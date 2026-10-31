@@ -38,7 +38,7 @@ if __name__ == "__main__":
     s.hdim("front", -ro, ro, -ro, -ro - 3, f"Ø{p['od']:.2f} holder OD")
     s.vdim("front", 0, ye, ro, ro + 3, f"{ye:.2f} axis to ledge edge [S]")
     s.vdim("plan", p["z0"], p["z_rim"], -ro, -ro - 3, f"{p['height']:.2f} holder")
-    s.vdim("plan", zt - SHOW_TUBE, zt, -SP["tube_od"] / 2, -ro - 8, f"tube top {zt:.1f} above PCB front")
+    s.vdim("plan", zt - SHOW_TUBE, zt, SP["tube_od"] / 2, ro + 3, f"tube top at {zt:.1f} above PCB front")
     s.vdim("plan", p["z_screen0"], p["z_glass_top"], ro, ro + 3, f"{p['screen_t']:.2f} screen [S]")
     s.vdim("plan", p["z_floor"], p["z_board_top"], ro, ro + 7, f"{p['board_t']:.1f} board [K]")
     s.note("plan", ro + 14, p["z_rim"] + 1, f"Z: holder {p['z0']:.1f}–{p['z_rim']:.1f}, board {p['z_floor']:.1f}, screen {p['z_screen0']:.1f}, glass top {p['z_glass_top']:.1f}", 6.5)
