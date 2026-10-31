@@ -65,14 +65,22 @@ p["d_bot_bore"] = p["d_ring_root"]
 p["hub_od"] = p["bush_od"] + 2 * p["hub_wall"]
 p["h_hub0"] = p["h_top"] - p["bush_len"]
 p["pin_wall"] = (p["d_pin_root"] - p["shaft_d"]) / 2
-# brass tube top above the PCB front (fixed shaft v0.1 + KiCad STEP)
-sys.path.insert(0, os.path.join(LIB, "shafts", "fixed-shaft-brass-5x3"))
-import fixed_shaft_brass as fsb
-_bb = pcb.board_solid().bounding_box()
-p["tube_top"] = fsb.P["above_flange"] - (_bb.max.Z - _bb.min.Z)
-p["knurl_len"] = fsb.P["knurl_len"]
+def tube_facts(p=P):
+    """Brass tube top (above the PCB front) and knurl length from the CURRENT shaft (v0.2). Imported lazily:
+    shaft v0.2 derives its length from the screen holder, which imports this module."""
+    sys.path.insert(0, os.path.join(LIB, "shafts", "fixed-shaft-brass-5x3-v0.2"))
+    import fixed_shaft_brass_v02 as fsb
+    bb = pcb.board_solid().bounding_box()
+    p["tube_top"] = fsb.P["above_flange"] - (bb.max.Z - bb.min.Z)
+    p["knurl_len"] = fsb.P["knurl_len"]
+    return p["tube_top"], p["knurl_len"]
 
 def inv(a): return math.tan(a) - a
+
+def build_bush(p=P):
+    """Sintered-bronze bush 5 ID x 8 OD x 6 [A] (bought part), pressed into the hub bore, flush with the knob top."""
+    A = (Align.CENTER, Align.CENTER, Align.MIN)
+    return Pos(0, 0, p["h_hub0"]) * (Cylinder(p["bush_od"] / 2, p["bush_len"], align=A) - Cylinder(p["bush_id"] / 2, p["bush_len"], align=A))
 
 def gear_pts(z, m, add, ded, dthick, alpha_deg=20.0, n=7):
     """External involute outline: z teeth, addendum add, dedendum ded, tooth thickness change dthick (mm on pitch)."""
@@ -155,14 +163,19 @@ if __name__ == "__main__":
     clashes = {k: vol(a.intersect(b)) for k, (a, b) in pairs.items()}
     clashes = {k: v for k, v in clashes.items() if v > 1e-4}
     od_flag = p["knob_od"] >= p["bezel_d"] or p["d_bot_tip"] >= p["bezel_d"]
+    tube_facts()
     bush_engaged = min(p["tube_top"], p["h_top"]) - p["h_hub0"]
+    knurl_on_bush = p["tube_top"] - p["knurl_len"] < p["h_top"] - 1e-9
     print({k: (round(v, 3) if isinstance(v, float) else v) for k, v in p.items()})
     print("clashes", clashes, "valid", pin.is_valid, ring.is_valid, bot.is_valid, knob.is_valid, "bush engaged", round(bush_engaged, 2))
 
     FLAG_OD = (f"KNOB OD {p['knob_od']:.2f} (bottom gear tip Ø{p['d_bot_tip']:.1f}) >= {p['bezel_d']:.0f} BEZEL [check]", RED)
+    TUBE_OK = f"Tube (shaft v0.2) top {p['tube_top']:.2f} above PCB front: bush fully engaged ({bush_engaged:.2f} of {p['bush_len']:.1f}); knurl zone starts {p['tube_top'] - p['knurl_len']:.2f}, above the bush"
     FLAG_TUBE = (f"Tube top {p['tube_top']:.2f} is {p['h_top'] - p['tube_top']:.2f} below the knob top: bush engaged {bush_engaged:.2f} of {p['bush_len']:.1f} [check]", RED)
     FLAG_KN = (f"Bush runs on the tube's top {p['knurl_len']:.0f} mm knurl zone [check]", RED)
     FLAG_PIN = (f"Pinion {p['z_pinion']}T: root Ø{p['d_pin_root']:.2f}, wall {p['pin_wall']:.2f} to the 3 mm shaft; undercut below 17T (no profile shift) [check]", RED)
+    TUBE_FLAGS = ([FLAG_TUBE] if bush_engaged < p["bush_len"] - 1e-9 else []) + ([FLAG_KN] if knurl_on_bush else [])
+    if not TUBE_FLAGS: TUBE_FLAGS = [TUBE_OK]
     MESH = f"m {m:.1f}, 20°: pinion {p['z_pinion']}T, ring {p['z_ring']}T, ({p['z_ring']} − {p['z_pinion']}) × {m:.1f} / 2 = {p['centre_dist']:.2f} = motor offset [K]"
     BUSH = f"bronze bush {p['bush_id']:.0f}x{p['bush_od']:.0f}x{p['bush_len']:.0f} [A]"
 
@@ -182,7 +195,7 @@ if __name__ == "__main__":
         ["Half-section, Ø8 bush bore wall on the left", BUSH + " pressed in, flush with the top"])
     notes(sh, "side", sh.bb["side"][1] + 3, ro, ["Printed CF-ASA or PETG, one piece with the internal ring band and the bottom ring [A]",
         BUSH + ": Ø8.0 bore for the press fit, runs on the Ø5.0 brass tube", f"Rotates about the dial axis; centre open for the tube (wires to the dial TFT)",
-        FLAG_OD, FLAG_TUBE, FLAG_KN], 2.0, 6.5)
+        FLAG_OD] + TUBE_FLAGS, 2.0, 6.5)
     title = "Knob cap + hub — v0.1, 2026-10-31"
     sub = [f"Cap Ø{p['knob_od']:.2f} × {p['cap_t']:.1f}, hub Ø{p['hub_od']:.0f} with the Ø8 bush bore.", "Z = height above the PCB front. [A] = assumed.", SUB3]
     sh.dxf(os.path.join(HERE, "knob-cap-hub.dxf"), [title] + sub)
@@ -242,8 +255,8 @@ if __name__ == "__main__":
     sh.vdim("plan", 0, 0, 0, 0, "") if False else None
     sh.note("plan", rbt + 14, p["h_top"], f"Z: base {p['h_base']:.1f}, band {p['h_band0']:.1f}–{p['h_band1']:.1f}, top {p['h_top']:.1f} above PCB front", 6.5)
     clash_lines = [("CLASH: " + ", ".join(f"{k} {v:.3f} mm³" for k, v in clashes.items()), RED)] if clashes else ["No clash between the four parts"]
-    notes(sh, "side", sh.bb["side"][1] + 3, ro, [MESH, f"Bottom ring {p['z_bottom']}T m{m:.1f} [A]; encoder pinion TBC", BUSH, *clash_lines, FLAG_OD, FLAG_TUBE, FLAG_PIN], 2.2, 6.5)
+    notes(sh, "side", sh.bb["side"][1] + 3, ro, [MESH, f"Bottom ring {p['z_bottom']}T m{m:.1f} [A]; encoder pinion TBC", BUSH, *clash_lines, FLAG_OD] + TUBE_FLAGS + [FLAG_PIN], 2.2, 6.5)
     title = "Knob v0.1 — knob + pinion + two ring gears"
-    sub = ["2026-10-31. Four parts together; not in the assembly yet.", "[K] = KiCad, [L] = layout, [A] = assumed.", SUB3]
+    sub = ["2026-10-31. Four parts together; placed in assembly v0.4.", "[K] = KiCad, [L] = layout, [A] = assumed.", SUB3]
     sh.dxf(os.path.join(HERE, "knob-v0.1-together.dxf"), [title] + sub)
     sh.png(os.path.join(HERE, "knob-v0.1-together-drawing.png"), title, sub)

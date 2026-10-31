@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461345.508912037
+2461345.5212268517
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461345.508923611
+2461345.5212268517
   9
 $TDUUPDATE
  40
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{B5AE03D2-756F-4F20-A4D5-4046F70A39F0}
+{6C640621-194F-4BD8-B38B-240BD288B02C}
   9
 $VERSIONGUID
   2
-{578905CC-9190-47BC-8A10-920EB68B2851}
+{1CA35074-82FC-4F3E-B45E-9E04A7752031}
   9
 $EXTNAMES
 290
@@ -479181,7 +479181,7 @@ AcDbText
  40
 1.4
   1
-Tube top 43.49 is 2.01 below the knob top: bush engaged 3.99 of 6.0 [check]
+Tube (shaft v0.2) top 51.80 above PCB front: bush fully engaged (6.00 of 6.0); knurl zone starts 45.80, above the bush
  11
 56.24925267195971
  21
@@ -479271,7 +479271,7 @@ AcDbText
  40
 1.6
   1
-2026-10-31. Four parts together; not in the assembly yet.
+2026-10-31. Four parts together; placed in assembly v0.4.
  11
 -20.240160073708594
  21
@@ -480443,7 +480443,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T04:12:50.908003+00:00
+1.4.5 @ 2026-10-31T04:30:34.474616+00:00
   0
 VISUALSTYLE
   5
@@ -481155,7 +481155,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T04:12:51.226803+00:00
+1.4.5 @ 2026-10-31T04:30:34.800055+00:00
   0
 ENDSEC
   0
