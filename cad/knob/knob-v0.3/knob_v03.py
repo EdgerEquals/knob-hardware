@@ -7,7 +7,7 @@ import os, sys
 from build123d import *
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.dirname(os.path.dirname(HERE))
-for d in ("tools", "knob/knob-v0.1", "knob/knob-v0.2", "bezel/bezel-v0.1"):
+for d in ("tools", "knob/knob-v0.1", "knob/knob-v0.2", "bezel-knob/bezel-knob-v0.1"):
     sys.path.insert(0, os.path.join(LIB, d))
 import knob_gears as kg
 import knob_v02 as kv

@@ -18,7 +18,7 @@ from build123d import *
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.dirname(os.path.dirname(HERE))
 for d in ("tools", "motors/1220-coreless-planetary", "pcbs/knob-main-pcb", "shafts/fixed-shaft-brass-5x3-v0.2",
-          "knob/knob-v0.1", "knob/knob-v0.2", "knob/knob-v0.3", "bezel/bezel-v0.1", "holders/screen-holder-v0.1", "encoder-takeoff/encoder-takeoff-v0.2"):
+          "knob/knob-v0.1", "knob/knob-v0.2", "knob/knob-v0.3", "bezel-knob/bezel-knob-v0.1", "holders/screen-holder-v0.1", "encoder-takeoff/encoder-takeoff-v0.2"):
     sys.path.insert(0, os.path.join(LIB, d))
 import motor_gearbox as mg
 import knob_main_pcb as pcb
@@ -46,7 +46,8 @@ def bbox_overlap(a, b, tol=1e-6):
     A, B = a.bounding_box(), b.bounding_box()
     return all(tuple(A.min)[i] < tuple(B.max)[i] - tol and tuple(B.min)[i] < tuple(A.max)[i] - tol for i in range(3))
 
-if __name__ == "__main__":
+def build_parts():
+    """All v0.6 parts in world coordinates (also used by iso_section.py)."""
     board = pcb.board_solid(); zf = board.bounding_box().max.Z; zb = board.bounding_box().min.Z
     hx, hy = F["shaft_x"], F["shaft_y"]
     T = Pos(hx, -hy, zf)                       # knob/bezel frame -> world
@@ -66,6 +67,10 @@ if __name__ == "__main__":
         "adapter board": TH * hp["board"],
     }
     for i, c in enumerate(hp["comps"]): parts[f"adapter part {('J1', 'U1')[i] if i < 2 else i}"] = TH * c
+    return parts, board, zf, zb, hx, hy, BZ, dz
+
+if __name__ == "__main__":
+    parts, board, zf, zb, hx, hy, BZ, dz = build_parts()
     asm = Compound(children=list(parts.values()), label="knob-stack-v0.6")
     export_step(asm, os.path.join(HERE, "knob-stack-v0.6.step"))
 
