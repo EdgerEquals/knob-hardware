@@ -4,7 +4,11 @@ Writes knob-main-pcb.kicad_pcb / .kicad_pro / fp-lib-table, then exports knob-ma
 Contents: Edge.Cuts outline, 1.6 mm board, M1 = footprints:Motor_1220_Tabs at the motor position (offset from the dial axis),
 H1 = footprints:Shaft_Hole_NPTH_5.2mm on the dial axis (v0.3; was 6.2 in v0.2).
 H2 = footprints:Bearing_F682ZZ_Press_NPTH_5.0mm, encoder take-off bearing, ENC_CD below the dial axis (v0.4); v0.5 flipped H2 to the back; v0.6 (2026-10-31) puts H2 back on the FRONT: the bearing is pressed in from the front through the base cradle
-floor and into the PCB (locating dowel for gluing the cradle), flange on the cradle floor. Hole Ø5.0 NPTH unchanged. Nothing else.
+floor and into the PCB (locating dowel for gluing the cradle), flange on the cradle floor. Hole Ø5.0 NPTH unchanged.
+v0.7 (2026-10-31): H2 rotated 3.0° [A] about the dial axis toward the motor side (still 19.0 from the axis) so the two idler
+pinions at 120°/240° clear the motor.
+v0.8 (2026-10-31): H1 = TubeRodClamp_Main_M1.6: the brass tube (GND) is soldered on a F.Cu ring pad, the M1.6 rod (VBUS_DATA,
+data over power) passes an NPTH Ø1.8 and clamps on a B.Cu ring pad. Nets GND, VBUS_DATA [A]. Nothing else.
 Tags: [L] layout v5 (scope/knob-module-v1.md + knob-panel-layout/make_v5.py), [A] assumed.
 Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from panel top (same as the layout)."""
 import os, json, subprocess, pcbnew
@@ -29,9 +33,14 @@ MOTOR_FP = ("footprints", "Motor_1220_Tabs")   # project library, cad/library/ki
 MOTOR_ROT = 0.0                       # tabs side by side along x
 # encoder take-off (encoder-takeoff v0.1): bearing hole H2 below the dial axis (panel y down = 90° from the motor) [A]
 ENC_CD = 19.0                         # (90T bottom internal ring - 14T encoder pinion) x m0.5 / 2, see encoder_takeoff.py
-ENC_X, ENC_Y = DIAL_X, DIAL_Y + ENC_CD
+# v0.7: the encoder + 2 idler pinion set (120° apart) is rotated by ENC_SET_ROT so the idler nearest the motor clears the
+# motor body by 0.5 [A] (at 0° it would be at 30° from the motor, 9.81 from its axis: overlap). Positive = toward the motor side.
+ENC_SET_ROT = 3.0                     # [A] degrees, minimum 2.88 for 0.5 clearance, rounded up
+import math as _m
+ENC_X, ENC_Y = DIAL_X + ENC_CD * _m.sin(_m.radians(ENC_SET_ROT)), DIAL_Y + ENC_CD * _m.cos(_m.radians(ENC_SET_ROT))
 ENC_FP = ("footprints", "Bearing_F682ZZ_Press_NPTH_5.0mm")   # Ø5.0 NPTH press fit for F682ZZ 2x5x2.3 [A]
-SHAFT_FP = ("footprints", "Shaft_Hole_NPTH_5.2mm")   # Ø5.2 NPTH [A] for the Ø5.0 brass tube (v0.2 was 6.2)
+SHAFT_FP = ("footprints", "TubeRodClamp_Main_M1.6")   # v0.8: brass tube SOLDERED on a F.Cu ring (GND), M1.6 rod [A] through NPTH Ø1.8, B.Cu clamp ring (VBUS_DATA)
+# (v0.3–v0.7: Shaft_Hole_NPTH_5.2mm for the tube through the board)
 # ----------------------------------------
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -68,6 +77,11 @@ h = pcbnew.FootprintLoad(LIBDIR, SHAFT_FP[1])
 h.SetFPID(pcbnew.LIB_ID(SHAFT_FP[0], SHAFT_FP[1]))
 h.SetReference("H1"); h.SetPosition(P(SHAFT_X, SHAFT_Y))
 board.Add(h)
+NETS = {n: pcbnew.NETINFO_ITEM(board, n) for n in ("GND", "VBUS_DATA")}   # [A] net names
+for n in NETS.values(): board.Add(n)
+for pad in h.Pads():
+    if pad.GetNumber() == "1": pad.SetNet(NETS["GND"])         # tube solder ring, F.Cu
+    elif pad.GetNumber() == "2": pad.SetNet(NETS["VBUS_DATA"]) # rod clamp ring, B.Cu
 e = pcbnew.FootprintLoad(LIBDIR, ENC_FP[1])
 e.SetFPID(pcbnew.LIB_ID(ENC_FP[0], ENC_FP[1]))
 e.SetReference("H2"); e.SetPosition(P(ENC_X, ENC_Y))

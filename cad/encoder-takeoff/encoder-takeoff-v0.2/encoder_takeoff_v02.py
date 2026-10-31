@@ -38,7 +38,7 @@ P = dict(
 )
 p = P
 p["centre_dist"] = (p["z_ring"] - p["z_pinion"]) * m / 2
-p["kicad_cd"] = K["enc_y"] - K["shaft_y"]
+p["kicad_cd"] = math.hypot(K["enc_x"] - K["shaft_x"], K["enc_y"] - K["shaft_y"])   # radial (H2 may be rotated, PCB v0.7)
 assert abs(p["centre_dist"] - p["kicad_cd"]) < 1e-6, f"KiCad H2 offset {p['kicad_cd']} != gear centre distance {p['centre_dist']}"
 p["ratio"] = p["z_ring"] / p["z_pinion"]
 # heights

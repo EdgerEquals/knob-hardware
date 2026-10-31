@@ -4,16 +4,17 @@ Writes screen-adapter.kicad_pcb / .kicad_pro / fp-lib-table, then exports ../scr
 Contents: round Edge.Cuts outline, 2 layers, 1.0 thick [A]; footprints from the shared library (cad/library/kicad/footprints.pretty):
   J1 = FPC_14P_0.5mm_Top   for the 0.71" round TFT tail (14 pin, 0.5 pitch [A], Zhunyi Z07101-P14)
   U1 = QFN-20_3x3_P0.4_CH32V003   CH32V003F4U6 [A]
-  W1 = WirePads_4x_0.7mm_Back      VCC, GND, D1, D2 at the centre, back side, over the Ø3.0 wire bore
+  C1 = TubeRodClamp_Adapter_M1.6   v0.2 (2026-10-31): NPTH Ø1.8 for the M1.6 rod; B.Cu ring GND on the tube top, F.Cu ring VBUS_DATA
+       under the thin nut (data over power; replaces W1, the 4 wire pads)
 Placed only, no routing. Grid origin = board centre (x right, y down in KiCad)."""
 import os, json, subprocess, pcbnew
 
 ORIGIN = (100.0, 100.0)     # KiCad position of the board centre (sheet placement only)
 BOARD_D = 15.5              # [A] <= 18 (Ed); smallest round that holds J1 with 0.3 courtyard-to-edge
 BOARD_T = 1.0               # [A]
-J1_POS = (0.0, -3.2)        # [A] KiCad coords (y up = negative): cable entry toward the board top edge
-U1_POS = (0.0, 3.5)         # [A]
-W1_POS = (0.0, 0.0)         # centre, over the wire bore
+J1_POS = (0.0, -3.7)        # [A] KiCad coords (y up = negative); v0.2: 0.5 out for the M1.6 nut at the centre (was -3.2)
+U1_POS = (0.0, 3.8)         # [A] v0.2: was 3.5
+C1_POS = (0.0, 0.0)         # centre: tube / rod clamp (v0.2 replaces the W1 wire pads)
 EDGE_CLEAR_CU = 0.3         # [A] copper to board edge (default 0.5 relaxed for the small board)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +37,12 @@ def place(fpname, ref, pos, back=False):
     return fp
 place("FPC_14P_0.5mm_Top", "J1", J1_POS)
 place("QFN-20_3x3_P0.4_CH32V003", "U1", U1_POS)
-place("WirePads_4x_0.7mm_Back", "W1", W1_POS, back=True)
+c1 = place("TubeRodClamp_Adapter_M1.6", "C1", C1_POS)
+NETS = {n: pcbnew.NETINFO_ITEM(board, n) for n in ("GND", "VBUS_DATA")}   # [A]
+for n in NETS.values(): board.Add(n)
+for pad in c1.Pads():
+    if pad.GetNumber() == "1": pad.SetNet(NETS["GND"])         # B.Cu ring on the brass tube top
+    elif pad.GetNumber() == "2": pad.SetNet(NETS["VBUS_DATA"]) # F.Cu ring under the M1.6 thin nut
 ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
 
 pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")
@@ -47,4 +53,4 @@ open(os.path.join(HERE, "fp-lib-table"), "w").write(
     '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../../../kicad/footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
 step = os.path.join(HERE, "..", NAME + ".step")
 subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "-o", step, pcb_path], check=True)
-print("board Ø", BOARD_D, "J1", J1_POS, "U1", U1_POS, "W1", W1_POS)
+print("board Ø", BOARD_D, "J1", J1_POS, "U1", U1_POS, "C1", C1_POS)
