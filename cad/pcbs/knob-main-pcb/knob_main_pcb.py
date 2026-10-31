@@ -60,14 +60,14 @@ if __name__ == "__main__":
     if ex is not None:
         sh.vdim("front", -hy, -ey, x1, x1 + 14, f"{ey - hy:.1f} H2 below the dial axis [A]")
         sh.hdim("front", ex - ed / 2, ex + ed / 2, -ey, -ey - 6, f"Ø{ed:.1f} NPTH H2 bearing [A]")
-        sh.note("front", x0 + 2, -hy - 43, "H2 encoder take-off bearing F682ZZ 2x5x2.3 press fit [A]", 6.5)
+        sh.note("front", x0 + 2, -hy - 43, "H2 encoder take-off bearing F682ZZ 2x5x2.3 press fit from the BACK (flange on the back face) [A]", 6.5)
     sh.note("front", x0 + 2, -hy - 34, "H1 shaft hole on the dial axis [L]", 6.5)
     sh.note("front", x0 + 2, -hy - 37, "M1 Motor_1220_Tabs: 2 plated slots 0.7 × 1.6 [A], pitch 6.0", 6.5)
     sh.note("front", x0 + 2, -hy - 40, "[A] motor offset TBC, gear/belt drive TBC", 6.5)
     sh.hdim("side", -zf, -zb, -y1, -y1 - 4, f"{f['thickness']:.1f} board")
     sh.note("side", -zf - 1, -y1 - 11, f"front (F) face at {Z_PCB_FRONT:.1f} behind panel front [L]", 6.5, ha="center")
-    title = "Knob main PCB — v0.4, 2026-10-31"
-    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.4: + H2 bearing hole.",
+    title = "Knob main PCB — v0.5, 2026-10-31"
+    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.5: H2 on the back (bearing from the back).",
            f"Board x {x0:.2f}–{x1:.2f}, y {y0:.1f}–{y1:.1f} from panel top-left. [L] layout v5, [A] assumed.",
            f"Third-angle projection · mm · STEP body {step_t:.2f} (KiCad omits copper+mask)"]
     sh.dxf(os.path.join(HERE, "knob-main-pcb.dxf"), [title] + sub)

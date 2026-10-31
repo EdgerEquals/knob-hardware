@@ -124,7 +124,7 @@ def bearing_hole(name, d, flange_d=6.1):
     return f'''(footprint "{name}"
   (version 20241229) (generator "make_footprints.py")
   (layer "F.Cu")
-  (descr "NPTH Ø{d:.2f} press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø{flange_d} on F) [A]")
+  (descr "NPTH Ø{d:.2f} press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø{flange_d} on the footprint side; H2 is placed on B = inserted from the PCB back) [A]")
   (attr exclude_from_pos_files exclude_from_bom)
   (property "Reference" "H2" (at 0 {-(flange_d / 2 + 1.0):.2f} 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
   (property "Value" "{name}" (at 0 {flange_d / 2 + 1.0:.2f} 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))

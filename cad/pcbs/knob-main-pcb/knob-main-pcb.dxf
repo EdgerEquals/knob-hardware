@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461345.528275463
+2461345.5439699073
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461345.528275463
+2461345.5439699073
   9
 $TDUUPDATE
  40
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{51510AD5-AB84-49AA-8435-101D134DA0C4}
+{763BE847-FD73-4E6B-9D64-FF6D069AA5EE}
   9
 $VERSIONGUID
   2
-{920DEBE0-2E82-4A7F-8B50-5FC23922E7B7}
+{84F70316-7F37-4799-91CE-4F86C3738182}
   9
 $EXTNAMES
 290
@@ -1323,9 +1323,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1339,9 +1339,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -32643,7 +32643,7 @@ AcDbText
  40
 1.4
   1
-H2 encoder take-off bearing F682ZZ 2x5x2.3 press fit [A]
+H2 encoder take-off bearing F682ZZ 2x5x2.3 press fit from the BACK (flange on the back face) [A]
  11
 2.749999999999461
  21
@@ -32793,7 +32793,7 @@ AcDbText
  40
 1.6
   1
-Knob main PCB — v0.4, 2026-10-31
+Knob main PCB — v0.5, 2026-10-31
  11
 0.0
  21
@@ -32823,7 +32823,7 @@ AcDbText
  40
 1.6
   1
-Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.4: + H2 bearing hole.
+Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.5: H2 on the back (bearing from the back).
  11
 0.0
  21
@@ -33995,7 +33995,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T04:40:43.799666+00:00
+1.4.5 @ 2026-10-31T05:03:19.157966+00:00
   0
 VISUALSTYLE
   5
@@ -34707,7 +34707,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T04:40:43.821111+00:00
+1.4.5 @ 2026-10-31T05:03:19.182020+00:00
   0
 ENDSEC
   0
