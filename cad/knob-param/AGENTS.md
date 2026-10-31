@@ -1,0 +1,145 @@
+# knob-param — agent guide (parallel work by sub-assembly)
+
+Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø39.5).
+Default params reproduce **v0.15** exactly: 32/34 gap checks PASS, 1 known clash (PCB / motor),
+`cad/assemblies/knob-stack-v0.15/` (sections PNG, check.json, report).
+
+## Branch model
+
+```
+main                      (released snapshots — agents never touch it)
+└── param-dev             (integration branch; assembly agent owns merges)
+    ├── sub/main_knob-<topic>      one cloud agent  → PR into param-dev
+    ├── sub/control_dial-<topic>   one cloud agent  → PR into param-dev
+    ├── sub/base_drive-<topic>     ...
+    ├── sub/under_pcb-<topic>
+    ├── sub/electronics-<topic>
+    └── asm/<topic>                assembly agent (interface changes, cross-checks, render)
+```
+
+* **One cloud agent per sub-assembly**, each on its own branch off `param-dev`.
+* A sub agent edits **only** `cad/knob-param/knobparam/<its sub>/`. Nothing else (not `common/`,
+  not `assembly/`, not another sub, not `cad/assemblies/`).
+* Open a PR into `param-dev`. Put the output of `python build.py --sub <name>` (local summary)
+  in the PR description.
+* The **assembly agent** merges sub PRs, runs the full build + cross-checks, renders the PNG, writes the
+  report, and commits `cad/assemblies/knob-stack-<version>/`. Only the assembly agent changes
+  `assembly/` (incl. the INTERFACE params) and `common/`.
+* Need an interface change (e.g. a new shared dimension, a different gear module)? Ask for it in the PR
+  / an issue for the assembly agent; don't edit `assembly/interface.py` from a sub branch.
+
+## Layout
+
+```
+cad/knob-param/
+  build.py            ONE CLI (full assembly or --sub)
+  report.py           engineering report (assembly agent)
+  setup.sh            fresh-VM setup (venv + pinned requirements + headless GL libs)
+  requirements.txt
+  knobparam/
+    common/           harness: model.py (scope/derive), cache.py (per-part cache, scope guard), util.py, checks.py
+    assembly/         interface.py (INTERFACE params + derive), params.py (version, ...), build.py (merge order),
+                      checks.py (cross-checks + clashes), render.py, report.py, hall_dyn.py
+    main_knob/        knob body + skirt, hub gear, cone race + balls, bottom ring
+    control_dial/     dial tube + lip, screen, carrier + FPC strap, hub magnet, Hall arm + magnets, thrust balls
+    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers
+    under_pcb/        encoder wheel, EE-SX1131, feel motor + clip
+    electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, TMAG5273, connectors;
+                      kicad/ = KiCad projects (knob-main-pcb, screen-adapter), footprints, footprint generators
+```
+
+Each sub folder has the same shape:
+
+| file | role |
+|---|---|
+| `params.py` | `P` (own params, each tagged `[A]` assumed / `[Ed]` Ed's decision), `IMPORTS`, `EXPORTS`, `derive(D)` |
+| `parts/*.py` | one module per part group: `build(D) -> {name: solid}` (reads `D` only) |
+| `checks.py` | `local(D, parts, rows)` — checks that need only this sub's scope |
+| `__init__.py` | `PART_MODULES` + any public helpers |
+
+## The contract (enforced by the harness)
+
+* **Scope.** A sub's `derive()` and part builders see only: INTERFACE params + interface-derived values,
+  its own `P` and own derived values, and the keys it lists in `IMPORTS`. Reading anything else raises
+  `ScopeError` (`... is outside this sub-assembly's scope`).
+* **Imports.** `IMPORTS = {"<other sub>": [keys]}` — each key must be in that sub's `EXPORTS`.
+  Interface and imported values are read-only (writes are detected and rejected).
+  Derive order: interface → electronics → control_dial → main_knob → base_drive → under_pcb
+  (exports flow forward; under_pcb's `d_big_tip` is consumed by electronics at *build* time only).
+* **No code imports across subs.** Code in `knobparam/<sub>/` may import only `knobparam.common` and its
+  own folder. `python build.py --contract` checks this statically (AST) and fails on any cross-sub import.
+  Cross-boundary data goes through interface params or exported envelopes (EXPORTS), never internals.
+* **Unique owners.** Every param name has exactly one owner (interface / assembly / one sub).
+  `python build.py --dump` prints every value with its owner.
+* **Don't hard-code — derive.** New dimensions become params in your `P` with a `[A]`/`[Ed]` tag and a comment.
+* **Keep exports stable.** Changing the meaning of an exported key is an interface change → assembly agent.
+
+Current contract (`python build.py --contract`):
+
+* INTERFACE params: `pcb_t, axis_bx, axis_by, module, pressure, backlash, motor_offset, z_motor_pinion, z_enc_pinion,
+  enc_ang, idler2_from_enc, motor, skirt_clear, knob_wall, skirt_gap, knob_run, knob_hub_z0, hub_gear_face, kb_ball_d,
+  kb_ball_tube, kb_clear, kb_zc, kb_play, dial_tube_id, dial_tube_wall, travel_deg, rod_d, nut_m, plate_t, cr_floor,
+  pin_face, pinion_hub_d, pin_above_skirt, brg, ha_ang0, ha_ring_clear, ha_n, ha_mag, ha_mag_wall, ha_mag_edge,
+  ha_pitch, ha_sens_h, ha_gap, ha_arm, ha_win_clear, feel_ang, adapter_t, cord_clear, screen, z_glass, z_holder0,
+  cof_bend, hall_layout, hv_n, hv_pitch, hv_cross_travel, hv_mag, hv_br, hv_wall, hv_gap, hv_sensor, hv_ring_clear, tgt`
+* electronics — EXPORTS `pcb_w, pcb_above, pcb_below, adapter_d, adapter_fps, adapter_env`; IMPORTS under_pcb `d_big_tip`
+* control_dial — EXPORTS `dial_hub_z0, z_lip0, z_web0, dial_hub_od, r_web, gusset, lip_fillet, tb_pcd, tb_groove_r, tb_z_ball`;
+  IMPORTS electronics `adapter_d, adapter_fps, adapter_env`
+* main_knob — IMPORTS control_dial `dial_hub_z0, z_lip0, z_web0, dial_hub_od, r_web, gusset, lip_fillet`
+* base_drive — IMPORTS control_dial `tb_pcd, tb_groove_r, tb_z_ball`
+* under_pcb — EXPORTS `d_big_tip`; IMPORTS electronics `pcb_w, pcb_above, pcb_below`
+
+## Running
+
+```bash
+bash cad/knob-param/setup.sh                 # once per VM -> cad/knob-param/.venv
+PY=cad/knob-param/.venv/bin/python
+
+# sub-assembly agent
+$PY cad/knob-param/build.py --contract                  # must print "contract: OK"
+$PY cad/knob-param/build.py --sub control_dial          # its parts + LOCAL checks + internal clashes
+$PY cad/knob-param/build.py --sub control_dial --preview  # + preview PNG -> cad/knob-param/out/control_dial-<ver>/
+$PY cad/knob-param/build.py --sub control_dial --set cof_bend=0.26  # try a value (any param, dotted for dicts)
+
+# assembly agent
+$PY cad/knob-param/build.py --render         # all subs, local + cross checks, clashes, sections PNG
+                                             # -> cad/assemblies/knob-stack-<version>/
+$PY cad/knob-param/report.py                 # report-<version>.txt / .json (Hall vernier dynamics etc.)
+$PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the proxy board
+```
+
+* `--sub` builds only that sub's parts against the full derived parameter set (so interface + imports are
+  real), runs that sub's local checks and clashes between its own parts. Cross-checks and cross-sub
+  clashes run in the assembly build only.
+* Cache: `cad/knob-param/.cache/` (override with `KNOBPARAM_CACHE=/path`). Each part is keyed on the
+  exact params it read + its source, so only changed parts rebuild. `--clear-cache` wipes it.
+* Cold full build + render ≈ 30–40 s on 4 cores; cached re-render ≈ 10 s.
+
+### Checks
+
+* **Local** (`<sub>/checks.py`, 24 rows): main_knob 3, control_dial 12, base_drive 1, under_pcb 7, electronics 1.
+* **Cross** (`assembly/checks.py`, 10 rows) + all-pairs clashes; `KNOWN` lists accepted clashes (PCB / motor).
+* v0.15 baseline: 32/34 PASS. The two known FAILs are open design items, not harness bugs:
+  * control_dial: dial lip wall far side 0.36 < 0.4 (`--set cof_bend=0.26` → 0.405 PASS)
+  * under_pcb: geared feel motor needs 25.8 mm, 25.0 available (−0.8)
+* A sub PR must not turn any other row red; the assembly agent re-runs everything before merging.
+
+## KiCad
+
+* On `param-dev`, `knobparam/electronics/kicad/` is the **source of truth** for the main PCB and the
+  screen adapter (newer than the v0.11 snapshot in `cad/pcbs/`, which is left untouched for `main`).
+* **Not needed** for anything in `build.py` / `report.py`. The proxy board is built from params;
+  `--full` imports the committed `knobparam/electronics/kicad/knob-main-pcb/knob-main-pcb.step`.
+* kicad-cli (KiCad 9) is needed only by the **electronics** agent to regenerate boards / STEP / footprints
+  (`apt install kicad` or the KiCad PPA). After regenerating the STEP, commit it.
+* `kicad/*/knob_main_pcb.py` and `screen_adapter.py` are legacy generators that need `cad/tools/sheet`;
+  they are not used by the parametric build.
+* The committed KiCad board does not yet carry the v0.15 Hall-vernier sensor rows / B2B move (the
+  parametric proxy does) — that's a pending electronics task.
+
+## Deliverable conventions (assembly agent)
+
+* Sections PNG: A-A on the left, iso quarter cut on the right, insets along the bottom; clashes are
+  reported as text only (no red overlays). No GLB/USDZ.
+* Knob OD stays Ø39.5 [Ed].
+* Bump `version` in `assembly/params.py` for a new release; outputs land in `cad/assemblies/knob-stack-<version>/`.

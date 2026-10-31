@@ -1,0 +1,84 @@
+KNOB STACK v0.15 REPORT (knob-param; all values derived from params.py; [Ed] Ed's, [A] assumed, [S] datasheet)
+
+1. BALL SEATING GROOVE (dial cone = the race the greased balls sit in with the dial lip-down)
+   form: single-radius (circular) seat R0.52 [Ed] for Ø1 balls, depth 0.1 [A] into the cone face
+   dial cone face moved 0.1 toward the ball (c -37.4971 -> -37.3557; flare z 41.416-42.416)
+   groove centre (r, z) = (4.6741, 41.4359) = ball centre + 0.02 along the 45° line (away from the dial)
+   ball touches the groove bottom at (4.3064, 41.8036) = the v0.14 45° contact point: contact line kept
+   conformity R_groove / R_ball = 1.04 (gothic-arch alternative: two R0.52 arcs offset ±0.02 -> 2-point contact; not chosen, keeps one 45° line)
+   groove width at the cone face 2×0.307 = 0.613; ball chord there 2×0.300 (ball drops in, 0.007 side clearance)
+   ball centre / PCD Ø9.32 / 27 balls / knob cone unchanged; ball-to-tube 0.1
+   ASSEMBLY: hold the dial lip-down, fill the groove with grease, drop the balls in one by one (each self-centres in the seat),
+   lower the knob on axially (its cone closes over the ring), flip the pair together, fit onto the stack.
+
+2. SCREEN TURNS WITH THE DIAL
+   panel rm69330-1.39 bonded into the lip (bond gap 0, no running gap); lip ID Ø38.21 centred on the panel,
+   panel offset 0.285 from the axis away from the FPC exit (exact solve over the COF bend arc |y|<=4.0, step 0.005)
+   lip wall: far side 0.360 (target 0.4) / near side 0.930  (v0.14: 0.195)
+   -> lip passes 0.4 only if the offset <= 0.245, i.e. COF bend <= 0.265 radial past the ledge (table [A] 0.30);
+      try: --set cof_bend=0.26  (needs the vendor's minimum COF bend radius)
+   screen carrier (PETG [A]) bonded on the dial shoulder z 54.90, Ø38.21 plate 1.236 thick, FPC window;
+   fixed adapter cup (socket on the tube, adapter well) now stops at z 54.60, 0.3 under the carrier; adapter still clamped by the rod nut.
+   MASS / INERTIA about the dial axis ([A] densities g/mm3: glass 0.0025, POL 0.0012, tape 0.001, PETG 0.00127, NdFeB 0.0075)
+     control dial (PETG)                  7.673 g      1088.1 g·mm²
+     magnets (hub Ø3×1 + Hall row)        0.119 g        11.5 g·mm²
+     panel (glass+POL+tape)               1.473 g       266.4 g·mm²
+     FPC fold + B2B (lumped [A])          0.350 g        10.4 g·mm²
+     screen carrier (PETG)                1.200 g       268.8 g·mm²
+     dial unit v0.15 (moving)            10.816 g      1645.1 g·mm²   (dial + magnets only: 7.792 g, 1099.6 g·mm²; x1.50)
+   spring-centred dial k = 0.4 N·mm/deg [A] -> natural frequency 19 Hz with the screen (was 23 Hz without)
+   FPC SERVICE LOOP: diametral strap through the axis
+     B2B moved to (-0.0, -3.7) (rotating, under the fold) opposite J1 (0.0, 3.7) (stationary, adapter board)
+     strap L 7.4 flat in the vertical plane, z 52.35-54.14 (1.79 wide), t 0.12 [A] 2-layer PI,
+     clear over the rod/nut (top 51.90) and U3 TMAG5273; 14 lines [A] (J1 14P)
+     at ±10°: B2B end moves 0.65 sideways and turns 10° -> clamped-clamped beam with both ends on a diameter
+     bends to a uniform arc R 42 mm: strain 0.142% (limit 0.3% dynamic flex) - no twist, no tension
+     restoring torque ≈ EI·κ = 0.018 N·mm at ±10° (PI E 3 GPa [A], EI 0.77 N·mm²) = 0.5% of the centring spring
+
+3. HALL VERNIER
+   arm: spoke from the dial tube at z 4.60-5.9 (w 3), then a curved bar DOWN through the cradle slot to z 1.60
+   magnets: 5 × Ø1.5×1 N52 axial, alternating poles, pockets from below, faces at z 1.60
+   sensors: 5 × TMAG5253BA3 (TI) X2SON-4 1.4×1.1×0.4 [S], ±80 mT, 15 mV/mT @3.3 V, BW 15 kHz, EN pin
+   rows: radial pitch 2.2, r = 7.30, 9.50, 11.70, 13.90, 16.10 (outer = ring tips - 0.5 - pad)
+   curvature: magnets φ = 210° + 1.1364°/mm·(r - 11.70); sensors φ = 210° - 1.1364°/mm·(r - 11.70)
+     magnets φ: 205.00, 207.50, 210.00, 212.50, 215.00   sensors φ: 215.00, 212.50, 210.00, 207.50, 205.00
+     sensor centres (frame x, y) / board (bx, by): H1 (-5.98, -4.19) / (19.27, 57.09); H2 (-8.01, -5.10) / (17.24, 58.00); H3 (-10.13, -5.85) / (15.12, 58.75); H4 (-12.33, -6.42) / (12.92, 59.32); H5 (-14.59, -6.80) / (10.66, 59.70)
+   crossing: r_x(θ) = 11.70 - θ/(2g) = 11.70 - 0.440·θ mm -> end pairs at ±10°; one pair per 5.00°
+   cradle slot: per-pad swept sectors, r 5.65-18.25, ±travel + 0.5
+   PCB area: 5 X2SON (front) + 5 × 0402 (back) in a 10.3 × 4.4 mm patch; bodies ≥ 0.80 apart radially
+     (DRV5055 SOT-23: ~3×3 footprint incl. pads -> pitch ≥ 3.3, 4 pitches = 13.2 vs 8.8 available between the thrust web and the ring: X2SON TMAG5253 chosen)
+
+4. DYNAMICS (charged-disc magnet model; dipole cross-check)
+   element gap 1.33 (air 1.2 + 0.13 in the package); Bz at θ=0: H1 +17.9, H2 -33.2, H3 +53.0, H4 -19.8, H5 -0.5 mT
+     dipole model at θ=0: +17.5, -34.8, +61.4, -19.7, -0.5 mT (overestimates the aligned pair by ~25% at this gap)
+   field range over ±10°: peak |B| 56.3 mT (BA3 range ±80; each sensor reaches ≥ 53.0 mT at its crossing)
+   noise: sensor 220 nT/√Hz [S] -> 12.3 µT rms with a 2000 Hz RC; ADC 12-bit LSB 0.81 mV = 15.5 µT rms; total 19.8 µT
+   sensitivity |dB/dθ| (all 5 combined): 6.6-15.1 mT/deg over ±travel (never zero: some pair is always on a flank)
+   angle noise (Cramér-Rao, per sample): 1.31-3.01 m° rms  -> 6654 noise steps over ±10°
+     realistic accuracy is set by calibration, not noise: magnet Br/position tolerances, 15% sensitivity error [S], axial play.
+     Per-unit calibration (sweep against the TMAG5273 hub angle) -> expect ~0.02-0.05° repeatability [A].
+   bandwidth: sensor 15 kHz (-3 dB), power-on 20-45 µs [S]; RC 2000 Hz; sample 4000 Hz/sensor = 20 ksps total
+   flick: 3000°/s [A] -> full ±10° sweep in 6.7 ms; 0.75°/sample = 27 samples per sweep
+     RC 2000 Hz lag 0.080 ms -> 0.24° lag at the flick (compensate or raise the RC)
+   velocity: least-squares slope over 8 samples (2 ms) -> σv ≈ 1.8°/s rms (noise-limited) i.e. 0.061% of a flick
+   acceleration available from the same window (2nd-order fit); dial natural frequency 19 Hz << Nyquist 2000 Hz
+   FORCE (spring-centred): torque = k·θ, k 0.4 N·mm/deg [A]: full scale ±4.0 N·mm (= ±203 mN tangential at the lip)
+     torque noise 0.0012 N·mm -> 0.061 mN at the lip per sample; with damping/inertia: τ = kθ + cθ' + Jθ'' (J 1645 g·mm²)
+     inertial torque at a 3000°/s flick stopping in 5 ms: J·α = 17.2 N·mm = 4.3× the spring full scale
+     -> KE 2.26 mJ vs spring energy at ±10° 0.35 mJ: a flick that fast hits the end stop; finger torque = kθ + Jθ'' (+cθ')
+        must use θ'' from the same fit. Fastest flick the spring alone absorbs: 1180°/s
+   AXIAL PRESS (option): all 5 fields scale together with the air gap (common mode); jointly fitting (θ, z) from 5 readings
+     σz ≈ 0.17-0.23 µm per sample -> a press is measurable only if the dial has axial compliance (e.g. a 0.1 mm/N spring)
+
+5. COUNT / LAYOUT ALTERNATIVES (same model, same noise; worst-case σθ over ±travel, peak |B|)
+   5x5 vernier (v0.15 default)                σθ     3.01 m°   peak   56.3 mT   min slope   6.59 mT/deg
+   3x3 vernier, pitch 3.3                     σθ    11.94 m°   peak   61.0 mT   min slope   1.66 mT/deg
+   7x7 vernier, pitch 1.6 (X2SON too tight)   σθ     3.65 m°   peak   48.8 mT   min slope   5.42 mT/deg
+   5x5 no curvature (parallel rows)           σθ      inf (all pairs peak together at θ=0)   peak   55.6 mT   min slope   0.00 mT/deg
+   5x5 crossing at ±20°                       σθ    12.20 m°   peak   57.2 mT   min slope   1.62 mT/deg
+   5x5 crossing at ±5°                        σθ     2.83 m°   peak   55.8 mT   min slope   7.01 mT/deg
+   5x5 Ø2×1 magnets, gap 1.6                  σθ     4.78 m°   peak   46.4 mT   min slope   4.15 mT/deg
+   5x5 gap 1.0                                σθ     1.97 m°   peak   78.6 mT   min slope  10.06 mT/deg
+   4x4 vernier pitch 2.75                     σθ     3.78 m°   peak   59.1 mT   min slope   5.25 mT/deg
+   -> 5x5 is the knee: 3x3 loses ~5x worst-case (dead-ish spots between pairs), 7x7 gains nothing and won't fit at pitch 1.6;
+      the cross-over must stay inside the travel (±20° leaves the ends uncovered). Keep 5x5, crossing at ±10°.

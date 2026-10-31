@@ -1,0 +1,42 @@
+"""Control dial (v0.15: ball seating groove in the cone, lip bonded round the panel, Hall bar down through the cradle): tube on the thrust balls, dial half of the 45 deg cone race, hub/web/lip, Hall arm (printed in one), screen cut + FPC slot."""
+import math
+from build123d import *
+from ...common.util import A, rev, cyl
+from . import thrust, hall_arm as hall
+SRC_DEPS = [thrust, hall]
+
+def profile(D):
+    ri, rt, rb, rh = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2, D["dial_bore_d"] / 2, D["dial_hub_od"] / 2
+    rc, rw, rl, g, f = D["r_cup"], D["r_web"], D["knob_od"] / 2, D["gusset"], D["lip_fillet"]
+    return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"]), (rt, D["dial_hub_z0"]), (D["dial_collar_d"] / 2, D["dial_hub_z0"]),
+            (D["dial_collar_d"] / 2, D["z_hubf"]), (rh, D["z_hubf"]), (rh, D["z_web0"] - g), (rh + g, D["z_web0"]),
+            (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"]), (rl, D["z_lip0"]), (rl, D["z_top"]), (rc, D["z_top"]),
+            (rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well"]), (rb, D["z_well"]), (rb, D["z_bore0"]), (ri, D["z_bore0"])]
+
+def seat_groove(D):   # v0.15 ball seating groove (torus, tube radius kb_seat_r, centre on the 45 deg line through the ball centre)
+    cr, cz = D["kb_seat_c"]
+    return Pos(0, 0, cz) * Torus(cr, D["kb_seat_r"])
+
+def panel_ctr(D):
+    a = math.radians(D["tail_ang"]); o = D["lip_ctr_off"]
+    return (-o * math.cos(a), -o * math.sin(a))
+
+def race_add(D):   # 45 deg flare + collar on the tube, up into the hub
+    rt, zd0 = D["kb_rt"], D["kb_zd0"]
+    return rev([(rt - 0.6, zd0 - 1.6), (rt, zd0 - 1.6), (rt, zd0), (D["kb_r_collar"], D["kb_zd1"]),
+                (D["kb_r_collar"], D["dial_hub_z0"] + 0.2), (rt - 0.6, D["dial_hub_z0"] + 0.2)])
+
+def lip_slot(D):   # through the lip where the COF bend passes, widened for the dial travel
+    r0 = math.sqrt(max((D["lip_id"] / 2) ** 2 - (D["lip_slot_w"] / 2) ** 2, 0)) - D["lip_ctr_off"] - 0.3   # through the ring over the slot width
+    return Rot(0, 0, D["tail_ang"]) * Pos(r0, 0, D["z_holder0"] - 0.4) * Box(D["R"] + 2 - r0, D["lip_slot_w"], 10, align=(Align.MIN, Align.CENTER, Align.MIN))
+
+def build(D):
+    md, mh = D["dial_mag"]; mx, my = D["mag_xy"]
+    pocket = cyl((md + D["dial_mag_press"]) / 2, D["z_mag0"], mh + 0.01, mx, my)
+    d = rev(profile(D)) + race_add(D) - thrust.groove(D) - pocket
+    if D["kb_seat_depth"] > 0: d -= seat_groove(D)
+    d += hall.arm(D)
+    d -= cyl(D["lip_id"] / 2, D["z_screen_cut"], 10, *panel_ctr(D))
+    d -= lip_slot(D)
+    mag = cyl(md / 2, D["z_mag0"], mh, mx, my)
+    return {"control dial": d, f"dial magnet {md:g}x{mh:g}": mag}
