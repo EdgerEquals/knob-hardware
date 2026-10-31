@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "filename": "screen-adapter.kicad_pro",
+    "version": 1
+  },
+  "board": {
+    "design_settings": {
+      "rules": {
+        "min_copper_edge_clearance": 0.3
+      }
+    }
+  },
+  "libraries": {}
+}

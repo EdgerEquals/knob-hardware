@@ -1,0 +1,10 @@
+(footprint "Shaft_Hole_NPTH_5.2mm"
+  (version 20241229) (generator "make_footprints.py")
+  (layer "F.Cu")
+  (descr "NPTH Ø5.20 clearance hole for the fixed hollow shaft on the dial axis")
+  (attr exclude_from_pos_files exclude_from_bom)
+  (property "Reference" "H1" (at 0 -4.10 0) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+  (property "Value" "Shaft_Hole_NPTH_5.2mm" (at 0 4.10 0) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+  (fp_circle (center 0 0) (end 2.850 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "" np_thru_hole circle (at 0 0) (size 5.200 5.200) (drill 5.200) (layers "*.Cu" "*.Mask"))
+)
