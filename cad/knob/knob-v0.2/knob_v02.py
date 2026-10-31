@@ -2,7 +2,7 @@
 Ed: the dial body comes around the OUTSIDE of the offset motor, down to 2 mm above the PCB front (wider than the board is fine),
 and the encoder take-off at the bottom is an INTERNAL ring gear (not external).
 Kept from v0.1 by import: the top region, the 12T pinion, the 68T internal ring, the hub and the bronze bush 5x8x6 [A].
-New here: the cap + skirt body, and the bottom internal ring at the skirt's bottom inner edge (encoder pinion TBC, meshes inside).
+New here: the cap + skirt body, and the bottom internal ring at the skirt's bottom inner edge (the encoder-takeoff v0.1 pinion meshes inside).
 Printed one piece (CF-ASA or PETG) [A]; parts drawn separately. Frame as v0.1: dial axis = Z, Z = height above the PCB front."""
 import math, os, sys
 from build123d import *
@@ -81,7 +81,9 @@ if __name__ == "__main__":
         if v > 1e-3: cl[f"{na} / {nb}"] = v
     print({k: (round(v, 3) if isinstance(v, float) else v) for k, v in p.items() if k.startswith(("skirt", "z_bot", "d_bi", "bot_", "h_skirt", "h_bi", "overall", "motor_r"))}, "clashes", cl)
     ri, ro, rbo = p["skirt_id"] / 2, p["skirt_od"] / 2, p["bot_ring_od"] / 2
-    ENC = "Encoder pinion TBC, meshes inside the bottom ring (not drawn)"
+    sys.path.insert(0, os.path.join(LIB, "encoder-takeoff", "encoder-takeoff-v0.1"))
+    import encoder_takeoff as enc   # lazy: encoder_takeoff imports this module
+    ENC = f"Encoder pinion {enc.P['z_pinion']}T meshes inside (encoder-takeoff v0.1, ratio {enc.P['ratio']:.3f})"
 
     # ---- sheet 1: cap + skirt ----
     k = pr["knob cap+skirt"]

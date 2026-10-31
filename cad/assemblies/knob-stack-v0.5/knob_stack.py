@@ -76,11 +76,30 @@ if __name__ == "__main__":
     ko, ho = KP["bot_ring_od"] / 2, HP["od"] / 2
     sh = Sheet(asm, gap=34, scale=1.05, label_pad=20)
     # front view
-    sh.hdim("front", hx, F["motor_x"], -hy, -hy - KP["bot_ring_od"] / 2 - 5, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
-    sh.hdim("front", hx - KP["skirt_od"] / 2, hx + KP["skirt_od"] / 2, -hy, -hy + ko + 5, f"Ø{KP['skirt_od']:.2f} skirt OD (ring band Ø{KP['bot_ring_od']:.2f})")
-    sh.hdim("front", hx - ho, hx + ho, -hy, -hy + ko + 13, f"Ø{HP['od']:.2f} holder OD")
-    sh.hdim("front", x0, x1, -y1, -y1 - 8, f"{x1 - x0:.2f} PCB")
-    sh.vdim("front", -y0, -y1, x1, x1 + 8, f"{y1 - y0:.2f} PCB")
+    # FRONT view replaced by full section A-A: plane through the dial axis and the motor axis (world Y = -dial y)
+    cut = Plane(origin=(0, -hy, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
+    HATCH = ["////", "\\\\", "xx", "---", "|||", "//", "\\\\\\", "++", "...", "/", "\\", "-", "|", "x", "oo", "////\\\\"]
+    items, hi = [], 0
+    for n, part in parts.items():
+        try:
+            fs = section(part, section_by=cut).faces()
+        except Exception:
+            fs = []
+        if fs:
+            items.append((n, list(fs), HATCH[hi % len(HATCH)])); hi += 1
+    sh.set_front_section(items, "SECTION A-A (through dial and motor axes)")
+    cut_names = [n for n, _, _ in items]
+    print("cut parts", cut_names)
+    zt = zf + HP["z_glass_top"]
+    sh.hdim("front", hx - ho, hx + ho, zf + HP["z_rim"], zt + 4, f"Ø{HP['od']:.2f} holder OD")
+    sh.hdim("front", hx - KP["skirt_od"] / 2, hx + KP["skirt_od"] / 2, zf + KP["h_top"], zt + 10, f"Ø{KP['skirt_od']:.2f} skirt OD (ring band Ø{KP['bot_ring_od']:.2f})")
+    sh.hdim("front", hx, F["motor_x"], zb, zb - 9, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
+    sh.hdim("front", x0, x1, zb, zb - 17, f"{x1 - x0:.2f} PCB")
+    sh.vdim("front", zf, zt, x1, x1 + 14, f"{HP['z_glass_top']:.2f} overall above PCB front")
+    sh.vdim("side", -y0, -y1, -zb, -zb + 8, f"{y1 - y0:.2f} PCB")
+    sb = sh.bb["side"]
+    sh.cut_line("side", sb[0] - 4, sb[1] + 4, -hy, -1, "A")
+    sh.note("plan", x0, zf - 34, "Section plane A-A contains both axes and is parallel to this view: cutting line shown on the side view", 6.5)
     # plan view (y = Z, front up)
     sh.vdim("plan", zf, zf + top, hx - ho, x0 - 12, f"{top:.2f} overall above PCB front (glass top)")
     sh.vdim("plan", zf, zf + KP["h_top"], x1, x1 + 5, f"{KP['h_top']:.1f} knob top")
@@ -90,7 +109,6 @@ if __name__ == "__main__":
     EP = enc.P; zp = zf + EP["h_panel"]
     sh.ref_line("plan", x0 - 2, zp, x1 + 2, zp, f"back panel [A], {EP['panel_gap']:.0f} behind PCB back")
     sh.ref_line("side", -zp, -y1, -zp, -y0, "back panel [A]")
-    sh.hdim("front", F["enc_x"] - EP["d_big_tip"] / 2, F["enc_x"] + EP["d_big_tip"] / 2, -F["enc_y"], -F["enc_y"] - EP["d_big_tip"] / 2 - 4, f"Ø{EP['d_big_tip']:.1f} encoder big gear {EP['z_big']}T (behind PCB)")
     lines = [f"PCB v0.4 + 1220 motor + brass shaft v0.2 ({SP['tube_len']:.2f} tube) + knob v0.2 + bush + encoder take-off + holder + TFT + adapter",
              f"Pairwise interference: {len(parts)} parts, {checked} bbox-overlapping pairs checked (threshold {THR} mm³)"]
     if clashes:
@@ -100,6 +118,9 @@ if __name__ == "__main__":
         lines += [(f"CLASH: {k} {v:.2f} mm³{why.get(k, '')}", RED) for k, v in clashes.items()]
     else:
         lines.append("No solid clash")
+    lines.append("Section A-A cuts (each hatched differently): " + ", ".join(cut_names[:5]) + ",")
+    lines.append("    " + ", ".join(cut_names[5:10]) + ",")
+    lines.append("    " + ", ".join(cut_names[10:]) + "; encoder pinion, shaft and bearings lie off the plane")
     lines.append(kv.flag_od())
     lines.append(enc.FLAG_BEHIND)
     lines.append(f"Encoder: 14T pinion in the 90T ring (ratio {enc.P['ratio']:.3f}), H2 {enc.P['centre_dist']:.1f} below the dial axis [K]; encoder TBC")
@@ -108,8 +129,8 @@ if __name__ == "__main__":
         kw = dict(weight="bold") if i == 0 else {}
         if isinstance(l, tuple): l, kw = l
         sh.note("side", max(sh.bb["side"][1], -zp) + 6, sh.bb["side"][3] - 6 - i * 3.2, l, 8 if i == 0 else 6.5, **kw)
-    title = "Knob stack v0.5 — all current parts"
-    sub = ["2026-10-31. PCB v0.4, motor, shaft v0.2, knob v0.2, encoder, holder, TFT, adapter.", "Parts imported from the library. [A] = assumed.",
+    title = "Knob stack v0.5 rev B — all current parts"
+    sub = ["2026-10-31. PCB v0.4, motor, shaft v0.2, knob v0.2, encoder, holder, TFT, adapter.", "Rev B: front view -> full section A-A. [A] = assumed.",
            "Third-angle projection · mm · plan view drawn front-up"]
     sh.dxf(os.path.join(HERE, "knob-stack-v0.5.dxf"), [title] + sub)
     sh.png(os.path.join(HERE, "knob-stack-v0.5-drawing.png"), title, sub)

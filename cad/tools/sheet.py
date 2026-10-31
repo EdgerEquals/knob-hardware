@@ -45,6 +45,8 @@ class Sheet:
         self.sections = []   # (label, face, scale, notes)
         self.zones = []      # (view, x0, y0, x1, y1, hatch)
         self.refs = []       # (view, x0, y0, x1, y1, label): dashed reference lines (not parts)
+        self.fsec = None     # front view replaced by a section: list of (name, [polygons], hatch)
+        self.cut_lines = []  # (view, x0, x1, y, arrow_dir, letter): section cutting lines
         self.dims = []   # (kind, view, p1, p2, offset, text)
         self.texts = []  # (view, x, y, text, size)
 
@@ -52,7 +54,8 @@ class Sheet:
         # align plan above front (same x), side right of front (same y)
         f, p, s = self.bb["front"], self.bb["plan"], self.bb["side"]; g = self.gap
         self.k = k
-        self.off = {"front": (0, 0), "plan": (0, (f[3] - p[2]) * k + g), "side": ((f[1] - s[0]) * k + g, 0)}
+        dy = getattr(self, "side_dy", 0.0)
+        self.off = {"front": (0, 0), "plan": (0, (f[3] - p[2]) * k + g), "side": ((f[1] - s[0]) * k + g, dy * k)}
 
     def P(self, view, x, y):
         ox, oy = self.off[view]; return x * self.k + ox, y * self.k + oy
@@ -68,6 +71,35 @@ class Sheet:
     def ref_line(self, view, x0, y0, x1, y1, label=""):
         """Thin dashed reference line in view coords (e.g. an assumed back-panel position). Not a part."""
         self.refs.append((view, x0, y0, x1, y1, label))
+
+    def set_front_section(self, items, title="SECTION A-A"):
+        """Replace the FRONT view with a full section. items = [(name, faces, hatch)], faces are planar build123d Faces
+        lying in a plane of constant world Y; they are drawn in (X, Z) with Z up the sheet (front-up, like the plan)."""
+        def pts(w):
+            out = []
+            for e in w.order_edges():
+                n = 2 if e.geom_type == GeomType.LINE else 24
+                out += [((e @ (i / (n - 1))).X, (e @ (i / (n - 1))).Z) for i in range(n - 1)]
+            return out
+        self.fsec = []
+        outl = []
+        for name, faces, hatch in items:
+            polys = []
+            for f in faces:
+                ws = [f.outer_wire()] + list(f.inner_wires())
+                polys.append([pts(w) for w in ws])
+                outl += [q + [q[0]] for q in polys[-1]]
+            self.fsec.append((name, polys, hatch))
+        self.v["front"] = (outl, [])
+        self.bb["front"] = bbox2d(outl)
+        self.front_title = title
+        f, sd = self.bb["front"], self.bb["side"]
+        self.side_dy = (f[2] + f[3]) / 2 - (sd[2] + sd[3]) / 2   # side view no longer shares the front's y (section is X-Z)
+        self._set_scale(self.k)
+
+    def cut_line(self, view, x0, x1, y, arrow_dir=-1, letter="A"):
+        """Section cutting line (chain, thick ends) at view-y = y from x0 to x1; arrows point along view-y arrow_dir."""
+        self.cut_lines.append((view, x0, x1, y, arrow_dir, letter))
 
     def add_section(self, label, face, scale, notes=()):
         """Enlarged cross-section (a planar build123d Face in its own XY), drawn hatched in the
@@ -134,6 +166,25 @@ class Sheet:
             (X0z, Y0z), (X1z, Y1z) = self.P(k, a0, b0), self.P(k, a1, b1)
             ax.add_patch(Rectangle((min(X0z, X1z), min(Y0z, Y1z)), abs(X1z - X0z), abs(Y1z - Y0z),
                                    facecolor="none", edgecolor="black", lw=0.6, hatch=hp))
+        if self.fsec:
+            from matplotlib.path import Path as MPath0
+            from matplotlib.patches import PathPatch as PP0
+            import matplotlib as _mpl
+            _mpl.rcParams["hatch.linewidth"] = 0.45
+            for name, polys, hp in self.fsec:
+                for rings in polys:
+                    verts, codes = [], []
+                    for q in rings:
+                        qq = [self.P("front", x, y) for x, y in q]
+                        verts += qq + [qq[0]]; codes += [MPath0.MOVETO] + [MPath0.LINETO] * (len(qq) - 1) + [MPath0.CLOSEPOLY]
+                    ax.add_patch(PP0(MPath0(verts, codes), facecolor="white", edgecolor="black", lw=0.7, hatch=hp))
+        for k, x0c, x1c, yc, dr, let in self.cut_lines:
+            (A0, B0), (A1, _) = self.P(k, x0c, yc), self.P(k, x1c, yc)
+            ax.plot([A0, A1], [B0, B0], color="black", lw=0.5, ls=(0, (10, 2, 2, 2)))
+            for A in (A0, A1):
+                ax.plot([A, A + (4 if A == A0 else -4)], [B0, B0], color="black", lw=1.6)
+                ax.annotate("", (A, B0 + dr * 6), (A, B0), arrowprops=dict(arrowstyle="-|>", lw=1.0, color="black", shrinkA=0, shrinkB=0))
+                ax.text(A, B0 + dr * 9, let, ha="center", va="center", fontsize=10, weight="bold")
         for k, a0, b0, a1, b1, lab in self.refs:
             (X0r, Y0r), (X1r, Y1r) = self.P(k, a0, b0), self.P(k, a1, b1)
             ax.plot([X0r, X1r], [Y0r, Y1r], color="0.35", lw=0.6, ls=(0, (6, 3)))
@@ -156,7 +207,7 @@ class Sheet:
                 ax.text(l + (-0.6 if s < 0 else 0.6), (b1 + b2) / 2, t, ha="right" if s < 0 else "left", va="center", fontsize=fs, rotation=90)
         for k, x, y, t, s, kw in self.texts:
             X, Y = self.P(k, x, y); ax.text(X, Y, t, fontsize=s, **kw)
-        names = labels or {"front": "FRONT VIEW", "plan": "PLAN (TOP) VIEW" + (" — front up" if PLAN_FRONT_UP else ""), "side": "RIGHT SIDE VIEW"}
+        names = labels or {"front": getattr(self, "front_title", None) or "FRONT VIEW", "plan": "PLAN (TOP) VIEW" + (" — front up" if PLAN_FRONT_UP else ""), "side": "RIGHT SIDE VIEW"}
         for k, lab in names.items():
             b = self.bb[k]; X, Y = self.P(k, b[0], b[3]); ax.text(X, Y + self.label_pad, lab, fontsize=9, weight="bold")
         # extents
