@@ -34,7 +34,7 @@ if __name__ == "__main__":
     print("clashes", {k: round(v, 3) for k, v in clashes.items()})
 
     ro = p["od"] / 2; ye = sh_mod.S["y_edge"]
-    s = Sheet(asm, gap=26, scale=3.5, label_pad=14)
+    s = Sheet(layout="panel", shape=asm, gap=26, scale=3.5, label_pad=14)
     s.hdim("front", -ro, ro, -ro, -ro - 3, f"Ø{p['od']:.2f} holder OD")
     s.vdim("front", 0, ye, ro, ro + 3, f"{ye:.2f} axis to ledge edge [S]")
     s.vdim("plan", p["z0"], p["z_rim"], -ro, -ro - 3, f"{p['height']:.2f} holder")

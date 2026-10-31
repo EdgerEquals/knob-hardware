@@ -89,7 +89,7 @@ if __name__ == "__main__":
     export_step(Compound(children=[tube, fl]), os.path.join(HERE, "fixed-shaft-brass-5x3-assembled.step"))
 
     # ---- sheet 1: brass tube (local Z from -t to H) ----
-    sh = Sheet(tube, gap=26, scale=4, label_pad=16)
+    sh = Sheet(layout="panel", shape=tube, gap=26, scale=4, label_pad=16)
     sh.hdim("front", -R, R, -R, -R - 3, f"Ø{p['tube_od']:.1f} OD [Ed]")
     sh.hdim("front", -r, r, R, R + 2.5, f"Ø{p['tube_id']:.1f} ID [Ed]")
     sh.vdim("plan", -t, H, -R, -R - 4, f"{Lt:.1f} tube = {H:.0f} [A] + {t:.0f} flange")
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             for x, y, w, hh in PADS]
     near = min(PADS, key=lambda q: abs(q[0] - p["axis_x"]))
     nx0 = near[0] - p["axis_x"] - near[2] / 2
-    sh = Sheet(Compound(children=[fl] + refs), gap=20, scale=3, label_pad=16)
+    sh = Sheet(layout="panel", shape=Compound(children=[fl] + refs), gap=20, scale=3, label_pad=16)
     sh.hdim("front", -s2, s2, -s2, -s2 - 4, f"{p['flange_side']:.1f} [A]")
     sh.vdim("front", -s2, s2, -s2, -s2 - 4, f"{p['flange_side']:.1f} square [A]")
     sh.hdim("front", -p["flange_bore"] / 2, p["flange_bore"] / 2, 0.0, 4, f"Ø{p['flange_bore']:.1f} bore [Ed]")
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     # ---- sheet 3: together ----
     pair = Compound(children=[tube, fl])
-    sh = Sheet(pair, gap=24, scale=3, label_pad=16)
+    sh = Sheet(layout="panel", shape=pair, gap=24, scale=3, label_pad=16)
     sh.hdim("front", -s2, s2, -s2, -s2 - 5, f"{p['flange_side']:.1f} flange")
     sh.vdim("front", -s2, s2, -s2, -s2 - 5, f"{p['flange_side']:.1f}")
     sh.vdim("plan", 0, H, -R, -R - 6, f"{H:.1f} above flange front [A]")

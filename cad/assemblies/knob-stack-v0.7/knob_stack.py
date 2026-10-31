@@ -90,7 +90,7 @@ if __name__ == "__main__":
     bb = board.bounding_box(); x0, x1, y0, y1 = bb.min.X, bb.max.X, -bb.max.Y, -bb.min.Y
     top = HP["z_glass_top"] + dz; R = M["body_d"] / 2
     ko, ho = KP["bot_ring_od"] / 2, HP["od"] / 2
-    sh = Sheet(asm, gap=34, scale=1.05, label_pad=20)
+    sh = Sheet(asm, gap=44, scale=0.92, label_pad=20, layout="z-up")
     # front view
     # FRONT view replaced by full section A-A: plane through the dial axis and the motor axis (world Y = -dial y)
     cut = Plane(origin=(0, -hy, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
@@ -113,19 +113,21 @@ if __name__ == "__main__":
     sh.hdim("front", hx, F["motor_x"], zb, zb - 9, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
     sh.hdim("front", x0, x1, zb, zb - 17, f"{x1 - x0:.2f} PCB")
     sh.vdim("front", zf, zt, x1, x1 + 14, f"{top:.2f} overall above PCB front")
-    sh.vdim("side", -y0, -y1, -zb, -zb + 8, f"{y1 - y0:.2f} PCB")
-    sb = sh.bb["side"]
-    sh.cut_line("side", sb[0] - 4, sb[1] + 4, -hy, -1, "A")
-    sh.note("plan", x0, zf - 34, "Section plane A-A contains both axes and is parallel to this view: cutting line shown on the side view", 6.5)
-    # plan view (y = Z, front up)
-    sh.vdim("plan", zf, zf + top, hx - ho, x0 - 12, f"{top:.2f} overall above PCB front (glass top)")
-    sh.vdim("plan", zf, zf + KP["h_top"], x1, x1 + 5, f"{KP['h_top']:.1f} knob top")
-    sh.vdim("plan", zf, zf + KP["h_skirt0"], hx + ko, x1 + 19, f"{KP['skirt_gap']:.1f} skirt to PCB [Ed]")
-    sh.vdim("plan", zf, zf + KP["h_shaft_tip"], x1, x1 + 12, f"{KP['h_shaft_tip']:.1f} motor shaft tip")
-    sh.vdim("plan", zb - SP["flange_t"], zb, hx - SP["flange_side"] / 2, x0 - 4, f"{SP['flange_t']:.1f} flange")
+    # TOP view (layout z-up: x = X, y = world Y = -panel y), looking down the dial axis; A-A cutting line here
+    sh.hdim("plan", hx, F["motor_x"], -hy, -hy + ko + 5, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
+    sh.hdim("plan", x0, x1, -y0, -y0 + 6, f"{x1 - x0:.2f} PCB")
+    sh.vdim("plan", -y1, -y0, x1, x1 + 8, f"{y1 - y0:.2f} PCB")
+    sh.vdim("plan", -F["enc_y"], -hy, x0, x0 - 8, f"{F['enc_y'] - hy:.1f} H2 below the dial axis [K]")
+    sh.cut_line("plan", x0 - 5, x1 + 5, -hy, +1, "A")
+    # RIGHT SIDE view (x = world Y, y = Z): heights line up with the section
+    sh.vdim("side", zf, zf + KP["h_top"], -y0, -y0 + 5, f"{KP['h_top']:.1f} knob top")
+    sh.vdim("side", zf, zf + KP["h_shaft_tip"], -y0, -y0 + 12, f"{KP['h_shaft_tip']:.1f} motor shaft tip")
+    sh.vdim("side", zf, zf + KP["h_skirt0"], -hy + ko, -y0 + 19, f"{KP['skirt_gap']:.1f} skirt to PCB [Ed]")
+    sh.vdim("side", zb - SP["flange_t"], zb, -hy - SP["flange_side"] / 2, -y1 - 6, f"{SP['flange_t']:.1f} flange")
     EP = enc.P; zp = zf + EP["h_panel"]
-    sh.ref_line("plan", x0 - 2, zp, x1 + 2, zp, f"back panel [A], {EP['panel_gap']:.0f} behind PCB back")
-    sh.ref_line("side", -zp, -y1, -zp, -y0, "back panel [A]")
+    sh.hdim("side", -y1, -y0, zb, zp - 6, f"{y1 - y0:.2f} PCB")
+    sh.ref_line("front", x0 - 2, zp, x1 + 2, zp, "")
+    sh.ref_line("side", -y1 - 2, zp, -y0 + 2, zp, "back panel [A]")
     sock = HP["socket_len"] - dz
     lines = [f"PCB v0.5, 1220 motor, shaft v0.2 ({SP['tube_len']:.2f} tube), bezel knob v0.2, knob v0.3, encoder v0.2, holder, TFT, adapter",
              f"Pairwise interference: {len(parts)} parts, {checked} bbox-overlapping pairs checked (threshold {THR} mm³)"]
@@ -155,9 +157,9 @@ if __name__ == "__main__":
     for i, l in enumerate(["NOTES"] + lines):
         kw = dict(weight="bold") if i == 0 else {}
         if isinstance(l, tuple): l, kw = l
-        sh.note("side", max(sh.bb["side"][1], -zp) + 6, sh.bb["side"][3] - 6 - i * 3.2, l, 8 if i == 0 else 6.5, **kw)
-    title = "Knob stack v0.7 rev A — all current parts"
-    sub = ["2026-10-31. PCB v0.5, motor, shaft v0.2, bezel knob v0.2, knob v0.3, encoder v0.2, holder, TFT, adapter.", "Front view = full section A-A. [S] = stock, [A] = assumed.",
-           "Third-angle projection · mm · plan view drawn front-up"]
+        sh.note("plan", x1 + 40, -y0 - i * 3.4, l, 8 if i == 0 else 6.5, **kw)
+    title = "Knob stack v0.7 rev B — all current parts"
+    sub = ["2026-10-31. PCB v0.5, motor, shaft v0.2, bezel knob v0.2, knob v0.3, encoder v0.2, holder, TFT, adapter.", "Rev B: top view (down the dial axis) top-left, side view rotated: Z up in all elevations.",
+           "Third-angle projection · mm · front = section A-A · [S] stock, [A] assumed"]
     sh.dxf(os.path.join(HERE, "knob-stack-v0.7.dxf"), [title] + sub)
     sh.png(os.path.join(HERE, "knob-stack-v0.7-drawing.png"), title, sub)

@@ -74,7 +74,7 @@ if __name__ == "__main__":
     bb = board.bounding_box(); x0, x1, y0, y1 = bb.min.X, bb.max.X, -bb.max.Y, -bb.min.Y
     top = HP["z_glass_top"]; R = M["body_d"] / 2
     ko, ho = KP["bot_ring_od"] / 2, HP["od"] / 2
-    sh = Sheet(asm, gap=34, scale=1.05, label_pad=20)
+    sh = Sheet(layout="panel", shape=asm, gap=34, scale=1.05, label_pad=20)
     # front view
     # FRONT view replaced by full section A-A: plane through the dial axis and the motor axis (world Y = -dial y)
     cut = Plane(origin=(0, -hy, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))

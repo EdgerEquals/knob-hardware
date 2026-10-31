@@ -65,7 +65,7 @@ if __name__ == "__main__":
     scr = Compound(children=[backing, glass, tail], label="tft-0.71-round")
     export_step(scr, os.path.join(HERE, "tft-0.71-round-gc9d01.step"))
     R = p["bl_d"] / 2; ye = p["y_edge"]; t = p["t_total"]
-    sh = Sheet(scr, gap=26, scale=4, label_pad=14)
+    sh = Sheet(layout="panel", shape=scr, gap=26, scale=4, label_pad=14)
     sh.hdim("front", -R, R, -R, -R - 3, f"Ø{p['bl_d']:.2f} backing / glass OD [S]")
     sh.hdim("front", -p["lcd_d"] / 2, p["lcd_d"] / 2, -R, -R - 6, f"Ø{p['lcd_d']:.2f} LCD [S]")
     sh.hdim("front", -p["aa_d"] / 2, p["aa_d"] / 2, 0, 0.5, f"Ø{p['aa_d']:.1f} active area [S]")

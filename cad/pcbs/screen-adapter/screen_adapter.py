@@ -57,7 +57,7 @@ if __name__ == "__main__":
     asm = Compound(children=[b] + comps + wire_pads_ref(), label="screen-adapter")
     export_step(asm, os.path.join(HERE, "screen-adapter-with-envelopes.step"))
     R = F["diameter"] / 2; T = F["thickness"]; j, u, w = F["fps"]["J1"], F["fps"]["U1"], F["fps"]["W1"]
-    sh = Sheet(asm, gap=22, scale=5, label_pad=12)
+    sh = Sheet(layout="panel", shape=asm, gap=22, scale=5, label_pad=12)
     sh.hdim("front", -R, R, -R, -R - 2, f"Ø{F['diameter']:.2f} board [K]")
     sh.vdim("front", 0, j["y"], -R, -R - 2, f"{j['y']:.2f} J1 [K]")
     sh.vdim("front", 0, u["y"], R, R + 2, f"{-u['y']:.2f} U1 [K]")

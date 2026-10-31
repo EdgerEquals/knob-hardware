@@ -26,7 +26,7 @@ if __name__ == "__main__":
     from sheet import Sheet
     p = P; t = build(p); L = p["length"]; R = p["od"] / 2; r = p["bore"] / 2; c = p["chamfer"]
     export_step(t, os.path.join(HERE, "fixed-hollow-shaft-4mm.step"))
-    sh = Sheet(t, gap=22, scale=3)
+    sh = Sheet(layout="panel", shape=t, gap=22, scale=3)
     # front view = end view (circles)
     sh.hdim("front", -R, R, -R, -R - 4, f"Ø{p['od']:.1f} OD [Ed]")
     sh.hdim("front", -r, r, R, R + 3, f"Ø{p['bore']:.1f} bore [Ed]")

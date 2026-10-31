@@ -55,7 +55,7 @@ if __name__ == "__main__":
     from sheet import Sheet
     b = build_bezel_knob(); export_step(b, os.path.join(HERE, "bezel-knob.step"))
     rb, rj, ro, rp = p["bore"] / 2, p["journal_d"] / 2, p["face_d"] / 2, p["pocket_d"] / 2
-    sh = Sheet(b, gap=40, scale=2.0, label_pad=24)
+    sh = Sheet(layout="panel", shape=b, gap=40, scale=2.0, label_pad=24)
     sh.set_front_section(b1.section_items({"bezel knob": b}), "SECTION A-A (through the dial axis)")
     sh.hdim("front", -ro, ro, p["z_top"], p["z_top"] + 9, f"Ø{p['face_d']:.1f} OD = big knob OD [Ed]")
     sh.hdim("front", -rp, rp, p["z_top"], p["z_top"] + 4, f"Ø{p['pocket_d']:.2f} pocket = holder Ø{HP['od']:.2f} + 2×{p['pocket_clear']:.1f} [A]")

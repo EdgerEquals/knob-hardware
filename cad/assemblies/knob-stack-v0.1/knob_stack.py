@@ -35,7 +35,7 @@ if __name__ == "__main__":
     zf = -pcb.Z_PCB_FRONT; zb = bbb.min.Z
     x0, x1, y0, y1 = bbb.min.X, bbb.max.X, -bbb.max.Y, -bbb.min.Y; r = M["body_d"] / 2
     DX, DY = F["motor_x"], F["motor_y"]
-    sh = Sheet(Compound(children=[board, motor]))
+    sh = Sheet(layout="panel", shape=Compound(children=[board, motor]))
     # front view
     sh.hdim("front", x0, x1, -y1, -y1 - 9, f"{x1 - x0:.2f} board")
     sh.vdim("front", -y0, -y1, x0, x0 - 9, f"{y1 - y0:.2f} board")

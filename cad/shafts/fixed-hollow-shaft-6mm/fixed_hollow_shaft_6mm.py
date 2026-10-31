@@ -87,7 +87,7 @@ if __name__ == "__main__":
     export_step(Compound(children=[b2, t2]), os.path.join(HERE, "shaft-6mm-assembled.step"))
 
     # ---- sheet 1: base ----
-    sh = Sheet(base, gap=24, scale=2)
+    sh = Sheet(layout="panel", shape=base, gap=24, scale=2)
     sh.hdim("front", -s2, s2, -s2, -s2 - 6, f"{p['flange_side']:.1f} flange = PCB width [K]")
     sh.vdim("front", -s2, s2, -s2, -s2 - 6, f"{p['flange_side']:.1f} square")
     sh.note("front", -s2 + 1, s2 - 4, f"bore Ø{p['bore']:.1f} through flange [Ed]", 6.5)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     # ---- sheet 2: top ----
     Lt = p["top_len"]; rk = p["socket_d"] / 2; ds = p["socket_depth"]; xs = xf + p["glue_gap"]
-    sh = Sheet(top, gap=40, scale=4)
+    sh = Sheet(layout="panel", shape=top, gap=40, scale=4)
     sh.hdim("front", -R, R, -R, -R - 3, f"Ø{p['od']:.1f} [Ed]")
     sh.hdim("front", -rb, rb, R, R + 2.5, f"Ø{p['bore']:.1f} bore")
     sh.vdim("front", -rk, rk, -rk, -R - 2.5, f"Ø{p['socket_d']:.1f} socket")
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     # ---- sheet 3: assembled ----
     pair = Compound(children=[b2, t2]); H = L1 + Lt
-    sh = Sheet(pair, gap=24, scale=2)
+    sh = Sheet(layout="panel", shape=pair, gap=24, scale=2)
     sh.hdim("front", -s2, s2, -s2, -s2 - 6, f"{p['flange_side']:.1f} flange")
     sh.vdim("front", -s2, s2, -s2, -s2 - 6, f"{p['flange_side']:.1f}")
     sh.vdim("plan", -t, 0, -s2, -s2 - 5, f"{t:.1f}")

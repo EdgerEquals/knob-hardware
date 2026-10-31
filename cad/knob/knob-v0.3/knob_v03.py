@@ -46,7 +46,7 @@ if __name__ == "__main__":
              [f"m {m:.1f}: pinion {p['z_pinion']}T, ring {p['z_ring']}T, centre distance {p['centre_dist']:.2f} = offset [K]",
               f"Bottom ring {p['z_bot_int']}T internal (encoder pinion 14T meshes inside, encoder take-off v0.2)",
               *([(f"CLASH: {k} {v:.2f} mm³", kv.RED) for k, v in cl.items()] or ["No clash between the knob parts"])])):
-        sh = Sheet(shape, gap=30, scale=sc, label_pad=14)
+        sh = Sheet(layout="panel", shape=shape, gap=30, scale=sc, label_pad=14)
         sh.set_front_section(bz.section_items({"part": shape} if name == "knob-cap-skirt" else pr), "SECTION A-A (through dial and motor axes)")
         sh.hdim("front", -rhb, rhb, p["h_hub0"], p["h_hub0"] - 4, f"Ø{p['hub_bore']:.1f} hub bore = PTFE OD [S] (was Ø8.0)")
         sh.hdim("front", -rho, rho, p["h_top"], p["h_top"] + 4, f"Ø{p['hub_od']:.1f} hub ({p['hub_wall']:.1f} wall [A])")

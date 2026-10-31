@@ -47,7 +47,7 @@ if __name__ == "__main__":
     step_t = bb.size.Z
     zf = -Z_PCB_FRONT; zb = bb.min.Z
     mx, my = f["motor_x"], f["motor_y"]; hx, hy, hd = f["shaft_x"], f["shaft_y"], f["shaft_hole"]
-    sh = Sheet(b, gap=36, scale=1.3, label_pad=22)
+    sh = Sheet(layout="panel", shape=b, gap=36, scale=1.3, label_pad=22)
     sh.hdim("front", x0, x1, -y1, -y1 - 9, f"{x1 - x0:.2f} board")
     sh.vdim("front", -y0, -y1, x0, x0 - 9, f"{y1 - y0:.2f} board")
     sh.hdim("front", x0, hx, -y0, -y0 + 6, f"{hx - x0:.2f} to shaft hole")

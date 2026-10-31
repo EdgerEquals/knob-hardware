@@ -70,7 +70,7 @@ if __name__ == "__main__":
     from sheet import Sheet
     h = build_holder(); export_step(h, os.path.join(HERE, "screen-holder.step"))
     ro, rh, rl, rs, rw = p["od"] / 2, p["pocket_hi_d"] / 2, p["pocket_lo_d"] / 2, p["socket_d"] / 2, p["wire_d"] / 2
-    sh = Sheet(h, gap=26, scale=4, label_pad=14)
+    sh = Sheet(layout="panel", shape=h, gap=26, scale=4, label_pad=14)
     sh.hdim("front", -ro, ro, -ro, -ro - 3, f"Ø{p['od']:.2f} OD = screen Ø{p['screen_d']:.2f} + 2×{p['screen_clear']:.1f} + 2×{p['wall']:.1f} wall [A]")
     sh.hdim("front", -rh, rh, 0, ro + 2, f"Ø{p['pocket_hi_d']:.2f} screen pocket")
     sh.hdim("front", -rl, rl, 0, ro + 5, f"Ø{p['pocket_lo_d']:.2f} board pocket")

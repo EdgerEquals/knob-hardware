@@ -4,18 +4,29 @@ Third-angle layout: FRONT view looks along -Z; PLAN (top) view sits above it, lo
 RIGHT SIDE view sits to the right, looking along -X, front (+Z) on its left.
 CONVENTION (Ed, 2026-10-31): the PLAN view is drawn with the front (+Z, toward the panel) pointing UP the sheet,
 e.g. board at the bottom and motor shaft tip at the top. It is the true top view (top-visible edges, X still to the right)
-mirrored top-to-bottom; strict third-angle would put the front at the bottom. Set PLAN_FRONT_UP = False for strict."""
+mirrored top-to-bottom; strict third-angle would put the front at the bottom. Set PLAN_FRONT_UP = False for strict.
+
+LAYOUT "z-up" (DEFAULT from 2026-10-31, Ed on assembly v0.7): the dial axis (+Z, toward the panel front) is UP the sheet in every
+elevation, as if the module lies on the bench with the knob up. Strict third-angle:
+  "front" = FRONT elevation, looking along +Y (from the panel-bottom side): sheet x = X, y = Z (board at the bottom, shaft up)
+  "plan"  = TOP view placed ABOVE the front, looking down the dial axis (-Z): sheet x = X, y = Y (panel top edge up)
+  "side"  = RIGHT SIDE view placed RIGHT of the front, looking along -X: sheet x = Y, y = Z (front-view side on its left)
+The front and side share Z heights; the front and plan share X. Dims/notes use those view coordinates.
+LAYOUT "panel" is the earlier layout (front = panel face X-Y, plan = X-Z front-up above it, side x = -Z, y = Y); existing
+part scripts pass layout="panel" explicitly so they render as before."""
 import math
 from build123d import GeomType
 
 FAR = 1000
 PLAN_FRONT_UP = True
 VIEWS = {"front": ((0, 0, FAR), (0, 1, 0)), "plan": ((0, FAR, 0), (0, 0, -1)), "side": ((FAR, 0, 0), (0, 1, 0))}
+VIEWS_ZUP = {"front": ((0, -FAR, 0), (0, 0, 1)), "plan": ((0, 0, FAR), (0, 1, 0)), "side": ((FAR, 0, 0), (0, 0, 1))}
+DEFAULT_LAYOUT = "z-up"
 
 
-def project(shape):
+def project(shape, layout="panel"):
     out = {}
-    for k, (o, up) in VIEWS.items():
+    for k, (o, up) in (VIEWS_ZUP if layout == "z-up" else VIEWS).items():
         vis, hid = shape.project_to_viewport(o, up, (0, 0, 0))
         def pts(es):
             res = []
@@ -24,7 +35,7 @@ def project(shape):
                 res.append([((e @ (i / (n - 1))).X, (e @ (i / (n - 1))).Y) for i in range(n)])
             return res
         v, h = pts(vis), pts(hid)
-        if k == "plan" and PLAN_FRONT_UP:
+        if k == "plan" and PLAN_FRONT_UP and layout != "z-up":
             v = [[(x, -y) for x, y in pl] for pl in v]; h = [[(x, -y) for x, y in pl] for pl in h]
         out[k] = (v, h)
     return out
@@ -36,9 +47,10 @@ def bbox2d(polys):
 
 
 class Sheet:
-    def __init__(self, shape, gap=18, scale=1.0, label_pad=13):
-        """scale = PNG drawing scale (e.g. 3 -> 3:1); the DXF is always 1:1. gap is in sheet mm."""
-        self.v = project(shape)
+    def __init__(self, shape=None, gap=18, scale=1.0, label_pad=13, layout=None):
+        """scale = PNG drawing scale (e.g. 3 -> 3:1); the DXF is always 1:1. gap is in sheet mm. layout: "z-up" (default) or "panel"."""
+        self.layout = layout or DEFAULT_LAYOUT
+        self.v = project(shape, self.layout)
         f = bbox2d(self.v["front"][0]); p = bbox2d(self.v["plan"][0]); s = bbox2d(self.v["side"][0])
         self.bb = {"front": f, "plan": p, "side": s}
         self.gap = gap; self._set_scale(scale); self.scale = scale; self.label_pad = label_pad
@@ -94,7 +106,8 @@ class Sheet:
         self.bb["front"] = bbox2d(outl)
         self.front_title = title
         f, sd = self.bb["front"], self.bb["side"]
-        self.side_dy = (f[2] + f[3]) / 2 - (sd[2] + sd[3]) / 2   # side view no longer shares the front's y (section is X-Z)
+        if self.layout != "z-up":   # panel layout: the side view no longer shares the front's y (section is X-Z)
+            self.side_dy = (f[2] + f[3]) / 2 - (sd[2] + sd[3]) / 2
         self._set_scale(self.k)
 
     def cut_line(self, view, x0, x1, y, arrow_dir=-1, letter="A"):
@@ -207,7 +220,10 @@ class Sheet:
                 ax.text(l + (-0.6 if s < 0 else 0.6), (b1 + b2) / 2, t, ha="right" if s < 0 else "left", va="center", fontsize=fs, rotation=90)
         for k, x, y, t, s, kw in self.texts:
             X, Y = self.P(k, x, y); ax.text(X, Y, t, fontsize=s, **kw)
-        names = labels or {"front": getattr(self, "front_title", None) or "FRONT VIEW", "plan": "PLAN (TOP) VIEW" + (" — front up" if PLAN_FRONT_UP else ""), "side": "RIGHT SIDE VIEW"}
+        if self.layout == "z-up":
+            names = labels or {"front": getattr(self, "front_title", None) or "FRONT VIEW", "plan": "TOP VIEW (looking down the dial axis)", "side": "RIGHT SIDE VIEW"}
+        else:
+            names = labels or {"front": getattr(self, "front_title", None) or "FRONT VIEW", "plan": "PLAN (TOP) VIEW" + (" — front up" if PLAN_FRONT_UP else ""), "side": "RIGHT SIDE VIEW"}
         for k, lab in names.items():
             b = self.bb[k]; X, Y = self.P(k, b[0], b[3]); ax.text(X, Y + self.label_pad, lab, fontsize=9, weight="bold")
         # extents

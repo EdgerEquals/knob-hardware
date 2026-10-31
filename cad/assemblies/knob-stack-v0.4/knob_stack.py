@@ -74,7 +74,7 @@ if __name__ == "__main__":
     bb = board.bounding_box(); x0, x1, y0, y1 = bb.min.X, bb.max.X, -bb.max.Y, -bb.min.Y
     top = HP["z_glass_top"]; R = M["body_d"] / 2
     ko, ho = KP["knob_od"] / 2, HP["od"] / 2
-    sh = Sheet(asm, gap=34, scale=1.05, label_pad=20)
+    sh = Sheet(layout="panel", shape=asm, gap=34, scale=1.05, label_pad=20)
     # front view
     sh.hdim("front", hx, F["motor_x"], -hy, -hy - KP["d_bot_tip"] / 2 - 5, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
     sh.hdim("front", hx - ko, hx + ko, -hy, -hy + ko + 5, f"Ø{KP['knob_od']:.2f} knob OD (Ø{KP['d_bot_tip']:.1f} gear tip)")

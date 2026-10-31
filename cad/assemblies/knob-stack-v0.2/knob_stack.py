@@ -44,7 +44,7 @@ if __name__ == "__main__":
     clash_vol = sum(c.volume for c in (clash if isinstance(clash, (list, ShapeList)) else [clash]) if c is not None) if clash is not None else 0.0
     print("shaft top above PCB front", round(z_shaft_top - zf, 2), "motor", Lm, Lt, "flange/tab clash vol", round(clash_vol, 3))
 
-    sh = Sheet(asm, gap=30, scale=1.15, label_pad=20)
+    sh = Sheet(layout="panel", shape=asm, gap=30, scale=1.15, label_pad=20)
     # front view
     sh.hdim("front", hx, mx, -hy, -hy - R - 6, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
     sh.hdim("front", x0, x1, -y1, -y1 - 8, f"{x1 - x0:.2f} PCB")

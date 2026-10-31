@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     # ---- sheet 1: knob cap + hub ----
     rb, rh, ro = p["bush_od"] / 2, p["hub_od"] / 2, p["knob_od"] / 2
-    sh = Sheet(knob, gap=26, scale=2.5, label_pad=16)
+    sh = Sheet(layout="panel", shape=knob, gap=26, scale=2.5, label_pad=16)
     sh.hdim("front", -ro, ro, -ro, -ro - 5, f"Ø{p['knob_od']:.2f} knob OD = ring root Ø{p['d_ring_root']:.2f} + 2 × {p['ring_wall']:.1f} wall [A]")
     sh.hdim("front", -rb, rb, 0, rh + 3, f"Ø{p['bush_od']:.1f} bore: {BUSH}")
     sh.hdim("front", -rh, rh, 0, -rh - 3, f"Ø{p['hub_od']:.1f} hub [A]")
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
     # ---- sheet 2: motor pinion ----
     rt = p["d_pin_tip"] / 2; f = p["pinion_face"]
-    sh = Sheet(pin, gap=14, scale=10, label_pad=8)
+    sh = Sheet(layout="panel", shape=pin, gap=14, scale=10, label_pad=8)
     sh.hdim("front", -rt, rt, -rt, -rt - 1.0, f"Ø{p['d_pin_tip']:.2f} tip")
     sh.vdim("front", -p["d_pin_pitch"] / 2, p["d_pin_pitch"] / 2, -rt, -rt - 1.0, f"Ø{p['d_pin_pitch']:.2f} pitch")
     sh.hdim("front", -(p["shaft_d"] + p["bore_clear"]) / 2, (p["shaft_d"] + p["bore_clear"]) / 2, 0, rt + 0.8, f"Ø{p['shaft_d'] + p['bore_clear']:.2f} D-bore [A]")
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     sh.png(os.path.join(HERE, "motor-pinion-drawing.png"), title, sub)
 
     # ---- sheet 3: internal ring gear ----
-    sh = Sheet(ring, gap=26, scale=2.5, label_pad=16)
+    sh = Sheet(layout="panel", shape=ring, gap=26, scale=2.5, label_pad=16)
     sh.hdim("front", -ro, ro, -ro, -ro - 5, f"Ø{p['knob_od']:.2f} OD ({p['ring_wall']:.1f} wall outside root) [A]")
     sh.hdim("front", -p["d_ring_tip"] / 2, p["d_ring_tip"] / 2, 0, ro + 3, f"Ø{p['d_ring_tip']:.2f} tip")
     sh.hdim("front", -p["d_ring_root"] / 2, p["d_ring_root"] / 2, 0, ro + 8, f"Ø{p['d_ring_root']:.2f} root")
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     # ---- sheet 4: bottom ring gear ----
     rbt = p["d_bot_tip"] / 2
-    sh = Sheet(bot, gap=26, scale=2.5, label_pad=16)
+    sh = Sheet(layout="panel", shape=bot, gap=26, scale=2.5, label_pad=16)
     sh.hdim("front", -rbt, rbt, -rbt, -rbt - 5, f"Ø{p['d_bot_tip']:.2f} tip")
     sh.hdim("front", -p["d_bot_bore"] / 2, p["d_bot_bore"] / 2, 0, rbt + 3, f"Ø{p['d_bot_bore']:.2f} bore")
     sh.vdim("plan", p["h_base"], p["h_bottom1"], rbt, rbt + 4, f"{p['bottom_face']:.1f} face [A]")
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     sh.png(os.path.join(HERE, "bottom-ring-gear-drawing.png"), title, sub)
 
     # ---- sheet 5: together ----
-    sh = Sheet(together, gap=26, scale=2.2, label_pad=16)
+    sh = Sheet(layout="panel", shape=together, gap=26, scale=2.2, label_pad=16)
     sh.hdim("front", 0, p["offset"], 0, -rbt - 4, f"{p['centre_dist']:.2f} centre distance = motor offset [K]")
     sh.hdim("front", -rbt, rbt, -rbt, -rbt - 10, f"Ø{p['d_bot_tip']:.2f} max (bottom gear tip)")
     sh.hdim("front", -ro, ro, ro, ro + 4, f"Ø{p['knob_od']:.2f} knob OD vs Ø{p['bezel_d']:.0f} bezel [L]")

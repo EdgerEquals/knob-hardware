@@ -99,7 +99,7 @@ def notes(sh, view, x, ytop, lines, step, size=6.5):
 def sheet(shape, name, title, sub1, scale, dims, lines, step, gap=22, note_at=None, refs=()):
     from sheet import Sheet
     export_step(shape, os.path.join(HERE, name + ".step"))
-    sh = Sheet(shape, gap=gap, scale=scale, label_pad=12)
+    sh = Sheet(layout="panel", shape=shape, gap=gap, scale=scale, label_pad=12)
     for d in dims: getattr(sh, d[0])(*d[1:])
     for r in refs: sh.ref_line(*r)
     v, x, y = note_at or ("side", sh.bb["side"][1] + 3, sh.bb["side"][3])

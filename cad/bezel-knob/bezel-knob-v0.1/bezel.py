@@ -77,7 +77,7 @@ if __name__ == "__main__":
     import screen_holder as hold, knob_v02 as kv
     b = build_bezel(); export_step(b, os.path.join(HERE, "bezel.step"))
     rb, rj, rs, ro = p["bore"] / 2, p["journal_d"] / 2, p["shoulder_d"] / 2, p["face_d"] / 2
-    sh = Sheet(b, gap=34, scale=2.4, label_pad=14)
+    sh = Sheet(layout="panel", shape=b, gap=34, scale=2.4, label_pad=14)
     sh.set_front_section(section_items({"bezel": b}), "SECTION A-A (through the dial axis)")
     sh.hdim("front", -ro, ro, p["z_f1"], p["z_f1"] + 4, f"Ø{p['face_d']:.1f} face [L]")
     sh.hdim("front", -rj, rj, p["z_base"], p["z_base"] - 7, f"Ø{p['journal_d']:.2f} journal + stem = PTFE ID {p['liner_id']:.0f} − {p['journal_clear']:.1f} [A]")

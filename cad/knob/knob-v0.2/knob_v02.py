@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     # ---- sheet 1: cap + skirt ----
     k = pr["knob cap+skirt"]
-    sh = Sheet(k, gap=26, scale=1.9, label_pad=14)
+    sh = Sheet(layout="panel", shape=k, gap=26, scale=1.9, label_pad=14)
     sh.hdim("front", -ro, ro, -ro, -ro - 5, f"Ø{p['skirt_od']:.2f} skirt OD ({p['skirt_wall']:.1f} wall [A])")
     sh.hdim("front", -ri, ri, 0, ro + 3, f"Ø{p['skirt_id']:.2f} skirt ID = 2 × ({p['motor_r_out']:.1f} motor reach + {p['skirt_clear']:.1f}) [Ed]")
     sh.hdim("front", -p["bush_od"] / 2, p["bush_od"] / 2, 0, -p["hub_od"] / 2 - 3, f"Ø{p['bush_od']:.1f} bore: bronze bush 5x8x6 [A]")
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     # ---- sheet 2: bottom internal ring ----
     b = pr["bottom internal ring"]
-    sh = Sheet(b, gap=26, scale=2.4, label_pad=14)
+    sh = Sheet(layout="panel", shape=b, gap=26, scale=2.4, label_pad=14)
     sh.hdim("front", -rbo, rbo, -rbo, -rbo - 4, f"Ø{p['bot_ring_od']:.2f} OD ({p['bot_ring_wall']:.1f} outside root) [A]")
     sh.hdim("front", -p["d_bi_tip"] / 2, p["d_bi_tip"] / 2, 0, rbo + 3, f"Ø{p['d_bi_tip']:.2f} tip = skirt ID")
     sh.hdim("front", -p["d_bi_root"] / 2, p["d_bi_root"] / 2, 0, rbo + 8, f"Ø{p['d_bi_root']:.2f} root")
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     sh.png(os.path.join(HERE, "bottom-internal-ring-drawing.png"), title, sub)
 
     # ---- sheet 3: together ----
-    sh = Sheet(tog, gap=26, scale=1.9, label_pad=14)
+    sh = Sheet(layout="panel", shape=tog, gap=26, scale=1.9, label_pad=14)
     sh.hdim("front", 0, p["offset"], 0, -rbo - 4, f"{p['offset']:.1f} motor offset [K]")
     sh.hdim("front", -rbo, rbo, -rbo, -rbo - 10, f"Ø{p['bot_ring_od']:.2f} overall OD")
     sh.vdim("plan", p["h_skirt0"], p["h_top"], -rbo, -rbo - 4, f"{p['h_top'] - p['h_skirt0']:.1f} knob height")

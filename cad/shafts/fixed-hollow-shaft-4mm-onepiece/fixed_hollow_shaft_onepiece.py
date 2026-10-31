@@ -65,7 +65,7 @@ if __name__ == "__main__":
     R = p["od"] / 2; rb = p["bore"] / 2
     export_step(part, os.path.join(HERE, "fixed-hollow-shaft-4mm-onepiece.step"))
     sec = section(part, section_by=Plane.XY.offset(L - Ls / 2)).faces()[0]
-    sh = Sheet(part, gap=26, scale=2.2, label_pad=16)
+    sh = Sheet(layout="panel", shape=part, gap=26, scale=2.2, label_pad=16)
     sh.hdim("front", -s2, s2, -s2, -s2 - 5, f"{p['flange_side']:.1f} flange = PCB width [K]")
     sh.vdim("front", -s2, s2, -s2, -s2 - 5, f"{p['flange_side']:.1f} square [A] 2.0 thick")
     sh.note("front", -s2 + 1.5, s2 - 4, "spline end, Ø1.5 bore through (see SECTION A-A)", 6.5)

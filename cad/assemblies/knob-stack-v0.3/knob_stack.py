@@ -54,7 +54,7 @@ if __name__ == "__main__":
           "flange front vs PCB back", round(z_fl_front - zb, 4), "motor", Lm, Lt, "pad clear", round(clear, 3), "clashes", clashes,
           "hole", F["shaft_hole"])
 
-    sh = Sheet(asm, gap=48, scale=1.15, label_pad=20)
+    sh = Sheet(layout="panel", shape=asm, gap=48, scale=1.15, label_pad=20)
     # front view
     sh.hdim("front", hx, mx, -hy, -hy - R - 6, f"{MOTOR_OFFSET:.1f} motor offset [A] TBC")
     sh.hdim("front", x0, x1, -y1, -y1 - 8, f"{x1 - x0:.2f} PCB")
