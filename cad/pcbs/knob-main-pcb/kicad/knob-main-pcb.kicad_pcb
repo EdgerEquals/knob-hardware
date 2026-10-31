@@ -80,87 +80,15 @@
 		)
 	)
 	(net 0 "")
-	(footprint "footprints:Shaft_Hole_NPTH_5.2mm"
-		(layer "F.Cu")
-		(uuid "9e7e7cc0-e8a2-47b3-b7f3-a4de206f67c0")
-		(at 125.25 152.9)
-		(descr "NPTH Ø5.20 clearance hole for the fixed hollow shaft on the dial axis")
-		(property "Reference" "H1"
-			(at 0 -4.1 0)
-			(layer "F.SilkS")
-			(uuid "0962afe0-236b-4a72-9aea-db3f85f8f86f")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Value" "Shaft_Hole_NPTH_5.2mm"
-			(at 0 4.1 0)
-			(layer "F.Fab")
-			(uuid "85a90368-5003-4524-bfd5-4bec83754765")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "59b5ddd9-de9f-49c2-ab51-47abf9aa6543")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 0)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "5e248218-b66a-4915-aa4b-560d2d5343aa")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
-		(attr exclude_from_pos_files exclude_from_bom)
-		(fp_circle
-			(center 0 0)
-			(end 2.85 0)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(fill no)
-			(layer "F.CrtYd")
-			(uuid "3a7a4048-60d4-46d2-8c53-83d5f40c7e4e")
-		)
-		(pad "" np_thru_hole circle
-			(at 0 0)
-			(size 5.2 5.2)
-			(drill 5.2)
-			(layers "*.Cu" "*.Mask")
-			(uuid "55cb3e41-26c4-469b-ba2d-7e0e2756eb8b")
-		)
-		(embedded_fonts no)
-	)
 	(footprint "footprints:Motor_1220_Tabs"
 		(layer "F.Cu")
-		(uuid "a6f9270b-4d4b-48c5-a732-1bc004522498")
+		(uuid "7acf49fc-608a-49f9-8afa-02f67495c27d")
 		(at 139.25 152.9)
 		(descr "Motor 1220 coreless planetary: 2 rear solder tabs, plated slots 0.70x1.60, pitch 6.0 [A]. Motor body Ø12.0 on F.Fab, axis at origin, motor on the front (F) side")
 		(property "Reference" "M1"
 			(at 0 -7.5 0)
 			(layer "F.SilkS")
-			(uuid "18c02da7-91d5-4544-bd1c-f00a25a10805")
+			(uuid "762d538f-2d2f-49c0-906b-8c074ce8bdad")
 			(effects
 				(font
 					(size 1 1)
@@ -171,7 +99,7 @@
 		(property "Value" "Motor_1220_Tabs"
 			(at 0 7.5 0)
 			(layer "F.Fab")
-			(uuid "f2264b7c-da83-434f-a9c4-8d4aaa0a38e8")
+			(uuid "09429196-5057-47d7-ae27-04362d8d8a01")
 			(effects
 				(font
 					(size 1 1)
@@ -183,7 +111,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9eb024a5-dec0-4cbb-b9c6-a0dcad82cf16")
+			(uuid "55b8ccb1-c719-44bf-9f59-3aba459c1b29")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -195,7 +123,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9ef3a93f-efe3-4a8e-8167-58b503f1526d")
+			(uuid "07ca52bc-62c9-47c1-bdec-5b208bfbc121")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -213,7 +141,7 @@
 			)
 			(fill no)
 			(layer "F.CrtYd")
-			(uuid "6afe291e-80cc-4ef8-b6cc-646769046dd6")
+			(uuid "d78f1a2c-d79f-4fd6-b596-705904383c35")
 		)
 		(fp_circle
 			(center 0 0)
@@ -224,7 +152,7 @@
 			)
 			(fill no)
 			(layer "F.Fab")
-			(uuid "eebf6996-0408-425a-a735-46dd8db40c05")
+			(uuid "55ee210e-5c1b-4cfc-8499-c35c8e6152a7")
 		)
 		(pad "1" thru_hole oval
 			(at -3 0)
@@ -232,7 +160,7 @@
 			(drill oval 0.7 1.6)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(uuid "d35d8489-dc8f-4460-9a95-9df197066c8b")
+			(uuid "7875855d-8326-4760-9c21-00b5192a2112")
 		)
 		(pad "2" thru_hole oval
 			(at 3 0)
@@ -240,63 +168,131 @@
 			(drill oval 0.7 1.6)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(uuid "83fa8e1e-063a-42e4-bde2-86581bc8b028")
+			(uuid "0bb80ea2-28c0-46cf-8c8d-ce888c524ff7")
 		)
 		(embedded_fonts no)
 	)
-	(footprint "footprints:Bearing_F682ZZ_Press_NPTH_5.0mm"
-		(layer "B.Cu")
-		(uuid "b575a63b-a14f-441a-b065-8370941b7e73")
-		(at 125.25 171.9 180)
-		(descr "NPTH Ø5.00 press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø6.1 on the footprint side; H2 is placed on B = inserted from the PCB back) [A]")
-		(property "Reference" "H2"
-			(at 0 4.05 0)
-			(layer "B.Fab")
-			(uuid "eb8072ff-9272-45bb-9dea-1c5e81f1dafd")
+	(footprint "footprints:Shaft_Hole_NPTH_5.2mm"
+		(layer "F.Cu")
+		(uuid "d5588a8e-7c82-4490-9244-91cb08d13439")
+		(at 125.25 152.9)
+		(descr "NPTH Ø5.20 clearance hole for the fixed hollow shaft on the dial axis")
+		(property "Reference" "H1"
+			(at 0 -4.1 0)
+			(layer "F.SilkS")
+			(uuid "30300456-9f69-4ea2-9a1f-dde0ab281207")
 			(effects
 				(font
-					(size 0.8 0.8)
-					(thickness 0.12)
+					(size 1 1)
+					(thickness 0.15)
 				)
-				(justify mirror)
 			)
 		)
-		(property "Value" "Bearing_F682ZZ_Press_NPTH_5.0mm"
-			(at 0 -4.05 0)
-			(layer "B.Fab")
-			(uuid "03f8bffe-aba2-421c-ac62-cc16bab3f962")
+		(property "Value" "Shaft_Hole_NPTH_5.2mm"
+			(at 0 4.1 0)
+			(layer "F.Fab")
+			(uuid "cc8c417e-e8bf-459f-9b87-0928f0a94a55")
 			(effects
 				(font
-					(size 0.8 0.8)
-					(thickness 0.12)
+					(size 1 1)
+					(thickness 0.15)
 				)
-				(justify mirror)
 			)
 		)
 		(property "Datasheet" ""
 			(at 0 0 0)
-			(layer "B.Fab")
+			(layer "F.Fab")
 			(hide yes)
-			(uuid "ea4acc5e-5e02-48a5-940c-6d8a7628b6c6")
+			(uuid "e48aee47-575f-4617-83c3-6e7b1f50b135")
 			(effects
 				(font
 					(size 1.27 1.27)
 					(thickness 0.15)
 				)
-				(justify mirror)
 			)
 		)
 		(property "Description" ""
 			(at 0 0 0)
-			(layer "B.Fab")
+			(layer "F.Fab")
 			(hide yes)
-			(uuid "77a993db-f4bb-4327-af7b-ae2d5b8922ac")
+			(uuid "3b5a82a3-804d-427d-8bac-337cb97c8407")
 			(effects
 				(font
 					(size 1.27 1.27)
 					(thickness 0.15)
 				)
-				(justify mirror)
+			)
+		)
+		(attr exclude_from_pos_files exclude_from_bom)
+		(fp_circle
+			(center 0 0)
+			(end 2.85 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "67a68d68-df69-49c6-bbcf-3723a349ef16")
+		)
+		(pad "" np_thru_hole circle
+			(at 0 0)
+			(size 5.2 5.2)
+			(drill 5.2)
+			(layers "*.Cu" "*.Mask")
+			(uuid "72b77475-e2f0-48cb-8275-92332307b8ba")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "footprints:Bearing_F682ZZ_Press_NPTH_5.0mm"
+		(layer "F.Cu")
+		(uuid "f85dcc6c-c4e0-45d0-b434-ec013fc15cc1")
+		(at 125.25 171.9)
+		(descr "NPTH Ø5.00 press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø6.1 on the footprint side; H2 is placed on B = inserted from the PCB back) [A]")
+		(property "Reference" "H2"
+			(at 0 -4.05 0)
+			(layer "F.Fab")
+			(uuid "30ded1fd-1ce2-44f2-815b-93395eb4516e")
+			(effects
+				(font
+					(size 0.8 0.8)
+					(thickness 0.12)
+				)
+			)
+		)
+		(property "Value" "Bearing_F682ZZ_Press_NPTH_5.0mm"
+			(at 0 4.05 0)
+			(layer "F.Fab")
+			(uuid "4554d9c2-60c5-432e-9e6a-c3610e1e9f69")
+			(effects
+				(font
+					(size 0.8 0.8)
+					(thickness 0.12)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "403a5cc1-36c9-4a74-9c7b-6b1618466bbe")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "968b67c8-e684-4736-a041-a44f78c65ea3")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
 			)
 		)
 		(attr exclude_from_pos_files exclude_from_bom)
@@ -308,8 +304,8 @@
 				(type solid)
 			)
 			(fill no)
-			(layer "B.CrtYd")
-			(uuid "9dd99a30-5136-458b-9462-02172c580f8d")
+			(layer "F.CrtYd")
+			(uuid "e3e80ea2-ac6d-4a1a-a4f6-ebab047d4c67")
 		)
 		(fp_circle
 			(center 0 0)
@@ -319,17 +315,37 @@
 				(type solid)
 			)
 			(fill no)
-			(layer "B.Fab")
-			(uuid "adfe2765-4019-4071-8b67-b0be26e73359")
+			(layer "F.Fab")
+			(uuid "132b7d5e-10d1-4317-8a54-71eeee1d103c")
 		)
 		(pad "" np_thru_hole circle
-			(at 0 0 180)
+			(at 0 0)
 			(size 5 5)
 			(drill 5)
 			(layers "*.Cu" "*.Mask")
-			(uuid "29bae0d1-91a0-41a5-9b85-d7f7004f64e9")
+			(uuid "9ddd79ec-f930-4572-8be6-cbd04f35c7fc")
 		)
 		(embedded_fonts no)
+	)
+	(gr_line
+		(start 101.75 110.5)
+		(end 148.75 110.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "138b86dc-2e46-40f5-b0bc-5ffa57cd34a7")
+	)
+	(gr_line
+		(start 148.75 218)
+		(end 101.75 218)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "19d74d09-a9a1-4d04-a428-385c082e72bb")
 	)
 	(gr_arc
 		(start 148.75 110.5)
@@ -340,17 +356,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "317f75c8-6c8e-4208-9853-4ef5db55344d")
-	)
-	(gr_line
-		(start 148.75 218)
-		(end 101.75 218)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "3c0dbbf2-787b-4dee-b071-222fb67d7db4")
+		(uuid "276fb718-7355-4b0b-86b4-fce8ba83762c")
 	)
 	(gr_line
 		(start 100.75 217)
@@ -360,18 +366,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "58788298-f46d-415a-b212-9007018d52ab")
-	)
-	(gr_arc
-		(start 100.75 111.5)
-		(mid 101.042893 110.792893)
-		(end 101.75 110.5)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "5d0833ee-cf5f-48ff-8607-4c1d52ed805e")
+		(uuid "69209f8e-b8ca-480b-bf84-206e503786bc")
 	)
 	(gr_line
 		(start 149.75 111.5)
@@ -381,7 +376,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "9fefc58e-c520-4bc9-a7dd-39afa7c0f3e1")
+		(uuid "84fccd9a-32d2-480a-920e-d003caf19069")
 	)
 	(gr_arc
 		(start 149.75 217)
@@ -392,17 +387,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "bcdf1190-89cd-44e3-a761-74b807c9a732")
-	)
-	(gr_line
-		(start 101.75 110.5)
-		(end 148.75 110.5)
-		(stroke
-			(width 0.05)
-			(type default)
-		)
-		(layer "Edge.Cuts")
-		(uuid "c13e6a9a-6a33-4508-85de-b16dbeb6d39f")
+		(uuid "9723dfc1-35f0-488e-9308-44827c14f131")
 	)
 	(gr_arc
 		(start 101.75 218)
@@ -413,7 +398,18 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "fb77d58d-f123-41b5-9fb2-b85940a1a1d6")
+		(uuid "a9daae94-adb0-4c7f-894d-6982b2db36de")
+	)
+	(gr_arc
+		(start 100.75 111.5)
+		(mid 101.042893 110.792893)
+		(end 101.75 110.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "d60781cd-a008-4ce5-a612-281c1d8ea7a7")
 	)
 	(embedded_fonts no)
 )

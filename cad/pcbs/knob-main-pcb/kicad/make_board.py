@@ -3,7 +3,8 @@ Run with the system python that has pcbnew:  /usr/bin/python3 make_board.py
 Writes knob-main-pcb.kicad_pcb / .kicad_pro / fp-lib-table, then exports knob-main-pcb.step with kicad-cli.
 Contents: Edge.Cuts outline, 1.6 mm board, M1 = footprints:Motor_1220_Tabs at the motor position (offset from the dial axis),
 H1 = footprints:Shaft_Hole_NPTH_5.2mm on the dial axis (v0.3; was 6.2 in v0.2).
-H2 = footprints:Bearing_F682ZZ_Press_NPTH_5.0mm, encoder take-off bearing, ENC_CD below the dial axis (v0.4); v0.5 flips H2 to the back (bearing inserted from the back, flange on the back face). Nothing else.
+H2 = footprints:Bearing_F682ZZ_Press_NPTH_5.0mm, encoder take-off bearing, ENC_CD below the dial axis (v0.4); v0.5 flipped H2 to the back; v0.6 (2026-10-31) puts H2 back on the FRONT: the bearing is pressed in from the front through the base cradle
+floor and into the PCB (locating dowel for gluing the cradle), flange on the cradle floor. Hole Ø5.0 NPTH unchanged. Nothing else.
 Tags: [L] layout v5 (scope/knob-module-v1.md + knob-panel-layout/make_v5.py), [A] assumed.
 Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from panel top (same as the layout)."""
 import os, json, subprocess, pcbnew
@@ -71,7 +72,7 @@ e = pcbnew.FootprintLoad(LIBDIR, ENC_FP[1])
 e.SetFPID(pcbnew.LIB_ID(ENC_FP[0], ENC_FP[1]))
 e.SetReference("H2"); e.SetPosition(P(ENC_X, ENC_Y))
 board.Add(e)
-e.Flip(e.GetPosition(), pcbnew.FLIP_DIRECTION_LEFT_RIGHT if hasattr(pcbnew, "FLIP_DIRECTION_LEFT_RIGHT") else False)   # v0.5: bearing inserts from the PCB BACK (flange on B)
+# v0.6: no flip (v0.5 flipped H2 to B); the bearing inserts from the FRONT through the base cradle v0.3 floor
 ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
 
 pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")

@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461345.5439699073
+2461345.6126967594
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461345.5439699073
+2461345.6126967594
   9
 $TDUUPDATE
  40
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{763BE847-FD73-4E6B-9D64-FF6D069AA5EE}
+{46DA5FB5-6041-4C33-91CA-345DEEC0444B}
   9
 $VERSIONGUID
   2
-{84F70316-7F37-4799-91CE-4F86C3738182}
+{5E9C53DF-E488-45E3-B500-502D28FF0F06}
   9
 $EXTNAMES
 290
@@ -1323,9 +1323,9 @@ ISM
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1339,9 +1339,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -32793,7 +32793,7 @@ AcDbText
  40
 1.6
   1
-Knob main PCB — v0.5, 2026-10-31
+Knob main PCB — v0.6, 2026-10-31
  11
 0.0
  21
@@ -32823,7 +32823,7 @@ AcDbText
  40
 1.6
   1
-Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.5: H2 on the back (bearing from the back).
+Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.6: H2 back on the front (bearing from the front through the base cradle).
  11
 0.0
  21
@@ -33995,7 +33995,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T05:03:19.157966+00:00
+1.4.5 @ 2026-10-31T06:42:17.429996+00:00
   0
 VISUALSTYLE
   5
@@ -34707,7 +34707,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-10-31T05:03:19.182020+00:00
+1.4.5 @ 2026-10-31T06:42:17.472808+00:00
   0
 ENDSEC
   0

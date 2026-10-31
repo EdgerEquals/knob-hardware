@@ -13,7 +13,7 @@ import os, sys
 from build123d import *
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.dirname(os.path.dirname(HERE))
-for d in ("tools", "knob/knob-v0.1", "knob/knob-v0.2", "bezel-knob/bezel-knob-v0.1", "holders/screen-holder-v0.1"):
+for d in ("tools", "knob/knob-v0.1", "knob/knob-v0.2", "control-dial/control-dial-v0.1", "holders/screen-holder-v0.1"):
     sys.path.insert(0, os.path.join(LIB, d))
 import bezel as b1
 import knob_v02 as kv
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         kw = dict(weight="bold") if i == 0 else {}
         if isinstance(l, tuple): l, kw = l
         sh.note("plan", ro + 26, p["z_top"] - i * 2.6, l, 8 if i == 0 else 6.5, **kw)
-    title = "Bezel knob — v0.2, 2026-10-31"
+    title = "Control dial (was bezel knob) — v0.2, superseded"
     sub = [f"Ø{p['face_d']:.0f} ring on the big knob, top flush with the glass; ±{p['travel_deg']:.0f}° [A].", "[L] = layout, [S] = stock, [Ed] = Ed, [A] = assumed.",
            "Third-angle projection · mm · plan view drawn front-up"]
     sh.dxf(os.path.join(HERE, "bezel-knob.dxf"), [title] + sub)

@@ -66,8 +66,8 @@ if __name__ == "__main__":
     sh.note("front", x0 + 2, -hy - 40, "[A] motor offset TBC, gear/belt drive TBC", 6.5)
     sh.hdim("side", -zf, -zb, -y1, -y1 - 4, f"{f['thickness']:.1f} board")
     sh.note("side", -zf - 1, -y1 - 11, f"front (F) face at {Z_PCB_FRONT:.1f} behind panel front [L]", 6.5, ha="center")
-    title = "Knob main PCB — v0.5, 2026-10-31"
-    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.5: H2 on the back (bearing from the back).",
+    title = "Knob main PCB — v0.6, 2026-10-31"
+    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.6: H2 back on the front (bearing from the front through the base cradle).",
            f"Board x {x0:.2f}–{x1:.2f}, y {y0:.1f}–{y1:.1f} from panel top-left. [L] layout v5, [A] assumed.",
            f"Third-angle projection · mm · STEP body {step_t:.2f} (KiCad omits copper+mask)"]
     sh.dxf(os.path.join(HERE, "knob-main-pcb.dxf"), [title] + sub)

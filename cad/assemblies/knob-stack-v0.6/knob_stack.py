@@ -18,7 +18,7 @@ from build123d import *
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.dirname(os.path.dirname(HERE))
 for d in ("tools", "motors/1220-coreless-planetary", "pcbs/knob-main-pcb", "shafts/fixed-shaft-brass-5x3-v0.2",
-          "knob/knob-v0.1", "knob/knob-v0.2", "knob/knob-v0.3", "bezel-knob/bezel-knob-v0.1", "holders/screen-holder-v0.1", "encoder-takeoff/encoder-takeoff-v0.2"):
+          "knob/knob-v0.1", "knob/knob-v0.2", "knob/knob-v0.3", "control-dial/control-dial-v0.1", "holders/screen-holder-v0.1", "encoder-takeoff/encoder-takeoff-v0.2"):
     sys.path.insert(0, os.path.join(LIB, d))
 import motor_gearbox as mg
 import knob_main_pcb as pcb

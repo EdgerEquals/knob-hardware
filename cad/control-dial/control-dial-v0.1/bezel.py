@@ -99,7 +99,7 @@ if __name__ == "__main__":
         kw = dict(weight="bold") if i == 0 else {}
         if isinstance(l, tuple): l, kw = l
         sh.note("plan", ro + 30, p["z_f1"] - i * 2.4, l, 8 if i == 0 else 6.5, **kw)
-    title = "Bezel — v0.1, 2026-10-31"
+    title = "Control dial (was bezel) — v0.1, superseded"
     sub = [f"Printed PETG sleeve on the Ø5 tube; Ø{p['face_d']:.0f} face; PTFE 10x8 journal.", "[L] = layout, [S] = stock, [Ed] = Ed, [A] = assumed.",
            "Third-angle projection · mm · plan view drawn front-up"]
     sh.dxf(os.path.join(HERE, "bezel.dxf"), [title] + sub)
