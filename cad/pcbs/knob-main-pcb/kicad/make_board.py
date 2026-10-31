@@ -9,6 +9,12 @@ v0.7 (2026-10-31): H2 rotated 3.0° [A] about the dial axis toward the motor sid
 pinions at 120°/240° clear the motor.
 v0.8 (2026-10-31): H1 = TubeRodClamp_Main_M1.6: the brass tube (GND) is soldered on a F.Cu ring pad, the M1.6 rod (VBUS_DATA,
 data over power) passes an NPTH Ø1.8 and clamps on a B.Cu ring pad. Nets GND, VBUS_DATA [A]. Nothing else.
+v0.9 (2026-10-31): Ed: motor closer to the axis, driving a 32T spur gear on the knob's bearing hub (12T pinion, m0.5):
+MOTOR_OFFSET 14.0 -> 11.0 = (32 + 12) x 0.5 / 2. The knob shrinks (skirt ID 38), bottom ring 90T -> 78T, so the encoder
+H2 moves in to ENC_CD 16.0 = (78 - 14) x 0.5 / 2, back on the board centre line (ENC_SET_ROT 0: encoder exactly 90° from
+the motor; the idler nearest the motor is moved instead, see encoder-takeoff v0.5).
+v0.9 also: U2 = Omron EE-SX1131 (Ed: encoder locked) on B.Cu, directly below H2 (panel +y) at SENS_R from the encoder axis, slot
+tangent to the big gear's slotted rim (119 windows, pitch 0.8 / 0.75 = 1.0667 so the two 0.8-spaced channels are in quadrature).
 Tags: [L] layout v5 (scope/knob-module-v1.md + knob-panel-layout/make_v5.py), [A] assumed.
 Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from panel top (same as the layout)."""
 import os, json, subprocess, pcbnew
@@ -27,18 +33,24 @@ RAIL_CLEAR = 0.5                      # [A] board edge to rail-zone line (top/bo
 CORNER_R = 1.0                        # [A]
 # dial / fixed-shaft axis (H1) and motor (M1) are separate (Ed, 2026-10-31: motor offset from the dial axis)
 SHAFT_X, SHAFT_Y = DIAL_X, DIAL_Y     # [L] shaft hole on the dial axis
-MOTOR_OFFSET = 14.0                   # [A] motor offset TBC, gear/belt drive TBC: centre distance, to the right, same height
+MOTOR_OFFSET = 11.0                   # v0.9: 12T pinion on the 32T knob hub gear, m0.5: (32 + 12) x 0.5 / 2 (was 14.0, 68T internal ring)
 MOTOR_X, MOTOR_Y = DIAL_X + MOTOR_OFFSET, DIAL_Y
 MOTOR_FP = ("footprints", "Motor_1220_Tabs")   # project library, cad/library/kicad/footprints.pretty
 MOTOR_ROT = 0.0                       # tabs side by side along x
 # encoder take-off (encoder-takeoff v0.1): bearing hole H2 below the dial axis (panel y down = 90° from the motor) [A]
-ENC_CD = 19.0                         # (90T bottom internal ring - 14T encoder pinion) x m0.5 / 2, see encoder_takeoff.py
+ENC_CD = 16.0                         # v0.9: (78T bottom internal ring - 14T encoder pinion) x m0.5 / 2 (was 19.0 with 90T)
 # v0.7: the encoder + 2 idler pinion set (120° apart) is rotated by ENC_SET_ROT so the idler nearest the motor clears the
 # motor body by 0.5 [A] (at 0° it would be at 30° from the motor, 9.81 from its axis: overlap). Positive = toward the motor side.
-ENC_SET_ROT = 3.0                     # [A] degrees, minimum 2.88 for 0.5 clearance, rounded up
+ENC_SET_ROT = 0.0                     # v0.9: 0 (encoder exactly 90° from the motor); v0.7-v0.8 used 3.0
 import math as _m
 ENC_X, ENC_Y = DIAL_X + ENC_CD * _m.sin(_m.radians(ENC_SET_ROT)), DIAL_Y + ENC_CD * _m.cos(_m.radians(ENC_SET_ROT))
 ENC_FP = ("footprints", "Bearing_F682ZZ_Press_NPTH_5.0mm")   # Ø5.0 NPTH press fit for F682ZZ 2x5x2.3 [A]
+SENS_N = 119                          # [A] rim windows (multiple of 7 -> whole counts per knob turn with 78:14)
+SENS_PITCH = 0.8 / 0.75               # datasheet channel spacing 0.8 = 3/4 pitch -> quadrature
+SENS_R = SENS_N * SENS_PITCH / (2 * _m.pi)   # 20.20 rim mean radius = sensor slot centre from the encoder axis
+SENS_X, SENS_Y = ENC_X, ENC_Y + SENS_R       # below H2 (panel y down), away from the dial axis
+SENS_FP = ("footprints", "Omron_EE-SX1131")
+SENS_ROT = 90.0                       # slot (footprint Y) along panel x = tangent to the rim here
 SHAFT_FP = ("footprints", "TubeRodClamp_Main_M1.6")   # v0.8: brass tube SOLDERED on a F.Cu ring (GND), M1.6 rod [A] through NPTH Ø1.8, B.Cu clamp ring (VBUS_DATA)
 # (v0.3–v0.7: Shaft_Hole_NPTH_5.2mm for the tube through the board)
 # ----------------------------------------
@@ -86,6 +98,11 @@ e = pcbnew.FootprintLoad(LIBDIR, ENC_FP[1])
 e.SetFPID(pcbnew.LIB_ID(ENC_FP[0], ENC_FP[1]))
 e.SetReference("H2"); e.SetPosition(P(ENC_X, ENC_Y))
 board.Add(e)
+u = pcbnew.FootprintLoad(LIBDIR, SENS_FP[1])
+u.SetFPID(pcbnew.LIB_ID(SENS_FP[0], SENS_FP[1]))
+u.SetReference("U2"); u.SetPosition(P(SENS_X, SENS_Y)); u.SetOrientationDegrees(SENS_ROT)
+board.Add(u)
+u.Flip(u.GetPosition(), pcbnew.FLIP_DIRECTION_TOP_BOTTOM if hasattr(pcbnew, "FLIP_DIRECTION_TOP_BOTTOM") else False)   # to B.Cu
 # v0.6: no flip (v0.5 flipped H2 to B); the bearing inserts from the FRONT through the base cradle v0.3 floor
 ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
 
@@ -96,4 +113,4 @@ open(os.path.join(HERE, "fp-lib-table"), "w").write(
     '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../../../kicad/footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
 step = os.path.join(HERE, "..", NAME + ".step")
 subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "-o", step, pcb_path], check=True)
-print("board", x0, x1, y0, y1, "M1 at", MOTOR_X, MOTOR_Y, "H1 at", SHAFT_X, SHAFT_Y, "H2 at", ENC_X, ENC_Y)
+print("board", x0, x1, y0, y1, "M1 at", MOTOR_X, MOTOR_Y, "H1 at", SHAFT_X, SHAFT_Y, "H2 at", ENC_X, ENC_Y, "U2 at", SENS_X, SENS_Y, "B" if u.IsFlipped() else "F")

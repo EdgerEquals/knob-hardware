@@ -53,22 +53,23 @@ if __name__ == "__main__":
     sh.hdim("front", x0, hx, -y0, -y0 + 6, f"{hx - x0:.2f} to shaft hole")
     sh.hdim("front", x0, mx, -y0, -y0 + 12, f"{mx - x0:.2f} to motor centre")
     sh.vdim("front", -y0, -hy, x1, x1 + 6, f"{hy - y0:.2f} (both)")
-    sh.hdim("front", hx, mx, -hy, -hy - 9, f"{mx - hx:.1f} motor offset [A]")
+    sh.hdim("front", hx, mx, -hy, -hy - 9, f"{mx - hx:.1f} motor offset")
     sh.hdim("front", mx - 3, mx + 3, -my, -my - 4, "6.0 [A]")
     sh.hdim("front", hx - hd / 2, hx + hd / 2, -hy, -hy + 6, f"Ø{hd:.1f} NPTH [A]")
     ex, ey, ed = f["enc_x"], f["enc_y"], f["enc_hole"]
     if ex is not None:
-        sh.vdim("front", -hy, -ey, x1, x1 + 14, f"{ey - hy:.2f} H2 (rotated 3.0° [A])")
+        sh.vdim("front", -hy, -ey, x1, x1 + 14, f"{ey - hy:.2f} H2 (90° from the motor, on the centre line)")
         sh.hdim("front", ex - ed / 2, ex + ed / 2, -ey, -ey - 6, f"Ø{ed:.1f} NPTH H2 bearing [A]")
         sh.note("front", x0 + 2, -hy - 44, "H2 encoder bearing F682ZZ press fit from the FRONT through the base cradle floor [A]", 6.5)
     sh.note("front", x0 + 2, -hy - 34, "H1 on the dial axis [L]: TubeRodClamp_Main_M1.6, NPTH Ø1.8; F.Cu ring Ø3.4–Ø6.4 GND (tube soldered),", 6.5)
     sh.note("front", x0 + 2, -hy - 36.5, "    B.Cu ring Ø2.4–Ø4.4 VBUS_DATA under the M1.6 washer/nut [A]", 6.5)
+    sh.note("front", x0 + 2, -hy - 46.5, "U2 Omron EE-SX1131 encoder sensor on B.Cu, 20.20 below H2 (36.20 below the dial axis), slot along x", 6.5)
     sh.note("front", x0 + 2, -hy - 39, "M1 Motor_1220_Tabs: 2 plated slots 0.7 × 1.6 [A], pitch 6.0", 6.5)
-    sh.note("front", x0 + 2, -hy - 41.5, "[A] motor offset TBC, gear/belt drive TBC", 6.5)
+    sh.note("front", x0 + 2, -hy - 41.5, "v0.9: motor offset 11.0 = 12T pinion on the knob's 32T hub gear, m0.5 (was 14.0); H2 16.0 = 78T ring − 14T", 6.5)
     sh.hdim("side", -zf, -zb, -y1, -y1 - 4, f"{f['thickness']:.1f} board")
     sh.note("side", -zf - 1, -y1 - 11, f"front (F) face at {Z_PCB_FRONT:.1f} behind panel front [L]", 6.5, ha="center")
-    title = "Knob main PCB — v0.8, 2026-10-31"
-    sub = ["KiCad kicad/knob-main-pcb.kicad_pcb (STEP). v0.8: H1 tube ring GND + M1.6 rod clamp VBUS_DATA.",
+    title = "Knob main PCB — v0.9, 2026-10-31"
+    sub = ["KiCad kicad/knob-main-pcb.kicad_pcb (STEP). v0.9: motor 11.0, H2 16.0, U2 EE-SX1131 on B; DRC 0.",
            f"Board x {x0:.2f}–{x1:.2f}, y {y0:.1f}–{y1:.1f} from panel top-left. [L] layout v5, [A] assumed.",
            f"Third-angle projection · mm · STEP body {step_t:.2f} (KiCad omits copper+mask)"]
     sh.dxf(os.path.join(HERE, "knob-main-pcb.dxf"), [title] + sub)
