@@ -44,6 +44,7 @@ class Sheet:
         self.gap = gap; self._set_scale(scale); self.scale = scale; self.label_pad = label_pad
         self.sections = []   # (label, face, scale, notes)
         self.zones = []      # (view, x0, y0, x1, y1, hatch)
+        self.refs = []       # (view, x0, y0, x1, y1, label): dashed reference lines (not parts)
         self.dims = []   # (kind, view, p1, p2, offset, text)
         self.texts = []  # (view, x, y, text, size)
 
@@ -63,6 +64,10 @@ class Sheet:
     def hatch_zone(self, view, x0, y0, x1, y1, hatch="||||"):
         """Hatched rectangle in view coords (e.g. a knurl zone that is not modelled as geometry). PNG only."""
         self.zones.append((view, x0, y0, x1, y1, hatch))
+
+    def ref_line(self, view, x0, y0, x1, y1, label=""):
+        """Thin dashed reference line in view coords (e.g. an assumed back-panel position). Not a part."""
+        self.refs.append((view, x0, y0, x1, y1, label))
 
     def add_section(self, label, face, scale, notes=()):
         """Enlarged cross-section (a planar build123d Face in its own XY), drawn hatched in the
@@ -96,6 +101,8 @@ class Sheet:
             else:
                 _, k, y1, y2, xref, xl, t = d
                 msp.add_linear_dim(base=self.P(k, xl, y1), p1=self.P(k, xref, y1), p2=self.P(k, xref, y2), angle=90, **ds).render()
+        for k, a0, b0, a1, b1, lab in self.refs:
+            msp.add_line(self.P(k, a0, b0), self.P(k, a1, b1), dxfattribs={"layer": "HIDDEN"})
         for k, x, y, t, s, kw in self.texts:
             msp.add_text(t, height=1.4, dxfattribs={"layer": "TEXT"}).set_placement(self.P(k, x, y))
         x0 = min(self.P("front", self.bb["front"][0], 0)[0], 0); y0 = self.P("front", 0, self.bb["front"][2])[1] - 14
@@ -127,6 +134,10 @@ class Sheet:
             (X0z, Y0z), (X1z, Y1z) = self.P(k, a0, b0), self.P(k, a1, b1)
             ax.add_patch(Rectangle((min(X0z, X1z), min(Y0z, Y1z)), abs(X1z - X0z), abs(Y1z - Y0z),
                                    facecolor="none", edgecolor="black", lw=0.6, hatch=hp))
+        for k, a0, b0, a1, b1, lab in self.refs:
+            (X0r, Y0r), (X1r, Y1r) = self.P(k, a0, b0), self.P(k, a1, b1)
+            ax.plot([X0r, X1r], [Y0r, Y1r], color="0.35", lw=0.6, ls=(0, (6, 3)))
+            if lab: ax.text(X1r + 1, Y1r, lab, fontsize=6.5, va="center", color="0.25")
         fs = 7.5
         for d in self.dims:
             if d[0] == "h":

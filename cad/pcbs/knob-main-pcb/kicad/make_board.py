@@ -2,7 +2,8 @@
 Run with the system python that has pcbnew:  /usr/bin/python3 make_board.py
 Writes knob-main-pcb.kicad_pcb / .kicad_pro / fp-lib-table, then exports knob-main-pcb.step with kicad-cli.
 Contents: Edge.Cuts outline, 1.6 mm board, M1 = footprints:Motor_1220_Tabs at the motor position (offset from the dial axis),
-H1 = footprints:Shaft_Hole_NPTH_5.2mm on the dial axis (v0.3; was 6.2 in v0.2). Nothing else.
+H1 = footprints:Shaft_Hole_NPTH_5.2mm on the dial axis (v0.3; was 6.2 in v0.2).
+H2 = footprints:Bearing_F682ZZ_Press_NPTH_5.0mm, encoder take-off bearing, ENC_CD below the dial axis (v0.4). Nothing else.
 Tags: [L] layout v5 (scope/knob-module-v1.md + knob-panel-layout/make_v5.py), [A] assumed.
 Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from panel top (same as the layout)."""
 import os, json, subprocess, pcbnew
@@ -25,6 +26,10 @@ MOTOR_OFFSET = 14.0                   # [A] motor offset TBC, gear/belt drive TB
 MOTOR_X, MOTOR_Y = DIAL_X + MOTOR_OFFSET, DIAL_Y
 MOTOR_FP = ("footprints", "Motor_1220_Tabs")   # project library, cad/library/kicad/footprints.pretty
 MOTOR_ROT = 0.0                       # tabs side by side along x
+# encoder take-off (encoder-takeoff v0.1): bearing hole H2 below the dial axis (panel y down = 90° from the motor) [A]
+ENC_CD = 19.0                         # (90T bottom internal ring - 14T encoder pinion) x m0.5 / 2, see encoder_takeoff.py
+ENC_X, ENC_Y = DIAL_X, DIAL_Y + ENC_CD
+ENC_FP = ("footprints", "Bearing_F682ZZ_Press_NPTH_5.0mm")   # Ø5.0 NPTH press fit for F682ZZ 2x5x2.3 [A]
 SHAFT_FP = ("footprints", "Shaft_Hole_NPTH_5.2mm")   # Ø5.2 NPTH [A] for the Ø5.0 brass tube (v0.2 was 6.2)
 # ----------------------------------------
 
@@ -62,6 +67,10 @@ h = pcbnew.FootprintLoad(LIBDIR, SHAFT_FP[1])
 h.SetFPID(pcbnew.LIB_ID(SHAFT_FP[0], SHAFT_FP[1]))
 h.SetReference("H1"); h.SetPosition(P(SHAFT_X, SHAFT_Y))
 board.Add(h)
+e = pcbnew.FootprintLoad(LIBDIR, ENC_FP[1])
+e.SetFPID(pcbnew.LIB_ID(ENC_FP[0], ENC_FP[1]))
+e.SetReference("H2"); e.SetPosition(P(ENC_X, ENC_Y))
+board.Add(e)
 ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
 
 pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")
@@ -71,4 +80,4 @@ open(os.path.join(HERE, "fp-lib-table"), "w").write(
     '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../../../kicad/footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
 step = os.path.join(HERE, "..", NAME + ".step")
 subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "-o", step, pcb_path], check=True)
-print("board", x0, x1, y0, y1, "M1 at", MOTOR_X, MOTOR_Y, "H1 at", SHAFT_X, SHAFT_Y)
+print("board", x0, x1, y0, y1, "M1 at", MOTOR_X, MOTOR_Y, "H1 at", SHAFT_X, SHAFT_Y, "H2 at", ENC_X, ENC_Y)

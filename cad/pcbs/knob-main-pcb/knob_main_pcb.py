@@ -21,14 +21,19 @@ def kicad_facts(path=KICAD_PCB):
         return (float(m.group(1)) - gx, float(m.group(2)) - gy) if m else (None, None)
     mx, my = at(re.escape("Motor_1220_Tabs"))
     sx, sy = at(r"Shaft_Hole_NPTH_[\d.]+mm")   # any H1 hole size
-    d = re.search(r'np_thru_hole circle.*?\(drill ([\d.]+)\)', t, re.S)
+    def drill(fpname):
+        b = re.search(r'\(footprint "footprints:' + fpname + r'"(.*?)\n\t\)', t, re.S)
+        m = re.search(r'np_thru_hole circle.*?\(drill ([\d.]+)\)', b.group(1), re.S) if b else None
+        return float(m.group(1)) if m else None
+    ex, ey = at(r"Bearing_[^\"]+")
     pads = []   # motor tab pads in panel coords (x, y, w, h); footprint at 0 deg rotation
     blk = re.search(r'\(footprint "footprints:Motor_1220_Tabs"(.*?)\n\t\)', t, re.S)
     if blk:
         for px, py, w, h in re.findall(r'\(pad "\d+" thru_hole \w+\s*\(at ([\d.\-]+) ([\d.\-]+)\)\s*\(size ([\d.]+) ([\d.]+)\)', blk.group(1)):
             pads.append((mx + float(px), my + float(py), float(w), float(h)))
     return dict(thickness=thick, motor_x=mx, motor_y=my, shaft_x=sx, shaft_y=sy,
-                shaft_hole=float(d.group(1)) if d else None, motor_pads=pads)
+                shaft_hole=drill(r"Shaft_Hole_NPTH_[\d.]+mm"), motor_pads=pads,
+                enc_x=ex, enc_y=ey, enc_hole=drill(r"Bearing_[^\"]+"))
 
 def board_solid():
     """KiCad STEP, moved so its F (front, motor) face sits at Z = -Z_PCB_FRONT."""
@@ -51,13 +56,18 @@ if __name__ == "__main__":
     sh.hdim("front", hx, mx, -hy, -hy - 9, f"{mx - hx:.1f} motor offset [A]")
     sh.hdim("front", mx - 3, mx + 3, -my, -my - 4, "6.0 [A]")
     sh.hdim("front", hx - hd / 2, hx + hd / 2, -hy, -hy + 6, f"Ø{hd:.1f} NPTH [A]")
-    sh.note("front", x0 + 2, -hy - 16, "H1 shaft hole on the dial axis [L]", 6.5)
-    sh.note("front", x0 + 2, -hy - 19, "M1 Motor_1220_Tabs: 2 plated slots 0.7 × 1.6 [A], pitch 6.0", 6.5)
-    sh.note("front", x0 + 2, -hy - 22, "[A] motor offset TBC, gear/belt drive TBC", 6.5)
+    ex, ey, ed = f["enc_x"], f["enc_y"], f["enc_hole"]
+    if ex is not None:
+        sh.vdim("front", -hy, -ey, x1, x1 + 14, f"{ey - hy:.1f} H2 below the dial axis [A]")
+        sh.hdim("front", ex - ed / 2, ex + ed / 2, -ey, -ey - 6, f"Ø{ed:.1f} NPTH H2 bearing [A]")
+        sh.note("front", x0 + 2, -hy - 43, "H2 encoder take-off bearing F682ZZ 2x5x2.3 press fit [A]", 6.5)
+    sh.note("front", x0 + 2, -hy - 34, "H1 shaft hole on the dial axis [L]", 6.5)
+    sh.note("front", x0 + 2, -hy - 37, "M1 Motor_1220_Tabs: 2 plated slots 0.7 × 1.6 [A], pitch 6.0", 6.5)
+    sh.note("front", x0 + 2, -hy - 40, "[A] motor offset TBC, gear/belt drive TBC", 6.5)
     sh.hdim("side", -zf, -zb, -y1, -y1 - 4, f"{f['thickness']:.1f} board")
     sh.note("side", -zf - 1, -y1 - 11, f"front (F) face at {Z_PCB_FRONT:.1f} behind panel front [L]", 6.5, ha="center")
-    title = "Knob main PCB — v0.3, 2026-10-31"
-    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.3: H1 6.2 -> 5.2.",
+    title = "Knob main PCB — v0.4, 2026-10-31"
+    sub = ["Source: KiCad kicad/knob-main-pcb.kicad_pcb (STEP export). v0.4: + H2 bearing hole.",
            f"Board x {x0:.2f}–{x1:.2f}, y {y0:.1f}–{y1:.1f} from panel top-left. [L] layout v5, [A] assumed.",
            f"Third-angle projection · mm · STEP body {step_t:.2f} (KiCad omits copper+mask)"]
     sh.dxf(os.path.join(HERE, "knob-main-pcb.dxf"), [title] + sub)

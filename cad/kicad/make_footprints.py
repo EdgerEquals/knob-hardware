@@ -115,3 +115,26 @@ ADAPTER_FPS = {"FPC_14P_0.5mm_Top": fpc_conn, "QFN-20_3x3_P0.4_CH32V003": qfn20,
 if __name__ == "__main__":
     for n, f in ADAPTER_FPS.items():
         out = os.path.join(HERE, "footprints.pretty", n + ".kicad_mod"); open(out, "w").write(f(n)); print("wrote", out)
+
+
+# ---------------- encoder take-off bearing (2026-10-31) ----------------
+ENC_BEARING_HOLE_D = 5.0   # [A] press fit for an F682ZZ flanged bearing (2 x 5 x 2.3, flange 6.1 x 0.6) [A]; Ed: 2 mm encoder shaft
+
+def bearing_hole(name, d, flange_d=6.1):
+    return f'''(footprint "{name}"
+  (version 20241229) (generator "make_footprints.py")
+  (layer "F.Cu")
+  (descr "NPTH Ø{d:.2f} press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø{flange_d} on F) [A]")
+  (attr exclude_from_pos_files exclude_from_bom)
+  (property "Reference" "H2" (at 0 {-(flange_d / 2 + 1.0):.2f} 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (property "Value" "{name}" (at 0 {flange_d / 2 + 1.0:.2f} 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (fp_circle (center 0 0) (end {flange_d / 2:.3f} 0) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
+  (fp_circle (center 0 0) (end {flange_d / 2 + 0.25:.3f} 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "" np_thru_hole circle (at 0 0) (size {d:.3f} {d:.3f}) (drill {d:.3f}) (layers "*.Cu" "*.Mask"))
+)
+'''
+ENC_BEARING_FP = f"Bearing_F682ZZ_Press_NPTH_{ENC_BEARING_HOLE_D:.1f}mm"
+
+if __name__ == "__main__":
+    out = os.path.join(HERE, "footprints.pretty", ENC_BEARING_FP + ".kicad_mod")
+    open(out, "w").write(bearing_hole(ENC_BEARING_FP, ENC_BEARING_HOLE_D)); print("wrote", out)

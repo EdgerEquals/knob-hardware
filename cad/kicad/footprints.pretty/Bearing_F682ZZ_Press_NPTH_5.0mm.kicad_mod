@@ -1,0 +1,11 @@
+(footprint "Bearing_F682ZZ_Press_NPTH_5.0mm"
+  (version 20241229) (generator "make_footprints.py")
+  (layer "F.Cu")
+  (descr "NPTH Ø5.00 press-fit hole for a flanged miniature bearing (F682ZZ 2x5x2.3, flange Ø6.1 on F) [A]")
+  (attr exclude_from_pos_files exclude_from_bom)
+  (property "Reference" "H2" (at 0 -4.05 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (property "Value" "Bearing_F682ZZ_Press_NPTH_5.0mm" (at 0 4.05 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+  (fp_circle (center 0 0) (end 3.050 0) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))
+  (fp_circle (center 0 0) (end 3.300 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "" np_thru_hole circle (at 0 0) (size 5.000 5.000) (drill 5.000) (layers "*.Cu" "*.Mask"))
+)
