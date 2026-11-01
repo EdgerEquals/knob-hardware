@@ -213,7 +213,7 @@ P = dict(
     em_pin_len_k=0.5,   # [A] hollow-pin engagement / board thickness. Stops short of the body on the back.
     em_cover_k=0.05,   # [A] package past the hole, each side, / smaller package side
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
-    fm_keepout=[(160.0, 222.0, 6.0, 9.5)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
+    fm_keepout=[(172.0, 210.0, 6.5, 9.0)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
     fg_edge_x=22.45,   # [A] v0.19: panel |x| the compound gear tip may reach (cover side wall 22.75 - 0.3)
     hb_mn_pref=0.60,   # [A] v0.19: keep the v0.18 herringbone module (the arm, cradle and caps are tuned to it); 0.55 broke the arm/cradle checks
     fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
