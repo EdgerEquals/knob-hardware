@@ -206,6 +206,21 @@ def cross(D, parts):
     gearcheck.rows(D, row)          # contact ratio and backlash band; tooth counts are this stack's, not the old spur set
     from .. import optics
     optics.beam_rows(D, parts, row)  # no-op while optics_on is False
+    # v0.19 [Ed]: screen rule. Every part behind the PCB keeps screen_air (1.0) from both back AMOLEDs.
+    scr = {n: parts[n] for n in parts if n.startswith("back AMOLED")}
+    if scr:
+        case_like = ("case", "back cover", "glow coat", "PCB", "corner screw", "jack ", "USB-C", "back AMOLED", "lower screen pad", "knob bolt")
+        rear = {n: p for n, p in parts.items() if not n.startswith(case_like) and p.bounding_box().min.Z < D["z_pcb_back"] - 0.01}
+        smin, swho = 1e9, ""
+        for sn, sp in scr.items():
+            sb = sp.bounding_box()
+            for n, p in rear.items():
+                pb = p.bounding_box()
+                if pb.max.X < sb.min.X - 3 or pb.min.X > sb.max.X + 3 or pb.max.Y < sb.min.Y - 3 or pb.min.Y > sb.max.Y + 3:
+                    continue
+                d = sp.distance_to(p)
+                if d < smin: smin, swho = d, f"{n} over the {sn.split('(')[0].replace('back AMOLED ', '').strip()} screen"
+        row("parts behind the PCB vs the back AMOLEDs (screen rule)", smin, D.get("screen_air", 1.0) - 0.01, f"nearest: {swho}")
     return r
 
 def ring_field(D):

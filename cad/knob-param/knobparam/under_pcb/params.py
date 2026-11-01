@@ -18,7 +18,10 @@ P = dict(
     n_spokes=6,
     spoke_w=2.4,
     boss_r=3.0,
-    back_panel=25.0,   # [A] PCB back to the back panel inner face (bearing 2 seat)
+    back_panel=25.0,   # [A] v0.18 only: PCB back to the back panel inner face (bearing 2 seat)
+    brg2_on_pcb=True,   # [Ed] 2 Nov: the back screens sit behind the wheel, so bearing 2 moves up to a printed seat on the PCB back
+    brg2_seat_wall=1.2,   # [A] printed seat wall round bearing 2 (glued to the PCB back round H2)
+    brg2_seat_floor=0.6,   # [A] seat floor under bearing 2
     # ---- v0.17 encoder daughterboard [Ed]: the EE-SX1321 moves off the main PCB so its slot meets the rim at the new depth ----
     enc_db_t=0.8,   # [A] daughterboard thickness
     enc_db_clear=0.6,   # [A] board margin past the sensor body
@@ -34,7 +37,7 @@ P = dict(
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "main_knob": ["hb_mid"]}
-EXPORTS = ["d_big_tip"]   # -> electronics (J2 pads below the wheel)
+EXPORTS = ["d_big_tip", "z_rear_min"]   # -> electronics (J2 pads below the wheel)
 
 
 def derive(D):
@@ -61,7 +64,17 @@ def derive(D):
     D["h_hub_bot"] = D["h_big_bot"] - D["big_hub"][1]
     D["win_z0"], D["win_z1"] = D["z_axis"] - sn["ap_h"] / 2 - 0.6, D["z_axis"] + sn["ap_h"] / 2 + 0.3
     D["h_panel"] = D["z_pcb_back"] - D["back_panel"]
-    D["h_b2_top"] = D["h_panel"] + B["ft"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
+    if D["brg2_on_pcb"]:
+        # bearing 2 straight under bearing 1, flange down, in a seat on the PCB back; the shaft stops in the disc hub
+        D["h_b2_top"] = D["z_pcb_back"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
+        D["brg2_seat_z0"] = D["h_b2_bot"] - D["brg2_seat_floor"]
+        D["enc_shaft_bot"] = D["h_hub_bot"]
+    else:
+        D["h_b2_top"] = D["h_panel"] + B["ft"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
+        D["brg2_seat_z0"] = D["h_b2_bot"]
+        D["enc_shaft_bot"] = D["h_b2_bot"]
+    # deepest under-PCB part, for the case cover depth (v0.19)
+    D["z_rear_min"] = min(D["h_hub_bot"], D["enc_shaft_bot"], D["brg2_seat_z0"], D["z_sens_open"] - D["enc_db_t"])
     ex, ey = D["enc_xy"]
     r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
     D["disc_r"] = D["rim_r1"]                                            # plain disc out to the slotted rim (no teeth)

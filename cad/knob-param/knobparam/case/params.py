@@ -139,6 +139,32 @@ P = dict(
     pocket_wall=2.14,      # [A] pocket back and tub wall; not the local screw pad
     cover_under_mult=0.5,  # [Ed] PETG left under the screw head, in screw diameters
     notch_gap=0.30,        # [A] air, printed boss to the PCB corner notch
+    # ---- v0.3 case [Ed, 2 Nov] ----
+    knob_drop=4.0,         # [Ed] knob, joystick and clear OLED sit this much lower on the panel so all four rail screws fit
+    top_corners=True,      # [Ed] top bolts at the top corners, mirroring the bottom pair (v0.2: between the knob and the joystick)
+    insert_od=4.6,         # [A] stock M3 knurled brass insert, epoxied in the resin boss (Claude's pick, 2 Nov): OD
+    insert_len=5.7,        # [A] insert length
+    insert_wall=1.5,       # [A] resin round the insert; boss radius = insert_od/2 + this (was Ø9 printed-thread boss)
+    back_screens="amoled2",   # [Ed] two 2.4" AMOLEDs facing forward on the cover floor, overlapped behind the knob (v0.2: 2.0" TFT on the back)
+    amo_w=38.72,           # [S] 2.4" 450x600 RM690B0 panel outline (TOH240XVT-01 / Gesight B024JMV-N50-6DP0)
+    amo_h=51.56,           # [S]
+    amo_t=0.5,             # [S] panel thickness (flex tail and stiffener not modelled yet)
+    amo_pad=1.0,           # [Ed] the lower (front) screen sits on a 1 mm pad over the upper one
+    amo_lower_y_up=23.5,   # [Ed] lower screen bottom edge above the panel bottom (frame y -52.1 with the v0.2 knob at 0)
+    amo_upper_top_up=105.0,   # [Ed] upper screen top edge above the panel bottom (frame y 29.4 with the v0.2 knob at 0)
+    screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
+    cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
+    tube_press=1.0,        # [A] width of the tube ring that bears on the PCB round the corner notch
+    jack_w=10.0,           # [S] PJ366ST body width (x) — clacktronics/AudioJacks STEP, MIT, credit Barwise; untested vs a real part
+    jack_h=10.5,           # [S] body height (y)
+    jack_bush_d=6.0,       # [S] threaded bushing; panel hole jack_hole
+    jack_nut_d=8.0,        # [S] knurled nut across flats/round
+    jack_nut_t=2.0,        # [A] nut thickness on the plate front
+    jack_xs=(-17.25, -5.75, 5.75, 17.25),   # [Ed] four jacks at 11.5 mm pitch
+    jack_y_up=26.7,        # [Ed] jack centre above the panel bottom edge (frame y -48.9 with the v0.2 knob at 0)
+    usb_y_up=17.1,         # [Ed] USB-C centre above the panel bottom edge, between the bottom bolts
+    usb_rcpt=(8.94, 3.26, 7.35),   # [S] USB-C receptacle opening w, h and depth behind the plate (typical mid-mount)
+    usb_board=(12.0, 6.0, 1.0),    # [Ed] small PD board glued behind the faceplate: w, h, t
     boss_gap=0.40,         # [A] air, boss to the knob hole and to the joystick opening
     cover_rho=1.27e-3,     # [A] PETG, g/mm³
     cover_rgb=(132, 136, 142),  # [A] smoky grey, still see-through
@@ -147,7 +173,7 @@ P = dict(
     # The seal itself is the thin ring on the front face (interface lab_ring_*).
     collar_h_mult=3.0,     # [A] collar length / screw diameter
     collar_wall=2.5,       # [A] radial wall of the tube the knob slides through
-    knob_bolt_n=4,         # [Ed] bolts the knob module up into the shell
+    knob_bolt_n=0,         # [Ed] 2 Nov: knob bolts removed (v0.2 had 4)
     seat_gap=0.08,         # [A] air so the cover, the shell and the PCB do not fuse in the model
     nest_gap=0.05,         # [A] air, PCB front face to the ledge stop (solids stay apart)
     ledge_ratio=0.60,      # [A] ledge width / wall, inboard of the PCB edge
@@ -174,9 +200,9 @@ P = dict(
     tft_mod_t=3.2,         # [A] placeholder module thickness, into the pocket
     tft_gap=0.80,          # [A] air from the module to the pocket wall
     # ---- front jacks, only counted. Thonkiconn PJ398SM [S], body width [A] ----
-    jack_hole=6.0,         # [S] panel hole
+    jack_hole=6.2,         # [S] panel hole for the 6.0 bushing
     jack_nut=7.8,          # [S] knurled nut
-    jack_body=12.0,        # [A] plastic body width behind the panel
+    jack_body=10.5,        # [S] PJ366ST body (was 12.0 assumed)
     jack_air=0.80,         # [A] air between bodies, and off the knob
     # PJ366ST (stereo Thonkiconn), from the community STEP model clacktronics/AudioJacks (MIT, Barwise).
     # The library lists it untested against a real part: measure one before ordering.
@@ -192,7 +218,7 @@ P = dict(
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
-           "under_pcb": ["d_big_tip"]}
+           "under_pcb": ["d_big_tip", "z_rear_min"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
            "lab_ring_r", "lab_ring_z0", "lab_ring_z1",
@@ -301,8 +327,8 @@ def derive(D):
     D["panel_w_scope"] = D["panel_w"]
     D["panel_x0"] = -D["panel_w"] / 2.0
     D["panel_x1"] = D["panel_w"] / 2.0
-    D["panel_y1"] = D["axis_by"]
-    D["panel_y0"] = D["axis_by"] - D["panel_h"]
+    D["panel_y1"] = D["axis_by"] + D["knob_drop"]   # [Ed] 2 Nov: knob sits knob_drop lower on the panel
+    D["panel_y0"] = D["panel_y1"] - D["panel_h"]
     D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2.0
     D["body_y1"] = D["panel_y1"] - D["rail_clear"]
     D["body_y0"] = D["panel_y0"] + D["rail_clear"]
@@ -326,7 +352,7 @@ def derive(D):
     D["z_ledge0"] = D["nest_gap"]
     D["z_ledge1"] = D["z_ledge0"] + D["wall"]
     D["ledge_w"] = D["ledge_ratio"] * D["wall"]
-    D["screw_boss_r"] = D["screw_d"] * (0.5 + D["boss_wall_mult"])
+    D["screw_boss_r"] = D["insert_od"] / 2 + D["insert_wall"]   # [Ed] brass insert in a resin boss (v0.2: printed thread, Ø9)
     D["pad_r"] = D["screw_boss_r"]
     D["hole_r"] = D["screw_d"] * (0.5 + D["screw_hole_ratio"])
     D["tip_clear"] = D["tip_clear_ratio"] * D["screw_d"]
@@ -342,8 +368,16 @@ def derive(D):
     B = D["brg"]
     D["rear_stack"] = D["rear_panel_snap"] - B["ft"] + B["B"]
     D["z_bearing_bot"] = D["z_pcb_back"] - D["rear_stack"]
-    D["cover_depth"] = D["rear_stack"] * (1.0 + D["cover_clear_ratio"])
-    D["z_cover_in"] = D["z_pcb_back"] - D["cover_depth"]
+    if D["back_screens"] == "amoled2":
+        # [Ed] 2 Nov: worked backwards. Deepest part behind the PCB, then screen_air, then the two-screen stack.
+        em_h = 1.0   # [A] emitter bodies on the PCB back (VCSEL 0.8, RGB 0.9) + gap
+        D["z_rear_parts"] = min(D["z_rear_min"], D["fg_z_bot"], D["z_pcb_back"] - em_h)
+        D["amo_stack"] = D["amo_pad"] + D["amo_t"]
+        D["z_cover_in"] = D["z_rear_parts"] - D["screen_air"] - D["amo_stack"]
+        D["cover_depth"] = D["z_pcb_back"] - D["z_cover_in"]
+    else:
+        D["cover_depth"] = D["rear_stack"] * (1.0 + D["cover_clear_ratio"])
+        D["z_cover_in"] = D["z_pcb_back"] - D["cover_depth"]
     D["cbore_depth"] = D["head_k"] + D["head_below"]
     D["cbore_r"] = D["screw_dk"] / 2.0 + D["cbore_clear"]
     D["cover_t"] = D["pocket_wall"]
@@ -481,6 +515,19 @@ def derive(D):
             D["win_y0"] = D["win_y1"] - D["tft_h"]
         D["tft_z0"] = D["nest_gap"]
         D["tft_z1"] = D["z_fp0"] - gap
+    elif D["back_screens"] == "amoled2":
+        y0 = D["panel_y0"] + D["amo_lower_y_up"]
+        D["amo_lower"] = (-D["amo_w"] / 2, D["amo_w"] / 2, y0, y0 + D["amo_h"])
+        y1 = D["panel_y0"] + D["amo_upper_top_up"]
+        D["amo_upper"] = (-D["amo_w"] / 2, D["amo_w"] / 2, y1 - D["amo_h"], y1)
+        D["amo_overlap"] = D["amo_lower"][3] - D["amo_upper"][2]
+        D["amo_upper_z"] = (D["z_cover_in"], D["z_cover_in"] + D["amo_t"])
+        D["amo_lower_z"] = (D["z_cover_in"] + D["amo_pad"], D["z_cover_in"] + D["amo_pad"] + D["amo_t"])
+        # older code reads win_* / mod_* / tft_*: point them at the lower screen (no window cut in the cover)
+        D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"] = D["amo_lower"]
+        D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"] = D["amo_lower"]
+        D["tft_z0"], D["tft_z1"] = D["amo_lower_z"]
+        D["back_z0"], D["back_z1"] = D["amo_lower_z"]
     else:
         # bottom of the cover pocket, centred in X. Active window is the border inset.
         D["mod_x0"] = -D["tft_mod_w"] / 2.0
@@ -540,7 +587,14 @@ def derive(D):
                 y = y_above
         return y
 
+    if D["top_corners"]:
+        y_hi = D["pcb_y1"] - br - gap   # [Ed] mirror of the bottom pair (pcb_y0 + br + gap)
     D["corners"] = ((-bx, _y_for(-bx)), (bx, _y_for(bx)), (-bx, y_hi), (bx, y_hi))
+    # jacks and USB-C (panel frame, from the panel bottom edge)
+    D["jack_y"] = D["panel_y0"] + D["jack_y_up"]
+    D["jack_xy"] = tuple((x, D["jack_y"]) for x in D["jack_xs"])
+    D["usb_xy"] = (0.0, D["panel_y0"] + D["usb_y_up"])
+    D["jack_depth_z0"] = D["z_fp0"] - D["jack_depth"]
     # Knob bolts: on the bolt circle outside the collar, lower arc only (the bezel
     # occupies +Y). Placed after the corners so a bolt is not spent on a post it hits.
     D["bolt_r"] = D["collar_r"] + D["seat_gap"] + br

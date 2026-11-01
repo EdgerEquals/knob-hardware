@@ -76,8 +76,11 @@ def build(D):
                 2 * (D["z_enc_pinion"] * D["hb_mt"] / 2 - D["hb_dedendum"] * D["hb_mn"] - D["cap_root_inset"]),
                 2 * D["enc_pip_r"] + 2 * D["cap_fit_gap"], D["h_pin1"] + D["cap_seat_gap"],
                 D["cap_t"], D["cap_rings"], D["cap_step_h"], D["cap_step_w"]),
-            "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["h_b2_bot"], D["h_pin1"] - D["h_b2_bot"]),
-            "encoder bearing 2 (back panel)": T * bearing(D, D["h_b2_top"]),
+            "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["enc_shaft_bot"], D["h_pin1"] - D["enc_shaft_bot"]),
+            "encoder bearing 2" + (" (seat on the PCB back)" if D["brg2_on_pcb"] else " (back panel)"):
+                T * (Rot(180, 0, 0) * Pos(0, 0, -D["h_b2_bot"] - D["h_b2_top"]) * bearing(D, D["h_b2_top"]) if D["brg2_on_pcb"] else bearing(D, D["h_b2_top"])),
+            **({"encoder bearing 2 seat (printed, glued)": T * (tube(D["brg"]["D"] / 2 + 0.02, D["brg"]["D"] / 2 + D["brg2_seat_wall"], D["brg2_seat_z0"], D["z_pcb_back"] - D["brg2_seat_z0"] - 0.02)
+                                                             - cyl(D["brg"]["d"] / 2 + 0.6, D["brg2_seat_z0"] - 0.1, 1.0))} if D["brg2_on_pcb"] else {}),
             "encoder disc + slotted rim": T * wheel(D),
             "encoder sensor EE-SX1321": T * sensor(D),
             "encoder daughterboard": T * board,

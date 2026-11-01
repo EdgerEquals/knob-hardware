@@ -24,21 +24,30 @@ def checks(D, parts):
         f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
-    row("back TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
-        f"active {D['win_w']:.2f}×{D['win_h']:.2f} at x {D['win_x0']:.2f}..{D['win_x1']:.2f}, "
-        f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}; module {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f}×{D['tft_mod_t']:.1f} "
-        f"with a {D['tft_border']:.1f} mm border")
-    win = parts["back TFT window"]
-    cover_hit = cover.intersect(win)
-    blocked = 0.0 if cover_hit is None or not cover_hit.solids() else sum(s.volume for s in cover_hit.solids())
-    row("TFT light path is open through the cover", blocked, 0.0,
-        "the active area is a hole in the back skin, not a front window", higher_ok=False)
-    mod = parts.get("back TFT module (placeholder)")
-    if mod is not None:
-        mb = mod.bounding_box()
-        inside = min(D["void_x1"] - mb.max.X, mb.min.X - D["void_x0"], D["void_y1"] - mb.max.Y, mb.min.Y - D["void_y0"])
-        row("back TFT module inside the pocket", inside, D["tft_gap"],
-            f"outline {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f} at y {D['mod_y0']:.2f}..{D['mod_y1']:.2f}")
+    if D["back_screens"] == "amoled2":
+        x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]
+        row("back AMOLEDs overlap behind the knob", D["amo_overlap"], 15.0,
+            f"lower y {ly0:.2f}..{ly1:.2f}, upper y {y0:.2f}..{y1:.2f}; seam inside the knob shadow")
+        row("back AMOLEDs inside the cover pocket", min(D["void_x1"] - x1, x0 - D["void_x0"], D["void_y1"] - y1, ly0 - D["void_y0"]), 0.3,
+            f"{D['amo_w']:.2f} wide in a {D['void_x1'] - D['void_x0']:.2f} pocket")
+        row("cover depth from the screen rule", D["cover_depth"], D["z_pcb_back"] - (D["z_rear_parts"] - D["screen_air"] - D["amo_stack"]) - 0.001,
+            f"deepest rear part z {D['z_rear_parts']:.2f} + {D['screen_air']:.1f} air + {D['amo_stack']:.1f} screens -> floor z {D['z_cover_in']:.2f}")
+    else:
+        row("back TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
+            f"active {D['win_w']:.2f}×{D['win_h']:.2f} at x {D['win_x0']:.2f}..{D['win_x1']:.2f}, "
+            f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}; module {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f}×{D['tft_mod_t']:.1f} "
+            f"with a {D['tft_border']:.1f} mm border")
+        win = parts["back TFT window"]
+        cover_hit = cover.intersect(win)
+        blocked = 0.0 if cover_hit is None or not cover_hit.solids() else sum(s.volume for s in cover_hit.solids())
+        row("TFT light path is open through the cover", blocked, 0.0,
+            "the active area is a hole in the back skin, not a front window", higher_ok=False)
+        mod = parts.get("back TFT module (placeholder)")
+        if mod is not None:
+            mb = mod.bounding_box()
+            inside = min(D["void_x1"] - mb.max.X, mb.min.X - D["void_x0"], D["void_y1"] - mb.max.Y, mb.min.Y - D["void_y0"])
+            row("back TFT module inside the pocket", inside, D["tft_gap"],
+                f"outline {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f} at y {D['mod_y0']:.2f}..{D['mod_y1']:.2f}")
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
     row("edge strip thickness", D["edge_t"], D["wall"], "the rim is the full faceplate, one plane with the rest")
     row("ligament thickness", D["ligament_t"], D["wall"], "bridge between the holes is the full plate")
@@ -56,11 +65,11 @@ def checks(D, parts):
     row("web, knob hole to joystick hole", D["web_knob_joy"], sla, "plan width of the bridge")
     row("bezel above the faceplate", D["z_bz0"] - D["z_fp1"], 0.0,
         f"lip z {D['z_bz0']:.2f}–{D['z_bz1']:.2f}, plate top {D['z_fp1']:.2f}")
-    row("knob stands proud of the faceplate", D["knob_top_used"] - D["z_fp1"], D["knob_proud"],
-        f"knob top {D['knob_top_used']:.2f} from {D['knob_top_src']}; faceplate front {D['z_fp1']:.2f}")
-    row("knob proud, not more", D["knob_top_used"] - D["z_fp1"], D["knob_proud"],
-        "faceplate z is the knob top minus knob_proud", higher_ok=False)
-    row("faceplate to PCB ledge", D["fp_to_pcb"], D["knob_top_used"] - D["knob_proud"],
+    row("knob stands proud of the faceplate", D["z_top"] - D["z_fp1"], D["knob_proud"],
+        f"screen top {D['z_top']:.2f} (v0.18 knob_proud is to the glass); faceplate front {D['z_fp1']:.2f}")
+    row("knob proud, not more", D["z_top"] - D["z_fp1"], D["knob_proud"],
+        "faceplate z is the screen top minus knob_proud (interface)", higher_ok=False)
+    row("faceplate to PCB ledge", D["fp_to_pcb"], D["z_top"] - D["knob_proud"],
         f"faceplate front to the PCB front (ledge datum z=0) is {D['fp_to_pcb']:.2f} mm; "
         f"model ledge face at z {D['z_ledge0']:.2f} leaves nest_gap {D['nest_gap']:.2f}")
     row("10HP panel", D["panel_w"], 10 * D["hp_pitch"] - D["hp_gap"],
@@ -102,8 +111,9 @@ def checks(D, parts):
         f"overlap {D['clamp_overlap']:.2f}, nearest {D['bside_ref'] or 'edge'} is {D['bside_clear']:.2f} from the outline")
     row("preload before the rim seats", D["preload_gap"], D["seat_gap"],
         f"PCB land at {D['z_pcb_land']:.2f}, shell seat at {D['z_rim_seat']:.2f}; tongue {D['clamp_t']:.2f} closes the step")
-    row("pocket clears the rear envelope", D["pocket_gap"], D["cover_pocket"],
-        f"d_big_tip Ø{D['d_big_tip']:.2f} at the encoder; cavity depth {D['cover_depth']:.2f} unchanged")
+    if D["back_screens"] != "amoled2":   # v0.19: the screen rule sets the depth; clearances are measured in the assembly
+        row("pocket clears the rear envelope", D["pocket_gap"], D["cover_pocket"],
+            f"d_big_tip Ø{D['d_big_tip']:.2f} at the encoder; cavity depth {D['cover_depth']:.2f} unchanged")
     row("body clears the rails", D["rail_clear"], sla, "outer 10 mm of the panel, behind the face only")
     row("panel height", D["panel_h"], 128.5, "3U")
     row("panel height cap", D["panel_h"], 128.5, "3U, not taller", higher_ok=False)
@@ -183,7 +193,7 @@ def checks(D, parts):
     # a point in the boss wall (outside the thread) is resin
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,
-        "printed thread, no insert")
+        f"M3 brass insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} epoxied in a Ø{2 * D['screw_boss_r']:.1f} boss")
     row("corner post top vs jack pins", D["z_jack_pins"] - D["z_post_top"], D["post_jack_clear"],
         f"post top z {D['z_post_top']:.2f}, PJ366ST pin tips z {D['z_jack_pins']:.2f} (body {D['jack_depth']:.1f} + pins {D['jack_pin_len']:.1f} behind the plate)")
     row("post stands above the thread", D["z_post_top"] - D["z_thread1"], D["wall"],

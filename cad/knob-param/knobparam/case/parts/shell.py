@@ -262,19 +262,27 @@ def build(D):
     ov = D["clamp_overlap"]
     cover = _box(D["x_out0"], D["x_out1"], D["body_y0"], D["body_y1"], D["z_cover_out"], D["z_rim_seat"])
     cover = _sub(cover, _box(D["void_x0"], D["void_x1"], D["void_y0"], D["void_y1"], D["z_cover_in"], D["z_rim_seat"] + sl))
+    tubes = D["cover_clamp"] == "tubes"
+    ovt = 0.0 if tubes else ov   # [Ed] 2 Nov: with corner tubes the tongue stays outside the board outline
     tongue = _box(D["void_x0"] - fu, D["void_x1"] + fu, D["void_y0"] - fu, D["void_y1"] + fu, D["z_flange_out"], D["z_rim_seat"])
-    tongue = _sub(tongue, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
+    tongue = _sub(tongue, _box(-D["pcb_x1"] + ovt, D["pcb_x1"] - ovt, D["pcb_y0"] + ovt, D["pcb_y1"] - ovt,
                                D["z_flange_out"] - sl, D["z_rim_seat"] + sl))
     cover = _add(cover, tongue)
-    land = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_rim_seat"], D["z_pcb_land"])
-    land = _sub(land, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
-                           D["z_rim_seat"] - sl, D["z_pcb_land"] + sl))
-    cover = _add(cover, land)
+    if tubes:
+        # PETG corner tubes from the cover floor up to the PCB back; each bears on the board round its corner notch
+        for x, y in D["corners"]:
+            t = _cyl_z(D["notch_r"] + D["tube_press"], D["z_cover_in"] - fu, D["z_pcb_land"], x, y)
+            cover = _add(cover, _sub(t, _cyl_z(D["hole_r"], D["z_cover_in"] - sl, D["z_pcb_land"] + sl, x, y)))
+    else:
+        land = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_rim_seat"], D["z_pcb_land"])
+        land = _sub(land, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
+                               D["z_rim_seat"] - sl, D["z_pcb_land"] + sl))
+        cover = _add(cover, land)
     for x, y in D["corners"]:
         cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
         cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_pad_out"] - sl, D["z_pad_out"] + D["cbore_depth"], x, y))
         cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
-    if not D["tft_on_front"]:
+    if not D["tft_on_front"] and D["back_screens"] != "amoled2":
         cover = _sub(cover, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"],
                                  D["z_cover_out"] - sl, D["z_cover_in"] + sl))
     screws = {}
@@ -298,19 +306,52 @@ def build(D):
     pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
     for x, y in D["corners"]:
         pcb = _sub(pcb, _cyl_z(D["notch_r"], D["z_pcb_back"] - sl, sl, x, y))
-    if D["tft_on_front"]:
+    amo = {}
+    if D["back_screens"] == "amoled2":
+        window = None; module = None
+        g = 0.02
+        x0, x1, y0, y1 = D["amo_upper"]; z0, z1 = D["amo_upper_z"]
+        amo["back AMOLED upper (rear, on the cover floor)"] = _box(x0, x1, y0, y1, z0 + g, z1)
+        x0, x1, y0, y1 = D["amo_lower"]; z0, z1 = D["amo_lower_z"]
+        amo["back AMOLED lower (front, on a 1 mm pad)"] = _box(x0, x1, y0, y1, z0, z1)
+        # the pad: a frame under the lower screen where it is not over the upper one
+        oy = D["amo_upper"][2]
+        if y0 < oy:
+            amo["lower screen pad (PETG)"] = _box(x0, x1, y0, min(oy, y1) - g, D["z_cover_in"] + g, z0 - g)
+    elif D["tft_on_front"]:
         window = _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"])
         module = None
     else:
         window = _box(D["win_x0"] + D["nest_gap"], D["win_x1"] - D["nest_gap"],
                       D["win_y0"] + D["nest_gap"], D["win_y1"] - D["nest_gap"], D["back_z0"], D["back_z1"])
         module = _box(D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"], D["tft_z0"], D["tft_z1"])
-    out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
-           "PCB": pcb, "back TFT window": window}
+    # [Ed] 2 Nov: four PJ366ST jacks and the USB-C on its own board behind the plate
+    for x, y in D["jack_xy"]:
+        case = _sub(case, _cyl_z(D["jack_hole"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, y))
+    ux, uy = D["usb_xy"]; uw, uh, ud = D["usb_rcpt"]
+    case = _sub(case, _box(ux - uw / 2 - 0.15, ux + uw / 2 + 0.15, uy - uh / 2 - 0.15, uy + uh / 2 + 0.15, D["z_fp0"] - sl, D["z_fp1"] + sl))
+    jacks = {}
+    for i, (x, y) in enumerate(D["jack_xy"], 1):
+        g = 0.02
+        body = _box(x - D["jack_w"] / 2, x + D["jack_w"] / 2, y - D["jack_h"] / 2, y + D["jack_h"] / 2, D["jack_depth_z0"], D["z_fp0"] - g)
+        pins = _box(x - 2.0, x + 2.0, y - 3.0, y + 3.0, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"])
+        bush = _cyl_z(D["jack_bush_d"] / 2, D["z_fp0"], D["z_fp1"] + D["jack_nut_t"], x, y)
+        nut = _sub(_cyl_z(D["jack_nut_d"] / 2, D["z_fp1"] + g, D["z_fp1"] + D["jack_nut_t"], x, y), _cyl_z(D["jack_bush_d"] / 2 + 0.01, D["z_fp1"], D["z_fp1"] + D["jack_nut_t"] + 1, x, y))
+        jacks[f"jack {i} PJ366ST body + pins [S]"] = _add(body, pins)
+        jacks[f"jack {i} bushing"] = bush
+        jacks[f"jack {i} nut"] = nut
+    bw, bh, bt = D["usb_board"]
+    jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
+    jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
+    out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow, "PCB": pcb}
+    if window is not None:
+        out["back TFT window"] = window
+    out.update(amo)
     if module is not None:
         out["back TFT module (placeholder)"] = module
     if D["scanner_enabled"]:
         out.update({"scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
                     "grating film": film, "VCSEL 665 nm": vcsel})
     out.update(screws)
+    out.update(jacks)
     return out
