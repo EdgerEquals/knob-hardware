@@ -9,7 +9,7 @@ Coordinates of Gerbers, drill and CPL all use the KiCad absolute origin."""
 import os, sys, csv, glob, re, json, shutil, subprocess, tempfile, zipfile, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
 BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad"}
-LAYERS = "F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts"
+LAYERS = "F.Cu,In1.Cu,In2.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts"
 
 def run(*a): return subprocess.run(["kicad-cli", *a], capture_output=True, text=True)
 
@@ -65,8 +65,10 @@ def export(name):
         f.write(f"{name} {rev} PCBWay pack, generated {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} AWST by fab_export.py\n")
         f.write(("READY TO QUOTE" if ready else "NOT READY TO ORDER (see below)") + "\n\n")
         f.write(json.dumps(status, indent=2) + "\n\n")
-        f.write("Board: 2 layers, FR-4; thickness per the .kicad_pcb (main 1.6 mm, adapter 1.0 mm); HASL or ENIG; green mask, white silk [A].\n")
-        f.write("Hand-fit parts (excluded from BOM/CPL): main H1 rod pad, M1 1220 motor, M2 716 motor leads, J10 MCU-link pads; adapter C1 rod clamp.\n")
+        layers = "4" if name == "knob-main-pcb" else "2"
+        f.write(f"Board: {layers} layers, FR-4; thickness per the .kicad_pcb (main 1.6 mm, adapter 1.0 mm); HASL or ENIG; green mask, white silk [A].\n")
+        f.write("Hand-fit parts (excluded from BOM/CPL): H1 rod pad, M1 1220, M2 716 leads, M2 standoffs, pad-row connectors J4-J17; adapter C1 rod clamp.\n")
+        f.write("v0.12: one laser gate high at a time. LASER_EN, RGB_EN, VIOLET_EN and the motor enables are pulled off.\n")
     return status
 
 if __name__ == "__main__":

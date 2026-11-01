@@ -1,0 +1,10 @@
+(footprint "Mount_M2_PTH"
+  (version 20241229) (generator "make_lighting_footprints.py")
+  (layer "F.Cu")
+  (attr through_hole)
+  (descr "M2 standoff hole, drill 2.4, pad 3.2, one net")
+  (property "Reference" "H" (at 0 -2.2 0) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.08))))
+  (property "Value" "M2" (at 0 2.2 0) (layer "F.Fab") (effects (font (size 0.4 0.4) (thickness 0.06))))
+  (fp_circle (center 0 0) (end 1.70 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "1" thru_hole circle (at 0 0) (size 3.2 3.2) (drill 2.4) (layers "*.Cu" "*.Mask"))
+)

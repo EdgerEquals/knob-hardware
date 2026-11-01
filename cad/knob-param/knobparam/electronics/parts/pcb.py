@@ -15,7 +15,11 @@ def build(D):
     ex, ey = D["enc_xy"]; b -= cyl(D["brg"]["D"] / 2, -t - 1, t + 2, ex, ey)          # H2 press bore
     F = D["feel"]; pw, pl = F["pad"]   # (radial, tangential) copper around each lead hole
     for px, py in D["fm_pad_xy"]:
-        b -= cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py)                          # M2 lead holes (shaft no longer passes the board)
+        b -= cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py)                          # M2 lead holes
+    # v0.17 holes (assembly 00502746): 716 shaft Ø1.6, compound-idler pin Ø1.8 at the 150° idler. KiCad drills the same.
+    b -= cyl(0.8, -t - 1, t + 2, *D["fm_xy"])
+    ix, iy = min(D["idler_xy"], key=lambda p: p[0])
+    b -= cyl(0.9, -t - 1, t + 2, ix, iy)
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         b -= Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + 0.3, M["term_w"] + 0.3, t + 2, align=A)
