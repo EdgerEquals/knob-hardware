@@ -169,12 +169,22 @@ P = dict(
     ligament_t=1.2,        # [A] bridge between the knob hole and the joystick hole
     web_min=0.80,          # [A] smallest plan web, = sla_min
     pad_extra=1.0,         # [A] full-thickness pad past the rail-hole radius
-    # ---- bottom TFT, on the PCB, shining out through the clear shell [L] design-notes ----
-    # 2.0" 320×240 (4:3). Active size from the diagonal; no datasheet part is named yet.
+    # ---- 2.0" TFT. Off the front; a placeholder module on the back cover [Ed] ----
+    # Active area from the 2.0" diagonal. The module itself is not chosen: an [A] border
+    # around that active area is the placeholder outline.
+    tft_on_front=False,    # [Ed]
     tft_in=2.0,            # [L] inch
     tft_px=(320, 240),     # [L]
-    tft_air=1.0,           # [A] window starts this far above the PCB (the glass is not bonded)
-    tft_gap=0.80,          # [A] keep-out beyond the active area, and off walls / the scanner
+    tft_border=2.0,        # [A] bezel around the active area, each side
+    tft_mod_t=3.2,         # [A] placeholder module thickness, into the pocket
+    tft_air=1.0,           # [A] laser placeholders start this far above the PCB
+    tft_gap=0.80,          # [A] air from the module to the pocket wall
+    # ---- front jacks, only counted. Thonkiconn PJ398SM [S], body width [A] ----
+    jack_hole=6.0,         # [S] panel hole
+    jack_nut=7.8,          # [S] knurled nut
+    jack_body=12.0,        # [A] plastic body width behind the panel
+    jack_air=0.80,         # [A] air between bodies, and off the knob
+    usb_w=12.0,            # [A] upright USB-C, plug keep-out width
     # ---- laser light-show, PLACEHOLDER only. Knob agent is moving the feel motor to the bottom. ----
     # Do not change the PCB. 2× in the top corners under the joystick; laser_n=1 is the centred alternative.
     laser_n=2,             # [A] FLAG
@@ -455,28 +465,44 @@ def derive(D):
     D["beam_x"] = D["x_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_y"] = D["y_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_z1"] = D["z_fp0"] - D["beam_gap"]
-    # Bottom TFT window: the full 2.0" active area. tft_gap is the air bosses and ribs keep
-    # outside that rectangle. With the scanner parked, the window is centred.
+    # 2.0" active area. On the back cover unless tft_on_front.
     diag = D["tft_in"] * 25.4
     aspect = D["tft_px"][0] / D["tft_px"][1]
     D["tft_w"] = diag * aspect / math.hypot(aspect, 1.0)
     D["tft_h"] = D["tft_w"] / aspect
     gap = D["tft_gap"]
-    D["win_x0"] = -D["tft_w"] / 2.0
-    D["win_x1"] = D["tft_w"] / 2.0
-    D["win_y0"] = D["pcb_y0"] + D["ledge_w"] + gap
-    if D["scanner_enabled"]:
-        scan_x1 = max(D["shelf_x1"], D["x_mot"] + D["mirror_r"]) + gap
-        D["win_x1"] = min(D["x_in1"], D["pcb_x1"] - D["ledge_w"]) - gap
-        D["win_x0"] = max(scan_x1, D["win_x1"] - D["tft_w"])
-    D["win_y1"] = D["win_y0"] + D["tft_h"]
-    if D["win_y1"] > -D["knob_hole_r"] - gap:
-        D["win_y1"] = -D["knob_hole_r"] - gap
-        D["win_y0"] = D["win_y1"] - D["tft_h"]
+    D["tft_mod_w"] = D["tft_w"] + 2.0 * D["tft_border"]
+    D["tft_mod_h"] = D["tft_h"] + 2.0 * D["tft_border"]
+    if D["tft_on_front"]:
+        D["win_x0"] = -D["tft_w"] / 2.0
+        D["win_x1"] = D["tft_w"] / 2.0
+        D["win_y0"] = D["pcb_y0"] + D["ledge_w"] + gap
+        if D["scanner_enabled"]:
+            scan_x1 = max(D["shelf_x1"], D["x_mot"] + D["mirror_r"]) + gap
+            D["win_x1"] = min(D["x_in1"], D["pcb_x1"] - D["ledge_w"]) - gap
+            D["win_x0"] = max(scan_x1, D["win_x1"] - D["tft_w"])
+        D["win_y1"] = D["win_y0"] + D["tft_h"]
+        if D["win_y1"] > -D["knob_hole_r"] - gap:
+            D["win_y1"] = -D["knob_hole_r"] - gap
+            D["win_y0"] = D["win_y1"] - D["tft_h"]
+        D["tft_z0"] = D["nest_gap"]
+        D["tft_z1"] = D["z_fp0"] - gap
+    else:
+        # bottom of the cover pocket, centred in X. Active window is the border inset.
+        D["mod_x0"] = -D["tft_mod_w"] / 2.0
+        D["mod_x1"] = D["tft_mod_w"] / 2.0
+        D["mod_y0"] = D["void_y0"] + gap
+        D["mod_y1"] = D["mod_y0"] + D["tft_mod_h"]
+        D["win_x0"] = D["mod_x0"] + D["tft_border"]
+        D["win_x1"] = D["mod_x1"] - D["tft_border"]
+        D["win_y0"] = D["mod_y0"] + D["tft_border"]
+        D["win_y1"] = D["mod_y1"] - D["tft_border"]
+        D["tft_z0"] = D["z_cover_in"] + D["nest_gap"]
+        D["tft_z1"] = D["tft_z0"] + D["tft_mod_t"]
+        D["back_z0"] = D["z_cover_out"] + D["nest_gap"]
+        D["back_z1"] = D["z_cover_in"] - D["nest_gap"]
     D["win_w"] = D["win_x1"] - D["win_x0"]
     D["win_h"] = D["win_y1"] - D["win_y0"]
-    D["tft_z0"] = D["tft_air"]
-    D["tft_z1"] = D["z_fp0"] - gap   # the plain faceplate over this rectangle is the window itself
     D["tft_short_w"] = max(0.0, D["tft_w"] - D["win_w"])
     # Laser placeholders, on the PCB under the joystick, not printed. Two top corners.
     ly = D["pcb_y1"] - D["ledge_w"] - D["laser_d"] / 2.0 - gap
@@ -508,17 +534,21 @@ def derive(D):
     y_joy = D["joy_y_near"] - br - gap
     D["boss_y_room"] = y_joy - y_knob
     y_hi = (y_knob + y_joy) / 2.0 if y_joy >= y_knob else y_knob
-    y_above = D["win_y1"] + br + D["tft_gap"]
     y_scan = D["y_mot"] + D["mirror_r"] + br + gap
-    y_floor = max(y_scan, D["pcb_y0"] + br + gap)
-    if not D["scanner_enabled"]:
-        y_lo = -y_knob if -y_knob >= y_above else y_above
+    y_floor = D["pcb_y0"] + br + gap
+    if D["scanner_enabled"]:
+        y_floor = max(y_scan, y_floor)
+    if D["tft_on_front"]:
+        y_above = D["win_y1"] + br + D["tft_gap"]
+        y_lo = y_above if (not D["scanner_enabled"] or y_above <= -y_knob) else (
+            y_floor if y_floor <= -y_knob else -y_knob)
     else:
-        y_lo = y_above if y_above <= -y_knob else (y_floor if y_floor <= -y_knob else -y_knob)
+        y_above = y_floor
+        y_lo = y_floor if y_floor <= -y_knob else -y_knob
 
     def _y_for(x):
         y = y_lo
-        if _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
+        if D["tft_on_front"] and _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
             if y_above <= -y_knob:
                 y = y_above
         return y
@@ -539,7 +569,7 @@ def derive(D):
         dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
         if math.hypot(dx, dy) < br + D["seat_gap"]:
             return False
-        if _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"] - 1e-9:
+        if D["tft_on_front"] and _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"] - 1e-9:
             return False
         if any(math.hypot(x - cx, y - cy) < sep - 1e-6 for cx, cy in D["corners"]):
             return False
@@ -548,14 +578,14 @@ def derive(D):
         return True
 
     bolts = []
-    # The band just above the active area is the one place a Ø9 boss clears the window.
-    y_bolt = y_above
-    disc = D["bolt_r"] * D["bolt_r"] - y_bolt * y_bolt
-    if disc > 0.0:
-        x_bolt = math.sqrt(disc)
-        for x in (x_bolt, -x_bolt):
-            if _bolt_ok(x, y_bolt, bolts):
-                bolts.append((x, y_bolt))
+    if D["tft_on_front"]:
+        y_bolt = y_above
+        disc = D["bolt_r"] * D["bolt_r"] - y_bolt * y_bolt
+        if disc > 0.0:
+            x_bolt = math.sqrt(disc)
+            for x in (x_bolt, -x_bolt):
+                if _bolt_ok(x, y_bolt, bolts):
+                    bolts.append((x, y_bolt))
     if len(bolts) < D["knob_bolt_n"]:
         steps = 180
         for i in range(steps):
@@ -602,6 +632,25 @@ def derive(D):
     top_span = (D["panel_w"] - D["joy_hole"][0]) / 2.0
     D["rail_top_web"] = (top_span - D["rail_hole_d"]) / 2.0
     D["rail_top_ok"] = 1.0 if D["rail_top_web"] >= D["sla_min"] else 0.0
+    # Front face freed below the knob, above the rail zone. Jack bodies must stay
+    # inside the panel; the pitch is the body plus air, and also the 3 HP column.
+    D["face_y0"] = D["panel_y0"] + D["rail_clear"]
+    D["face_y1"] = -D["knob_hole_r"]
+    D["face_free_h"] = D["face_y1"] - D["face_y0"]
+    D["face_free_w"] = D["panel_w"]
+    half = D["jack_body"] / 2.0
+    D["jack_x_lim"] = D["panel_w"] / 2.0 - half - D["jack_air"]
+    D["jack_pitch"] = D["jack_body"] + D["jack_air"]
+    D["jack_pitch_hp"] = 3.0 * D["hp_pitch"]
+    pitch = max(D["jack_pitch"], D["jack_pitch_hp"])
+    usb_gap = half + D["usb_w"] / 2.0 + D["jack_air"]
+    span = 2.0 * D["jack_x_lim"]
+    k = 0
+    while k < 8 and (k * pitch + usb_gap) <= span + 1e-9:
+        k += 1
+    D["jack_n"] = k
+    D["jack_pitch_used"] = pitch
+    D["usb_gap"] = usb_gap
     D["ox"] = 0.0
     D["oy"] = 0.0
     return D

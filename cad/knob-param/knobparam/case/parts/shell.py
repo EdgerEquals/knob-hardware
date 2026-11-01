@@ -176,15 +176,14 @@ def build(D):
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["x_in0"], -D["pcb_x1"] + lw, D["pcb_y0"], D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["pcb_x1"] - lw, D["x_in1"], D["pcb_y0"], D["pcb_y1"], z0, z1))
-    # Side ledges run the full board height and would sit inside the TFT keep-out
-    # (active area plus tft_gap). Pull only that ledge band back. Bosses are added
-    # after this, on the safe side of the same gap. The faceplate over the window stays.
-    eps = 0.02
-    ky0, ky1 = D["win_y0"] - D["tft_gap"], D["win_y1"] + D["tft_gap"]
-    case = _sub(case, _box(D["pcb_x1"] - lw - eps, min(D["x_in1"], D["win_x1"] + D["tft_gap"]),
-                           ky0, ky1, z0 - eps, z1 + eps))
-    case = _sub(case, _box(max(D["x_in0"], D["win_x0"] - D["tft_gap"]), -D["pcb_x1"] + lw + eps,
-                           ky0, ky1, z0 - eps, z1 + eps))
+    if D["tft_on_front"]:
+        # Side ledges would cross a front window. Pull only that ledge band back.
+        eps = 0.02
+        ky0, ky1 = D["win_y0"] - D["tft_gap"], D["win_y1"] + D["tft_gap"]
+        case = _sub(case, _box(D["pcb_x1"] - lw - eps, min(D["x_in1"], D["win_x1"] + D["tft_gap"]),
+                               ky0, ky1, z0 - eps, z1 + eps))
+        case = _sub(case, _box(max(D["x_in0"], D["win_x0"] - D["tft_gap"]), -D["pcb_x1"] + lw + eps,
+                               ky0, ky1, z0 - eps, z1 + eps))
     # corner posts beside the PCB. The thread is the lower part; the post runs up into the plate.
     for x, y in D["corners"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_fp0"] + fu, x, y))
@@ -262,7 +261,8 @@ def build(D):
     for x, y in D["corners"]:
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_fp1"], x, y))
     glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
-    glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))
+    if D["tft_on_front"]:
+        glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))
 
     # PETG cover. Outer skin is the same rectangle as the shell, so the side faces are one line.
     # The pocket is inside that skin. A tongue captures the PCB edge; the PCB never reaches the outside.
@@ -281,6 +281,9 @@ def build(D):
         cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
         cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_pad_out"] - sl, D["z_pad_out"] + D["cbore_depth"], x, y))
         cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
+    if not D["tft_on_front"]:
+        cover = _sub(cover, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"],
+                                 D["z_cover_out"] - sl, D["z_cover_in"] + sl))
     screws = {}
     for i, (x, y) in enumerate(D["corners"]):
         z_head = D["z_pad_out"] + D["head_below"]
@@ -306,15 +309,22 @@ def build(D):
     pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
     for x, y in D["corners"]:
         pcb = _sub(pcb, _cyl_z(D["notch_r"], D["z_pcb_back"] - sl, sl, x, y))
-    # clear column over the bottom TFT: not a cutout, the resin here stays plain
-    window = _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"])
+    if D["tft_on_front"]:
+        window = _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"])
+        module = None
+    else:
+        window = _box(D["win_x0"] + D["nest_gap"], D["win_x1"] - D["nest_gap"],
+                      D["win_y0"] + D["nest_gap"], D["win_y1"] - D["nest_gap"], D["back_z0"], D["back_z1"])
+        module = _box(D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"], D["tft_z0"], D["tft_z1"])
     lasers = {}
     for i, (x, y) in enumerate(D["lasers"]):
         lasers[f"laser placeholder {i + 1}"] = _box(
             x - D["laser_w"] / 2.0, x + D["laser_w"] / 2.0,
             y - D["laser_d"] / 2.0, y + D["laser_d"] / 2.0, D["tft_air"], D["tft_air"] + D["laser_h"])
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
-           "PCB": pcb, "bottom TFT window": window}
+           "PCB": pcb, "back TFT window": window}
+    if module is not None:
+        out["back TFT module (placeholder)"] = module
     if D["scanner_enabled"]:
         out.update({"scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
                     "grating film": film, "VCSEL 665 nm": vcsel})

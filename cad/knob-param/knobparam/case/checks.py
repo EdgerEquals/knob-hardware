@@ -24,22 +24,21 @@ def checks(D, parts):
         f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
-    row("bottom TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
+    row("back TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
         f"active {D['win_w']:.2f}×{D['win_h']:.2f} at x {D['win_x0']:.2f}..{D['win_x1']:.2f}, "
-        f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}, z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}; "
-        f"bosses stay {D['tft_gap']:.2f} mm outside it")
-    row("bosses clear of the TFT window", D["boss_win_clear"], D["tft_gap"], "no post in the light path")
-    win = parts["bottom TFT window"]
-    hit = case.intersect(win)
-    blocked = 0.0 if hit is None or not hit.solids() else sum(s.volume for s in hit.solids())
-    row("TFT light path is empty", blocked, 0.0, "no shell solid in the window column", higher_ok=False)
-    y_mid = (D["win_y0"] + D["win_y1"]) / 2.0
-    x_keep = (D["pcb_x1"] - D["ledge_w"] + D["win_x1"] + D["tft_gap"]) / 2.0
-    z_led = (D["z_ledge0"] + D["z_ledge1"]) / 2.0
-    side_open = D["pcb_x1"] - D["ledge_w"] < D["win_x1"] + D["tft_gap"] - 1e-6
-    row("TFT side keep-out is open",
-        0.0 if (side_open and _inside(case, x_keep, y_mid, z_led)) else 1.0, 1.0,
-        f"side ledge pulled back to {D['tft_gap']:.2f} mm outside the active area")
+        f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}; module {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f}×{D['tft_mod_t']:.1f} "
+        f"with a {D['tft_border']:.1f} mm border")
+    win = parts["back TFT window"]
+    cover_hit = cover.intersect(win)
+    blocked = 0.0 if cover_hit is None or not cover_hit.solids() else sum(s.volume for s in cover_hit.solids())
+    row("TFT light path is open through the cover", blocked, 0.0,
+        "the active area is a hole in the back skin, not a front window", higher_ok=False)
+    mod = parts.get("back TFT module (placeholder)")
+    if mod is not None:
+        mb = mod.bounding_box()
+        inside = min(D["void_x1"] - mb.max.X, mb.min.X - D["void_x0"], D["void_y1"] - mb.max.Y, mb.min.Y - D["void_y0"])
+        row("back TFT module inside the pocket", inside, D["tft_gap"],
+            f"outline {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f} at y {D['mod_y0']:.2f}..{D['mod_y1']:.2f}")
     lasers = [parts[n] for n in parts if n.startswith("laser")]
     lhit = 0.0
     for laser in lasers:

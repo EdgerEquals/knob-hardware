@@ -38,7 +38,9 @@ def _colour(D, name):
         return (0.85, 0.75, 0.35), 1.0
     if name == "beam":
         return (0.85, 0.15, 0.12), 0.28
-    if name.startswith("bottom TFT"):
+    if name.startswith("back TFT module"):
+        return (0.08, 0.10, 0.16), 0.95
+    if "TFT window" in name:
         return (0.25, 0.75, 0.95), 0.35
     if name.startswith("laser"):
         return (0.95, 0.25, 0.35), 0.45
@@ -139,8 +141,7 @@ def _annotate_mid(ax, D, bounds, fs):
     _tag(ax, fx(D["x_out0"] + 1.2), fz((D["z_fp0"] + D["z_rim"]) / 2.0), "shell", fs)
     _tag(ax, fx(D["x_out0"] + 1.2), fz(D["z_rim_seat"] - 4.0), "cover", fs)
     _tag(ax, fx(0.0), fz(D["z_pcb_back"] / 2.0), "PCB inside", fs)
-    _tag(ax, fx(D["win_x0"] + 8.0), fz((D["tft_z0"] + D["tft_z1"]) / 2.0),
-         f"TFT {D['win_w']:.2f}×{D['win_h']:.2f}", fs)
+    _tag(ax, fx(0.0), fz(D["z_cover_out"] + 1.5), "back TFT", fs)
     _tag(ax, fx(D["pcb_x1"] - 2.0), fz(D["z_ledge1"] + 3.0), "ledge", fs)
     xd = fx(D["pcb_x1"] * 0.35)
     ax.annotate("", xy=(xd, fz(D["z_fp1"])), xytext=(xd, fz(0.0)),
@@ -214,7 +215,7 @@ def _annotate_section(ax, D, bounds, fs):
     rad = math.hypot(sx, sy)
     t = _ray_hit(ang, D["pcb_x1"], D["pcb_y0"], D["pcb_y1"])
     _tag(ax, _fx(-D["collar_r"] + 2.0, bounds), _fz(D["z_fp0"] + 2.8, bounds), "collar", fs)
-    _tag(ax, _fx(-14.0, bounds), _fz(D["lab_z0"], bounds), "labyrinth", fs)
+    _tag(ax, _fx(-14.0, bounds), _fz(D["lab_ring_z0"], bounds), "seal ring", fs)
     _tag(ax, _fx(-8.0, bounds), _fz(D["z_pcb_back"] - 1.6, bounds), "PCB", fs)
     _tag(ax, _fx(t - 2.0, bounds), _fz(16.0, bounds), "shell ledge", fs)
     _tag(ax, _fx(4.0, bounds), _fz(D["z_flange_out"] - 5.2, bounds), "clamp rim", fs)
@@ -251,8 +252,8 @@ def _annotate_plan(ax, D, fs):
     _tag(ax, fx(0.0), fy(D["place_y"]), f"bezel {D['bezel_w']:.1f}", fs)
     for x, y in D["corners"]:
         _tag(ax, fx(x + (7.5 if x > 0 else -7.5)), fy(y), "M3", fs)
-    _tag(ax, fx(0.0), fy((D["win_y0"] + D["win_y1"]) / 2.0),
-         f"TFT {D['win_w']:.2f}×{D['win_h']:.2f}", fs)
+    _tag(ax, fx(0.0), fy((D["face_y0"] + D["face_y1"]) / 2.0),
+         f"{D['jack_n']} jacks + USB-C", fs)
     _tag(ax, fx(0.0), fy(D["panel_y0"] + 8.0), f"PCB {D['nest_w']:.2f}   wall {D['wall']:.1f}", fs)
 
 
@@ -284,7 +285,7 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head"),
-               Patch(facecolor=(0.25, 0.75, 0.95), label="bottom TFT window"),
+               Patch(facecolor=(0.25, 0.75, 0.95), label="TFT light path (air, keep-out)"),
                Patch(facecolor=(0.95, 0.25, 0.35), label="laser placeholder")]
     fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.44))
     fig.text(0.02, 0.005, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
@@ -335,7 +336,8 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     glow = parts["glow coat (inside walls)"]
     beam = beam_solid(D) if D["scanner_enabled"] else None
     show = [("case", case), ("glow", glow), ("back cover", parts["back cover (PETG)"]),
-            ("PCB", parts["PCB"]), ("bottom TFT window", parts["bottom TFT window"]),
+            ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
+            ("back TFT module", parts.get("back TFT module (placeholder)")),
             ("corner screw 1", parts["corner screw 1"])]
     if beam is not None:
         show.append(("beam", beam))
@@ -347,9 +349,9 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     shots = []
     joint = [("case", case), ("back cover", parts["back cover (PETG)"]),
              ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"]),
-             ("bottom TFT window", parts["bottom TFT window"])]
+             ("back TFT window", parts["back TFT window"])]
     plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
-                 ("PCB", parts["PCB"]), ("bottom TFT window", parts["bottom TFT window"]),
+                 ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
                  ("corner screw 1", parts["corner screw 1"])]
     plan_show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if preview:
@@ -411,7 +413,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
               f"knob top {D['knob_top_used']:.2f} − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
               f"    plate {D['wall']:.2f} + cavity {D['z_fp0']:.2f} + PCB {D['pcb_t']:.2f}"
               f" + rear {D['rear_stack']:.2f} + cover past stack {past_stack:.2f}\n"
-              f"TFT {D['win_w']:.2f} × {D['win_h']:.2f}    "
+              f"back TFT {D['win_w']:.2f} × {D['win_h']:.2f}    "
               f"x {D['win_x0']:.2f}..{D['win_x1']:.2f}    "
               f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}    "
               f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}\n"

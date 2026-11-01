@@ -20,7 +20,8 @@ CASE_GROUPS = [
     ("shell, plain clear resin — printed M3 threads in the bosses", "#c5d0d8", lambda n: n == "case"),
     ("Shimicoat glow coat, inside walls", "#8fd184", lambda n: n.startswith("glow")),
     ("back cover, smoky PETG", "#84888e", lambda n: n.startswith("back cover")),
-    ("TFT light path (air, keep-out)", "#3ec0f0", lambda n: n.startswith("bottom TFT")),
+    ("TFT light path (air, keep-out)", "#3ec0f0", lambda n: "TFT window" in n),
+    ("back TFT module (placeholder)", "#101828", lambda n: n.startswith("back TFT module")),
     ("laser placeholder", "#f23b52", lambda n: n.startswith("laser")),
     ("ISO 4762 M3×10 corner screws, A2", "#b7bcc6", lambda n: n.startswith("corner screw")),
     ("knob bolts, M3", "#9aa0aa", lambda n: n.startswith("knob bolt")),
@@ -134,7 +135,7 @@ def _draw(pl, pv, meshes, lw=1.2):
     for n, m in meshes.items():
         gi = group_of(n)
         col = GROUPS[gi][1] if gi is not None else "#9e9e9e"
-        keep = n.startswith("bottom TFT")
+        keep = "TFT window" in n
         for _cut, (P, T) in m.items():
             if len(T) == 0:
                 continue
@@ -232,9 +233,9 @@ def render_sheet(D, parts, keys, paths, out_png):
         (f"{tmp}/sx.png", "SECTION  —  across X, through the knob axis",
          f"Dial axis up. {D['hp']} HP, {D['panel_w']:.2f} mm wide."),
         (f"{tmp}/sp.png", "SECTION  —  just above the PCB",
-         f"TFT window {D['win_w']:.2f} × {D['win_h']:.2f} mm, x {D['win_x0']:.2f}..{D['win_x1']:.2f}, y {D['win_y0']:.2f}..{D['win_y1']:.2f}."),
+         f"Front below the knob is clear. {D['jack_n']}× Thonkiconn + USB-C fit in one row."),
         (f"{tmp}/iso.png", "ISOMETRIC CUT-AWAY",
-         "Helices in the bosses are the printed M3 threads. The cyan outline is the TFT light path, not a part."),
+         "Helices in the bosses are the printed M3 threads. The blue outline is the back TFT light path, not a part."),
     ]
     shown = []
     for meshes in (m_y, m_x, m_p, m_i):
@@ -259,7 +260,7 @@ def render_sheet(D, parts, keys, paths, out_png):
     tb.add_patch(Rectangle((0.01, 0.02), 0.98, 0.96, fill=False, lw=1.0, edgecolor="#222222", transform=tb.transAxes))
     tb.text(0.06, 0.72, f"10 HP    {D['panel_w']:.2f} mm wide", fontsize=14, va="center", transform=tb.transAxes)
     tb.text(0.06, 0.40, f"depth {behind:.2f} mm    faceplate to PCB {D['fp_to_pcb']:.2f} mm", fontsize=14, va="center", transform=tb.transAxes)
-    tb.text(0.06, 0.12, f"TFT {D['win_w']:.2f} × {D['win_h']:.2f} mm", fontsize=14, va="center", transform=tb.transAxes)
+    tb.text(0.06, 0.12, f"back TFT {D['win_w']:.2f} × {D['win_h']:.2f} mm", fontsize=14, va="center", transform=tb.transAxes)
 
     rects = [
         [0.02, 0.56, 0.46, 0.30],

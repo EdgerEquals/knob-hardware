@@ -25,35 +25,27 @@
    "owner": "case"
   },
   {
-   "name": "bottom TFT window",
+   "name": "back TFT window",
    "value": 30.48,
    "target": ">= 30.48",
    "ok": true,
-   "note": "active 40.64\u00d730.48 at x -20.32..20.32, y -60.20..-29.72, z 1.00..32.75; bosses stay 0.80 mm outside it",
+   "note": "active 40.64\u00d730.48 at x -20.32..20.32, y -60.30..-29.82; module 44.64\u00d734.48\u00d73.2 with a 2.0 mm border",
    "owner": "case"
   },
   {
-   "name": "bosses clear of the TFT window",
-   "value": 8.391,
-   "target": ">= 0.8",
-   "ok": true,
-   "note": "no post in the light path",
-   "owner": "case"
-  },
-  {
-   "name": "TFT light path is empty",
+   "name": "TFT light path is open through the cover",
    "value": 0.0,
    "target": "<= 0",
    "ok": true,
-   "note": "no shell solid in the window column",
+   "note": "the active area is a hole in the back skin, not a front window",
    "owner": "case"
   },
   {
-   "name": "TFT side keep-out is open",
-   "value": 1.0,
-   "target": ">= 1",
+   "name": "back TFT module inside the pocket",
+   "value": 0.8,
+   "target": ">= 0.8",
    "ok": true,
-   "note": "side ledge pulled back to 0.80 mm outside the active area",
+   "note": "outline 44.64\u00d734.48 at y -62.30..-27.82",
    "owner": "case"
   },
   {
@@ -226,7 +218,7 @@
   },
   {
    "name": "boss clears the knob hole",
-   "value": 0.4,
+   "value": 0.765,
    "target": ">= 0.4",
    "ok": true,
    "note": "upper bosses y 17.39, room between knob and joystick 1.12",
@@ -469,7 +461,7 @@
    "value": 3.3,
    "target": ">= 0.3",
    "ok": true,
-   "note": "notch \u00d89.60 at x 19.95, y -16.83",
+   "note": "notch \u00d89.60 at x 19.95, y -57.60",
    "owner": "case"
   },
   {
@@ -485,15 +477,15 @@
    "value": 3.0,
    "target": ">= 2.5",
    "ok": true,
-   "note": "2 bolts up into the shell, tip z 33.05",
+   "note": "4 bolts up into the shell, tip z 33.05",
    "owner": "case"
   },
   {
    "name": "knob bolts present",
-   "value": 2.0,
+   "value": 4.0,
    "target": ">= 2",
    "ok": true,
-   "note": "2 on the lower arc; the TFT window and the bosses leave room for fewer than 4",
+   "note": "4 on the lower arc; the TFT window and the bosses leave room for fewer than 4",
    "owner": "case"
   },
   {
@@ -514,10 +506,10 @@
   },
   {
    "name": "case mass",
-   "value": 59.009,
+   "value": 60.658,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 45391 mm\u00b3 (45.4 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 46660 mm\u00b3 (46.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {
