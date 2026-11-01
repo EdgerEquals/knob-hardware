@@ -42,6 +42,11 @@ def main():
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],
         d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"], pcb=(D["pcb_w"], D["pcb_above"], D["pcb_below"]),
         knob_proud=D["knob_proud"], z_top=D["z_top"], z_knob_top=g("z_knob_top"),
+        knob_od=D["knob_od"], sleeve_id=D["sleeve_id"], sleeve_len=g("sleeve_len"), sleeve_wall=D["sleeve_wall"],
+        sleeve_z0=g("sleeve_z0"), sleeve_z1=g("sleeve_z1"), sleeve_od_tol=D["sleeve_od_tol"], sleeve_ovality=D["sleeve_ovality"],
+        knob_hole_clear=D["knob_hole_clear"],
+        knob_hole_d=D["knob_od"] + 2 * D["knob_hole_clear"],
+        knob_hole_d_max=D["knob_od"] + D["sleeve_od_tol"] + 2 * D["knob_hole_clear"],
         faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)

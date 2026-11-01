@@ -202,7 +202,19 @@ P = dict(
     lip_wall_lines=3,   # [Ed] v0.17: lip wall 3 lines = 1.2 mm, thickened outward (v0.16 was 2 lines / 0.8)
     print_wall_min=1.0,   # [Ed] v0.17: printed walls (lip far side and outside the bend pocket) at least this
     bend_clear=0.1,   # [A] COF bend / ledge to the lip pocket wall
-    knob_od_step=0.01,   # [A] knob OD rounded up to this
+    knob_od_step=0.01,   # [A] screen OD rounded up to this
+    knob_od=42.0,   # [Ed] measured borosilicate 3.3 sleeve OD. Nominal 42. The screen minimum is still checked.
+    sleeve_wall=2.15,   # [Ed] nominal wall, inside the bought 2.0–2.3 band (ID ≥ 37.4 at OD 42 and wall 2.3)
+    sleeve_wall_lo=2.0,   # [Ed]
+    sleeve_wall_hi=2.3,   # [Ed]
+    sleeve_od_tol=0.6,   # [Ed] supplier OD, ±
+    sleeve_wall_tol=0.2,   # [Ed] supplier wall, ±
+    sleeve_ovality=0.5,   # [Ed] max diameter minus min diameter
+    sleeve_glue=0.25,   # [Ed] radial glue line on the measured bore. Design point inside 0.2–0.3
+    sleeve_glue_lo=0.2,   # [Ed]
+    sleeve_glue_hi=0.3,   # [Ed]
+    sleeve_chamfer_k=0.12,   # [A] fire-polished end, chamfer as a fraction of the wall
+    sleeve_insert_k=2.0,   # [A] cap engagement into the bore, in wall-thicknesses
     rel_sensor=False,   # [Ed] v0.16b: knob ring magnet + dial TMAG5273 REMOVED (duplicate of the encoder + Hall row). True = v0.16
     # ---- v0.16 relative knob-vs-dial angle [Ed] (only when rel_sensor): diametric ring magnet in the knob (blue), 3D TMAG5273 on a sensor board in the
     # control dial (purple), so the sensor reads the knob angle relative to the dial (v0.15: Ø3×1 dial magnet under a fixed U3) ----
@@ -321,7 +333,7 @@ def _motor_room(enc, ang, cd, tip_r, D):
 def _place_herringbone(D, R):
     """Coarsest normal module whose 25° herringbone keeps the root-to-skin wall at least the main knob wall
     (a bit thicker when the race seat allows), clears the 1220 by the cradle clearance, keeps hb_z_min teeth,
-    and whose feel train can reach hb_ratio_target. The outer radius R is fixed: the teeth move inward."""
+    and whose feel train can reach hb_ratio_target. The outer radius R is the cap skin: the teeth move inward."""
     beta, pa = D["hb_beta"], D["hb_pressure"]
     ha, ded = D["hb_addendum"], D["hb_dedendum"]
     cosb = math.cos(math.radians(beta))
@@ -355,6 +367,8 @@ def _place_herringbone(D, R):
                 tip_r, root_r = pr - ha * mn, pr + ded * mn
                 wall = R - root_r
                 if tip_r < tip_min or wall < D["ring_wall_req"]:
+                    continue
+                if _ot_solution(D, root_r, R) is None:
                     continue
                 pp = zp * mt / 2
                 enc = pr - pp
@@ -471,6 +485,38 @@ def _set_travel(D):
     D["travel_deg"] = D["det_deg"] + math.degrees(D["det_stop_clear"] / D["det_r_nom"])
 
 
+def _ot_solution(D, root_r, R):
+    """Ball pitch closest to the middle of the cap band that still has a loose-glass count. None if the band cannot."""
+    d_load, dmin, dmax = D["ot_ball_d"], D["ot_spacer_min"], D["ot_spacer_max"]
+    rb = d_load / 2
+    half_w = rb + D["ot_seat_gap"]
+    lo, hi = root_r + half_w, R - half_w
+    if hi < lo - 1e-9:
+        return None
+    a0, a1 = D["ot_keep_ang"]
+    free = 360.0 - ((a1 - a0) % 360.0)
+    mid = (lo + hi) / 2
+    steps = max(1, int(round((hi - lo) / 0.01)))
+    best = None
+    for s in range(steps + 1):
+        r = lo + (hi - lo) * s / steps
+        margin = math.degrees(math.asin(min(0.999, rb / r))) + D["ot_seat_gap"]
+        usable = free - 2 * margin
+        if usable <= 0:
+            continue
+        for n in range(6, 90):
+            ang = usable / (2 * n - 1)
+            chord = 2 * r * math.sin(math.radians(ang) / 2.0)
+            gap_max = chord - (d_load + dmax) / 2.0
+            gap_min = chord - (d_load + dmin) / 2.0
+            if gap_max < D["ot_play"] or gap_min > D["ot_play_max"] or gap_min <= 0:
+                continue
+            key = (abs(r - mid), gap_max)
+            if best is None or key < best[0]:
+                best = (key, r, n, ang, chord, gap_max, gap_min, margin)
+    return None if best is None else best[1:]
+
+
 def _ot_gaps(r, n_pairs, free_deg, d_load, d_spacer):
     """Chord between a load ball and the next spacer, and how much air is left."""
     ang = free_deg / (2 * n_pairs)
@@ -486,7 +532,7 @@ def _place_outer_thrust(D):
     dmin, dmax = D["ot_spacer_min"], D["ot_spacer_max"]
     rb = d_load / 2.0
     rg = rb + D["ot_seat_gap"]
-    root_r, R = D["hb_root_r"], D["R"]
+    root_r, R = D["hb_root_r"], D["cap_r"]   # the groove is cut in the printed cap, not in the glass
     # Groove bottom sits ot_land_min above the PCB. The ball equator stays on the knob underside,
     # so the underside rises with the land. Radial ring band and cradle clearance are not moved.
     z_ball = max(D["h_skirt0"], D["ot_land_min"] + rg)
@@ -495,32 +541,13 @@ def _place_outer_thrust(D):
         D["h_pin0"] = z_ball + D["pin_above_skirt"]
         D["h_pin1"] = D["h_pin0"] + D["pin_face"]
     half_w = rg
-    span = R - root_r
-    if span > 2 * half_w:
-        land = (span - 2 * half_w) / 2.0
-        r = root_r + land + half_w
-    else:
-        r = min(max((root_r + R) / 2.0, root_r + half_w), R - half_w)
-    land_in, land_out = r - half_w - root_r, R - (r + half_w)
-    a0, a1 = D["ot_keep_ang"]
-    keep = (a1 - a0) % 360.0
-    free = 360.0 - keep
-    # keep a load-ball radius clear of the printed blank that fills the keep-out
-    margin = math.degrees(math.asin(min(0.999, rb / r))) + D["ot_seat_gap"]
-    usable = free - 2 * margin
-    best = None
-    for n in range(6, 90):
-        ang = usable / (2 * n - 1)
-        chord = 2 * r * math.sin(math.radians(ang) / 2.0)
-        gap_max = chord - (d_load + dmax) / 2.0
-        gap_min = chord - (d_load + dmin) / 2.0
-        if gap_max < D["ot_play"] or gap_min > D["ot_play_max"] or gap_min <= 0:
-            continue
-        if best is None or gap_max < best[0]:
-            best = (gap_max, n, ang, chord, gap_min)
-    if best is None:
+    # The glass OD widens the cap. Sit the pitch where the loose-glass window still has a count.
+    solved = _ot_solution(D, root_r, R)
+    if solved is None:
         raise ValueError("no cageless ball count fits the spacer window")
-    _g, n, ang, chord, gap_min = best
+    r, n, ang, chord, gap_max, gap_min, margin = solved
+    a0, a1 = D["ot_keep_ang"]
+    land_in, land_out = r - half_w - root_r, R - (r + half_w)
     angs = []
     a = (a1 + margin) % 360.0
     for _i in range(2 * n):
@@ -538,14 +565,14 @@ def _place_outer_thrust(D):
     D["ot_angs"] = angs[0::2]                     # load
     D["ot_spacer_angs"] = angs[1::2]
     D["ot_chord"] = chord
-    D["ot_gap_max"] = best[0]                     # air at the large spacer
+    D["ot_gap_max"] = gap_max                     # air at the large spacer
     D["ot_gap_min"] = gap_min                     # air at the small spacer
-    D["ot_play_total"] = 2 * n * best[0]          # whole ring, large spacers
+    D["ot_play_total"] = 2 * n * gap_max          # whole ring, large spacers
     D["ot_track_clear_max"] = (d_load - dmax) / 2.0
     D["ot_track_clear_min"] = (d_load - dmin) / 2.0
     D["ot_track_clear_alt"] = (d_load - D["ot_spacer_alt"]) / 2.0
     D["ot_gap_alt"] = chord - (d_load + D["ot_spacer_alt"]) / 2.0
-    D["ot_light_gap"] = best[0]                  # slit between a load ball and a max spacer
+    D["ot_light_gap"] = gap_max                  # slit between a load ball and a max spacer
     ruby = min(D["ot_ruby_n"], n)
     D["ot_ruby_idx"] = list(range(ruby))
     D["ot_z_top"] = z_ball                        # bottom track stops at the equator (not a cage)
@@ -687,9 +714,19 @@ def derive(D):
                                                       D["lip_wall_min"], D["bend_clear"])
     st = D["knob_od_step"]
     screen_od = math.ceil(D["knob_od_min"] / st - 1e-9) * st
-    # OD stays the screen lip. The ring band and the race grow inward; the teeth and the cradle follow.
-    D["knob_od"] = screen_od
-    _place_herringbone(D, D["knob_od"] / 2)
+    D["knob_od_screen"] = screen_od
+    # The bought sleeve is the OD. Caps are flush with that measured OD and locate on the bore.
+    D["sleeve_id"] = D["knob_od"] - 2 * D["sleeve_wall"]
+    D["sleeve_id_spec"] = D["knob_od"] - 2 * D["sleeve_wall_hi"]          # 37.4 at OD 42, wall 2.3
+    D["sleeve_wall_worst"] = max(D["sleeve_wall_hi"], D["sleeve_wall"] + D["sleeve_wall_tol"])
+    D["sleeve_id_worst"] = (D["knob_od"] - D["sleeve_od_tol"]) - 2 * D["sleeve_wall_worst"] - D["sleeve_ovality"]
+    D["sleeve_chamfer"] = D["sleeve_wall"] * D["sleeve_chamfer_k"]
+    D["sleeve_spigot_r"] = D["sleeve_id"] / 2 - D["sleeve_glue"]          # both caps, one datum
+    D["sleeve_lip_r"] = D["motor_offset"] + D["can_r"] + D["ring_can_clear"]
+    D["sleeve_gap_lo"] = D["sleeve_glue"] - D["sleeve_ovality"] / 2 - D["sleeve_wall_tol"]
+    D["sleeve_gap_hi"] = D["sleeve_glue"] + D["sleeve_ovality"] / 2 + D["sleeve_wall_tol"]
+    D["cap_r"] = D["knob_od"] / 2
+    _place_herringbone(D, D["cap_r"])
     D["skirt_wall"] = (D["knob_od"] - D["skirt_id"]) / 2
     D["R"] = D["knob_od"] / 2
     _set_travel(D)   # v0.17: ±det_deg latch, hard stop a ball-clearance past it (hall arc and the fan follow this)
@@ -753,6 +790,8 @@ def derive(D):
     _place_feel(D)
     _place_mech(D)
     _place_outer_thrust(D)
+    # Cans stand up into the sleeve. The ring tips and the pinions stop at the cap, under the glass.
+    D["sleeve_inside_r"] = max(D["motor_offset"] + D["can_r"], math.hypot(*D["fm_xy"]) + D["feel"]["can_d"] / 2)
     # ---- v0.16 knob ring magnet / dial sensor ----
     D["tm_r"] = (D["tm_ring"][0] + D["tm_ring"][1]) / 4                  # sensor element over the ring mid radius
     D["tm_xy"] = (D["tm_r"] * math.cos(math.radians(D["tm_ang"])), D["tm_r"] * math.sin(math.radians(D["tm_ang"])))

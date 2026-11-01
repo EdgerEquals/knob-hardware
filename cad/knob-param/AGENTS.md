@@ -1,7 +1,7 @@
 # knob-param — agent guide (parallel work by sub-assembly)
 
-Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø41.65, derived from the
-AMOLED COF bend + a 1.2 mm printable lip wall).
+Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø42.0, the measured
+borosilicate sleeve; the screen still needs at least Ø41.641).
 Default params are **v0.18**. v0.17 is kept in `cad/assemblies/knob-stack-v0.17/`. v0.18: 25° herringbone
 (module 0.67, 51T ring split in two halves, 12T pinions), every gear PA-12 (the motor pinions use the Tempero
 0.5M-12T and RW m0.6 14T tooth forms, printed), feel train 15.58:1, hub 1.571:1, and UTR-8100 Fresnel caps on the
@@ -122,12 +122,11 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`): main_knob 4, control_dial 17, base_drive 14, under_pcb 2, electronics 2, plus 30 cross
-  rows (`assembly`) = **69 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
+* **Local** (`<sub>/checks.py`): main_knob 17, control_dial 17, base_drive 14, under_pcb 2, electronics 2, plus 47 cross
+  rows (`assembly`) = **99 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
   re-count from that file whenever checks are added or removed, rather than editing numbers by hand.
 * **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.18).
-* **v0.18: 69/69 gap checks PASS, 0 clashes** on the proxy and on `--full`. `--full` drills the 716 shaft, the compound pin, and the
-  moved H2 into the committed STEP (the KiCad board does not have those holes yet). v0.17 was 62/62. v0.16b was 54/54.
+* **v0.18 glass sleeve: 96/99 gap checks PASS, 5 clashes** on the proxy. The two glue rows fail because 0.5 mm ovality and ±0.2 mm wall do not fit a 0.20–0.30 mm glue band; the Hall spoke is 0.295 mm against a 0.3 mm target. v0.17 was 62/62. v0.16b was 54/54.
   The old PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
 * History: v0.16 had 41/42 (dial lip wall far side 0.36 < 0.4, fixed by the closed 0.8 lip); v0.15d also failed
   "geared feel motor depth 25.8 > 25" (removed in v0.16: the 716 is no longer under the board).

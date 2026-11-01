@@ -6,6 +6,16 @@ Renders: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan 
 `cad/assemblies/knob-stack-v0.17/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
 `docs/top-screen-joystick.md`).
 
+## Glass sleeve (Ed, 1 Nov 2026)
+
+The see-through band of the main knob is a bought borosilicate 3.3 tube, not printed PETG. `knob_od` is the measured sleeve OD, nominal **42.0** (the screen still needs at least Ø41.641). Nominal wall **2.15** mm, inside the bought **2.0–2.3** band, so the nominal bore is **Ø37.70** and the thick-wall bore is **Ø37.40**. The cut length is the visible band, **38.95 mm** (z 5.05 to 44.00), not the 20 mm starting guess. Ends are chamfered 0.26 mm for the fire polish.
+
+Printed caps glue into that bore on one datum, spigot Ø37.20, radial glue **0.25** mm (the 0.20–0.30 band). The lower cap carries the 54T ring and the bottom thrust race; a clear land outside a 1 mm nylon hoop is the light path up into the glass (0.15 mm of clear entry at the race). The upper cap carries the 45° race and the screen lip. Both plugs enter 4.30 mm. The land under the groove stays **1.00 mm**.
+
+The tube has to absorb OD ±0.6, wall ±0.2 and 0.5 mm ovality. Stacked, the bore can be **Ø36.20**. That still clears the ring tips (Ø34.79, 0.71 mm radially, against a Ø36.50 skirt on the old printed knob) and the cans inside the sleeve (outermost r 16.75). It does not keep the glue line inside 0.20–0.30 all the way around: the tight side goes to −0.20 mm and the loose side to 0.70 mm. The caps are sized to the measured bore, so those two rows fail on purpose. A round cap flush with the measured OD also stands 0.25 mm proud of the oval minor axis, and that minor axis (Ø41.50) is 0.14 mm under the screen minimum.
+
+Case opening, from `cad_constraints.json`: nominal hole **Ø42.80** (`knob_od` + 2 × 0.40). If the plate is cut before the tube is measured, the hole has to clear OD + 0.6, **Ø43.40**. The old hole was Ø42.45. A collar or seal on this OD has to live with ±0.6 mm and 0.5 mm ovality; nothing in this tree is a seal. The joystick carrier, still on the old place, loses the 0.175 mm of radius and is about **0.10 mm** off the knob instead of 0.275 mm.
+
 ## Faceplate (Ed)
 
 `knob_proud = 18.0` mm is the height of the knob screen top above the faceplate front. The screen top is `z_glass`

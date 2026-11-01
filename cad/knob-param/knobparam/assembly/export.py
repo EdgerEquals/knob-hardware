@@ -8,7 +8,7 @@ import os, re, hashlib
 import numpy as np
 from ..common.cache import CACHE
 
-CLEAR = ("knob body", "control dial", "thrust carrier", "Risley", "screen carrier")
+CLEAR = ("knob glass", "knob lower-cap", "control dial", "thrust carrier", "Risley", "screen carrier")
 OPACITY = 0.35
 
 

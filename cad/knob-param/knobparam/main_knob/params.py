@@ -16,10 +16,17 @@ EXPORTS = ["h_bi1", "hb_mid"]   # ring top -> base_drive; herringbone apex -> th
 def derive(D):
     D["hb_mid"] = D["h_skirt0"] + D["bot_face"] / 2          # apex the two ring halves and the pinions share
     D["ring_root_d"] = 2 * D["hb_root_r"]
-    D["ring_wall"] = (D["knob_od"] - D["ring_root_d"]) / 2
+    D["ring_wall"] = D["cap_r"] - D["hb_root_r"]
     D["d_hg_root"] = (D["z_hub_gear"] - 2 * D["spur_dedendum"]) * D["hub_mod"]
     D["d_hg_tip"] = (D["z_hub_gear"] + 2 * D["spur_addendum"]) * D["hub_mod"]
     D["h_bi1"] = D["h_skirt0"] + D["bot_face"]
+    D["sleeve_z0"] = D["h_bi1"]
+    D["sleeve_z1"] = D["h_band1"]
+    D["sleeve_len"] = D["sleeve_z1"] - D["sleeve_z0"]
+    D["sleeve_insert"] = min(D["sleeve_wall"] * D["sleeve_insert_k"], 0.25 * D["sleeve_len"])
+    # A 1 mm nylon hoop ties the teeth. It stops under the glass; the clear land outboard of it is the light path.
+    D["sleeve_nylon_r"] = min(D["cap_r"] - D["cap_seat_gap"], D["hb_root_r"] + D["hb_wall_min"])
+    D["sleeve_land_ri"] = D["sleeve_nylon_r"] + D["cap_seat_gap"]
     D["knob_hub_top"] = D["z_hub0"] - D["knob_run"]
     D["r_bore_hi"] = D["dial_hub_od"] / 2 + D["knob_run"]
     if D["kb_race"] == "chamfer":   # v0.15d: track in the knob's 45° top chamfer; the hub fills down to the dial tube (no annular gap)

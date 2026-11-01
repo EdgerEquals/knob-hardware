@@ -105,7 +105,7 @@ def cross(D, parts):
     clip = parts["feel motor saddle seat [A]"].fuse(parts["feel motor saddle strap [A]"])
     can = [parts[n] for n in feel_names if "shaft" not in n and "saddle" not in n and "pinion" not in n][0]
     pin = [parts[n] for n in feel_names if "pinion" in n][0]
-    knob = [parts[n] for n in parts if n.startswith("knob body")][0]
+    knob = parts["knob glass sleeve"]
     rings = [parts[n] for n in parts if n.startswith("bottom internal ring")]
     ring = rings[0] if len(rings) == 1 else rings[0].fuse(*rings[1:])
     row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
@@ -149,7 +149,7 @@ def cross(D, parts):
         if cap == "feel motor pinion cap":
             return other.startswith("feel motor pinion")
         if cap == "hub gear cap":
-            return other.startswith("knob body")
+            return other.startswith("knob upper-cap")
         return False
 
     if caps:
@@ -166,7 +166,8 @@ def cross(D, parts):
     row("bottom thrust land, clear resin under the groove", D["ot_land_th"], D["ot_land_min"],
         f"groove bottom z {D['ot_z'] - D['ot_rg']:.2f}; ball centre {D['ot_z']:.2f}; underside was skirt_gap {D['skirt_gap']:.2f}, now {D['h_skirt0']:.2f}. UTR-8100, not an insert",
         procs=("sla", "sla"))
-    row("outer thrust balls vs bottom ring", min(b.distance_to(ring) for b in ot_bits), 0.0,
+    hosts = rings + ([parts["knob lower-cap land"]] if "knob lower-cap land" in parts else [])
+    row("outer thrust balls vs bottom ring", min(b.distance_to(h) for b in ot_bits for h in hosts), 0.0,
         f"Ø{D['ot_ball_d']:g} load × {D['ot_n']}, glass {D['ot_spacer_min']:g}–{D['ot_spacer_max']:g} × {D['ot_n_spacer']}, ruby {len(D['ot_ruby_idx'])} on r {D['ot_r']:.2f}",
         procs=("buy", "mjf"))
     row("spacer clears both tracks at the large end", D["ot_track_clear_max"], D["ot_seat_gap"],
