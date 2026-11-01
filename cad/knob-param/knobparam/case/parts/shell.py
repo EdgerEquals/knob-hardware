@@ -155,11 +155,12 @@ def build(D):
     r = D["fillet_r"]
     # ---- faceplate, full HP × 3U ----
     case = _plate(D["panel_w"], D["panel_h"], D["fp_corner_r"], D["z_fp0"], D["z_fp1"], D["ox"], D["panel_yc"])
-    # side walls outside the PCB, from the back rim (flush with the PCB back) up to the plate
+    # four outer walls, same rectangle the cover continues. Top and bottom stay inside the rail zone.
     case = _add(case, _box(D["x_out0"], D["x_in0"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
     case = _add(case, _box(D["x_in1"], D["x_out1"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
-    # ledge the PCB front sits against. Inboard of the outline; top and bottom have no outboard wall
-    # (the rail zone starts 0.5 mm outside the board).
+    case = _add(case, _box(D["x_out0"], D["x_out1"], D["body_y0"], D["y_in0"], D["z_rim"], D["z_fp0"] + fu))
+    case = _add(case, _box(D["x_out0"], D["x_out1"], D["y_in1"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
+    # ledge the PCB front sits against, inboard of the board edge
     lw, z0, z1 = D["ledge_w"], D["z_ledge0"], D["z_ledge1"]
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y0"] + lw, z0, z1))
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
@@ -251,25 +252,19 @@ def build(D):
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_fp1"], x, y))
     glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
 
-    # transparent PETG cover. A thin clamping tongue across the shell rim and the PCB edge,
-    # a pocket behind it for the rear stack (depth unchanged), and a pad at each corner screw.
-    body_h = D["body_y1"] - D["body_y0"]
-    cover = _plate(D["panel_w"], body_h, D["fp_corner_r"], D["z_flange_out"], D["z_rim_seat"], D["ox"], D["body_yc"])
+    # PETG cover. Outer skin is the same rectangle as the shell, so the side faces are one line.
+    # The pocket is inside that skin. A tongue captures the PCB edge; the PCB never reaches the outside.
     ov = D["clamp_overlap"]
-    window = _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
-                  D["z_flange_out"] - sl, D["z_rim_seat"] + sl)
-    cover = _sub(cover, window)
+    cover = _box(D["x_out0"], D["x_out1"], D["body_y0"], D["body_y1"], D["z_cover_out"], D["z_rim_seat"])
+    cover = _sub(cover, _box(D["void_x0"], D["void_x1"], D["void_y0"], D["void_y1"], D["z_cover_in"], D["z_rim_seat"] + sl))
+    tongue = _box(D["void_x0"] - fu, D["void_x1"] + fu, D["void_y0"] - fu, D["void_y1"] + fu, D["z_flange_out"], D["z_rim_seat"])
+    tongue = _sub(tongue, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
+                               D["z_flange_out"] - sl, D["z_rim_seat"] + sl))
+    cover = _add(cover, tongue)
     land = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_rim_seat"], D["z_pcb_land"])
     land = _sub(land, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
                            D["z_rim_seat"] - sl, D["z_pcb_land"] + sl))
     cover = _add(cover, land)
-    wall = D["cover_t"]
-    vx0, vx1 = D["void_x0"] - wall, D["void_x1"] + wall
-    vy0, vy1 = D["void_y0"] - wall, D["void_y1"] + wall
-    cover = _add(cover, _box(vx0, vx1, vy0, vy1, D["z_cover_out"], D["z_cover_in"]))
-    tub = _box(vx0, vx1, vy0, vy1, D["z_cover_in"] - fu, D["z_flange_out"] + fu)
-    tub = _sub(tub, _box(D["void_x0"], D["void_x1"], D["void_y0"], D["void_y1"], D["z_cover_in"] - sl, D["z_flange_out"] + sl))
-    cover = _add(cover, tub)
     for x, y in D["corners"]:
         cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
         cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_pad_out"] - sl, D["z_pad_out"] + D["cbore_depth"], x, y))

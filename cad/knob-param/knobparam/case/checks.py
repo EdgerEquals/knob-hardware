@@ -16,6 +16,12 @@ def checks(D, parts):
     r = Rows("case")
     row = r.row
     case = parts["case"]
+    cover = parts["back cover (PETG)"]
+    cb = cover.bounding_box()
+    row("cover flush in X", min(D["x_out1"] - cb.max.X, cb.min.X - D["x_out0"]), 0.0,
+        f"cover x {cb.min.X:.2f}..{cb.max.X:.2f}, shell ±{D['x_out1']:.2f}")
+    row("cover flush in Y", min(D["body_y1"] - cb.max.Y, cb.min.Y - D["body_y0"]), 0.0,
+        f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
     row("SLA wall", D["wall"], sla, "UTR-8100, nominal 2.5")
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
@@ -43,7 +49,12 @@ def checks(D, parts):
     row("10HP panel", D["panel_w"], 10 * D["hp_pitch"] - D["hp_gap"],
         f"{D['hp']}HP  {D['panel_w']:.2f} mm, wall {D['wall']:.2f}")
     row("PCB width within the shell", D["pcb_max_w"] - D["nest_w"], 0.0,
-        f"max PCB width {D['pcb_max_w']:.2f} (live board is {D['pcb_w']:.2f}, {D['scope_short']:.2f} wider)")
+        f"board {D['nest_w']:.2f} wide, {D['nest_above']:.2f} above, {D['nest_below']:.2f} below "
+        f"(live {D['pcb_w']:.2f} × {D['pcb_live_above']:.2f}/{D['pcb_live_below']:.2f})")
+    row("PCB inside the side walls", D["x_in1"] - D["pcb_x1"], D["pcb_clear"],
+        f"board edge ±{D['pcb_x1']:.2f}, wall inner ±{D['x_in1']:.2f}")
+    row("PCB inside the top and bottom", min(D["y_in1"] - D["pcb_y1"], D["pcb_y0"] - D["y_in0"]), D["pcb_clear"],
+        f"board y {D['pcb_y0']:.2f}..{D['pcb_y1']:.2f} inside the box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     row("PCB side air", D["side_air"], D["pcb_clear"],
         f"wall {D['wall']:.2f} + clearance {D['pcb_clear']:.2f} each side of the {D['nest_w']:.2f} board")
     row("bezel on the 10HP panel", D["bezel_margin"], 0.0,

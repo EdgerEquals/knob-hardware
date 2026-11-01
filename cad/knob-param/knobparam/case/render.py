@@ -48,6 +48,8 @@ def _cut(shape, kind, screw=None):
     x0, x1 = bb.min.X - 1.0, bb.max.X + 1.0
     if kind == "section":
         return shape.intersect(_box(x0, 0.0, y0, y1, z0, z1))
+    if kind == "mid":
+        return shape.intersect(_box(x0, x1, min(y0, -1.0), 0.0, z0, z1))
     if kind == "corner" and screw is not None:
         # rotate the screw onto +X, then keep y <= 0 so the cut plane holds the collar and that screw
         ang = math.degrees(math.atan2(screw[1], screw[0]))
@@ -114,6 +116,31 @@ def _shot(items, path, view, size, zoom, bounds=None):
     pl.screenshot(path)
     pl.close()
     return path
+
+
+def _mid_frame(D):
+    """Full outer width, from just behind the parting line up through the faceplate."""
+    return (D["x_out0"] - 6.0, D["x_out1"] + 6.0, -2.0, 2.0, D["z_rim_seat"] - 12.0, D["z_fp1"] + 4.0)
+
+
+def _annotate_mid(ax, D, bounds, fs):
+    """Straight cut on the dial axis. +X is on the left of the image."""
+    def fx(x):
+        return _fx(x, bounds)
+
+    def fz(z):
+        return _fz(z, bounds)
+
+    _tag(ax, fx(D["x_out0"] + 1.2), fz((D["z_fp0"] + D["z_rim"]) / 2.0), "shell", fs)
+    _tag(ax, fx(D["x_out0"] + 1.2), fz(D["z_rim_seat"] - 4.0), "cover", fs)
+    _tag(ax, fx(0.0), fz(D["z_pcb_back"] / 2.0), "PCB inside", fs)
+    _tag(ax, fx(D["pcb_x1"] - 2.0), fz(D["z_ledge1"] + 3.0), "ledge", fs)
+    xd = fx(D["pcb_x1"] * 0.35)
+    ax.annotate("", xy=(xd, fz(D["z_fp1"])), xytext=(xd, fz(0.0)),
+                xycoords=ax.transAxes, textcoords=ax.transAxes,
+                arrowprops=dict(arrowstyle="<->", color="#111", lw=1.4))
+    _tag(ax, xd + 0.08, fz(D["z_fp1"] * 0.55), f"{D['fp_to_pcb']:.2f} mm\nfaceplate to PCB", fs)
+    _tag(ax, 0.50, 0.96, "outer faces flush  ·  parting line at the shell rim  ·  PCB embedded", fs)
 
 
 def _section_frame(D):
@@ -222,7 +249,7 @@ def _annotate_plan(ax, D, fs):
     _tag(ax, fx(0.0), fy(D["panel_y0"] + 8.0), f"PCB {D['nest_w']:.2f}   wall {D['wall']:.1f}", fs)
 
 
-def _compose_preview(section, plan, out, D, bounds, footer):
+def _compose_preview(section, plan, iso, out, D, bounds, footer):
     """Section full width, plan beside the notes. Labels are drawn here so they stay ≥ 14 px."""
     import matplotlib
     matplotlib.use("Agg")
@@ -236,18 +263,22 @@ def _compose_preview(section, plan, out, D, bounds, footer):
     ax = fig.add_axes((0.02, 0.40, 0.96, 0.52))
     ax.imshow(plt.imread(section), aspect="equal")
     ax.set_axis_off()
-    _annotate_section(ax, D, bounds, fs)
-    ax2 = fig.add_axes((0.02, 0.03, 0.34, 0.35))
+    _annotate_mid(ax, D, bounds, fs)
+    ax2 = fig.add_axes((0.01, 0.03, 0.30, 0.35))
     ax2.imshow(plt.imread(plan), aspect="equal")
     ax2.set_title("PLAN  (+Z, panel up = +Y)", loc="left", fontsize=fs, fontweight="bold")
     ax2.set_axis_off()
     _annotate_plan(ax2, D, fs - 2)
+    ax3 = fig.add_axes((0.32, 0.03, 0.30, 0.35))
+    ax3.imshow(plt.imread(iso), aspect="equal")
+    ax3.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
+    ax3.set_axis_off()
     handles = [Patch(facecolor=tuple(c / 255 for c in D["dye_rgb"]), label="shell, translucent 2577 C"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head")]
-    fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.38, 0.36))
-    fig.text(0.38, 0.05, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
+    fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.36))
+    fig.text(0.62, 0.05, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
     fig.savefig(out)
     plt.close(fig)
 
@@ -306,8 +337,9 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
                  ("PCB", parts["PCB"]), ("corner screw 1", parts["corner screw 1"])]
     if preview:
-        shots = [("corner", "SECTION", joint, "xz"),
-                 ("plan", "PLAN", plan_show, "plan")]
+        shots = [("mid", "SECTION through both side walls", joint, "xz"),
+                 ("plan", "PLAN", plan_show, "plan"),
+                 ("iso", "ISOMETRIC", show, "iso")]
     elif full:
         shots = [("corner", "SECTION  —  corner screw, collar, PCB ledge, clamp rim", joint, "xz"),
                  ("iso", "ISOMETRIC", show, "iso"),
@@ -321,12 +353,20 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
         for name, shape in shapes:
             if key == "corner":
                 shape = _cut(shape, "corner", D["corners"][0])
+            elif key == "mid":
+                shape = _cut(shape, "mid")
             cut_shapes.append((name, shape))
         items = _items(D, cut_shapes, 0.08 if key == "corner" else tol)
         p = os.path.join(tmp, key + ".png")
         bounds = None
         shot_size = size
-        if key == "corner":
+        if key == "mid":
+            bounds = _mid_frame(D)
+            x0, x1, _y0, _y1, z0, z1 = bounds
+            h = 1000
+            w = int(round(h * abs(x1 - x0) / max(abs(z1 - z0), 1.0)))
+            shot_size = (w, h)
+        elif key == "corner":
             bounds = _section_frame(D)
             x0, x1, _y0, _y1, z0, z1 = bounds
             h = 1100
@@ -341,7 +381,8 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
         _shot(items, p, view, shot_size, zoom, bounds=bounds)
         pngs.append(p)
         paths.append(p)
-    section_bounds = _section_frame(D) if any(s[0] == "corner" for s in shots) else None
+    section_bounds = _mid_frame(D) if any(s[0] == "mid" for s in shots) else (
+        _section_frame(D) if any(s[0] == "corner" for s in shots) else None)
     mass = case.volume * D["case_rho"]
     nf = sum(not r["ok"] for r in rows) if rows else 0
     nt = len(rows) if rows else 0
@@ -357,7 +398,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
     titles = [s[1] for s in shots]
     if preview and section_bounds is not None:
-        _compose_preview(pngs[0], pngs[1], sheet, D, section_bounds, footer)
+        _compose_preview(pngs[0], pngs[1], pngs[2], sheet, D, section_bounds, footer)
     else:
         _compose(pngs, titles, sheet, D, footer)
     paths = [sheet]

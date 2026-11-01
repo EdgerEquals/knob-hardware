@@ -253,20 +253,36 @@ def derive(D):
     D["fp_to_pcb"] = D["z_fp1"]
     D["z_bz0"] = D["z_fp1"] + D["up_gap"]
     D["z_bz1"] = D["z_bz0"] + D["bz_t"]
-    # Height stays the KiCad board. Width shrinks so 2.5 mm walls and the drop-in clearance
-    # fit in a 10HP panel (5.08 × 10 − 0.30). The corner bosses move inside that outline.
+    # 10HP panel. The box behind the rail ears is one rectangle: shell and cover share it.
+    # The PCB is inset from that rectangle by the wall plus the drop-in clearance, on all four sides.
     _, above, below, src = _pcb_outline(cons, D["pcb_w"], D["pcb_above"], D["pcb_below"])
+    D["pcb_live_above"] = above
+    D["pcb_live_below"] = below
+    D["pcb_src"] = src
     D["hp"] = int(D["hp_scope"])
     D["panel_w"] = D["hp"] * D["hp_pitch"] - D["hp_gap"]
     D["panel_w_scope"] = D["panel_w"]
-    D["pcb_max_w"] = D["panel_w"] - 2.0 * (D["wall"] + D["pcb_clear"])
-    D["nest_w"] = D["pcb_max_w"]
-    D["nest_above"] = above
-    D["nest_below"] = below
-    D["pcb_src"] = src
-    D["pcb_x1"] = D["nest_w"] / 2.0
-    D["pcb_y0"] = -D["nest_below"]
-    D["pcb_y1"] = D["nest_above"]
+    D["panel_x0"] = -D["panel_w"] / 2.0
+    D["panel_x1"] = D["panel_w"] / 2.0
+    D["panel_y1"] = D["axis_by"]
+    D["panel_y0"] = D["axis_by"] - D["panel_h"]
+    D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2.0
+    D["body_y1"] = D["panel_y1"] - D["rail_clear"]
+    D["body_y0"] = D["panel_y0"] + D["rail_clear"]
+    D["body_yc"] = (D["body_y0"] + D["body_y1"]) / 2.0
+    D["x_out1"] = D["panel_w"] / 2.0
+    D["x_out0"] = -D["x_out1"]
+    D["x_in1"] = D["x_out1"] - D["wall"]
+    D["x_in0"] = -D["x_in1"]
+    D["y_in1"] = D["body_y1"] - D["wall"]
+    D["y_in0"] = D["body_y0"] + D["wall"]
+    D["pcb_x1"] = D["x_in1"] - D["pcb_clear"]
+    D["pcb_y1"] = D["y_in1"] - D["pcb_clear"]
+    D["pcb_y0"] = D["y_in0"] + D["pcb_clear"]
+    D["nest_w"] = 2.0 * D["pcb_x1"]
+    D["nest_above"] = D["pcb_y1"]
+    D["nest_below"] = -D["pcb_y0"]
+    D["pcb_max_w"] = D["nest_w"]
     # The PCB drops in from the back. Its back face is flush with the shell rim; the ledge
     # stops the front face. nest_gap keeps the two solids from fusing.
     D["z_rim"] = D["z_pcb_back"]
@@ -277,27 +293,10 @@ def derive(D):
     D["pad_r"] = D["screw_boss_r"]
     D["hole_r"] = D["screw_d"] * (0.5 + D["screw_hole_ratio"])
     D["tip_clear"] = D["tip_clear_ratio"] * D["screw_d"]
-    # Walls on the panel edge. Top and bottom stay ledges: the rail zone starts 0.5 mm
-    # outside the board in Y. Boss axis is inside the PCB; the post uses the wall for its
-    # outer half and the board is notched around it.
-    D["x_out1"] = D["panel_w"] / 2.0
-    D["x_out0"] = -D["x_out1"]
-    D["x_in1"] = D["x_out1"] - D["wall"]
-    D["x_in0"] = -D["x_in1"]
+    # Boss axis is inside the PCB; the post uses the wall for its outer half and the board is notched.
     br = D["screw_boss_r"]
     D["boss_x"] = D["x_out1"] - D["web_min"] - br
     D["hp_need_w"] = D["panel_w"]
-    # panel centred on the dial axis. Top at y = axis_by (board y = 0).
-    D["panel_x0"] = -D["panel_w"] / 2
-    D["panel_x1"] = D["panel_w"] / 2
-    D["panel_y1"] = D["axis_by"]
-    D["panel_y0"] = D["axis_by"] - D["panel_h"]
-    D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2
-    D["body_y1"] = D["panel_y1"] - D["rail_clear"]
-    D["body_y0"] = D["panel_y0"] + D["rail_clear"]
-    D["body_yc"] = (D["body_y0"] + D["body_y1"]) / 2
-    D["y_in0"] = D["pcb_y0"]
-    D["y_in1"] = D["pcb_y1"]
     D["z_seat"] = D["seat_gap"]
     # Placeholder rear stack: bearing 2 bottom behind the PCB back. Same arithmetic as under_pcb
     # (back panel seat + flange − bearing width). The retainer plate on sub/assembly-v017 replaces
@@ -355,15 +354,14 @@ def derive(D):
         boxes.append({"ref": "rod pad", "x": 0.0, "y": 0.0, "w": 2.0 * rod_r, "l": 2.0 * rod_r})
     D["bside_clear"], D["bside_ref"] = _bside_clear(boxes, D["nest_w"], D["nest_above"], D["nest_below"])
     D["clamp_overlap"] = max(D["sla_min"], D["clamp_keep"] * D["bside_clear"])
-    # wide pocket behind the tongue: the flange window is the overlap; the cavity opens out to the
-    # rear envelope so the disc and the bearing retainer are not asked to pass through the lip.
+    # Outer skin matches the shell. On X the rear envelope sets how thick that skin can be;
+    # it stays at least the SLA minimum and never outside the shell line.
     ex, ey = D["enc_xy"]
-    R = D["d_big_tip"] / 2.0 + D["cover_pocket"]
-    ov = D["clamp_overlap"]
-    D["void_x0"] = min(-D["pcb_x1"] + ov, ex - R)
-    D["void_x1"] = max(D["pcb_x1"] - ov, ex + R)
-    D["void_y0"] = min(D["pcb_y0"] + ov, ey - R)
-    D["void_y1"] = max(D["pcb_y1"] - ov, ey + R)
+    D["cover_side"] = min(D["wall"], max(D["sla_min"], D["x_out1"] - (abs(ex) + D["d_big_tip"] / 2.0 + D["cover_pocket"])))
+    D["void_x1"] = D["x_out1"] - D["cover_side"]
+    D["void_x0"] = -D["void_x1"]
+    D["void_y0"] = D["y_in0"]
+    D["void_y1"] = D["y_in1"]
     D["pocket_gap"] = min(ex - D["void_x0"], D["void_x1"] - ex, ey - D["void_y0"], D["void_y1"] - ey) - D["d_big_tip"] / 2.0
     # rail screws. Bottom stations stay on the Doepfer 7.5 mm grid.
     # Top stations move outboard of the joystick opening: the bezel crosses the usual columns,

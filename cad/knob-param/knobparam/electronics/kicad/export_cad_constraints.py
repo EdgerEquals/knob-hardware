@@ -51,8 +51,8 @@ def main():
             notches=[dict(x=round(x, 3), y=round(y, 3), bx=round(D["axis_bx"] + x, 3), by=round(D["axis_by"] - y, 3),
                           d=round(2 * D["notch_r"], 3), kind="notch") for x, y in D.get("corners", ())],
             screw="DIN 7984 M3 low-head socket cap, flat counterbore in the PETG cover",
-            note="Shrink the main PCB to pcb_w so 2.5 mm shell walls fit a 10HP panel. "
-                 "Cut a notch of diameter d at each (bx, by). The resin boss and the screw occupy the notch."),
+            note="Board is inset from the 10HP box by the wall plus the drop-in clearance on all four sides, "
+                 "so the PCB edge never reaches the outside. Cut a notch of diameter d at each (bx, by)."),
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])
