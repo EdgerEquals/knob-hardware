@@ -62,3 +62,11 @@ def thrust_groove(pcd, groove_r, z_ball):
     """Torus groove for a ring of thrust balls (cut into BOTH the cradle plate and the dial tube end; numbers are the
     control_dial exports tb_pcd / tb_groove_r / tb_z_ball)."""
     return Pos(0, 0, z_ball) * Torus(pcd / 2, groove_r)
+
+
+class overlay(dict):
+    """Tracked view of D with a few keys replaced: ext_gear(overlay(D, module=m), ...) instead of Dm = dict(D); Dm[...] = m."""
+    def __init__(self, base, **kw): super().__init__(kw); self.base = base
+    def __getitem__(self, k): return super().__getitem__(k) if super().__contains__(k) else self.base[k]
+    def get(self, k, default=None): return super().__getitem__(k) if super().__contains__(k) else self.base.get(k, default)
+    def __contains__(self, k): return super().__contains__(k) or k in self.base

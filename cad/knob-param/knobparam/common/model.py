@@ -7,8 +7,8 @@ Rules enforced here:
   * every IMPORT names a key that the source sub-assembly lists in its EXPORTS."""
 import copy, importlib
 
-SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb"]   # derive order (exports flow forward)
-ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics"]     # build / report order
+SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb", "optics"]   # derive order (exports flow forward)
+ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics", "optics"]     # build / report order
 
 def sub(name): return importlib.import_module(f"knobparam.{name}")
 def sub_params(name): return importlib.import_module(f"knobparam.{name}.params")

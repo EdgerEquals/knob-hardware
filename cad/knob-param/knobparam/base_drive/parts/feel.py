@@ -2,7 +2,7 @@
 into a catalogue pinion. v0.17 [Ed]: that pinion meshes the compound gear on the idler, not the knob ring."""
 import math
 from build123d import *
-from ...common.util import A, cyl, tube, ext_gear
+from ...common.util import overlay, A, cyl, tube, ext_gear
 
 def build(D):
     F = D["feel"]; x, y = D["fm_xy"]; ang = D["fm_ang"]
@@ -12,7 +12,7 @@ def build(D):
     P = D["fg_pinion"]; face = D["fg_face"]; z1 = D["fg_z_top"]; zb = z1 - face
     shaft = cyl(F["shaft_d"] / 2, zb, z0 - zb, x, y)   # can bottom down through the PCB into the pinion
     bore = P["bore"]
-    Dm = dict(D); Dm["module"] = D["fg_mod"]
+    Dm = overlay(D, module=D["fg_mod"])   # tracked view; dict(D) hid backlash/pressure from the cache
     pin = Pos(x, y, zb) * (ext_gear(Dm, D["fg_z_pin"], 0, face) - cyl(bore / 2, -0.01, face + 0.02))
     # Ø2 catalogue bore on the Ø1 shaft
     sleeve = tube(F["shaft_d"] / 2 + 0.04, bore / 2 - 0.04, zb, face, x, y)

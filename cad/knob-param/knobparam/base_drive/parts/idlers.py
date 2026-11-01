@@ -3,7 +3,7 @@ v0.17 [Ed]: the idler farther from the 1220 is a compound gear — the small gea
 on the same pin under the PCB is driven by the 716's catalogue pinion. No extra shaft."""
 import math
 from build123d import *
-from ...common.util import A, cyl, ext_gear, ext_mesh_spin, ring_phase
+from ...common.util import overlay, A, cyl, ext_gear, ext_mesh_spin, ring_phase
 
 def idler(D):
     g = ext_gear(D, D["z_enc_pinion"], D["h_pin0"], D["pin_face"])
@@ -17,7 +17,7 @@ def idler(D):
 def compound_gear(D):
     """Printed big gear on the compound idler: toothed rim, a 0.8 web, a short hub. Bore clears the existing pin."""
     z, m = D["fg_z_gear"], D["fg_mod"]
-    Dm = dict(D); Dm["module"] = m
+    Dm = overlay(D, module=m)   # tracked view; dict(D) hid backlash/pressure from the cache
     face, z1 = D["fg_face"], D["fg_z_top"]
     zb = z1 - face
     root_r = max((z - 2.5) * m / 2, D["pin_d"])
