@@ -91,3 +91,8 @@ Cut on 2 Nov 2026 to save usage. Each is also listed in `cad/knob-param/PARKED.m
 ## Still running when this was written
 - Knob: clean up the glass-sleeve PR #7 (3 fails, 5 clashes), then one full current-state assembly sheet (3 sections + iso).
 - Case (PR #6): 3-section + iso sheet, identify the stray blue capsule shapes in the iso, switch to full-height ISO 4762 M3 screws.
+
+## Update 2026-11-02 01:00 AWST (Ed decisions)
+- MCU change: this module's main MCU is now the STM32H7B0VBT6 (LQFP100, 280 MHz, 1.4 MB RAM, 2x Octo-SPI, FDCAN), not the STM32G474VET6. Add a small Octo-SPI NOR flash for the pre-rendered screen animations (the H7B0 has only 128 KB of internal flash). The G4 stays the shared core for cheap modules; the H7B0 is the display variant of the core (screen modules such as this one and the player stations), on the same CAN-FD bus and clock line. Redo the pin plan and the I/O and power budget for the H7B0 before starting the PCB.
+- Bottom 2.0" TFT moves from the front to the back panel (rear cover). Put as many through-holes in the main PCB as practical. The freed front space goes to jacks; the TRS MIDI switching may be dropped. Keep the analogue jacks Ed wants and keep digital switching.
+- Case shell fixes queued on sub/case-v01: flush flat front face (the joystick screen on the same plane), a plain box with a small edge radius, and the labyrinth as a single small upright ring on the case with the knob's shoulder dropping over it.
