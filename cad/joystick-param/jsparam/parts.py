@@ -61,8 +61,10 @@ def plate(D):
     for x, y in D["springs"]:
         p -= cyl(D["spr_bore"], D["z_plate0"] - 0.2, D["z_plate1"] + 0.2, x, y)
     for x, y in D["balls"]:
-        p += cyl(2 * D["boss_r"], D["z_plate1"] - 0.01, D["z_ball"], x, y)
-        p -= Pos(x, y, D["z_ball"]) * Sphere(D["seat_r"])
+        p += cyl(2 * D["boss_r"], D["z_plate1"] - 0.01, D["z_rim_lo"], x, y)
+        p -= Pos(x, y, D["z_sc_lo"]) * Sphere(D["cup_r"])
+    for x, y in D["springs"]:
+        p -= cyl(D["spr_bore"], D["z_plate0"] - 0.2, D["z_rim_lo"] + 0.2, x, y)
     return p
 
 def _fpc_slot(D, z0, z1):
@@ -76,6 +78,9 @@ def carrier(D):
         c -= cyl(2 * D["cs_bore_r"], D["z_seat"], D["z_floor1"] + 0.02, x, y)
         c += cyl(D["boss_d"], D["z_ins0"], D["z_c0"] + 0.01, x, y)
         c -= cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y)
+    for x, y in D["balls"]:
+        c += cyl(2 * D["boss_r"], D["z_rim_hi"], D["z_c0"] + 0.01, x, y)
+        c -= Pos(x, y, D["z_sc_hi"]) * Sphere(D["cup_r"])
     c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01)
     c -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_floor1"] + 0.02)
     hook_w = D["spr_d"] * 0.325

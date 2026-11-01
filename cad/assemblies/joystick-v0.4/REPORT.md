@@ -1,5 +1,7 @@
 # Joystick v0.4
 
+Each Ø2 ball sits in a pair of shallow spherical cups, one in the seat post and one in the carrier. Cup radius **1.396 mm** (1.396 × the ball radius), depth **0.60 mm** (0.30 × the diameter). The cups still hold the ball out to **0.65 mm** of carrier travel; the slide is 0.45 mm, so the margin is **0.20 mm**. The wider posts put the balls at **(±9.51, ±4.14)**.
+
 The module rests on the case faceplate. The bezel is a 1.2 mm lip (44.02 × 29.14) on a 2.5 mm faceplate proxy. The carrier, springs, switch, daughterboard and standoffs are below that plate.
 
 The carrier assembly is simpler. The printed spider and plunger are gone, and so is the round stop. The switch's own end of travel is the only stop, for tilt and for the centre press. The screen is glued to a separate bezel. Four catalog compression springs sit between that bezel and the carrier, and an M2 grub screw under each one sets the preload.

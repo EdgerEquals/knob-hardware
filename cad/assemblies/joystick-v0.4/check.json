@@ -344,18 +344,39 @@
    "note": "standoffs (\u00b114.04, \u00b13.73), compression springs (\u00b119.14, \u00b111.70)"
   },
   {
-   "name": "balls touch the carrier underside",
+   "name": "ball seated in the upper cup",
    "value": 0.0,
    "target": "<= 0.02",
    "ok": true,
-   "note": "four \u00d82 stainless"
+   "note": "four \u00d82, cup \u00d82.79"
   },
   {
-   "name": "balls seated (clear of the plate)",
-   "value": 0.04999999999999548,
-   "target": ">= 0.03",
+   "name": "ball seated in the lower cup",
+   "value": 0.0,
+   "target": "<= 0.02",
    "ok": true,
-   "note": "seat radius +0.05"
+   "note": "matching cup in the seat post"
+  },
+  {
+   "name": "cup radius / ball radius",
+   "value": 1.3955709644998018,
+   "target": "1.05-2.0",
+   "ok": true,
+   "note": "Rc 1.396 mm, rim radius 1.147 mm"
+  },
+  {
+   "name": "cup depth / ball diameter",
+   "value": 0.3,
+   "target": "0.15-0.40",
+   "ok": true,
+   "note": "depth 0.600 mm on \u00d82"
+  },
+  {
+   "name": "full slide stays inside the cups",
+   "value": 0.20000000000000367,
+   "target": ">= 0.20",
+   "ok": true,
+   "note": "slide 0.45 mm, cups still hold to 0.65 mm. Ball centres move to (\u00b19.51, \u00b14.14)"
   },
   {
    "name": "bezel (full slide toward the knob) vs live knob-param",
@@ -429,7 +450,7 @@
   },
   {
    "name": "carrier volume",
-   "value": 1.8018669383376948,
+   "value": 1.830301995055142,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
@@ -529,20 +550,20 @@
   "hole_hy": 4.95,
   "balls": [
    [
-    10.105652750607062,
-    4.735652750607062
+    9.509055542604287,
+    4.139055542604285
    ],
    [
-    10.105652750607062,
-    -4.735652750607062
+    9.509055542604287,
+    -4.139055542604285
    ],
    [
-    -10.105652750607062,
-    4.735652750607062
+    -9.509055542604287,
+    4.139055542604285
    ],
    [
-    -10.105652750607062,
-    -4.735652750607062
+    -9.509055542604287,
+    -4.139055542604285
    ]
   ],
   "springs": [
@@ -617,8 +638,8 @@
   "sx": 14.03770355817594,
   "sy": 3.7300000000000013,
   "hx": 9.745652750607062,
-  "bx": 10.105652750607062,
-  "by": 4.735652750607062,
+  "bx": 9.509055542604287,
+  "by": 4.139055542604285,
   "board_x0": -15.93770355817594,
   "board_x1": 15.93770355817594,
   "board_y0": -6.935652750607062,
@@ -628,8 +649,8 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "seat plate (printed, glued)": 0.39766406744513333,
-   "joystick carrier (printed)": 1.8018669383376948,
+   "seat plate (printed, glued)": 0.47875920155979984,
+   "joystick carrier (printed)": 1.830301995055142,
    "screen carrier (printed)": 0.49576115898961626
   }
  }

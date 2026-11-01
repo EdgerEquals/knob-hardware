@@ -185,9 +185,17 @@ def run(D, P):
         f"standoffs (±{D['sx']:.2f}, ±{D['sy']:.2f}), compression springs (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f})")
     # 9 balls
     bt = min(b.distance_to(car) for b in balls)
-    row("balls touch the carrier underside", bt, "<= 0.02", bt <= 0.02, f"four Ø{D['ball_d']:g} stainless")
-    row("balls seated (clear of the plate)", min(b.distance_to(plate) for b in balls), ">= 0.03",
-        min(b.distance_to(plate) for b in balls) >= 0.03, f"seat radius +{D['seat_clear']:g}")
+    bp = min(b.distance_to(plate) for b in balls)
+    row("ball seated in the upper cup", bt, "<= 0.02", bt <= 0.02, f"four Ø{D['ball_d']:g}, cup Ø{2*D['cup_r']:.2f}")
+    row("ball seated in the lower cup", bp, "<= 0.02", bp <= 0.02, "matching cup in the seat post")
+    row("cup radius / ball radius", D["cup_ratio"], "1.05-2.0", 1.05 <= D["cup_ratio"] <= 2.0,
+        f"Rc {D['cup_r']:.3f} mm, rim radius {D['cup_rim_r']:.3f} mm")
+    row("cup depth / ball diameter", D["cup_depth_frac"], "0.15-0.40", 0.15 <= D["cup_depth_frac"] <= 0.40,
+        f"depth {D['cup_depth']:.3f} mm on Ø{D['ball_d']:g}")
+    row("full slide stays inside the cups", D["cup_travel_margin"], f">= {D['cup_margin']:.2f}",
+        D["cup_travel_margin"] + 1e-6 >= D["cup_margin"],
+        f"slide {D['slide']:.2f} mm, cups still hold to {D['cup_s_max']:.2f} mm. "
+        f"Ball centres move to (±{D['bx']:.2f}, ±{D['by']:.2f})")
     # 10 knob clearance — both faces are MJF, so the gap is 2 x 0.25
     for name, od in (("live knob-param", D["knob_od_live"]), ("design Ø41.7", D["knob_od_design"])):
         kg = min(_gap_at(D, od, x, y) for x, y in ((0.0, -D["half_h"]), (D["half_w"], -D["half_h"])))

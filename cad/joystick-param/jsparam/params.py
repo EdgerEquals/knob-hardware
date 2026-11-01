@@ -87,7 +87,9 @@ P = dict(
     drill_m2=2.4,           # [A]
     # ---- plate, balls, hold-down springs (kept from v0.3) ----
     ball_d=2.0,             # [Ed]
-    seat_clear=0.05,        # [A]
+    cup_depth_frac=0.30,    # [A] cup depth / ball diameter. Shallow: a hemisphere would be ~0.5
+    cup_margin=0.20,        # [A] mm the contact stays short of the rim at full slide
+    seat_clear=0.05,        # [A] unused once the cups are spherical; kept so old overrides still parse
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
@@ -330,6 +332,38 @@ def derive(P_):
     D["sy_nut"] = sy_nut
     D["standoff_xy"] = [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
     D["hdr_xy"] = [(D["hx"], 0.0), (-D["hx"], 0.0)]
+    # shallow spherical cups, same above and below. The ratio is the smallest cup radius
+    # that still keeps cup_margin at the full slide. A ratio near 1.05 only allows ~0.15 mm.
+    Rb = D["ball_d"] / 2.0
+    cd = D["cup_depth_frac"] * D["ball_d"]
+    s_need = D["slide"] + D["cup_margin"]
+
+    def _smax(Rc):
+        a2 = 2.0 * Rc * cd - cd * cd
+        if Rc <= Rb or a2 <= 0.0:
+            return 0.0
+        return 2.0 * (Rc - Rb) * math.sqrt(a2) / Rc
+
+    lo, hi = Rb * 1.02, Rb * 4.0
+    for _ in range(48):
+        mid = 0.5 * (lo + hi)
+        if _smax(mid) < s_need:
+            lo = mid
+        else:
+            hi = mid
+    D["cup_r"] = hi
+    D["cup_ratio"] = hi / Rb
+    D["cup_depth"] = cd
+    D["cup_rim_r"] = math.sqrt(max(2.0 * hi * cd - cd * cd, 0.0))
+    D["cup_s_max"] = _smax(hi)
+    D["cup_travel_margin"] = D["cup_s_max"] - D["slide"]
+    D["z_ball"] = D["z_c0"] - Rb
+    D["z_rim_lo"] = D["z_ball"] - (Rb - cd)
+    D["z_rim_hi"] = D["z_ball"] + (Rb - cd)
+    D["z_sc_lo"] = D["z_rim_lo"] + (hi - cd)
+    D["z_sc_hi"] = D["z_rim_hi"] - (hi - cd)
+    D["boss_r"] = D["cup_rim_r"] + pm
+    D["boss_h"] = D["z_rim_lo"] - D["z_plate1"]
     D["by"] = D["db_half_h"] - D["boss_r"] - D["part_gap"]
     need = D["cut_r"] + D["boss_r"] + D["part_gap"]
     bx_min = math.sqrt(max(need ** 2 - D["by"] ** 2, 0.0))
