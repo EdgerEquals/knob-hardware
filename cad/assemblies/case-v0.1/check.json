@@ -1,0 +1,527 @@
+{
+ "rows": [
+  {
+   "name": "cover flush in X",
+   "value": 0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "cover x -25.25..25.25, shell \u00b125.25",
+   "owner": "case"
+  },
+  {
+   "name": "cover flush in Y",
+   "value": -0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "cover y -65.60..42.90, box -65.60..42.90",
+   "owner": "case"
+  },
+  {
+   "name": "SLA wall",
+   "value": 2.5,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "UTR-8100 plain clear, no tint; front face polished, every other face as-printed",
+   "owner": "case"
+  },
+  {
+   "name": "back TFT window",
+   "value": 30.48,
+   "target": ">= 30.48",
+   "ok": true,
+   "note": "active 40.64\u00d730.48 at x -20.32..20.32, y -60.30..-29.82; module 44.64\u00d734.48\u00d73.2 with a 2.0 mm border",
+   "owner": "case"
+  },
+  {
+   "name": "TFT light path is open through the cover",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "the active area is a hole in the back skin, not a front window",
+   "owner": "case"
+  },
+  {
+   "name": "back TFT module inside the pocket",
+   "value": 0.8,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "outline 44.64\u00d734.48 at y -62.30..-27.82",
+   "owner": "case"
+  },
+  {
+   "name": "laser placeholder is open",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "2\u00d7 at (-13.8,33.5), (13.8,33.5) under the joystick",
+   "owner": "case"
+  },
+  {
+   "name": "faceplate thickness",
+   "value": 2.5,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "same resin wall as the sides",
+   "owner": "case"
+  },
+  {
+   "name": "edge strip thickness",
+   "value": 2.5,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "the rim is the full faceplate, one plane with the rest",
+   "owner": "case"
+  },
+  {
+   "name": "ligament thickness",
+   "value": 2.5,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "bridge between the holes is the full plate",
+   "owner": "case"
+  },
+  {
+   "name": "outside edge radius",
+   "value": 0.4,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "the only radius on the plain box, a ratio of the wall",
+   "owner": "case"
+  },
+  {
+   "name": "bezel thickness under the cap",
+   "value": 0.3,
+   "target": ">= 0",
+   "ok": true,
+   "note": "joystick v0.4 lip 1.20, cap 1.5",
+   "owner": "case"
+  },
+  {
+   "name": "knob radial clearance",
+   "value": 0.2,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "hole \u00d842.40, knob \u00d842.00 (live 40.85, design 42.00)",
+   "owner": "case"
+  },
+  {
+   "name": "joystick lip overlap",
+   "value": 0.9,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "opening 42.22\u00d727.34 at place_y 36.52",
+   "owner": "case"
+  },
+  {
+   "name": "web, knob hole to joystick hole",
+   "value": 1.65,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "plan width of the bridge",
+   "owner": "case"
+  },
+  {
+   "name": "bezel above the faceplate",
+   "value": 0.02,
+   "target": ">= 0",
+   "ok": true,
+   "note": "lip z 36.07\u201337.27, plate top 36.05",
+   "owner": "case"
+  },
+  {
+   "name": "knob stands proud of the faceplate",
+   "value": 16.45,
+   "target": ">= 16.45",
+   "ok": true,
+   "note": "knob top 52.50 from placeholder; faceplate front 36.05",
+   "owner": "case"
+  },
+  {
+   "name": "knob proud, not more",
+   "value": 16.45,
+   "target": "<= 16.45",
+   "ok": true,
+   "note": "faceplate z is the knob top minus knob_proud",
+   "owner": "case"
+  },
+  {
+   "name": "faceplate to PCB ledge",
+   "value": 36.05,
+   "target": ">= 36.05",
+   "ok": true,
+   "note": "faceplate front to the PCB front (ledge datum z=0) is 36.05 mm; model ledge face at z 0.05 leaves nest_gap 0.05",
+   "owner": "case"
+  },
+  {
+   "name": "10HP panel",
+   "value": 50.5,
+   "target": ">= 50.5",
+   "ok": true,
+   "note": "10HP  50.50 mm, wall 2.50",
+   "owner": "case"
+  },
+  {
+   "name": "PCB width within the shell",
+   "value": 0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "board 44.30 wide, 39.80 above, 62.50 below (live 49.00 \u00d7 39.80/62.50)",
+   "owner": "case"
+  },
+  {
+   "name": "PCB inside the side walls",
+   "value": 0.6,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": "board edge \u00b122.15, wall inner \u00b122.75",
+   "owner": "case"
+  },
+  {
+   "name": "PCB inside the top and bottom",
+   "value": 0.6,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": "board y -62.50..39.80 inside the box -65.60..42.90",
+   "owner": "case"
+  },
+  {
+   "name": "PCB side air",
+   "value": 0.6,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": "wall 2.50 + clearance 0.60 each side of the 44.30 board",
+   "owner": "case"
+  },
+  {
+   "name": "bezel on the 10HP panel",
+   "value": 3.24,
+   "target": ">= 0",
+   "ok": true,
+   "note": "bezel 44.02 wide, 3.24 mm each side; a 49 mm bezel would have 0.75",
+   "owner": "case"
+  },
+  {
+   "name": "knob collar inside the panel",
+   "value": 1.55,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "\u00d842.00 knob, collar \u00d847.40, 1.55 mm of panel outside it",
+   "owner": "case"
+  },
+  {
+   "name": "boss axis inside the PCB",
+   "value": 2.2,
+   "target": ">= 0",
+   "ok": true,
+   "note": "boss x \u00b119.95, PCB edge \u00b122.15, notch \u00d89.60",
+   "owner": "case"
+  },
+  {
+   "name": "boss clears the knob hole",
+   "value": 0.765,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "upper bosses y 17.39, room between knob and joystick 1.12",
+   "owner": "case"
+  },
+  {
+   "name": "boss clears the joystick opening",
+   "value": 0.961,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "upper pair sits under the joystick hole",
+   "owner": "case"
+  },
+  {
+   "name": "top rail screws omitted",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the side strip is 4.14 mm and a \u00d83.2 hole with 0.8 webs needs 4.80; web would be 0.47. Holes left out. Bottom pair stays.",
+   "owner": "case"
+  },
+  {
+   "name": "ledge width",
+   "value": 1.5,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "inboard of the PCB edge, ratio of the wall",
+   "owner": "case"
+  },
+  {
+   "name": "rim flush with the PCB back",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "shell rim z -1.60, PCB back -1.60",
+   "owner": "case"
+  },
+  {
+   "name": "clamp clears B-side parts",
+   "value": 2.874,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "overlap 2.35, nearest J10 is 5.22 from the outline",
+   "owner": "case"
+  },
+  {
+   "name": "preload before the rim seats",
+   "value": 0.086,
+   "target": ">= 0.08",
+   "ok": true,
+   "note": "PCB land at -1.68, shell seat at -1.77; tongue 0.96 closes the step",
+   "owner": "case"
+  },
+  {
+   "name": "pocket clears the rear envelope",
+   "value": 0.4,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "d_big_tip \u00d848.00 at the encoder; cavity depth 28.84 unchanged",
+   "owner": "case"
+  },
+  {
+   "name": "body clears the rails",
+   "value": 10.0,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "outer 10 mm of the panel, behind the face only",
+   "owner": "case"
+  },
+  {
+   "name": "panel height",
+   "value": 128.5,
+   "target": ">= 128.5",
+   "ok": true,
+   "note": "3U",
+   "owner": "case"
+  },
+  {
+   "name": "panel height cap",
+   "value": 128.5,
+   "target": "<= 128.5",
+   "ok": true,
+   "note": "3U, not taller",
+   "owner": "case"
+  },
+  {
+   "name": "cover depth past the rear stack",
+   "value": 2.136,
+   "target": ">= 2.136",
+   "ok": true,
+   "note": "placeholder rear stack 26.70 (bearing 2); cover cavity 28.84; retainer plate on 0050274 has not reported a depth yet",
+   "owner": "case"
+  },
+  {
+   "name": "carrier fits the rounded opening",
+   "value": 0.422,
+   "target": ">= 0",
+   "ok": true,
+   "note": "corner clearance 0.42; carrier 40.92\u00d726.04",
+   "owner": "case"
+  },
+  {
+   "name": "top light-strip width",
+   "value": 1.81,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "panel edge above the bezel",
+   "owner": "case"
+  },
+  {
+   "name": "side wall is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "probe in the left wall",
+   "owner": "case"
+  },
+  {
+   "name": "ledge is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "bottom ledge, under the PCB front edge",
+   "owner": "case"
+  },
+  {
+   "name": "knob hole is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "probe on the dial axis, in the plate",
+   "owner": "case"
+  },
+  {
+   "name": "shell back is open for the PCB",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the PCB drops in from the back and stops on the ledge; the cover clamps it",
+   "owner": "case"
+  },
+  {
+   "name": "collar bore is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "knob module slides down through the collar",
+   "owner": "case"
+  },
+  {
+   "name": "edge strip is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "bottom rim is the same plate as the rest of the face",
+   "owner": "case"
+  },
+  {
+   "name": "front face is one plane",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "no light-pipe step and no joystick rebate; the TFT window, knob and joystick opening share z_fp1",
+   "owner": "case"
+  },
+  {
+   "name": "seal ring stands on the face",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "thin ring \u00d843.60, 1.00 mm above the face; knob shoulder bore \u00d844.10 from z 36.35",
+   "owner": "case"
+  },
+  {
+   "name": "seal ring bore is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the knob passes through; its shoulder drops over the ring",
+   "owner": "case"
+  },
+  {
+   "name": "thread engagement / diameter",
+   "value": 2.833,
+   "target": ">= 2",
+   "ok": true,
+   "note": "printed M3\u00d70.50, engagement 8.50 (asked 9.00)",
+   "owner": "case"
+  },
+  {
+   "name": "boss wall / diameter",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "boss \u00d89.00 around the \u00d83.00 thread",
+   "owner": "case"
+  },
+  {
+   "name": "PETG under the screw head",
+   "value": 1.5,
+   "target": ">= 1.5",
+   "ok": true,
+   "note": "ISO 4762 head \u00d85.5\u00d73.00, hex 2.5; counterbore 3.10 (head 0.10 below the face); pad 3.64 on the 0.96 tongue; left under the head 1.50",
+   "owner": "case"
+  },
+  {
+   "name": "counterbore sinks the head",
+   "value": 0.1,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "flat bottom, the \u00d85.5 \u00d7 3.0 knurled head is fully below the cover face",
+   "owner": "case"
+  },
+  {
+   "name": "ISO 4762 engagement",
+   "value": 2.778,
+   "target": ">= 2",
+   "ok": true,
+   "note": "M3\u00d710 A2, thread 10 (to the head); grip 1.67, in the resin 8.33",
+   "owner": "case"
+  },
+  {
+   "name": "screw tip inside the printed tap",
+   "value": 0.166,
+   "target": ">= 0",
+   "ok": true,
+   "note": "tip z 6.73, tap ends 6.90",
+   "owner": "case"
+  },
+  {
+   "name": "pad does not set the depth",
+   "value": 26.21,
+   "target": ">= 0",
+   "ok": true,
+   "note": "pad face -6.37, cover back -32.58; the 3 mm head fits in the local pad",
+   "owner": "case"
+  },
+  {
+   "name": "corner screw through the notch",
+   "value": 3.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "notch \u00d89.60 at x 19.95, y -57.60",
+   "owner": "case"
+  },
+  {
+   "name": "corner screw tip vs faceplate",
+   "value": 26.816,
+   "target": ">= 1.5",
+   "ok": true,
+   "note": "tip z 6.73, plate underside 33.55",
+   "owner": "case"
+  },
+  {
+   "name": "knob bolt tip vs front skin",
+   "value": 3.0,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "4 bolts up into the shell, tip z 33.05",
+   "owner": "case"
+  },
+  {
+   "name": "knob bolts present",
+   "value": 4.0,
+   "target": ">= 2",
+   "ok": true,
+   "note": "4 on the lower arc; the TFT window and the bosses leave room for fewer than 4",
+   "owner": "case"
+  },
+  {
+   "name": "corner boss is resin",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "printed thread, no insert",
+   "owner": "case"
+  },
+  {
+   "name": "cross pin opens the side",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "\u00d81.60 pin, hole \u00d82.24, z 28.53 (axis not yet exported by joystick v0.4)",
+   "owner": "case"
+  },
+  {
+   "name": "case mass",
+   "value": 60.658,
+   "target": "<= 140",
+   "ok": true,
+   "note": "volume 46660 mm\u00b3 (46.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "owner": "case"
+  },
+  {
+   "name": "one hollow shell",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "overall 50.50 \u00d7 128.50 \u00d7 68.63 mm; faceplate to PCB 36.05 mm",
+   "owner": "case"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "sub": "case"
+}

@@ -41,7 +41,7 @@ def main():
         rod_pad_r=D["rod_pad_r"], rod_pad_clear=D["rod_pad_clear"], h1_hole=D["h1_hole"],
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],
-        d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"], pcb=(D["pcb_w"], D["pcb_above"], D["pcb_below"]),
+        d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"],
         knob_proud=D["knob_proud"], z_top=D["z_top"], z_knob_top=g("z_knob_top"),
         knob_od=D["knob_od"], sleeve_id=D["sleeve_id"], sleeve_len=g("sleeve_len"), sleeve_wall=D["sleeve_wall"],
         sleeve_z0=g("sleeve_z0"), sleeve_z1=g("sleeve_z1"), sleeve_od_tol=D["sleeve_od_tol"], sleeve_ovality=D["sleeve_ovality"],
@@ -54,6 +54,18 @@ def main():
         em_holes=[dict(i=h["i"], kind=h["kind"], x=h["x"], y=h["y"], ang=h["ang"],
                        hole="slot" if h["slot"] else "round", hole_d=h["hole_d"], slot_l=h["slot_l"],
                        pin=h["pin"], aperture=D["em_ap"]) for h in D["em_holes"]],
+        # Case v0.1, 10HP: the shell sets the board width. Notches are where the M3 cover
+        # bosses sit inside the outline (frame x,y and board bx,by).
+        pcb=(D.get("nest_w", D["pcb_w"]), D.get("nest_above", D["pcb_above"]), D.get("nest_below", D["pcb_below"])),
+        case_pcb=dict(
+            hp=D.get("hp"), panel_w=D.get("panel_w"), wall=D.get("wall"),
+            pcb_w=D.get("nest_w"), pcb_above=D.get("nest_above"), pcb_below=D.get("nest_below"),
+            pcb_live_w=D["pcb_w"],
+            notches=[dict(x=round(x, 3), y=round(y, 3), bx=round(D["axis_bx"] + x, 3), by=round(D["axis_by"] - y, 3),
+                          d=round(2 * D["notch_r"], 3), kind="notch") for x, y in D.get("corners", ())],
+            screw="ISO 4762 / DIN 912 M3×10 socket head cap screw, stainless A2, full thread, knurled head Ø5.5×3.0, flat counterbore in the PETG cover",
+            note="Board is inset from the 10HP box by the wall plus the drop-in clearance on all four sides, "
+                 "so the PCB edge never reaches the outside. Cut a notch of diameter d at each (bx, by)."),
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

@@ -92,6 +92,12 @@ def main():
         clash_lines = [f"PAIRWISE CLASHES ({len(parts)} parts, {cand} bbox pairs, {ran} recomputed):"] + \
                       ([f"  {'KNOWN' if k in check.KNOWN else 'CLASH'} {k}: {v:.2f} mm³" for k, v in sorted(cl.items(), key=lambda kv: -kv[1])] or ["  none"])
     tm = None
+    case_job = None
+    if a.sub == "case" and (a.preview or a.render or a.clean or a.step):
+        # the case has its own sheets (section, iso, plan, clean, quarter cuts) and STEP/STL/USDZ
+        case_job = dict(preview=bool(a.preview) and not (a.render or a.clean),
+                        full=bool(a.render or a.clean), export=bool(a.render or a.clean or a.step))
+        a.preview = a.render = a.clean = a.step = False
     title = f"Knob stack {V} — sections in colour (2026-10-31; Ed / Edger_Equals, knob module v1, 10HP)" + (f"  [--set {' '.join(a.set)}]" if a.set else "")
     if a.sub: title = f"{a.sub} ({V}) — sub-assembly preview" + (f"  [--set {' '.join(a.set)}]" if a.set else "")
     if a.clean:
@@ -155,6 +161,15 @@ def main():
             elif kind == "usdz": print("usdz:", ex.usdz(parts, keys, stem + ".usdz"))
             else: print("unknown export", kind); continue
             print(f"export {kind}: {time.time() - t:.1f} s -> {stem}")
+    if case_job:
+        from knobparam.case.render import render_case
+        t = time.time()
+        arts = render_case(D, parts, preview=case_job["preview"], full=case_job["full"], export=case_job["export"],
+                           rows=rows, clashes=cl)
+        t_render = time.time() - t
+        print(f"\nCASE ({'preview' if case_job['preview'] else 'full'}) {t_render:.1f} s")
+        for p in arts:
+            print(f"  {p}")
     if a.step:
         from build123d import Compound, export_step
         export_step(Compound(children=list(parts.values())), os.path.join(OUT, f"knob-stack-{V}.step"))
