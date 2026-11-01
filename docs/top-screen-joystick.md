@@ -165,3 +165,16 @@ The 26 mm carrier floor is gone. The daughterboard is raised on a 35 mm riser so
 Carrier outline **44.02 × 29.14** (the screen plus a 1.20 mm wall, of which 0.20 is air, so the solid well wall is 1.00). Knob clearance at full slide is **0.60 mm** against the design Ø41.7 and **1.03 mm** against the live Ø40.85. v0.2 was 0.55 mm against Ø41.7.
 
 The +y standoffs are at local y = ±4.08, not on the outline's top edge. The main PCB only reaches local y 5.98, and a Ø3.2 pad has to stay 0.30 inside that edge. The board itself is taller than that (it has to clear the switch land and carry the stop toward the knob), so the four screws are the outermost symmetric holes the main PCB can take, one per quadrant.
+
+## v0.4 build (1 Nov 2026)
+Model: `cad/joystick-param/` (`build.py`, `build.py --preview`, `build.py --render`).
+Images: `cad/assemblies/joystick-v0.4/joystick-v0.4.png`, `-plan.png`, `-clean.png`, `-preview.png`, and `views/`.
+Report: `cad/assemblies/joystick-v0.4/REPORT.md`.
+**57/57 checks PASS, 0 clashes.** Daughterboard KiCad rev v0.4: ERC 0, DRC 0, schematic parity 0, 0 unconnected. Fab pack READY TO QUOTE.
+The main PCB KiCad project was **not** edited. v0.3 is unchanged beside this.
+
+The spider, the plunger and the round stop are gone. The switch is the only stop. The screen is glued to a separate bezel, which floats on four Lee Spring CI 008B 01 M compression springs (0.963 N/mm). An ISO 4026 M2×3 grub screw in an M2×2×3.2 heat-set insert under each spring sets the preload. That is dialled on the carrier-and-bezel sub-assembly, from underneath, before the stack is built. There is no later access hole. The four hold-down springs stay.
+
+Nominal preload is half a turn: **0.77 N** on the up-stop, **2.12 N** when the centre push bottoms (inside 2.35 ± 0.69 N). One spring is 0.385 N per turn; all four are 1.54 N per turn. The useful window is 0.25 to 1.08 turns. The hex stays reachable out to 1.50 turns.
+
+The knob gap is **0.50 mm** against the design Ø41.7 (was 0.60). The cup clearance is **0.20 mm** (was 0.075, which SLA cannot hold). The daughterboard is **31.88 × 13.87** (the −y stop tab is gone). Carrier floor is 1.00 mm. Carrier volume 2.79 cm³, bezel 3.77 cm³, plate 0.44 cm³. Screen top is still z 47.50. FPC pin-out is still open.

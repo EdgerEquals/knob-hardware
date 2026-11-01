@@ -1,8 +1,9 @@
-"""Top-screen joystick stack parts, v0.3: build(D) -> {name: solid}. Reads D only.
+"""Top-screen joystick stack parts, v0.4: build(D) -> {name: solid}. Reads D only.
 
-The carrier is a thin shell. The screen stays up near the knob top and the switch is raised on the
-35 mm riser so it sits just under that shell. A flat plate glued on the daughterboard carries the
-four ball seats and the round stop. There is no printed base enclosure.
+The carrier is a thin shell. The screen is glued to a separate bezel that floats on four catalog
+compression springs. Each spring sits on an M2 grub screw in the carrier, set before the stack is
+assembled. A flat plate glued on the daughterboard carries the ball seats. There is no spider,
+no plunger, no round stop and no printed base.
 """
 from build123d import *
 
@@ -16,6 +17,18 @@ def cbox(w, h, z0, z1, x=0.0, y=0.0):
 
 def cyl(d, z0, z1, x=0.0, y=0.0):
     return Pos(x, y, z0) * Cylinder(d / 2, z1 - z0, align=A)
+
+def notched(D, z0, z1):
+    """Full corner rectangle, with the middle of each long side cut back to h_mid.
+
+    The knob faces that middle edge. The four corners stay tall enough for a spring
+    outside the glass, and they sit outside the knob's plan.
+    """
+    s = cbox(2 * D["half_w"], 2 * D["half_h"], z0, z1)
+    if D["half_h"] > D["h_mid"] + 1e-6:
+        s -= box(-D["x_notch"], D["x_notch"], D["h_mid"], D["half_h"] + 1.0, z0 - 0.05, z1 + 0.05)
+        s -= box(-D["x_notch"], D["x_notch"], -(D["half_h"] + 1.0), -D["h_mid"], z0 - 0.05, z1 + 0.05)
+    return s
 
 def pcb(D):
     t = D["pcb_t"]
@@ -31,8 +44,9 @@ def pcb(D):
     return p
 
 def plate(D):
-    """Flat stiffener glued on the daughterboard. Ball seats and the round stop stand on it.
-    The standoff screws pass through the plate and the board together."""
+    """Flat stiffener glued on the daughterboard. Ball seats stand on it.
+    The standoff screws pass through the plate and the board together.
+    No round stop, and no hole for the grub screws: those are outside this outline."""
     x0, x1, y0, y1 = D["board_x0"], D["board_x1"], D["board_y0"], D["board_y1"]
     p = box(x0, x1, y0, y1, D["z_plate0"], D["z_plate1"])
     p -= cyl(2 * D["cut_r"], D["z_plate0"] - 0.01, D["z_plate1"] + 0.01)
@@ -41,58 +55,62 @@ def plate(D):
     for x, y in D["balls"]:
         p += cyl(2 * D["boss_r"], D["z_plate1"] - 0.01, D["z_ball"], x, y)
         p -= Pos(x, y, D["z_ball"]) * Sphere(D["seat_r"])
-    qx, qy = D["stop_xy"]
-    # stop short of the bore roof so the closest approach is the radial gap, not a coplanar face
-    p += cyl(D["stop_d"], D["z_plate1"] - 0.01, D["z_c0"] + D["stop_engage"] - D["part_gap"], qx, qy)
     return p
 
+def _fpc_slot(D, z0, z1):
+    """Vertical drop for the FPC, plus the in-plane run under the glass edge."""
+    return box(D["slot_x"][0], D["slot_x"][1], -D["slot_hy"], D["slot_hy"], z0, z1)
+
 def carrier(D):
-    cw, ch = D["car"]
-    g, t = D["skirt_gap"], D["car_skirt"]
-    pw, ph = D["pocket"]
-    c = cbox(cw, ch, D["z_c0"], D["z_car1"])
-    # glass well, then air under the glass down to the spider plate so only the land touches the screen
-    c -= cbox(pw, ph, D["z_scr0"], D["z_car1"] + 0.01)
-    c -= cbox(pw, ph, D["z_sp1"], D["z_scr0"] + 0.01)
-    c -= box(D["sp_x"][0], D["sp_x"][1], -D["sp_hy"], D["sp_hy"], D["z_sp0"], D["z_sp1"] + 0.01)
-    c -= box(D["sp_in_x"][0], D["sp_in_x"][1], -D["sp_in_hy"], D["sp_in_hy"], D["z_floor1"], D["z_sp0"] + 0.01)
-    sx, sy = D["sw_xy"]
-    c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01, sx, sy)
-    c -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_floor1"] + 0.01, sx, sy)
+    """Thin floor, four spring pilots with snap shoulders, cup, hold-down hooks, skirt."""
+    c = notched(D, D["z_c0"], D["z_floor1"])
+    br, sr = D["cs_bore_r"], D["pilot_r"]
+    for x, y in D["cs_xy"]:
+        c += cyl(2 * sr, D["z_floor1"] - 0.01, D["z_sh0"], x, y)
+        c += cyl(2 * D["sh_r"], D["z_sh0"] - 0.01, D["z_sh1"], x, y)
+        c -= cyl(2 * br, D["z_seat"], D["z_sh1"] + 0.02, x, y)
+        c += cyl(D["boss_d"], D["z_ins0"], D["z_c0"] + 0.01, x, y)
+        c -= cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y)
+    c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01)
+    c -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_floor1"] + 0.02)
     hook_w = D["spr_d"] * 0.325
     hook_reach = D["spr_d"] * 1.1
     for x, y in D["springs"]:
         c += cyl(D["spr_boss"][0], D["spr_z1"], D["z_c0"] + 0.01, x, y)
         c -= box(x - hook_w, x + hook_w, y - hook_reach, y + D["spr_boss"][1], D["spr_z1"] - 0.01, D["z_c0"] + 0.02)
-    qx, qy = D["stop_xy"]
-    c -= cyl(D["stop_bore"], D["z_c0"] - D["part_gap"], D["z_c0"] + D["stop_engage"], qx, qy)
-    c -= box(D["slot_x"][0], D["slot_x"][1], -D["slot_hy"], D["slot_hy"], D["z_c0"] - 0.01, D["z_scr0"] + 0.01)
-    bay = D["fpc_w"] / 2 + D["scr_clear"] * 3.5
-    c -= box(D["slot_x"][0] - D["scr_clear"] * 1.5, pw / 2 + 0.01, -bay, bay, D["z_sp1"] - D["sp_t"] * 3, D["z_scr0"] + 0.01)
-    # skirt: a print-minimum wall around the plate, only as tall as the plate. The floor above it is thin
+    c -= _fpc_slot(D, D["z_c0"] - 0.02, D["z_floor1"] + 0.02)
+    g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
     y0, y1 = D["board_y0"] - g, D["board_y1"] + g
     skirt = box(x0 - t, x1 + t, y0 - t, y1 + t, D["z_skirt0"], D["z_c0"] + 0.01)
     skirt -= box(x0, x1, y0, y1, D["z_skirt0"] - 0.01, D["z_c0"] + 0.02)
     return c + skirt
 
-def spider(D):
-    """Same flexure as v0.1 (pad, arm width, plate thickness). The frame does not grow with the screen."""
-    z0, z1 = D["z_sp0"], D["z_sp1"]
-    x0, x1 = D["sp_x"]; hy = D["sp_hy"]; ix0, ix1 = D["sp_in_x"]; ihy = D["sp_in_hy"]
-    px0, px1 = D["pad_x"]; phy = D["sp_pad"][1] / 2; w = D["sp_arm_w"]
-    s = box(x0, x1, -hy, hy, z0, z1) - box(ix0, ix1, -ihy, ihy, z0 - 0.01, z1 + 0.01)
-    s += box(px0, px1, -phy, phy, z0, z1)
-    yb = (phy + ihy) / 2
-    xm = D["sw_xy"][0]
-    for sy in (1, -1):
-        for (xa, xb) in ((px0 + w / 2 + 0.2, xm - 0.6 - w / 2), (px1 - w / 2 - 0.2, xm + 0.6 + w / 2)):
-            lo, hi = sorted((xa, xb))
-            ys = sorted((sy * phy, sy * yb)); s += box(xa - w / 2, xa + w / 2, ys[0] - 0.01, ys[1] + 0.01, z0, z1)
-            s += box(lo - w / 2, hi + w / 2, sy * yb - w / 2, sy * yb + w / 2, z0, z1)
-            ys = sorted((sy * yb, sy * ihy)); s += box(xb - w / 2, xb + w / 2, ys[0] - 0.01, ys[1] + 0.01, z0, z1)
-    s += box(px0, px1, -phy, phy, z1 - 0.01, z1 + D["sp_land"])
-    s += cyl(D["plunger_d"], D["z_plunger0"], z0 + 0.01, xm, D["sw_xy"][1])
+def screen_carrier(D):
+    """Bezel the screen is glued into. Sockets snap over the pilot shoulders. A centre peg meets the stem."""
+    b = notched(D, D["z_bz0"], D["z_bz1"])
+    S = D["scr"]
+    b -= cbox(D["pocket"][0], D["pocket"][1], D["z_scr0"], D["z_bz1"] + 0.05)
+    # hollow the underside of the glass area. The ledge left under the glass is one print minimum
+    hw = S["w"] - 4.0
+    hh = S["h"] - 4.0
+    b -= cbox(hw, hh, D["z_bz0"] - 0.02, D["z_scr0"] - D["print_min"])
+    for x, y in D["cs_xy"]:
+        # wide socket above the lip, so the shoulder can travel; the lip itself is the narrower hole
+        b -= cyl(2 * D["sock_r"], D["z_lip1"], D["z_sock_top"], x, y)
+        b -= cyl(2 * D["lip_r"], D["z_bz0"] - 0.02, D["z_lip1"] + 0.01, x, y)
+        b -= cyl(2 * D["cs_bore_r"], D["z_sock_top"] - 0.01, D["z_roof"] + 0.01, x, y)
+    b += cyl(D["peg_d"], D["z_peg"], D["z_scr0"] - 0.01)
+    # FPC: through the floor, and a shallow channel in the ledge so the tail can leave the glass
+    b -= _fpc_slot(D, D["z_bz0"] - 0.02, D["z_scr0"] + 0.01)
+    b -= box(D["slot_x"][0] - 0.4, D["half_w"] + 0.05, -D["slot_hy"], D["slot_hy"],
+             D["z_scr0"] - 0.55, D["z_scr0"] + 0.01)
+    return b
+
+def insert(D, x, y):
+    """Slip-fit model of the heat-set insert. The real one is an interference fit; that is not a solid overlap."""
+    s = cyl(D["ins_od_model"], D["z_ins0"], D["z_seat"] - 0.02, x, y)
+    s -= cyl(D["ins_id_model"], D["z_ins0"] - 0.04, D["z_seat"], x, y)
     return s
 
 def switch(D):
@@ -110,11 +128,10 @@ def build(D):
         db -= cyl(D["drill_m2"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     out["joystick daughterboard"] = db
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
-    pin_d = D["pitch"] * 0.25          # 0.025 inch square post, drawn round
+    pin_d = D["pitch"] * 0.25
     wall = D["part_gap"]
     for i, (x, y) in enumerate(D["hdr_xy"]):
         out[f"header 1x3 long pin {i + 1} (underside)"] = cbox(hw, hh, D["z_db0"] - ht, D["z_db0"], x, y)
-        # the H11 body is a shell: the pin enters mate_in and stops short of the floor
         sock = cbox(hw, hh, 0, D["sock"]["h"], x, y)
         sock -= cbox(hw - 2 * wall, hh - 2 * wall, D["sock"]["h"] - D["mate_in"] - wall, D["sock"]["h"] + 0.02, x, y)
         out[f"socket 1x3 H11 {i + 1} (main PCB)"] = sock
@@ -130,15 +147,19 @@ def build(D):
     for i, (x, y) in enumerate(D["balls"]):
         out[f"ball {i + 1} Ø{D['ball_d']:g} stainless"] = Pos(x, y, D["z_ball"]) * Sphere(D["ball_d"] / 2)
     out["joystick carrier (printed)"] = carrier(D)
-    out["screen spider + plunger (printed)"] = spider(D)
+    out["screen carrier (printed)"] = screen_carrier(D)
+    for i, (x, y) in enumerate(D["cs_xy"]):
+        out[f"brass insert {i + 1}"] = insert(D, x, y)
+        out[f"grub screw {i + 1}"] = cyl(D["grub_d_model"], D["z_tip"] - D["grub"]["length"], D["z_tip"], x, y)
+        out[f"compression spring {i + 1}"] = cyl(D["cs"]["od"], D["z_tip"] + 0.02, D["z_roof"] - 0.02, x, y)
     S = D["scr"]
     out["top screen " + S["part"]] = cbox(S["w"], S["h"], D["z_scr0"], D["scr_top"])
-    t = D["fpc_t"]; fx = D["fpc_x"]
-    x_end = S["w"] / 2 + D["scr_clear"] - D["scr_clear"] * 3.5
-    z_bend = D["z_sp1"] - D["sp_t"] * 1.75
+    t = D["fpc_t"]
+    fx = D["fpc_x"]
+    z_run = D["z_scr0"] - 0.55 + D["tol_mjf"]
     out["screen FPC [A]"] = (
-        box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, -D["pcb_t"] - 3.0, z_bend + t)
-        + box(fx - t / 2, x_end, -D["fpc_w"] / 2, D["fpc_w"] / 2, z_bend, z_bend + t)
+        box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, -D["pcb_t"] - 3.0, z_run + t)
+        + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
     )
     for i, (x, y) in enumerate(D["springs"]):
         out[f"hold-down spring {i + 1}"] = cyl(D["spr_d"], -D["pcb_t"] - 6.0, D["spr_z1"], x, y)

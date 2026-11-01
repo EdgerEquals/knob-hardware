@@ -1,0 +1,580 @@
+{
+ "rows": [
+  {
+   "name": "stem vs cup bore, radial (rest)",
+   "value": 0.1999999999999998,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "cup \u00d83.40 over the \u00d83 stem, SLA clearance 0.20"
+  },
+  {
+   "name": "cup covers the tilt reference height",
+   "value": 0.5,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "cup z 39.80-42.35, ref z 40.30, stem top 41.00"
+  },
+  {
+   "name": "slide is the switch tilt, no extra overtravel",
+   "value": 0.0,
+   "target": "0",
+   "ok": true,
+   "note": "slide 0.45 = cup clearance 0.20 + tilt 0.25"
+  },
+  {
+   "name": "peg tip to stem top (rest)",
+   "value": 0.20000000000000284,
+   "target": "0.20",
+   "ok": true,
+   "note": "one SLA tolerance. The peg is part of the bezel, not a separate plunger"
+  },
+  {
+   "name": "preload vs 5x screen weight",
+   "value": 9.818537206931705,
+   "target": ">= 5",
+   "ok": true,
+   "note": "preload 0.771 N, screen 8 g = 0.078 N [A]"
+  },
+  {
+   "name": "preload under the centre-push minimum",
+   "value": 0.7705588000000001,
+   "target": "< 1.66",
+   "ok": true,
+   "note": "rest is not already a click"
+  },
+  {
+   "name": "force at switch bottom",
+   "value": 2.1190367,
+   "target": "1.66-3.04",
+   "ok": true,
+   "note": "0.5 turn, 0.55 mm on 4 x Lee Spring CI 008B 01 M (0.963 N/mm). Centre push 2.35 \u00b1 0.69 N"
+  },
+  {
+   "name": "spring not solid at full press",
+   "value": 1.5600000000000003,
+   "target": ">= 0.40",
+   "ok": true,
+   "note": "free 3.18, solid 1.07, used 0.55"
+  },
+  {
+   "name": "newtons per turn, one spring",
+   "value": 0.38527940000000005,
+   "target": "> 0",
+   "ok": true,
+   "note": "0.385 N/turn each, 1.541 N/turn for all four. Pitch 0.40 mm"
+  },
+  {
+   "name": "nominal turns inside the useful window",
+   "value": 0.5,
+   "target": "0.25-1.08",
+   "ok": true,
+   "note": "window keeps the press inside the band and the preload under a click. Hex stays proud out to 1.50 turns"
+  },
+  {
+   "name": "compression spring count",
+   "value": 4.0,
+   "target": "4",
+   "ok": true,
+   "note": "one grub and one insert under each spring"
+  },
+  {
+   "name": "bezel against the up-stop (rest)",
+   "value": 0.010000000000005116,
+   "target": "0.01-0.08",
+   "ok": true,
+   "note": "lip under the pilot shoulder, gap 0.02. Snap overlap 0.40 mm"
+  },
+  {
+   "name": "bezel still clear of the floor at switch bottom",
+   "value": 0.20000000000000429,
+   "target": ">= 0.20",
+   "ok": true,
+   "note": "the switch bottoms first. The shoulder has the same spare room in its socket"
+  },
+  {
+   "name": "shoulder clears the socket roof",
+   "value": 0.12999999999999545,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "spring roof is a separate, smaller bore above the socket"
+  },
+  {
+   "name": "skirt clear at switch end of travel",
+   "value": 0.25,
+   "target": ">= 0.25",
+   "ok": true,
+   "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.250, 0.382, 0.250, 0.382"
+  },
+  {
+   "name": "3\u00b0 carrier rotation hits the rectangular skirt",
+   "value": 0.0,
+   "target": "< 0.05",
+   "ok": true,
+   "note": "the skirt is the anti-rotation stop. It is not the tilt stop"
+  },
+  {
+   "name": "spring pilots outside the plate",
+   "value": 1.0,
+   "target": "outside",
+   "ok": true,
+   "note": "no access hole and no keep-out. The hex is reached before the plate is fitted"
+  },
+  {
+   "name": "hex proud of the insert",
+   "value": 0.8,
+   "target": ">= 0.40",
+   "ok": true,
+   "note": "ISO 4026 M2x3 A2 flat point in M2x2x3.2 brass heat-set. 0.80 mm of screw below the insert at 0.5 turn"
+  },
+  {
+   "name": "insert hangs in free air under the floor",
+   "value": 1.3299999999999983,
+   "target": "0.5-3.0",
+   "ok": true,
+   "note": "insert bottom z 41.02, carrier underside z 42.35. Modelled as a slip fit"
+  },
+  {
+   "name": "grub screw modelled clear of the insert",
+   "value": 0.09999999999999709,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "real thread engages; the solid is the clearance pin"
+  },
+  {
+   "name": "FPC vs carrier and bezel",
+   "value": 0.25,
+   "target": ">= 0.25",
+   "ok": true,
+   "note": "FPC 8 wide [A], slot 2.30 x 8.50"
+  },
+  {
+   "name": "FPC bend room under the glass",
+   "value": 1.4500000000000028,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "screen +x edge to the slot end. Exit side and pin-out are still open"
+  },
+  {
+   "name": "FPC vs PCB slot at full slide",
+   "value": 0.5000000000000011,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "hole x 16.4-20.1, \u00b14.95"
+  },
+  {
+   "name": "FPC vs daughterboard",
+   "value": 2.2122964418240585,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "FPC vs seat plate",
+   "value": 2.2122964418240585,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "hold-down spring vs bore at full slide",
+   "value": 0.24999999999999994,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, length 66.0 (hook z 41.75 + PCB 1.6 + back panel 22.65 [A])"
+  },
+  {
+   "name": "hold-down spring vs plate (rest)",
+   "value": 5.56229644182406,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "hook boss is slotted so the eye can be swapped"
+  },
+  {
+   "name": "compression spring clear of the hold-downs",
+   "value": 11.653240470886935,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "the two spring sets do not share a job"
+  },
+  {
+   "name": "compression spring clear of the plate",
+   "value": 14.191146336059727,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "daughterboard vs plate (glued, faces touch)",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "board 31.88 x 13.87 x 1. The v0.3 -y stop tab is gone"
+  },
+  {
+   "name": "switch opening in the plate",
+   "value": 0.6500000000000001,
+   "target": ">= 0.25",
+   "ok": true,
+   "note": "opening \u00d811.87 over the land extent 5.29"
+  },
+  {
+   "name": "header body vs carrier",
+   "value": 3.092173536597835,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "headers are on the underside; trim the 2.79 mm tails flush"
+  },
+  {
+   "name": "switch body vs headers",
+   "value": 1.19270215497532,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "the switch is on top, the headers underneath"
+  },
+  {
+   "name": "standoff count",
+   "value": 4.0,
+   "target": "4",
+   "ok": true,
+   "note": "one in each quadrant, all GND"
+  },
+  {
+   "name": "standoffs meet the daughterboard",
+   "value": 0.020000000000003126,
+   "target": "0.01-0.05",
+   "ok": true,
+   "note": "and the main PCB, 0.02 short of each face"
+  },
+  {
+   "name": "standoff vs plate (screw through both)",
+   "value": 1.0200000000000031,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "the screw, not the standoff, passes through the plate"
+  },
+  {
+   "name": "standoff vs switch body",
+   "value": 8.003276025998092,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "standoff vs header",
+   "value": 1.1682893416339382,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "header mates the H11 socket",
+   "value": 4.449999999999999,
+   "target": "3.5-6.5",
+   "ok": true,
+   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 21.46, riser 35 = XHHD STTZ2032 (C50377216)"
+  },
+  {
+   "name": "socket count matches the headers",
+   "value": 2.0,
+   "target": "2",
+   "ok": true,
+   "note": "1x3 each side of the switch, not one 2x3 beside it"
+  },
+  {
+   "name": "switch on the carrier axis",
+   "value": 0.0,
+   "target": "0",
+   "ok": true,
+   "note": "dead centre"
+  },
+  {
+   "name": "standoffs, headers, balls and both spring sets symmetric",
+   "value": 1.0,
+   "target": "mirror",
+   "ok": true,
+   "note": "standoffs (\u00b114.04, \u00b14.13), compression springs (\u00b124.93, \u00b117.49)"
+  },
+  {
+   "name": "balls touch the carrier underside",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "four \u00d82 stainless"
+  },
+  {
+   "name": "balls seated (clear of the plate)",
+   "value": 0.04999999999999565,
+   "target": ">= 0.03",
+   "ok": true,
+   "note": "seat radius +0.05"
+  },
+  {
+   "name": "carrier (full slide toward the knob) vs live knob-param",
+   "value": 0.9249999999999965,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "\u00d840.85. The notch at y 14.57 is the close edge; the spring corners are outside the knob"
+  },
+  {
+   "name": "carrier (full slide toward the knob) vs design \u00d841.7",
+   "value": 0.4999999999999957,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "\u00d841.70. The notch at y 14.57 is the close edge; the spring corners are outside the knob"
+  },
+  {
+   "name": "standoff, socket and spring holes on the main PCB",
+   "value": 1.0,
+   "target": "on",
+   "ok": true,
+   "note": "hold-down hooks at x \u00b122.50 (the corner formula wanted \u00b127.35, past the PCB)"
+  },
+  {
+   "name": "carrier skirt above the rail",
+   "value": 25.25,
+   "target": ">= 0",
+   "ok": true,
+   "note": "skirt bottom z 35.25, rail z 10 [A]"
+  },
+  {
+   "name": "bezel well wall",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "PCBWay SLS/MJF minimum 1. Glue gap around the glass is 0.20"
+  },
+  {
+   "name": "carrier floor",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "the 35 mm riser leaves the floor at the print minimum. Screen top 47.50"
+  },
+  {
+   "name": "plate frame outside the switch opening",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "thinnest on the axis, where the land is widest"
+  },
+  {
+   "name": "skirt wall",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "anti-rotation skirt"
+  },
+  {
+   "name": "bezel well wall is solid and the pocket is open",
+   "value": 1.0,
+   "target": "solid",
+   "ok": true,
+   "note": "wall probe y 14.07 at z 46.60; pocket probe y 13.47"
+  },
+  {
+   "name": "carrier volume",
+   "value": 2.791263283510512,
+   "target": "< 12",
+   "ok": true,
+   "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
+  },
+  {
+   "name": "screen-carrier volume",
+   "value": 3.771269389153187,
+   "target": "< 8",
+   "ok": true,
+   "note": "cm3, the bezel the screen is glued to"
+  },
+  {
+   "name": "screen seated on the bezel ledge",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "bottom face sits on the ledge. Side glue gap 0.20. Glass top is 0.30 above the bezel"
+  },
+  {
+   "name": "no printed base, spider or round stop",
+   "value": 0.0,
+   "target": "0 parts",
+   "ok": true,
+   "note": "removed from v0.3: spider, plunger, round stop. Hold-down springs stay"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "key": {
+  "version": "v0.4",
+  "riser_h": 35.0,
+  "stack_h": 47.5,
+  "scr_top": 47.5,
+  "z_knob_top": 52.5,
+  "z_db0": 35.0,
+  "z_db1": 36.0,
+  "z_stem_top": 41.0,
+  "z_c0": 42.35,
+  "z_ball": 41.35,
+  "z_scr0": 46.0,
+  "z_bz0": 43.900000000000006,
+  "z_bz1": 47.2,
+  "z_roof": 46.2,
+  "z_seat": 43.02,
+  "z_tip": 43.220000000000006,
+  "z_skirt0": 35.25,
+  "slide": 0.45,
+  "slide_need": 0.45,
+  "press_gap": 0.2,
+  "press_travel": 0.35,
+  "press_f": 2.1190367,
+  "cs_f_preload": 0.7705588000000001,
+  "cs_f_press": 2.1190367,
+  "cs_f_turn": 1.5411176000000002,
+  "cs_f_turn_1": 0.38527940000000005,
+  "cs_turns": 0.5,
+  "turns_lo": 0.25462041313394895,
+  "turns_hi": 1.0771403817593155,
+  "turns_hex": 1.4999999999999998,
+  "grub_protrude": 0.2,
+  "hex_proud": 0.8,
+  "car": [
+   57.7,
+   42.82
+  ],
+  "car_floor": 1.0,
+  "well_wall": 1.0,
+  "half_w": 28.85,
+  "half_h": 21.41,
+  "h_mid": 14.569999999999999,
+  "x_notch": 20.009999999999998,
+  "db": [
+   31.87540711635188,
+   13.871305501214124,
+   1.0
+  ],
+  "db_xy": [
+   0.0,
+   0.0
+  ],
+  "place_y": 36.37,
+  "board_xy": [
+   25.25,
+   16.53
+  ],
+  "spr_len": 66.0,
+  "back_panel": 22.65,
+  "knob_od_live": 40.85,
+  "knob_od_design": 41.7,
+  "fpc_x": 18.209999999999997,
+  "slot_x": [
+   17.06,
+   19.359999999999996
+  ],
+  "hole_x0": 16.36,
+  "hole_x1": 20.059999999999995,
+  "hole_hy": 4.95,
+  "balls": [
+   [
+    8.360485619547411,
+    4.735652750607062
+   ],
+   [
+    8.360485619547411,
+    -4.735652750607062
+   ],
+   [
+    -8.360485619547411,
+    4.735652750607062
+   ],
+   [
+    -8.360485619547411,
+    -4.735652750607062
+   ]
+  ],
+  "springs": [
+   [
+    22.5,
+    4.030000000000001
+   ],
+   [
+    22.5,
+    -4.030000000000001
+   ],
+   [
+    -22.5,
+    4.030000000000001
+   ],
+   [
+    -22.5,
+    -4.030000000000001
+   ]
+  ],
+  "cs_xy": [
+   [
+    24.93,
+    17.49
+   ],
+   [
+    24.93,
+    -17.49
+   ],
+   [
+    -24.93,
+    17.49
+   ],
+   [
+    -24.93,
+    -17.49
+   ]
+  ],
+  "standoff_xy": [
+   [
+    14.03770355817594,
+    4.130000000000001
+   ],
+   [
+    14.03770355817594,
+    -4.130000000000001
+   ],
+   [
+    -14.03770355817594,
+    4.130000000000001
+   ],
+   [
+    -14.03770355817594,
+    -4.130000000000001
+   ]
+  ],
+  "sw_xy": [
+   0.0,
+   0.0
+  ],
+  "hdr_xy": [
+   [
+    9.745652750607062,
+    0.0
+   ],
+   [
+    -9.745652750607062,
+    0.0
+   ]
+  ],
+  "mate_in": 4.449999999999999,
+  "sx": 14.03770355817594,
+  "sy": 4.130000000000001,
+  "hx": 9.745652750607062,
+  "bx": 8.360485619547411,
+  "by": 4.735652750607062,
+  "board_x0": -15.93770355817594,
+  "board_x1": 15.93770355817594,
+  "board_y0": -6.935652750607062,
+  "board_y1": 6.935652750607062,
+  "cup_bore": 3.4,
+  "skirt_gap": 0.7,
+  "scr_clear": 0.2,
+  "glue": 0.2,
+  "volume_cm3": {
+   "seat plate (printed, glued)": 0.4350048990173548,
+   "joystick carrier (printed)": 2.791263283510512,
+   "screen carrier (printed)": 3.771269389153187
+  }
+ }
+}

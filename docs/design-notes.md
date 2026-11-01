@@ -3,7 +3,7 @@
 A short summary of the current design. The parametric model in `cad/knob-param/` is the source of truth for
 dimensions. Values marked [A] are assumptions that still need checking with calipers or on a prototype.
 Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `check.json`); v0.16 kept in
-`cad/assemblies/knob-stack-v0.16/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.3/` (v0.2 kept beside it; see
+`cad/assemblies/knob-stack-v0.16/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.4/` (v0.3 kept beside it; see
 `docs/top-screen-joystick.md`).
 
 ## v0.16b changes (Ed, 1 Nov 2026)

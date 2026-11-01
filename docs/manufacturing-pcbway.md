@@ -25,15 +25,16 @@
 |---|---|---|
 | Main PCB | v0.11 | **READY TO QUOTE**: routed, ERC 0 / DRC 0 (all severities, schematic parity), every BOM line has an MPN + LCSC part. J10 (MCU link) is a hand-wired placeholder pad field, not a part. |
 | Screen adapter | v0.4 | Placed, **not routed** (needs the screen's FPC pin-out). |
-| Joystick daughterboard | v0.3 | **READY TO QUOTE**: ERC 0, DRC 0 (all severities, schematic parity), 0 unconnected. J1/J2 Samtec TSW-103-20-T-S are consigned (not an LCSC 1×3 line). No LEDs. |
+| Joystick daughterboard | v0.4 | **READY TO QUOTE**: ERC 0, DRC 0 (all severities, schematic parity), 0 unconnected. Outline 31.88 × 13.87 (the v0.3 −y stop tab is gone). J1/J2 Samtec TSW-103-20-T-S are consigned (not an LCSC 1×3 line). No LEDs. |
 
 - Main PCB v0.11 part changes: U2 encoder sensor **Omron EE-SX1321** (LCSC C469128; replaces the discontinued
   EE-SX1131, new footprint from the 1321 datasheet), J2 joystick riser socket **FG FG-PM2.54-2-03P-H8.5**
   (LCSC C42391433, 2×3 2.54 female, 8.5 mm), R30 220R, 10k resistors YAGEO RC0402FR-0710KL (C60490).
 - Joystick switch: Alps SKRHADE010 (C202415); **only approved alternate SKRHABE010** (C139794); E-Switch
   JS1400BFQ is **no auto-substitute**. The joystick carrier slides in-plane (it never tilts).
-- Joystick v0.3 does not edit the main PCB. It needs two hanxia HX PM2.54-1x3P ZC H11 sockets (C41427518) and
+- Joystick v0.4 does not edit the main PCB. It needs two hanxia HX PM2.54-1x3P ZC H11 sockets (C41427518) and
   four M2×35 standoff holes, listed in `docs/top-screen-joystick.md`. The v0.11 J2 8.5 mm 2×3 socket is the old riser.
+  The four M2 grub screws are heat-set inserts in the printed carrier, not holes in this board.
 - STEP files per printed part from the parametric model, with the material and process for each.
 - A purchased-parts BOM with quantities per kit.
 - An assembly drawing showing which sub-assemblies PCBWay builds and which Ed builds.

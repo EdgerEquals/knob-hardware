@@ -3,14 +3,14 @@ Run with the system python that has pcbnew:  /usr/bin/python3 make_project.py
 Reads geom.json written by cad/joystick-param/build.py (the parameters). Writes the schematic, the board,
 ERC + DRC (schematic parity, all severities), the STEP, and the fab/ pack.
 
-v0.3: SKRHADE010 at -45° on the carrier axis. Two 1x3 long-pin headers on the underside, one each side.
-Four M2x35 brass standoffs, PTH to GND. No LEDs. The screen FPC is not on this board.
+v0.4: same switch, headers and standoffs as v0.3. The -y tab that carried the round stop is gone,
+so the outline is symmetric and the bottom GND bus sits inboard of the new edge.
 """
 import os, json, uuid, subprocess, csv, shutil, tempfile, zipfile, datetime, re
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__)); NAME = "joystick-daughterboard"
-REV = "v0.3"
+REV = "v0.4"
 G = json.load(open(os.path.join(HERE, "geom.json")))
 ORIGIN = (100.0, 100.0)
 X0, Y0, X1, Y1 = G["board"]
@@ -126,7 +126,7 @@ def write_sch():
         L += inst("joystick:Mount_M2", f"MH{i + 1}", "STTZ2032", "footprints:Mount_M2x35_Standoff", mx, my, uid, list(mhp), *PARTS[f"MH{i + 1}"])
         X, Y = mx + mhp["1"][0], my - mhp["1"][1]
         L.append(wire(X, Y, X - 5.08, Y)); L.append(label("GND", X - 5.08, Y, True))
-    L.append(f'  (text "v0.3. Switch on the carrier axis. Two 1x3 headers, plastic on the underside, long pin down into the H11 sockets on the main PCB.\\nFour M2x35 standoffs and frame tabs 7 and 8 are GND. No LEDs. No ESD or pull-ups on this board.\\nJ1 and J2 are Samtec TSW-103-20-T-S, consigned (same -20 lead as LCSC C3345998, which is the 2-row part)." (exclude_from_sim no) (at 20 165 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
+    L.append(f'  (text "v0.4. Switch on the carrier axis. Two 1x3 headers, plastic on the underside, long pin down into the H11 sockets on the main PCB.\\nFour M2x35 standoffs and frame tabs 7 and 8 are GND. No LEDs. No round-stop tab. No ESD or pull-ups on this board.\\nJ1 and J2 are Samtec TSW-103-20-T-S, consigned (same -20 lead as LCSC C3345998, which is the 2-row part)." (exclude_from_sim no) (at 20 165 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
     L += ['  (sheet_instances (path "/" (page "1")))', ')']
     open(os.path.join(HERE, NAME + ".kicad_sch"), "w").write("\n".join(L) + "\n")
 
@@ -214,16 +214,18 @@ def build_board():
     track([S["SW6"], (S["SW6"][0], -4.7)], "SW_DOWN")
     track([(S["SW6"][0], -4.7), (H[("J1", "SW_DOWN")][0], -4.7), H[("J1", "SW_DOWN")]], "SW_DOWN", pcbnew.B_Cu)
     # GND: common, both frame tabs, J1 outer pin, four standoffs. Spine at x=11.5, off SW_DOWN.
+    # The v0.3 bus at y=-7.4/-8.6 lived on the round-stop tab. This board ends at y=-6.94,
+    # so the bus is at y=-6.30: 0.53 mm inside the edge, 0.57 mm clear of the Ø3.2 standoff pads.
     gnd = H[("J1", "GND")]
-    # diagonal stub misses the rotated SW_RIGHT pad; SW_DOWN's long run is on B.Cu so this spine may cross it
-    track([S["SW5"], (3.2, -3.2), (4.0, -4.2), (4.0, -7.4), (11.5, -7.4), (11.5, -2.1), (gnd[0], -2.1), gnd], "GND")
-    track([S["SW8"], (S["SW8"][0], -8.6), (11.5, -8.6), (11.5, -7.4)], "GND")
+    yb = -6.30
+    track([S["SW5"], (3.2, -3.2), (4.0, -4.2), (4.0, yb), (11.5, yb), (11.5, -2.1), (gnd[0], -2.1), gnd], "GND")
+    track([S["SW8"], (S["SW8"][0], yb), (11.5, yb)], "GND")
     track([S["SW7"], (4.4, S["SW7"][1]), (4.4, 6.2), (11.5, 6.2), (11.5, 2.1), (gnd[0], 2.1), gnd], "GND")
     track([mh_pts["MH1"], (mh_pts["MH1"][0], 6.2), (4.4, 6.2)], "GND")
-    track([mh_pts["MH2"], (mh_pts["MH2"][0], -6.4), (11.5, -6.4)], "GND")
+    track([mh_pts["MH2"], (mh_pts["MH2"][0], yb), (11.5, yb)], "GND")
     track([mh_pts["MH3"], (mh_pts["MH3"][0], 6.2), (4.4, 6.2)], "GND")
-    track([mh_pts["MH4"], (mh_pts["MH4"][0], -8.6), (S["SW8"][0], -8.6)], "GND")
-    text("JOY v0.3", 0.0, -9.2, pcbnew.F_Fab, 0.8)
+    track([mh_pts["MH4"], (mh_pts["MH4"][0], yb), (11.5, yb)], "GND")
+    text("JOY v0.4", 7.2, -5.15, pcbnew.F_Fab, 0.6)
     pcbnew.SaveBoard(os.path.join(HERE, NAME + ".kicad_pcb"), b)
     return sw_pts
 

@@ -1,9 +1,9 @@
-joystick-daughterboard v0.3 PCBWay pack, generated 2026-11-01 11:58 by make_project.py
+joystick-daughterboard v0.4 PCBWay pack, generated 2026-11-01 12:54 by make_project.py
 READY TO QUOTE
 
 {
   "board": "joystick-daughterboard",
-  "rev": "v0.3",
+  "rev": "v0.4",
   "erc_messages": 0,
   "erc_errors": 0,
   "erc_warnings": 0,
