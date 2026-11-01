@@ -1,5 +1,7 @@
 # Joystick v0.4
 
+The module rests on the case faceplate. The bezel is a 1.2 mm lip (44.02 × 29.14) on a 2.5 mm faceplate proxy. The carrier, springs, switch, daughterboard and standoffs are below that plate.
+
 The carrier assembly is simpler. The printed spider and plunger are gone, and so is the round stop. The switch's own end of travel is the only stop, for tilt and for the centre press. The screen is glued to a separate bezel. Four catalog compression springs sit between that bezel and the carrier, and an M2 grub screw under each one sets the preload.
 
 Ed dials that preload on the carrier-and-bezel sub-assembly, from underneath, before the rest goes together. The screws are not reachable once the stack is built, and nothing was added so they could be. No access hole, no keep-out on the daughterboard.

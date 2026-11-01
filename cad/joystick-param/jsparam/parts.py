@@ -58,6 +58,8 @@ def plate(D):
     p -= cyl(2 * D["cut_r"], D["z_plate0"] - 0.01, D["z_plate1"] + 0.01)
     for x, y in D["standoff_xy"]:
         p -= cyl(D["drill_m2"], D["z_plate0"] - 0.01, D["z_plate1"] + 0.01, x, y)
+    for x, y in D["springs"]:
+        p -= cyl(D["spr_bore"], D["z_plate0"] - 0.2, D["z_plate1"] + 0.2, x, y)
     for x, y in D["balls"]:
         p += cyl(2 * D["boss_r"], D["z_plate1"] - 0.01, D["z_ball"], x, y)
         p -= Pos(x, y, D["z_ball"]) * Sphere(D["seat_r"])
@@ -68,13 +70,10 @@ def _fpc_slot(D, z0, z1):
     return box(D["slot_x"][0], D["slot_x"][1], -D["slot_hy"], D["slot_hy"], z0, z1)
 
 def carrier(D):
-    """Thin floor, four spring pilots with snap shoulders, cup, hold-down hooks, skirt."""
-    c = notched(D, D["z_c0"], D["z_floor1"])
-    br, sr = D["cs_bore_r"], D["pilot_r"]
+    """Thin floor under the faceplate. Spring seats, cup, hold-down hooks, skirt. It fits through the faceplate hole."""
+    c = cbox(2 * D["car_hw"], 2 * D["car_hh"], D["z_c0"], D["z_floor1"])
     for x, y in D["cs_xy"]:
-        c += cyl(2 * sr, D["z_floor1"] - 0.01, D["z_sh0"], x, y)
-        c += cyl(2 * D["sh_r"], D["z_sh0"] - 0.01, D["z_sh1"], x, y)
-        c -= cyl(2 * br, D["z_seat"], D["z_sh1"] + 0.02, x, y)
+        c -= cyl(2 * D["cs_bore_r"], D["z_seat"], D["z_floor1"] + 0.02, x, y)
         c += cyl(D["boss_d"], D["z_ins0"], D["z_c0"] + 0.01, x, y)
         c -= cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y)
     c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01)
@@ -84,7 +83,8 @@ def carrier(D):
     for x, y in D["springs"]:
         c += cyl(D["spr_boss"][0], D["spr_z1"], D["z_c0"] + 0.01, x, y)
         c -= box(x - hook_w, x + hook_w, y - hook_reach, y + D["spr_boss"][1], D["spr_z1"] - 0.01, D["z_c0"] + 0.02)
-    c -= _fpc_slot(D, D["z_c0"] - 0.02, D["z_floor1"] + 0.02)
+    c -= box(D["slot_x"][0] - 0.5, D["slot_x"][1] + 0.5, -(D["slot_hy"] + 0.4), D["slot_hy"] + 0.4,
+             D["z_c0"] - 0.5, D["z_floor1"] + 0.5)
     g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
     y0, y1 = D["board_y0"] - g, D["board_y1"] + g
@@ -93,25 +93,27 @@ def carrier(D):
     return c + skirt
 
 def screen_carrier(D):
-    """Bezel the screen is glued into. Sockets snap over the pilot shoulders. A centre peg meets the stem."""
-    b = notched(D, D["z_bz0"], D["z_bz1"])
-    S = D["scr"]
-    b -= cbox(D["pocket"][0], D["pocket"][1], D["z_scr0"], D["z_bz1"] + 0.05)
-    # hollow the underside of the glass area. The ledge left under the glass is one print minimum
-    hw = S["w"] - 4.0
-    hh = S["h"] - 4.0
-    b -= cbox(hw, hh, D["z_bz0"] - 0.02, D["z_scr0"] - D["print_min"])
+    """1.2 mm bezel. A lip around the glass, corner pads the springs push on, and the press peg."""
+    b = cbox(2 * D["half_w"], 2 * D["half_h"], D["z_bz0"], D["z_bz1"])
+    # glass opening. Corner pads stay, so the springs have a face and the glass has something to sit on.
+    b -= cbox(D["pocket"][0], D["pocket"][1], D["z_roof"], D["z_bz1"] + 0.05)
     for x, y in D["cs_xy"]:
-        # wide socket above the lip, so the shoulder can travel; the lip itself is the narrower hole
-        b -= cyl(2 * D["sock_r"], D["z_lip1"], D["z_sock_top"], x, y)
-        b -= cyl(2 * D["lip_r"], D["z_bz0"] - 0.02, D["z_lip1"] + 0.01, x, y)
-        b -= cyl(2 * D["cs_bore_r"], D["z_sock_top"] - 0.01, D["z_roof"] + 0.01, x, y)
-    b += cyl(D["peg_d"], D["z_peg"], D["z_scr0"] - 0.01)
-    # FPC: through the floor, and a shallow channel in the ledge so the tail can leave the glass
-    b -= _fpc_slot(D, D["z_bz0"] - 0.02, D["z_scr0"] + 0.01)
-    b -= box(D["slot_x"][0] - 0.4, D["half_w"] + 0.05, -D["slot_hy"], D["slot_hy"],
-             D["z_scr0"] - 0.55, D["z_scr0"] + 0.01)
+        b += cyl(2 * D["cs_bore_r"] + 1.2, D["z_bz0"], D["z_roof"], x, y)
+        b -= cyl(2 * D["cs_bore_r"], D["z_bz0"] - 0.02, D["z_roof"], x, y)
+    b += cyl(D["peg_d"], D["z_peg"], D["z_scr0"] - 0.05)
+    b -= box(D["slot_x"][0] - 0.4, D["half_w"] + 0.2, -(D["slot_hy"] + 0.3), D["slot_hy"] + 0.3,
+             D["z_bz0"] - 0.05, D["z_bz1"] + 0.05)
     return b
+
+def faceplate(D):
+    """Proxy for the one-piece case face, clear resin UTR-8100. Thickness is the ~2.5 mm wall.
+    The lip overlaps the plate. A rebate lets the lip drop for the press without the switch being blocked."""
+    m = 10.0
+    p = cbox(2 * (D["half_w"] + m), 2 * (D["half_h"] + m), D["z_fp0"], D["z_fp1"])
+    p -= cbox(2 * D["hole_hw"], 2 * D["hole_hh"], D["z_fp0"] - 0.05, D["z_fp1"] + 0.05)
+    p -= cbox(2 * (D["half_w"] + D["tol_sla"]), 2 * (D["half_h"] + D["tol_sla"]),
+              D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + 0.05)
+    return p
 
 def insert(D, x, y):
     """Slip-fit model of the heat-set insert. The real one is an interference fit; that is not a solid overlap."""
@@ -128,10 +130,13 @@ def switch(D):
 def build(D):
     out = {}
     out["main PCB (proxy, local patch)"] = pcb(D)
+    out["faceplate (case proxy, UTR-8100)"] = faceplate(D)
     dx0, dx1, dy0, dy1 = D["board_x0"], D["board_x1"], D["board_y0"], D["board_y1"]
     db = box(dx0, dx1, dy0, dy1, D["z_db0"], D["z_db1"])
     for x, y in D["standoff_xy"]:
         db -= cyl(D["drill_m2"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
+    for x, y in D["springs"]:
+        db -= cyl(D["spr_bore"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     out["joystick daughterboard"] = db
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
     pin_d = D["pitch"] * 0.25
@@ -165,7 +170,10 @@ def build(D):
         out[f"grub screw {i + 1}"] = cyl(D["grub_d_model"], D["z_tip"] - D["grub"]["length"], D["z_tip"], x, y)
         out[f"compression spring {i + 1}"] = cyl(D["cs"]["od"], D["z_tip"] + 0.02, D["z_roof"] - 0.02, x, y)
     S = D["scr"]
-    out["top screen " + S["part"]] = cbox(S["w"], S["h"], D["z_scr0"], D["scr_top"])
+    glass = cbox(S["w"], S["h"], D["z_scr0"] + 0.02, D["scr_top"])
+    for x, y in D["cs_xy"]:
+        glass -= cyl(2 * D["cs_bore_r"] + 1.4, D["z_scr0"] - 0.05, D["z_roof"] + 0.05, x, y)
+    out["top screen " + S["part"]] = glass
     t = D["fpc_t"]
     fx = D["fpc_x"]
     z_run = D["z_scr0"] - 0.55 + D["tol_mjf"]

@@ -23,6 +23,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--set", action="append", default=[]); ap.add_argument("--render", action="store_true")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--section", action="store_true", help="low-res section on y=0 only")
     ap.add_argument("--step", action="store_true"); ap.add_argument("--out", default=None)
     a = ap.parse_args()
     from jsparam import params, parts, checks
@@ -59,6 +60,10 @@ def main():
     gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
     json.dump(geom, open(gpath, "w"), indent=1)
     print("geom:", gpath)
+    if a.section and not a.render:
+        from jsparam import render
+        prev = os.path.join(OUT, f"joystick-{V}-section-preview.png")
+        render.section_preview(D, P, prev); print("section:", prev)
     if a.preview and not a.render:
         from jsparam import render
         prev = os.path.join(OUT, f"joystick-{V}-preview.png")

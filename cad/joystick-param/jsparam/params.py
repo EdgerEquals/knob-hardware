@@ -47,7 +47,11 @@ P = dict(
     fpc_bend=2.6,           # [A] screen +x edge to the slot centre, when the skirt allows it
     fpc_slot_l=2.3,         # [A]
     # ---- carrier / bezel ----
-    car_top_below=0.3,      # [A] bezel top below the screen glass top
+    car_top_below=0.3,      # [A] glass stands this far proud of the bezel top
+    bz_lip=1.2,             # [Ed] bezel lip, same as the other bezel. 1.5 mm is the maximum
+    bz_t=1.2,               # [Ed] bezel thickness. Same limit
+    fp_t=2.5,               # [A] faceplate of the one-piece case. UTR-8100 clear resin, wall ~2.5 mm
+    fp_overlap=0.90,        # [A] how far the lip covers the faceplate at rest, before the slide
     skirt_overlap=0.75,     # [A] skirt reaches this far below the plate
     # ---- return springs (Lee Spring instrument series, catalog) ----
     # 5.5 lbf/in = 0.963 N/mm. Short on purpose: the spring lives in the bezel, not in a thick floor.
@@ -168,40 +172,41 @@ def derive(P_):
     D["slide"] = D["cup_rad_clear"] + sw["tilt_travel"]
     D["slide_need"] = D["slide"]
     D["skirt_gap"] = D["slide"] + mjf       # the skirt is still clear when the switch has already stopped
-    # pilot / snap shoulder around each compression spring. Radii, from the spring outward.
-    bore_r = cs["od"] / 2 + sla
-    body_r = bore_r + 0.80                  # pilot wall. 0.80 is the SLA minimum; the floor and the bezel use 1.0
-    lip_r = body_r + sla                    # bezel lip, the guide and the catch
-    sh_r = lip_r + 0.40                     # shoulder the lip snaps under
-    sock_r = sh_r + sla                     # socket clears the shoulder
-    outer_r = sock_r + pm                   # plastic outside the socket
-    D["cs_bore_r"] = bore_r
-    D["pilot_r"] = body_r
-    D["lip_r"] = lip_r
-    D["sh_r"] = sh_r
-    D["sock_r"] = sock_r
-    D["cs_outer_r"] = outer_r
-    D["lip_t"] = 0.80
-    D["sh_t"] = 0.80
+    # The bezel is a 1.2 mm lip around the glass, not a tower. Springs, the carrier and the
+    # switch live under it, inside the faceplate hole.
+    D["cs_bore_r"] = cs["od"] / 2 + sla
+    D["pilot_r"] = D["cs_bore_r"]
+    D["sh_r"] = D["cs_bore_r"]
+    D["lip_r"] = D["cs_bore_r"]
+    D["sock_r"] = D["cs_bore_r"]
+    D["cs_outer_r"] = D["cs_bore_r"]
+    D["lip_t"] = D["bz_t"]
+    D["sh_t"] = 0.0
     D["up_gap"] = 0.02
-    D["snap"] = sh_r - lip_r
+    D["snap"] = D["fp_overlap"]
     D["peg_d"] = 1.80
-    # spring centres sit outside the glass well by a print-minimum wall, then the socket
-    D["cs_x"] = S["w"] / 2 + D["glue"] + pm + sock_r
-    D["cs_y"] = S["h"] / 2 + D["glue"] + pm + sock_r
-    D["half_w"] = D["cs_x"] + outer_r
-    D["half_h"] = D["cs_y"] + outer_r
-    D["h_mid"] = S["h"] / 2 + D["glue"] + pm
-    # notch inboard of the socket by a print-minimum wall plus 1 mm of bridge
-    D["x_notch"] = D["cs_x"] - sock_r - pm - 1.0
+    D["half_w"] = S["w"] / 2 + D["bz_lip"]
+    D["half_h"] = S["h"] / 2 + D["bz_lip"]
+    D["h_mid"] = D["half_h"]
+    D["x_notch"] = D["half_w"]
+    D["hole_hw"] = D["half_w"] - D["fp_overlap"]
+    D["hole_hh"] = D["half_h"] - D["fp_overlap"]
+    D["car_hw"] = D["hole_hw"] - D["slide"] - sla
+    D["car_hh"] = D["hole_hh"] - D["slide"] - sla
+    D["cs_x"] = D["car_hw"] - cs["od"] / 2 - sla
+    D["cs_y"] = D["car_hh"] - cs["od"] / 2 - sla
     D["car"] = (2 * D["half_w"], 2 * D["half_h"])
     D["pocket"] = (S["w"] + 2 * D["glue"], S["h"] + 2 * D["glue"])
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
     # screen top from the knob top. The riser does not move the screen
     D["scr_top"] = D["z_knob_top"] - D["scr_below_knob"]
-    D["z_scr0"] = D["scr_top"] - S["t"]
-    D["z_bz1"] = D["scr_top"] - D["car_top_below"]
-    D["z_roof"] = D["z_bz1"] - pm
+    # bezel is bz_t thick. Its bottom is where the old glass bottom was. The glass sits on the
+    # 0.30 mm spring pads, so the glass top is 0.30 above the old 47.50 target.
+    D["z_bz0"] = D["scr_top"] - S["t"]
+    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
+    D["z_roof"] = D["z_bz0"] + 0.30
+    D["z_scr0"] = D["z_roof"]
+    D["scr_top"] = D["z_scr0"] + S["t"]
     so, hd, sk = D["standoff"], D["hdr"], D["sock"]
     D["z_db0"] = so["length"]
     D["z_db1"] = D["z_db0"] + D["db_t"]
@@ -209,9 +214,15 @@ def derive(P_):
     D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
     D["z_pivot"] = D["z_db1"] + sw["pivot"]
     D["z_ref"] = D["z_db1"] + sw["ref_h"]
-    D["z_c0"] = D["z_stem_top"] + D["stem_below"]
+    # faceplate under the lip. The bezel sits 0.02 mm above it so the faces do not fuse.
+    D["z_fp1"] = D["z_bz0"] - D["up_gap"]
+    D["z_fp0"] = D["z_fp1"] - D["fp_t"]
+    D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
+    # carrier floor is one SLA tolerance under the faceplate, so the module hangs below it
     D["car_floor"] = pm
-    D["z_floor1"] = D["z_c0"] + D["car_floor"]
+    D["z_floor1"] = D["z_fp0"] - sla
+    D["z_c0"] = D["z_floor1"] - D["car_floor"]
+    D["stem_below"] = D["z_c0"] - D["z_stem_top"]
     D["riser_h"] = D["z_db0"]
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
@@ -238,15 +249,15 @@ def derive(P_):
     # press: the peg meets the stem after one SLA tolerance, then the switch travels its own 0.15 mm
     D["press_gap"] = sla
     D["press_travel"] = D["press_gap"] + sw["push_travel"]
-    D["z_bz0"] = D["z_floor1"] + D["press_travel"] + sla
+    D["fp_rebate"] = D["press_travel"] + sla          # the lip can drop this far into the faceplate before it stops
     D["z_peg"] = D["z_stem_top"] + D["press_gap"]
     D["z_lip0"] = D["z_bz0"]
-    D["z_lip1"] = D["z_bz0"] + D["lip_t"]
-    D["z_sh0"] = D["z_lip1"] + D["up_gap"]
-    D["z_sh1"] = D["z_sh0"] + D["sh_t"]
-    D["z_sock_top"] = D["z_sh1"] + D["press_travel"] + sla
-    D["z_car1"] = D["z_sh1"]
-    # zero grub protrusion = zero preload. The free spring just reaches the bezel roof.
+    D["z_lip1"] = D["z_bz1"]
+    D["z_sh0"] = D["z_bz0"]
+    D["z_sh1"] = D["z_bz0"]
+    D["z_sock_top"] = D["z_bz0"]
+    D["z_car1"] = D["z_floor1"]
+    # nominal grub protrusion is the whole preload. The free spring just reaches the bezel.
     D["z_seat"] = D["z_roof"] - cs["free"]
     D["grub_protrude"] = D["cs_turns"] * grub["pitch"]
     D["z_tip"] = D["z_seat"] + D["grub_protrude"]
@@ -288,8 +299,7 @@ def derive(P_):
     D["knob_od_used"] = design_od
     rc = design_od / 2 + D["tgt"]["knob_min"] + D["knob_extra"] + D["slide"]
     D["knob_rc"] = rc
-    silhouette = [(0.0, -D["h_mid"]), (D["x_notch"], -D["half_h"]),
-                  (D["half_w"], -D["half_h"]), (D["half_w"], -D["h_mid"])]
+    silhouette = [(0.0, -D["half_h"]), (D["half_w"], -D["half_h"])]
     D["place_y"] = max(_place_for(x, y, rc) for x, y in silhouette)
     D["y_pcb"] = D["pcb_above"] - D["place_y"]
     # switch on the carrier axis. Land extent drives the plate opening and the board
@@ -324,14 +334,13 @@ def derive(P_):
     need = D["cut_r"] + D["boss_r"] + D["part_gap"]
     bx_min = math.sqrt(max(need ** 2 - D["by"] ** 2, 0.0))
     bx_max = D["sx"] - D["standoff_d"] / 2 - D["part_gap"] - D["boss_r"]
-    D["bx"] = min(max(bx_min, (bx_min + bx_max) / 2), bx_max)
+    D["bx"] = bx_max          # as far toward the plate corners as the standoffs allow
     D["balls"] = [(bx, by) for bx in (D["bx"], -D["bx"]) for by in (D["by"], -D["by"])]
-    # hold-down hooks use the v0.3 rule, then stop at the main-PCB edge. The new corners are wider than the PCB
-    raw_x = D["half_w"] - D["spr_boss"][0] / 2 - sla
-    pcb_lim_x = D["pcb_w"] / 2 - D["pcb_edge"] - D["spr_bore"] / 2
-    D["spr_x"] = min(raw_x, pcb_lim_x)
-    D["spr_x_raw"] = raw_x
-    D["spr_y"] = min(D["sy"], D["y_pcb"] - D["pcb_edge"] - D["spr_bore"] / 2)
+    # hold-downs stay inboard of the FPC drop and under the bezel. The old pair at x=±22.5
+    # stood outside the lip; that is the yellow tube Ed circled.
+    D["spr_x_raw"] = D["car_hw"] - D["spr_boss"][0] / 2 - sla
+    D["spr_x"] = 6.5
+    D["spr_y"] = min(3.5, D["y_pcb"] - D["pcb_edge"] - D["spr_bore"] / 2)
     D["springs"] = [(sx, sy) for sx in (D["spr_x"], -D["spr_x"]) for sy in (D["spr_y"], -D["spr_y"])]
     edge = S["w"] / 2
     skirt_outer = D["db_half_w"] + D["skirt_gap"] + D["car_skirt"]

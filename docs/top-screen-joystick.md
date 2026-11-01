@@ -170,8 +170,10 @@ The +y standoffs are at local y = ±4.08, not on the outline's top edge. The mai
 Model: `cad/joystick-param/` (`build.py`, `build.py --preview`, `build.py --render`).
 Images: `cad/assemblies/joystick-v0.4/joystick-v0.4.png`, `-plan.png`, `-clean.png`, `-preview.png`, and `views/`.
 Report: `cad/assemblies/joystick-v0.4/REPORT.md`.
-**62/62 checks PASS, 0 clashes.** Daughterboard KiCad rev v0.4: ERC 0, DRC 0, schematic parity 0, 0 unconnected. Fab pack READY TO QUOTE.
+**65/65 checks PASS, 0 clashes.** Daughterboard KiCad rev v0.4: ERC 0, DRC 0, schematic parity 0, 0 unconnected. Fab pack READY TO QUOTE.
 The main PCB KiCad project was **not** edited. v0.3 is unchanged beside this.
+
+The bezel is a 1.2 mm lip (44.02 × 29.14), on a 2.5 mm faceplate proxy for the UTR-8100 case. The carrier drops through the faceplate hole from the front and the lip overlaps it by 0.90 mm. Ball seats are at the plate corners (±10.11, ±4.74). The yellow tubes Ed circled are the hold-down springs; they were outside the lip at x=±22.5 and now sit at (±6.50, ±3.50), under the bezel, through the daughterboard. Glass top is z 47.80 (0.30 mm of spring pad under the glass). Checks 65/65, 0 clashes.
 
 The riser is four XHHD DTTZ3033 male-female standoffs, LCSC C50377642 (H3×M2×35+4), in place of the out-of-stock STTZ2032. The 4 mm stud through the 1.6 mm main PCB leaves 2.40 mm below the board. An ISO 4032 M2 nut (1.6 mm thick, 4 mm across flats) sits in that space, with 0.79 mm of stud past the nut. The back panel is 22.65 mm behind the board, and the model has no clash. The nut is wider than the pad, so the screws are at local y ±3.73.
 

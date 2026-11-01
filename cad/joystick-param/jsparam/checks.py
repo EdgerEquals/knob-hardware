@@ -68,15 +68,26 @@ def run(D, P):
     row("compression spring count", len(css), "4", len(css) == 4 and len(grubs) == 4 and len(inserts) == 4,
         "one grub and one insert under each spring")
     # 3 captive bezel, and the skirt is not the tilt stop
-    gap_cb = car.distance_to(bez)
-    row("bezel against the up-stop (rest)", gap_cb, "0.01-0.08", 0.01 <= gap_cb <= 0.08,
-        f"lip under the pilot shoulder, gap {D['up_gap']:.2f}. Snap overlap {D['snap']:.2f} mm")
-    row("bezel still clear of the floor at switch bottom", D["z_bz0"] - D["z_floor1"] - D["press_travel"],
-        f">= {D['tol_sla']:.2f}",
-        D["z_bz0"] - D["z_floor1"] - D["press_travel"] >= D["tol_sla"] - 1e-9,
-        "the switch bottoms first. The shoulder has the same spare room in its socket")
-    row("shoulder clears the socket roof", D["z_roof"] - D["z_sock_top"], ">= 0.05",
-        D["z_roof"] - D["z_sock_top"] >= 0.05, "spring roof is a separate, smaller bore above the socket")
+    fp = P["faceplate (case proxy, UTR-8100)"]
+    gap_fp = bez.distance_to(fp)
+    row("bezel lip above the faceplate", D["z_bz0"] - D["z_fp1"], "0.02",
+        abs(D["z_bz0"] - D["z_fp1"] - D["up_gap"]) < 1e-6 and gap_fp > 0.05,
+        f"vertical gap {D['up_gap']:.2f}. The rebate is wider than the lip by {D['tol_sla']:.2f}, "
+        f"so the closest solid is {gap_fp:.2f} mm. Overlap {D['fp_overlap']:.2f} mm")
+    row("bezel thickness", D["bz_t"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_t"] <= 1.5 + 1e-9,
+        f"lip {D['bz_lip']:.2f} mm, same band as the other bezel. Outer {2*D['half_w']:.2f} x {2*D['half_h']:.2f}")
+    row("press rebate clears the switch travel", D["fp_rebate"] - D["press_travel"], f">= {D['tol_sla']:.2f}",
+        D["fp_rebate"] - D["press_travel"] >= D["tol_sla"] - 1e-9,
+        "the lip drops into the rebate. The switch bottoms before the rebate floor")
+    row("carrier below the faceplate", D["z_fp0"] - D["z_floor1"], f">= {D['tol_sla']:.2f}",
+        D["z_fp0"] - D["z_floor1"] >= D["tol_sla"] - 1e-9,
+        f"faceplate {D['fp_t']:.2f} mm assumed (UTR-8100 wall). Carrier top z {D['z_floor1']:.2f}, faceplate bottom z {D['z_fp0']:.2f}")
+    fits = (D["car_hw"] + D["slide"] + D["tol_sla"] <= D["hole_hw"] + 1e-9
+            and D["car_hh"] + D["slide"] + D["tol_sla"] <= D["hole_hh"] + 1e-9)
+    row("carrier drops through the faceplate hole", 1.0 if fits else 0.0, "fits", fits,
+        f"carrier ±{D['car_hw']:.2f} x ±{D['car_hh']:.2f}, hole ±{D['hole_hw']:.2f} x ±{D['hole_hh']:.2f}, slide {D['slide']:.2f}")
+    row("bezel lip bigger than the hole", D["half_w"] - D["hole_hw"], ">= 0.6",
+        D["half_w"] - D["hole_hw"] >= 0.6, "the lip cannot fall through. It is fitted from the front")
     gaps = []
     for deg in (0, 45, 90, 135):
         a = math.radians(deg)
@@ -90,7 +101,7 @@ def run(D, P):
     row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
         "the skirt is the anti-rotation stop. It is not the tilt stop")
     # 4 grub screws: on the sub-assembly only. No hole in the plate or the daughterboard
-    outside = all(abs(x) - D["sh_r"] > D["board_x1"] or abs(y) - D["sh_r"] > D["board_y1"] for x, y in D["cs_xy"])
+    outside = all(abs(x) - D["cs_bore_r"] > D["board_x1"] or abs(y) - D["cs_bore_r"] > D["board_y1"] for x, y in D["cs_xy"])
     row("spring pilots outside the plate", 1.0 if outside else 0.0, "outside", outside,
         "no access hole and no keep-out. The hex is reached before the plate is fitted")
     row("hex proud of the insert", D["hex_proud"], ">= 0.40", D["hex_proud"] >= 0.40,
@@ -179,10 +190,9 @@ def run(D, P):
         min(b.distance_to(plate) for b in balls) >= 0.03, f"seat radius +{D['seat_clear']:g}")
     # 10 knob clearance — both faces are MJF, so the gap is 2 x 0.25
     for name, od in (("live knob-param", D["knob_od_live"]), ("design Ø41.7", D["knob_od_design"])):
-        kg = min(_gap_at(D, od, x, y) for x, y in (
-            (0.0, -D["h_mid"]), (D["x_notch"], -D["half_h"]), (D["half_w"], -D["half_h"])))
-        row(f"carrier (full slide toward the knob) vs {name}", kg, f">= {T['knob_min']}", kg >= T["knob_min"] - 1e-6,
-            f"Ø{od:.2f}. The notch at y {D['h_mid']:.2f} is the close edge; the spring corners are outside the knob")
+        kg = min(_gap_at(D, od, x, y) for x, y in ((0.0, -D["half_h"]), (D["half_w"], -D["half_h"])))
+        row(f"bezel (full slide toward the knob) vs {name}", kg, f">= {T['knob_min']}", kg >= T["knob_min"] - 1e-6,
+            f"Ø{od:.2f}. Bezel lip {D['bz_lip']:.2f} mm, outer ±{D['half_h']:.2f}")
     # 11 screws and sockets on the main PCB
     def on_board(x, y, pad=0.0):
         fy = D["place_y"] + y
@@ -199,18 +209,17 @@ def run(D, P):
     row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
         f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
     # 12 walls, floor, volumes
-    row("bezel well wall", D["well_wall"], f">= {D['print_min']}", D["well_wall"] + 1e-9 >= D["print_min"],
-        f"PCBWay SLS/MJF minimum {D['print_min']:g}. Glue gap around the glass is {D['glue']:.2f}")
+    row("bezel lip", D["bz_lip"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_lip"] <= 1.5 + 1e-9,
+        f"matches the other bezel. Glue gap around the glass is {D['glue']:.2f}")
     row("carrier floor", D["car_floor"], f">= {D['print_min']}", D["car_floor"] >= D["print_min"] - 1e-9,
         f"the 35 mm riser leaves the floor at the print minimum. Screen top {D['scr_top']:.2f}")
     row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
         D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
     row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],
         "anti-rotation skirt")
-    z_well = (D["z_scr0"] + D["z_bz1"]) / 2
-    x_wall = (D["h_mid"] + D["pocket"][1] / 2) / 2
-    # the short-side wall is along y. Probe on the y axis, in the wall, and in the pocket
-    y_wall = (D["h_mid"] + D["pocket"][1] / 2) / 2
+    z_well = (D["z_roof"] + D["z_bz1"]) / 2
+    x_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
+    y_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
     y_void = D["pocket"][1] / 2 - D["glue"] * 0.5
     wall_solid = bez.is_inside((0.0, y_wall, z_well))
     void_empty = not bez.is_inside((0.0, y_void, z_well))
@@ -221,8 +230,9 @@ def run(D, P):
         "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53")
     row("screen-carrier volume", bez.volume / 1000.0, "< 8", bez.volume / 1000.0 < 8.0,
         "cm3, the bezel the screen is glued to")
-    row("screen seated on the bezel ledge", scr.distance_to(bez), "<= 0.02", scr.distance_to(bez) <= 0.02,
-        f"bottom face sits on the ledge. Side glue gap {D['glue']:.2f}. Glass top is {D['car_top_below']:.2f} above the bezel")
+    row("screen in the bezel", scr.distance_to(bez), "0.01-0.30",
+        0.01 <= scr.distance_to(bez) <= 0.30,
+        f"side glue gap {D['glue']:.2f}. Glass sits 0.02 above the spring pads. Top z {D['scr_top']:.2f}")
     row("no printed base, spider or round stop", 0.0, "0 parts",
         not any(n.startswith("joystick base") or n.startswith("screen spider") for n in P),
         "removed from v0.3: spider, plunger, round stop. Hold-down springs stay")

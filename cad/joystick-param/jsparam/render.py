@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Circle, Polygon, Patch, FancyArrowPatch
 
 GROUPS = [
+    ("faceplate (UTR-8100 case proxy)", "#b3e5fc", lambda n: n.startswith("faceplate")),
     ("main PCB (local patch)", "#2e7d32", lambda n: n.startswith("main PCB")),
     ("1×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
     ("1×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
@@ -148,6 +149,18 @@ def _meshes(parts, removed, planes, tol):
 
 def _centre_z(D):
     return (0.0, 0.0, D["scr_top"] * 0.55)
+
+def section_preview(D, P, png):
+    """Low-resolution section on y = 0, from -y. The view Ed marks up. Not the full sheet."""
+    tmp = tempfile.mkdtemp()
+    zc = _centre_z(D)
+    rem = Pos(0, -BIG / 2, 0) * Box(BIG, BIG, BIG)
+    m = _meshes(P, rem, [((0, 0, 0), (0, 1, 0))], tol=0.15)
+    im = _shot(m, (0, -1, 0), (0, 0, 1), os.path.join(tmp, "s.png"), (1100, 800), centre=zc, scale=27.0)
+    fig, ax = plt.subplots(figsize=(11, 8), dpi=70)
+    ax.imshow(im); ax.axis("off")
+    ax.set_title(f"Top-screen joystick {D['version']} — section y=0, from -y (low res)", fontsize=12, weight="bold", loc="left")
+    fig.tight_layout(); fig.savefig(png); plt.close(fig)
 
 def preview(D, P, png):
     """Low-resolution isometric, written before the colour sheet."""
