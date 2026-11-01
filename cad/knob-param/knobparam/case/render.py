@@ -140,7 +140,7 @@ def _annotate_mid(ax, D, bounds, fs):
                 xycoords=ax.transAxes, textcoords=ax.transAxes,
                 arrowprops=dict(arrowstyle="<->", color="#111", lw=1.4))
     _tag(ax, xd + 0.08, fz(D["z_fp1"] * 0.55), f"{D['fp_to_pcb']:.2f} mm\nfaceplate to PCB", fs)
-    _tag(ax, 0.50, 0.96, "outer faces flush  ·  parting line at the shell rim  ·  PCB embedded", fs)
+    _tag(ax, 0.50, 0.96, f"knob_proud {D['knob_proud']:.2f} mm  ·  outer faces flush  ·  PCB embedded", fs)
 
 
 def _section_frame(D):
@@ -206,7 +206,6 @@ def _annotate_section(ax, D, bounds, fs):
     ang = math.atan2(sy, sx)
     rad = math.hypot(sx, sy)
     t = _ray_hit(ang, D["pcb_x1"], D["pcb_y0"], D["pcb_y1"])
-    z_alt = D["knob_top_used"] - 16.45
     _tag(ax, _fx(-D["collar_r"] + 2.0, bounds), _fz(D["z_fp0"] + 2.8, bounds), "collar", fs)
     _tag(ax, _fx(-14.0, bounds), _fz(D["lab_z0"], bounds), "labyrinth", fs)
     _tag(ax, _fx(-8.0, bounds), _fz(D["z_pcb_back"] - 1.6, bounds), "PCB", fs)
@@ -224,8 +223,7 @@ def _annotate_section(ax, D, bounds, fs):
     _tag(ax, _fx(rad - 12.0, bounds), _fz(D["z_pcb_back"] - 2.4, bounds),
          f"{D['cover_skin']:.2f} mm PETG\nunder the head", fs)
     _tag(ax, 0.50, 0.97,
-         f"knob_proud {D['knob_proud']:.2f} mm  →  plate {D['z_fp1']:.2f} mm"
-         f"     at 16.45 mm proud the plate would be {z_alt:.2f} mm", fs)
+         f"knob_proud {D['knob_proud']:.2f} mm  →  plate {D['z_fp1']:.2f} mm", fs)
 
 
 def _plan_frame(D):
@@ -387,13 +385,15 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     nf = sum(not r["ok"] for r in rows) if rows else 0
     nt = len(rows) if rows else 0
     nc = len(clashes or {})
-    z_alt = D["knob_top_used"] - 16.45
-    footer = (f"{D['hp']} HP × 3U   {D['panel_w']:.2f} × {D['panel_h']:.1f} × {D['z_fp1'] - D['z_foot']:.2f} mm"
-              f"    faceplate to PCB {D['fp_to_pcb']:.2f} mm    shell {case.volume / 1000:.1f} cm³  {mass:.1f} g\n"
-              f"knob top {D['knob_top_used']:.2f} ({D['knob_top_src']}) − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
-              f"    (at 16.45 mm proud the plate would be {z_alt:.2f})\n"
+    behind = D["z_fp1"] - D["z_foot"]
+    past_stack = behind - D["fp_to_pcb"] - D["pcb_t"] - D["rear_stack"]
+    footer = (f"{D['hp']} HP × 3U   {D['panel_w']:.2f} × {D['panel_h']:.1f} × {behind:.2f} mm"
+              f"    behind the front face {behind:.2f} mm    skiff ~40 mm, over by {behind - 40:.2f}\n"
+              f"knob top {D['knob_top_used']:.2f} − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
+              f"    plate {D['wall']:.2f} + cavity {D['z_fp0']:.2f} + PCB {D['pcb_t']:.2f}"
+              f" + rear {D['rear_stack']:.2f} + cover past stack {past_stack:.2f}\n"
               f"PETG under the head {D['cover_skin']:.2f} mm    "
-              f"PCB max {D['pcb_max_w']:.2f} mm    wall {D['wall']:.2f}    "
+              f"PCB {D['pcb_max_w']:.2f} mm    wall {D['wall']:.2f}    "
               f"bosses x ±{D['boss_x']:.2f}    checks {nt - nf}/{nt}  clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
     titles = [s[1] for s in shots]

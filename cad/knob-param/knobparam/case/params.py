@@ -13,7 +13,7 @@ Geometry that belongs to the other two open branches is snapshotted here, not im
 * Knob v0.17 OD — commit 00502746fa2fb2aaef44580e1b9edbcc907f73e7 (origin/sub/assembly-v017).
   Design notes: minimum Ø41.641, drawn Ø41.65. The joystick sizes the plan to Ø41.70.
   z_knob_top is 52.5 on both that branch and param-dev (z_glass 56.8 − lip 4.0 − knob_run 0.3).
-  The faceplate front is that height minus knob_proud (18 mm). When cad_constraints grows a
+  The faceplate front is that height minus knob_proud (16.45 mm). When cad_constraints grows a
   z_knob_top / knob_top key, the plate follows it.
 
 The live interface knob_od (v0.16b Ø40.85 on param-dev) is read as well; the opening uses
@@ -57,7 +57,7 @@ P = dict(
     # ---- knob opening (v0.17 / joystick plan) ----
     knob_od_design=42.0,   # [Ed] glass + caps, about Ø42. Opening uses the larger of this and the live knob.
     z_knob_snap=52.5,      # [N] z_knob_top on v0.16b and v0.17, until cad_constraints carries it
-    knob_proud=18.0,       # [Ed] knob top stands this far above the faceplate front face
+    knob_proud=16.45,      # [Ed] knob top above the faceplate; 25 mm brass joystick pillar
     knob_rad_clear=0.20,   # [A] = one SLA tolerance, radial, dial and knob share this hole
     # ---- joystick bezel (v0.4 snapshot; formulas match jsparam.derive) ----
     scr_w=41.62,           # [J] DO0164FMST05 landscape width

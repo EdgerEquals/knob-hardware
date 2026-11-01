@@ -101,31 +101,31 @@
    "value": 0.02,
    "target": ">= 0",
    "ok": true,
-   "note": "lip z 34.52\u201335.72, plate top 34.50",
+   "note": "lip z 36.07\u201337.27, plate top 36.05",
    "owner": "case"
   },
   {
    "name": "knob stands proud of the faceplate",
-   "value": 18.0,
-   "target": ">= 18",
+   "value": 16.45,
+   "target": ">= 16.45",
    "ok": true,
-   "note": "knob top 52.50 from placeholder; faceplate front 34.50",
+   "note": "knob top 52.50 from placeholder; faceplate front 36.05",
    "owner": "case"
   },
   {
    "name": "knob proud, not more",
-   "value": 18.0,
-   "target": "<= 18",
+   "value": 16.45,
+   "target": "<= 16.45",
    "ok": true,
    "note": "faceplate z is the knob top minus knob_proud",
    "owner": "case"
   },
   {
    "name": "faceplate to PCB ledge",
-   "value": 34.5,
-   "target": ">= 34.5",
+   "value": 36.05,
+   "target": ">= 36.05",
    "ok": true,
-   "note": "faceplate front to the PCB front (ledge datum z=0) is 34.50 mm; model ledge face at z 0.05 leaves nest_gap 0.05",
+   "note": "faceplate front to the PCB front (ledge datum z=0) is 36.05 mm; model ledge face at z 0.05 leaves nest_gap 0.05",
    "owner": "case"
   },
   {
@@ -418,7 +418,7 @@
   },
   {
    "name": "beam reaches the rim",
-   "value": 31.6,
+   "value": 33.15,
    "target": ">= 12.08",
    "ok": true,
    "note": "rises from the mirror to the faceplate underside",
@@ -458,10 +458,10 @@
   },
   {
    "name": "corner screw tip vs faceplate",
-   "value": 25.1,
+   "value": 26.65,
    "target": ">= 1.5",
    "ok": true,
-   "note": "tip z 6.90, plate underside 32.00",
+   "note": "tip z 6.90, plate underside 33.55",
    "owner": "case"
   },
   {
@@ -469,7 +469,7 @@
    "value": 3.0,
    "target": ">= 2.5",
    "ok": true,
-   "note": "4 bolts up into the shell, tip z 31.50",
+   "note": "4 bolts up into the shell, tip z 33.05",
    "owner": "case"
   },
   {
@@ -493,15 +493,15 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "\u00d81.60 pin, hole \u00d82.24, z 27.21 (axis not yet exported by joystick v0.4)",
+   "note": "\u00d81.60 pin, hole \u00d82.24, z 28.53 (axis not yet exported by joystick v0.4)",
    "owner": "case"
   },
   {
    "name": "case mass",
-   "value": 57.314,
+   "value": 59.098,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 44088 mm\u00b3 (44.1 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 45460 mm\u00b3 (45.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {
@@ -509,7 +509,7 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "overall 50.50 \u00d7 128.50 \u00d7 67.08 mm; faceplate to PCB 34.50 mm",
+   "note": "overall 50.50 \u00d7 128.50 \u00d7 68.63 mm; faceplate to PCB 36.05 mm",
    "owner": "case"
   }
  ],
