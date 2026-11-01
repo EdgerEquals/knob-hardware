@@ -1,4 +1,4 @@
-"""Idler pinions in the bottom ring: idler 1 on the feel-motor shaft (no pin), idler 2 on a Ø1.5 steel pin in the cradle."""
+"""Idler pinions in the bottom ring. Both run on a Ø1.5 steel pin in the cradle (v0.16: idler 1 no longer shares the feel-motor shaft)."""
 from build123d import *
 from ...common.util import A, cyl, ext_gear, ring_phase
 
@@ -9,8 +9,8 @@ def idler(D):
 
 def build(D):
     out = {}
+    hd, ht = D["pin_head"]
     for i, (a, (x, y)) in enumerate(zip(D["idler_angs"], D["idler_xy"]), 1):
         out[f"idler pinion {i}"] = Pos(x, y, 0) * Rot(0, 0, ring_phase(D, a)) * idler(D)
-    x, y = D["idler_xy"][1]; hd, ht = D["pin_head"]
-    out["idler pin 2"] = cyl(D["pin_d"] / 2, 0, D["pin_z1"] - ht, x, y) + cyl(hd / 2, D["pin_z1"] - ht, ht, x, y)
+        out[f"idler pin {i}"] = cyl(D["pin_d"] / 2, 0, D["pin_z1"] - ht, x, y) + cyl(hd / 2, D["pin_z1"] - ht, ht, x, y)
     return out

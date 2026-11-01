@@ -11,7 +11,9 @@ def build(D):
     b = Pos(0, yc, -t) * Box(w, D["pcb_above"] + D["pcb_below"], t, align=A)
     b -= cyl(D["h1_hole"] / 2, -t - 1, t + 2)
     ex, ey = D["enc_xy"]; b -= cyl(D["brg"]["D"] / 2, -t - 1, t + 2, ex, ey)          # H2 press bore
-    fx, fy = D["fm_xy"]; b -= cyl(0.8, -t - 1, t + 2, fx, fy)                       # M2 NPTH Ø1.6 (feel-motor shaft)
+    F = D["feel"]; pw, pl = F["pad"]   # (radial, tangential) copper around each lead hole
+    for px, py in D["fm_pad_xy"]:
+        b -= cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py)                          # M2 lead holes (shaft no longer passes the board)
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         b -= Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + 0.3, M["term_w"] + 0.3, t + 2, align=A)
@@ -24,6 +26,9 @@ def build(D):
     for x, y, a in pts:
         comps.append(Pos(x, y, -t - 0.5) * Rot(0, 0, a) * Box(0.5, 1.0, 0.5, align=A))
     comps.append(Pos(0, D["enc_xy"][1] - D["d_big_tip"] / 2 - 1.95, -t - 0.2) * Box(5.75, 2.45, 0.2, align=A))
+    for px, py in D["fm_pad_xy"]:   # B.Cu pads [A] under the lead holes; wires drop from the 716's rear via the cradle pocket
+        pad = Pos(px, py, -t - F["pad_t"]) * Rot(0, 0, D["fm_ang"] + 90) * Box(pl, pw, F["pad_t"], align=A)
+        comps.append(pad - cyl(F["pad_hole"] / 2, -t - F["pad_t"] - 0.1, F["pad_t"] + 0.2, px, py))
     return {"PCB": b, "PCB back parts (Hall decouplers, J2)": Compound(children=comps)}
 
 STEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad", "knob-main-pcb", "knob-main-pcb.step")

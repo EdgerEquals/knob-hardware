@@ -18,7 +18,7 @@ def local(D, parts, owner, subs=None):
     return rows
 
 def cross(D, parts):
-    from .. import control_dial as cd, under_pcb as up
+    from .. import control_dial as cd
     from . import hall_dyn
     T = D["tgt"]; r = Rows("assembly"); row = r.row
     TR = (-D["travel_deg"], 0, D["travel_deg"]); on = D["screen_on_dial"]
@@ -65,7 +65,19 @@ def cross(D, parts):
     if D["kb_groove_h"] > 0:
         kb = [parts[n] for n in parts if n.startswith("knob") and "ball" not in n]
         row("seat: dial vs knob (race region)", min(parts["control dial"].distance_to(q) for q in kb), T["seat_vs_knob"])
-    row("idler 1 / feel motor vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
+    row("idler 1 vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
+    feel_names = [n for n in parts if n.startswith("feel motor")]
+    feels = [parts[n] for n in feel_names]
+    clip, ring = parts["feel motor clip [A]"], parts["bottom internal ring"]
+    can = [parts[n] for n in feel_names if "shaft" not in n and "clip" not in n and "pinion" not in n][0]
+    pin = [parts[n] for n in feel_names if "pinion" in n][0]
+    knob = [parts[n] for n in parts if n.startswith("knob body")][0]
+    row("feel clip vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
+        f"can {can.distance_to(knob):.2f} inside the skirt; {D['z_feel']}T at {D['fm_ang']:.1f}°, knob Ø{D['knob_od']:.2f}")
+    row("feel can/clip vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
+    row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
+    row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
+    row("feel motor vs Hall arm (±travel)", min(p.distance_to(cd.arm(Dc, t)) for t in TR for p in feels), T["hall_vs_pinions"])
     return r
 
 def _bb(s):
