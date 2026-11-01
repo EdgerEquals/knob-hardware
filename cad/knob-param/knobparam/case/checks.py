@@ -184,6 +184,10 @@ def checks(D, parts):
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,
         "printed thread, no insert")
+    row("corner post top vs jack pins", D["z_jack_pins"] - D["z_post_top"], D["post_jack_clear"],
+        f"post top z {D['z_post_top']:.2f}, PJ366ST pin tips z {D['z_jack_pins']:.2f} (body {D['jack_depth']:.1f} + pins {D['jack_pin_len']:.1f} behind the plate)")
+    row("post stands above the thread", D["z_post_top"] - D["z_thread1"], D["wall"],
+        f"post top z {D['z_post_top']:.2f}, tap ends z {D['z_thread1']:.2f}")
 
     vol = case.volume
     mass = vol * D["case_rho"]

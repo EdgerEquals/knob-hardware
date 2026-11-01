@@ -184,9 +184,10 @@ def build(D):
                                ky0, ky1, z0 - eps, z1 + eps))
         case = _sub(case, _box(max(D["x_in0"], D["win_x0"] - D["tft_gap"]), -D["pcb_x1"] + lw + eps,
                                ky0, ky1, z0 - eps, z1 + eps))
-    # corner posts beside the PCB. The thread is the lower part; the post runs up into the plate.
+    # corner posts beside the PCB. The thread is the lower part; the post stops under the jack pins
+    # and is fused to the side wall, so it does not need to reach the plate.
     for x, y in D["corners"]:
-        case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_fp0"] + fu, x, y))
+        case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_post_top"], x, y))
     # collar under the knob opening; the knob module slides down through it
     case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
@@ -251,7 +252,7 @@ def build(D):
         glow = _sub(glow, _box(D["shelf_x0"] - sl, D["shelf_x1"] + sl, D["shelf_y0"] - sl, D["shelf_y1"] + sl,
                                D["shelf_z0"] - sl, D["shelf_z1"] + sl))
     for x, y in D["corners"]:
-        glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_fp1"], x, y))
+        glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_post_top"] + D["glow_gap"], x, y))
     glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
     if D["tft_on_front"]:
         glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))

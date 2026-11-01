@@ -93,7 +93,9 @@ def pool(n=8):
     global _POOL
     if _POOL is None:
         from multiprocessing import get_context
-        _POOL = get_context("spawn").Pool(n)
+        # each spawned worker loads OCC (~0.7 GB); cap by CPUs or KNOB_POOL so small VMs do not run out of memory
+        n = int(os.environ.get("KNOB_POOL", min(n, os.cpu_count() or 2)))
+        _POOL = get_context("spawn").Pool(max(1, n))
     return _POOL
 def load(path):
     if path not in _SHAPES: _SHAPES[path] = import_brep(path)

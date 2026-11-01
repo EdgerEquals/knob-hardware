@@ -178,6 +178,11 @@ P = dict(
     jack_nut=7.8,          # [S] knurled nut
     jack_body=12.0,        # [A] plastic body width behind the panel
     jack_air=0.80,         # [A] air between bodies, and off the knob
+    # PJ366ST (stereo Thonkiconn), from the community STEP model clacktronics/AudioJacks (MIT, Barwise).
+    # The library lists it untested against a real part: measure one before ordering.
+    jack_depth=10.0,       # [S] body depth behind the panel
+    jack_pin_len=3.5,      # [S] solder pins below the body
+    post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width
     mass_max=140.0,        # [A] g, resin shell only (the PETG cover is separate)
     stl_tol=0.08,          # [A] STL chord tolerance, mm
@@ -589,6 +594,10 @@ def derive(D):
     D["z_thread0"] = D["z_rim"]
     D["tap_len"] = D["engage"] - D["screw_p"]
     D["z_thread1"] = D["z_thread0"] + D["tap_len"]
+    # Corner posts stop under the jack pins. The thread is only the lower ~7 mm; the post is fused to the side wall,
+    # so it does not need to reach the plate, and a full-height post would run into the jack bodies.
+    D["z_jack_pins"] = D["z_fp0"] - D["jack_depth"] - D["jack_pin_len"]
+    D["z_post_top"] = D["z_jack_pins"] - D["post_jack_clear"]
     # ISO 4762 length is under the head. M3×10 is fully threaded, so the thread
     # starts at the bearing face and the tip lands inside the printed tap.
     D["z_screw_under"] = D["z_pad_out"] + D["cbore_depth"]

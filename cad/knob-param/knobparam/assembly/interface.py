@@ -51,7 +51,12 @@ P = dict(
     cap_seat_gap=0.02,   # [A] axial seat gap in the model so the cap is not a clash with its gear
     cap_root_inset=0.25,   # [A] cap outside diameter sits this far inside the tooth root
     spur_tooth_min=0.30,   # [A] short-feature floor for those catalogue-module teeth (MJF can form ~0.3 mm in XY; 0.5 is the preferred wall)
-    enc_ang=270.0,   # [K] encoder pinion / H2 angle (90 deg from the motor)
+    # ---- v0.19 [Ed, 2 Nov]: the whole mechanism turns about the dial axis so the 1220 sits at the bottom.
+    # Every mechanism part and every PCB feature inside mech_rot_r is built in the mechanism frame (motor at +X) and then
+    # turned by mech_rot in the panel frame (+X right, +Y up). -90 puts the motor at 270 deg (bottom).
+    mech_rot=-90.0,   # [Ed] degrees, panel angle = mechanism angle + mech_rot
+    mech_rot_r=24.0,   # [A] KiCad holes / back parts within this radius of the axis belong to the mechanism and turn with it
+    enc_ang=180.0,   # [Ed] 2 Nov: encoder at the TOP of the panel (mechanism 180 + mech_rot -90 = panel 90). v0.18: 270
     idler2_from_enc=-120.0,   # [A] idler 2 = encoder angle - 120 = 150 deg
     # ---- 1220 motor [M] ----
     motor=dict(title="Motor 1220 coreless planetary", body_d=12.0, motor_len=20.0, gearbox_len=17.0, boss_d=4.0, boss_len=1.0, shaft_d=3.0, shaft_flat=2.5, shaft_len=5.5, flat_len=4.5, seam_groove=0.3, endcap_len=1.5, endcap_d=11.0, rear_boss_d=3.0, rear_boss_len=0.6, term_w=1.2, term_t=0.3, term_len=2.5, term_pitch=6.0, mount_holes=None, ratio="1:144 (3-stage)", version="v0.1"),
@@ -83,6 +88,7 @@ P = dict(
     dial_tube_id=5.12,   # [Ed] dial tube Ø5.12/Ø8.12
     dial_tube_wall=1.5,   # [Ed] dial tube Ø5.12/Ø8.12
     travel_deg=5.5,   # overwritten in derive [Ed]: hard-stop angle. v0.17 = det_deg + the ball's bore play (see det_stop_clear)
+    det_n=1,   # [Ed] 2 Nov: one spring-ball detent with three dimples (v0.18 had two)
     det_deg=10.0,   # [Ed] v0.17: dial latches at the centre and at both ends, ±10° (v0.16 was ±5°)
     det_stop_clear=0.10,   # [A] mm arc at the detent radius: hard stop past the seated end detent (ball bore play; the closest the ball allows)
     # ---- brass tube, rod ----
@@ -98,7 +104,7 @@ P = dict(
     pin_above_skirt=0.2,
     brg=dict(d=2.0, D=5.0, B=2.3, fd=6.1, ft=0.6),   # [S] F682ZZ envelope
     # ---- Hall array on the dial [Ed/A] ----
-    ha_ang0=210.0,
+    ha_ang0=240.0,   # [A] v0.19: Hall arm between the encoder (180) and idler 300; 120 hit the 1220 collar (v0.18: 210)
     ha_ring_clear=0.5,
     ha_n=5,
     ha_mag=(2.0, 1.0),
@@ -111,7 +117,8 @@ P = dict(
     ha_arm=(4.4, 1.5, 3.0, 3.0),
     ha_win_clear=0.5,
     # ---- idler 1 (v0.16: the 716 is no longer on this shaft) [A] ----
-    idler1_ang=54.0,   # [A] idler 1 stays at the v0.13 angle (45.5 overlapped the Ø48 wheel)
+    idler1_ang=300.0,   # [A] v0.19: idlers sit 120 deg either side of the encoder (300 / 60). v0.18: 54.
+    # (v0.18 note on idler 1: it stayed at the v0.13 angle 54 because 45.5 overlapped the Ø48 wheel)
     # ---- feel motor on the PCB top, inside the cradle [A] ----
     # Axial 716, its own pinion meshing the bottom internal ring. Angle and tooth count are derived
     # (the bisector of the idler gap that clears the 1220, the Hall arm and the skirt by the most).
@@ -160,7 +167,7 @@ P = dict(
     bt_groove_r=0.55,   # [A] groove radius in the plate and in the wing underside
     bt_rows=2,   # [A] concentric track rows under each detent (one ball per row)
     bt_row_pitch=1.4,   # [A] radial pitch of the rows (groove 1.1 + 0.3 land)
-    sl_ang=296.0,   # [Ed] lever angle, between the detent ear and the 1220 collar at ±10.7°
+    sl_ang=296.0,   # [A] v0.19: kept at 296 (searched with ha_ang0 240). [Ed] lever angle, between the detent ear and the 1220 collar at ±10.7°
     sl_r=7.4,   # [A] lever end radius. Kept short of the 1220 collar.
     sl_w=1.6,   # [Ed] v0.17: lever width. 2.4 swung into the 1220 collar at ±10°; 1.6 stays 0.3 clear.
     sl_z0=4.0,   # [A] lever end-block bottom (the bar near the hub stays above the thrust cage)
@@ -206,8 +213,9 @@ P = dict(
     em_pin_len_k=0.5,   # [A] hollow-pin engagement / board thickness. Stops short of the body on the back.
     em_cover_k=0.05,   # [A] package past the hole, each side, / smaller package side
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
+    fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
-    fg_z_pin=12,   # [Ed] 0.5 module 12T
+    fg_z_pin=12,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08) but only gains 15.75 -> 15.82, because the centre tube and rod nut cap the compound gear. Kept 12T.
     fg_pinion=dict(part="nylon 0.5M-12T", vendor="printed PA-12", material="PA-12 MJF", bore=2.04, face=5.0, hub_d=0.0, hub_w=5.0, od=6.8,
                    note="tooth form of the Tempero 0.5M-12T (was the brass reference). Stub addendum, press on the Ø2 shaft. Straight spur, 20°."),
     fg_back_h=0.8,   # [K] tallest PCB-back part the big gear can sit over (U20 / C22)
@@ -408,8 +416,14 @@ def _place_herringbone(D, R):
     pool = near or pool
     if not pool:
         raise ValueError("no herringbone module fits the fixed OD, the main wall and the feel ratio")
-    # coarsest module, then the thickest root wall, then the ratio closest to the target
-    best = max(pool, key=lambda c: (c[0], c[5], -abs(c[1] - D["hb_ratio_target"])))
+    if D["fg_ratio_max"]:
+        # [Ed] 2 Nov: the feel motor needs all the reduction the space allows. Highest overall ratio among the candidates
+        # that pass every wall and tooth floor; then the coarser module, then the thicker wall.
+        pool = full or cands
+        best = max(pool, key=lambda c: (round(c[1], 3), c[0], c[5]))
+    else:
+        # coarsest module, then the thickest root wall, then the ratio closest to the target
+        best = max(pool, key=lambda c: (c[0], c[5], -abs(c[1] - D["hb_ratio_target"])))
     mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt = best
     D["hb_mn"] = mn
     D["hb_mt"] = mt
@@ -799,6 +813,11 @@ def _place_mech(D):
     D["det_hi"] = min(hi, 90.0 - ear, lever_off - ear - c)
     D["det_off"] = D["det_lo"] if D["det_lo"] <= D["det_hi"] else (D["det_lo"] + D["det_hi"]) / 2
     D["det_angs"] = [D["ha_ang0"] - D["det_off"], D["ha_ang0"] + D["det_off"]]
+    if D["det_n"] == 1:
+        # [Ed] 2 Nov: one detent (three dimples). Keep the side with the most room to the pinions, the 1220, the 716 and the lever.
+        others = [D["enc_ang"], *D["idler_angs"], 0.0, D.get("fm_ang", 0.0), D["sl_ang"]]
+        ad = lambda a, b: abs((a - b + 180.0) % 360.0 - 180.0)
+        D["det_angs"] = [max(D["det_angs"], key=lambda a: min(ad(a, o) for o in others))]
     D["hall_win_out"] = win
     D["bt_z"] = D["plate_t"] + D["bt_up"]
     D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4

@@ -88,10 +88,15 @@ def main():
     clash_lines, cl = [], {}
     t_clash = t_render = t_gaps = 0.0
     if not a.no_check and not a.no_clash:   # pools first (fork safety), then BRepExtrema gaps
-        t = time.time(); cl, cand, ran, dtc = check.clashes(parts, keys, D["tgt"]["clash_mm3"]); t_clash = time.time() - t
+        from knobparam.assembly.build import view
+        pm, km = view(parts, keys, D, "mech")   # v0.19: one frame for the clashes
+        t = time.time(); cl, cand, ran, dtc = check.clashes(pm, km, D["tgt"]["clash_mm3"]); t_clash = time.time() - t
         clash_lines = [f"PAIRWISE CLASHES ({len(parts)} parts, {cand} bbox pairs, {ran} recomputed):"] + \
                       ([f"  {'KNOWN' if k in check.KNOWN else 'CLASH'} {k}: {v:.2f} mm³" for k, v in sorted(cl.items(), key=lambda kv: -kv[1])] or ["  none"])
     tm = None
+    def pv():   # v0.19: renders and exports in the panel frame (mechanism turned by mech_rot)
+        from knobparam.assembly.build import view
+        return view(parts, keys, D, "panel")
     case_job = None
     if a.sub == "case" and (a.preview or a.render or a.clean or a.step):
         # the case has its own sheets (section, iso, plan, clean, quarter cuts) and STEP/STL/USDZ
@@ -105,7 +110,7 @@ def main():
         png = a.out or os.path.join(OUT, f"knob-stack-{V}-clean.png")
         t = time.time()
         ov = [x for x in a.set if not x.startswith("version=")]
-        tm = render.render(D, parts, keys, png, clean=True, title=f"Knob stack {V} — assembly sections" + (" (OPPOSITE SIDE: A-A viewed from -Y, iso from -X-Y)" if a.opposite else ""), opposite=a.opposite,
+        tm = render.render(D, *pv(), png, clean=True, title=f"Knob stack {V} — assembly sections" + (" (OPPOSITE SIDE: A-A viewed from -Y, iso from -X-Y)" if a.opposite else ""), opposite=a.opposite,
                            note=(f"Overrides: {' '.join(ov)}." if ov else None))
         t_render = time.time() - t
         print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items())); tm = None
@@ -114,7 +119,7 @@ def main():
         if a.sub: a.preview, a.render = True, False   # sub-assembly renders are previews (insets need the whole stack)
         png = a.out or os.path.join(OUT, f"{'knob-stack-' + V if not a.sub else a.sub + '-' + V}-{'preview' if a.preview and not a.render else 'sections'}.png")
         t = time.time()
-        tm = render.render(D, parts, keys, png, preview=a.preview and not a.render, clash_lines=clash_lines, gap_lines=[], title=title)
+        tm = render.render(D, *pv(), png, preview=a.preview and not a.render, clash_lines=clash_lines, gap_lines=[], title=title)
         t_render = time.time() - t
     rows = []
     if not a.no_check:
@@ -127,7 +132,10 @@ def main():
             rows = json.load(open(rp))
         else:
             rows = check.local(D, parts, owner, [a.sub] if a.sub else None)
-            if not a.sub: rows += check.cross(D, parts)
+            if not a.sub:
+                from knobparam.assembly.build import view
+                pm, _ = view(parts, keys, D, "mech")   # v0.19: mechanism checks build D solids in the mechanism frame
+                rows += check.cross(D, pm)
             os.makedirs(cache.CACHE, exist_ok=True)
             json.dump(rows, open(rp, "w"))
         t_gaps = time.time() - t
@@ -148,7 +156,7 @@ def main():
         g = (["GAP CHECKS: %d/%d PASS" % (len(rows) - len(fails), len(rows))] + fails) if rows else []
         tmp = render.TMP; prev = a.preview and not a.render
         ins = [] if prev else [f"{tmp}/{n}.png" for n in ("bb", "cc", "d", "ee") + (("hh",) if D["hall_layout"] == "vernier" else ())]
-        render.compose(D, parts, f"{tmp}/aa.png", f"{tmp}/iso.png", ins, png, prev, clash_lines, g, title)
+        render.compose(D, pv()[0], f"{tmp}/aa.png", f"{tmp}/iso.png", ins, png, prev, clash_lines, g, title)
         print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items()))
     if a.export:
         from knobparam.assembly import export as ex
@@ -156,15 +164,15 @@ def main():
         os.makedirs(OUT, exist_ok=True)
         for kind in [k for k in a.export.split(",") if k]:
             t = time.time()
-            if kind == "step": ex.step(parts, stem + ".step")
-            elif kind == "stl": ex.stl(parts, stem + "-stl")
-            elif kind == "usdz": print("usdz:", ex.usdz(parts, keys, stem + ".usdz"))
+            if kind == "step": ex.step(pv()[0], stem + ".step")
+            elif kind == "stl": ex.stl(pv()[0], stem + "-stl")
+            elif kind == "usdz": print("usdz:", ex.usdz(*pv(), stem + ".usdz"))
             else: print("unknown export", kind); continue
             print(f"export {kind}: {time.time() - t:.1f} s -> {stem}")
     if case_job:
         from knobparam.case.render import render_case
         t = time.time()
-        arts = render_case(D, parts, preview=case_job["preview"], full=case_job["full"], export=case_job["export"],
+        arts = render_case(D, pv()[0], preview=case_job["preview"], full=case_job["full"], export=case_job["export"],
                            rows=rows, clashes=cl)
         t_render = time.time() - t
         print(f"\nCASE ({'preview' if case_job['preview'] else 'full'}) {t_render:.1f} s")
@@ -172,7 +180,7 @@ def main():
             print(f"  {p}")
     if a.step:
         from build123d import Compound, export_step
-        export_step(Compound(children=list(parts.values())), os.path.join(OUT, f"knob-stack-{V}.step"))
+        export_step(Compound(children=list(pv()[0].values())), os.path.join(OUT, f"knob-stack-{V}.step"))
     print(f"TIMES: derive {t_der:.3f} s, parts {t_build:.2f} s, clash {t_clash:.2f} s, render {t_render:.2f} s, gaps {t_gaps:.2f} s, "
           f"total wall incl. imports {time.time() - T_START:.1f} s")
 

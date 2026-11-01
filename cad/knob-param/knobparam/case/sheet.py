@@ -286,10 +286,11 @@ def render_sheet(D, parts, keys, paths, out_png):
 
 
 def main():
-    from ..assembly.build import PATHS, build_all
+    from ..assembly.build import PATHS, build_all, view
     from ..common import model
     D = model.derive(model.default_params())
     parts, stats, keys, owner = build_all(D)
+    parts, keys = view(parts, keys, D, "panel")   # v0.19: mechanism turned by mech_rot
     _restore_pcb(parts, keys, PATHS, D)
     _place_joystick(parts, keys, PATHS)
     out = os.path.join(ROOT, "assemblies", f"case-{D['case_rev']}", f"case-{D['case_rev']}-sheet.png")
