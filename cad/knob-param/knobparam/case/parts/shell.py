@@ -215,14 +215,6 @@ def build(D):
         case = _sub(case, _at(x, y, _tap(D, D["z_thread0"], D["tap_len"])))
     for x, y in D["knob_bolts"]:
         case = _sub(case, _at(x, y, _tap(D, D["z_bolt0"], D["tap_len"])))
-    # cross-pin access, one hole through each side wall
-    # the corner posts stand outboard of the wall, so the hole has to cross the post as well as the wall
-    case = _sub(case, _box(D["x_out0"] - D["cross_pin_d"] - sl, D["x_in0"] + sl,
-                           D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
-                           D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
-    case = _sub(case, _box(D["x_in1"] - sl, D["x_out1"] + D["cross_pin_d"] + sl,
-                           D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
-                           D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
     if D["scanner_enabled"]:
         case = _sub(case, _box(D["slot_x0"], D["slot_x1"], D["slot_y0"], D["slot_y1"], D["slot_z0"], D["slot_z1"]))
     # radius only the outside front edges, not the openings
@@ -292,10 +284,6 @@ def build(D):
         screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(
             D, D["z_bolt0"] - D["bolt_head_k"], D["z_bolt0"], D["z_bolt0"], D["tap_len"],
             head_k=D["bolt_head_k"], hex_s=D["bolt_hex"]))
-    pins = {}
-    for i, x0, x1 in ((1, D["x_out0"] - D["cross_pin_d"], D["x_in0"]), (2, D["x_in1"], D["x_out1"] + D["cross_pin_d"])):
-        pins[f"cross pin {i}"] = _box(x0, x1, D["place_y"] - D["cross_pin_d"] / 2.0, D["place_y"] + D["cross_pin_d"] / 2.0,
-                                      D["pin_z"] - D["cross_pin_d"] / 2.0, D["pin_z"] + D["cross_pin_d"] / 2.0)
 
     motor = mirror = film = vcsel = None
     if D["scanner_enabled"]:
@@ -316,11 +304,6 @@ def build(D):
         window = _box(D["win_x0"] + D["nest_gap"], D["win_x1"] - D["nest_gap"],
                       D["win_y0"] + D["nest_gap"], D["win_y1"] - D["nest_gap"], D["back_z0"], D["back_z1"])
         module = _box(D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"], D["tft_z0"], D["tft_z1"])
-    lasers = {}
-    for i, (x, y) in enumerate(D["lasers"]):
-        lasers[f"laser placeholder {i + 1}"] = _box(
-            x - D["laser_w"] / 2.0, x + D["laser_w"] / 2.0,
-            y - D["laser_d"] / 2.0, y + D["laser_d"] / 2.0, D["tft_air"], D["tft_air"] + D["laser_h"])
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
            "PCB": pcb, "back TFT window": window}
     if module is not None:
@@ -329,6 +312,4 @@ def build(D):
         out.update({"scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
                     "grating film": film, "VCSEL 665 nm": vcsel})
     out.update(screws)
-    out.update(pins)
-    out.update(lasers)
     return out

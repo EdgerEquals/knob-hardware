@@ -22,10 +22,8 @@ CASE_GROUPS = [
     ("back cover, smoky PETG", "#84888e", lambda n: n.startswith("back cover")),
     ("TFT light path (air, keep-out)", "#3ec0f0", lambda n: "TFT window" in n),
     ("back TFT module (placeholder)", "#101828", lambda n: n.startswith("back TFT module")),
-    ("laser placeholder", "#f23b52", lambda n: n.startswith("laser")),
     ("ISO 4762 M3×10 corner screws, A2", "#b7bcc6", lambda n: n.startswith("corner screw")),
     ("knob bolts, M3", "#9aa0aa", lambda n: n.startswith("knob bolt")),
-    ("joystick cross pin", "#d4b44a", lambda n: n.startswith("cross pin")),
 ]
 JOY_GROUPS = [
     ("joystick PCB patch", "#2e7d32", lambda n: n.startswith("main PCB")),

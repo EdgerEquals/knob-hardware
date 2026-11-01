@@ -149,10 +149,6 @@ P = dict(
     collar_h_mult=3.0,     # [A] collar length / screw diameter
     collar_wall=2.5,       # [A] radial wall of the tube the knob slides through
     knob_bolt_n=4,         # [Ed] bolts the knob module up into the shell
-    # ---- joystick spring cross pins: side access. v0.4 has no exported pin axis yet. ----
-    cross_pin_d=1.6,       # [A] cross pin diameter
-    pin_clear_ratio=0.2,   # [A] hole over the pin, as a fraction of the pin
-    pin_below_ratio=0.15,  # [A] pin centre below the faceplate underside, as a fraction of the plate height above the PCB
     seat_gap=0.08,         # [A] air so the cover, the shell and the PCB do not fuse in the model
     nest_gap=0.05,         # [A] air, PCB front face to the ledge stop (solids stay apart)
     ledge_ratio=0.60,      # [A] ledge width / wall, inboard of the PCB edge
@@ -177,7 +173,6 @@ P = dict(
     tft_px=(320, 240),     # [L]
     tft_border=2.0,        # [A] bezel around the active area, each side
     tft_mod_t=3.2,         # [A] placeholder module thickness, into the pocket
-    tft_air=1.0,           # [A] laser placeholders start this far above the PCB
     tft_gap=0.80,          # [A] air from the module to the pocket wall
     # ---- front jacks, only counted. Thonkiconn PJ398SM [S], body width [A] ----
     jack_hole=6.0,         # [S] panel hole
@@ -185,12 +180,6 @@ P = dict(
     jack_body=12.0,        # [A] plastic body width behind the panel
     jack_air=0.80,         # [A] air between bodies, and off the knob
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width
-    # ---- laser light-show, PLACEHOLDER only. Knob agent is moving the feel motor to the bottom. ----
-    # Do not change the PCB. 2× in the top corners under the joystick; laser_n=1 is the centred alternative.
-    laser_n=2,             # [A] FLAG
-    laser_w=12.0,          # [A] FLAG module width
-    laser_d=8.0,           # [A] FLAG module depth along Y
-    laser_h=8.0,           # [A] FLAG height above the PCB
     mass_max=140.0,        # [A] g, resin shell only (the PETG cover is separate)
     stl_tol=0.08,          # [A] STL chord tolerance, mm
     stl_ang=0.3,           # [A] STL angular tolerance, rad
@@ -504,13 +493,6 @@ def derive(D):
     D["win_w"] = D["win_x1"] - D["win_x0"]
     D["win_h"] = D["win_y1"] - D["win_y0"]
     D["tft_short_w"] = max(0.0, D["tft_w"] - D["win_w"])
-    # Laser placeholders, on the PCB under the joystick, not printed. Two top corners.
-    ly = D["pcb_y1"] - D["ledge_w"] - D["laser_d"] / 2.0 - gap
-    lx = D["pcb_x1"] - D["ledge_w"] - D["laser_w"] / 2.0 - gap
-    if D["laser_n"] == 1:
-        D["lasers"] = ((0.0, ly),)
-    else:
-        D["lasers"] = ((-lx, ly), (lx, ly))
     # collar under the knob opening. The seal ring stands on the front face.
     D["collar_h"] = D["collar_h_mult"] * D["screw_d"]
     D["z_collar0"] = D["z_fp0"] - D["collar_h"]
@@ -615,9 +597,6 @@ def derive(D):
     D["screw_engage"] = D["screw_thread"] - D["screw_grip"]
     D["z_tip"] = D["z_screw_under"] + D["screw_len"]
     D["z_bolt_tip"] = D["z_bolt0"] + D["tap_len"]
-    # cross-pin axis: through each side wall, at the joystick, just under the plate
-    D["pin_z"] = D["z_fp0"] - D["pin_below_ratio"] * (D["z_fp0"] - D["z_seat"])
-    D["pin_hole_r"] = D["cross_pin_d"] * (0.5 + D["pin_clear_ratio"])
     D["edge_t"] = D["fp_t"]
     D["ligament_t"] = D["fp_t"]
     D["edge_depth"] = 0.0

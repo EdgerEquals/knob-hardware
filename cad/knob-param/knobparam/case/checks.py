@@ -39,15 +39,6 @@ def checks(D, parts):
         inside = min(D["void_x1"] - mb.max.X, mb.min.X - D["void_x0"], D["void_y1"] - mb.max.Y, mb.min.Y - D["void_y0"])
         row("back TFT module inside the pocket", inside, D["tft_gap"],
             f"outline {D['tft_mod_w']:.2f}×{D['tft_mod_h']:.2f} at y {D['mod_y0']:.2f}..{D['mod_y1']:.2f}")
-    lasers = [parts[n] for n in parts if n.startswith("laser")]
-    lhit = 0.0
-    for laser in lasers:
-        h = case.intersect(laser)
-        if h is not None and h.solids():
-            lhit += sum(s.volume for s in h.solids())
-    row("laser placeholder is open", lhit, 0.0,
-        f"{len(lasers)}× at " + ", ".join(f"({x:.1f},{y:.1f})" for x, y in D["lasers"]) + " under the joystick",
-        higher_ok=False)
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
     row("edge strip thickness", D["edge_t"], D["wall"], "the rim is the full faceplate, one plane with the rest")
     row("ligament thickness", D["ligament_t"], D["wall"], "bridge between the holes is the full plate")
@@ -189,12 +180,10 @@ def checks(D, parts):
         f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
     row("knob bolts present", float(len(D["knob_bolts"])), 2.0,
         f"{len(D['knob_bolts'])} on the lower arc; the TFT window and the bosses leave room for fewer than {D['knob_bolt_n']}")
-    # a point in the boss wall (outside the thread) is resin; the pin hole opens the side wall
+    # a point in the boss wall (outside the thread) is resin
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,
         "printed thread, no insert")
-    row("cross pin opens the side", 0.0 if _inside(case, wall_x, D["place_y"], D["pin_z"]) else 1.0, 1.0,
-        f"Ø{D['cross_pin_d']:.2f} pin, hole Ø{2 * D['pin_hole_r']:.2f}, z {D['pin_z']:.2f} (axis not yet exported by joystick v0.4)")
 
     vol = case.volume
     mass = vol * D["case_rho"]

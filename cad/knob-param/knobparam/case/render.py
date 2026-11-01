@@ -34,16 +34,12 @@ def _colour(D, name):
         return (0.12, 0.42, 0.22), 1.0
     if name.startswith("corner screw") or name.startswith("knob bolt"):
         return (0.72, 0.74, 0.78), 1.0
-    if name.startswith("cross pin"):
-        return (0.85, 0.75, 0.35), 1.0
     if name == "beam":
         return (0.85, 0.15, 0.12), 0.28
     if name.startswith("back TFT module"):
         return (0.08, 0.10, 0.16), 0.95
     if "TFT window" in name:
         return (0.25, 0.75, 0.95), 0.35
-    if name.startswith("laser"):
-        return (0.95, 0.25, 0.35), 0.45
     return (0.6, 0.6, 0.6), 1.0
 
 
@@ -285,8 +281,7 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head"),
-               Patch(facecolor=(0.25, 0.75, 0.95), label="TFT light path (air, keep-out)"),
-               Patch(facecolor=(0.95, 0.25, 0.35), label="laser placeholder")]
+               Patch(facecolor=(0.25, 0.75, 0.95), label="TFT light path (air, keep-out)")]
     fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.44))
     fig.text(0.02, 0.005, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
     fig.savefig(out)
@@ -341,7 +336,6 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
             ("corner screw 1", parts["corner screw 1"])]
     if beam is not None:
         show.append(("beam", beam))
-    show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if not preview:
         show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (PETG)", "corner screw 1")]
     clean = [("case", case), ("back cover", parts["back cover (PETG)"]), ("glow", glow)]
@@ -353,7 +347,6 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
                  ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
                  ("corner screw 1", parts["corner screw 1"])]
-    plan_show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if preview:
         shots = [("mid", "SECTION through both side walls", joint, "xz"),
                  ("plan", "PLAN", plan_show, "plan"),
