@@ -4009,8 +4009,25 @@
   -35.45206744313125
  ],
  "pcb": [
-  49.0,
+  44.3,
   42.4,
   65.1
- ]
+ ],
+ "case_pcb": {
+  "hp": 10,
+  "panel_w": 50.5,
+  "wall": 2.5,
+  "pcb_w": 44.3,
+  "pcb_above": 42.4,
+  "pcb_below": 65.1,
+  "pcb_live_w": 49.0,
+  "notches": [
+   {"x": -19.95, "y": -43.4, "bx": 5.3, "by": 96.3, "d": 9.6, "kind": "notch"},
+   {"x": 19.95, "y": -43.4, "bx": 45.2, "by": 96.3, "d": 9.6, "kind": "notch"},
+   {"x": -19.95, "y": 17.389, "bx": 5.3, "by": 35.511, "d": 9.6, "kind": "notch"},
+   {"x": 19.95, "y": 17.389, "bx": 45.2, "by": 35.511, "d": 9.6, "kind": "notch"}
+  ],
+  "screw": "DIN 7984 M3 low-head socket cap, flat counterbore in the PETG cover",
+  "note": "Shrink the main PCB to pcb_w so 2.5 mm shell walls fit a 10HP panel (50.50 mm). Cut a notch of diameter d at each (bx, by). The resin boss and the screw occupy the notch. Frame x,y is the dial axis; bx,by is board coords."
+ }
 }

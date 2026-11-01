@@ -61,7 +61,7 @@
    "value": 0.2,
    "target": ">= 0.2",
    "ok": true,
-   "note": "hole \u00d842.10, knob \u00d841.70 (live 40.85, design 41.70)",
+   "note": "hole \u00d842.40, knob \u00d842.00 (live 40.85, design 42.00)",
    "owner": "case"
   },
   {
@@ -69,7 +69,7 @@
    "value": 0.9,
    "target": ">= 0.8",
    "ok": true,
-   "note": "opening 42.22\u00d727.34 at place_y 36.37",
+   "note": "opening 42.22\u00d727.34 at place_y 36.52",
    "owner": "case"
   },
   {
@@ -113,11 +113,83 @@
    "owner": "case"
   },
   {
+   "name": "10HP panel",
+   "value": 50.5,
+   "target": ">= 50.5",
+   "ok": true,
+   "note": "10HP  50.50 mm, wall 2.50",
+   "owner": "case"
+  },
+  {
+   "name": "PCB width within the shell",
+   "value": 0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "max PCB width 44.30 (live board is 49.00, 4.70 wider)",
+   "owner": "case"
+  },
+  {
    "name": "PCB side air",
    "value": 0.6,
    "target": ">= 0.6",
    "ok": true,
-   "note": "14HP panel 70.82 (scope 10HP is 50.50, short by 19.30); outline from cad_constraints",
+   "note": "wall 2.50 + clearance 0.60 each side of the 44.30 board",
+   "owner": "case"
+  },
+  {
+   "name": "bezel on the 10HP panel",
+   "value": 3.24,
+   "target": ">= 0",
+   "ok": true,
+   "note": "bezel 44.02 wide, 3.24 mm each side; a 49 mm bezel would have 0.75",
+   "owner": "case"
+  },
+  {
+   "name": "knob collar inside the panel",
+   "value": 1.55,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "\u00d842.00 knob, collar \u00d847.40, 1.55 mm of panel outside it",
+   "owner": "case"
+  },
+  {
+   "name": "boss axis inside the PCB",
+   "value": 2.2,
+   "target": ">= 0",
+   "ok": true,
+   "note": "boss x \u00b119.95, PCB edge \u00b122.15, notch \u00d89.60",
+   "owner": "case"
+  },
+  {
+   "name": "boss clears the knob hole",
+   "value": 0.765,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "upper bosses y 17.39, room between knob and joystick 1.12",
+   "owner": "case"
+  },
+  {
+   "name": "boss clears the joystick opening",
+   "value": 0.961,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "upper pair sits under the joystick hole",
+   "owner": "case"
+  },
+  {
+   "name": "boss clears the scanner mirror",
+   "value": 1.727,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "lower bosses y -43.40",
+   "owner": "case"
+  },
+  {
+   "name": "top rail screws",
+   "value": 0.47,
+   "target": ">= 0.8",
+   "ok": false,
+   "note": "joystick opening leaves too little panel for a \u00d83.2 hole with an SLA web both sides; top screws omitted, bottom screws stay",
    "owner": "case"
   },
   {
@@ -138,10 +210,10 @@
   },
   {
    "name": "clamp clears B-side parts",
-   "value": 4.304,
+   "value": 3.531,
    "target": ">= 0.8",
    "ok": true,
-   "note": "overlap 3.52, nearest J10 is 7.82 from the outline",
+   "note": "overlap 2.89, nearest C22 is 6.42 from the outline",
    "owner": "case"
   },
   {
@@ -202,7 +274,7 @@
   },
   {
    "name": "top light-strip width",
-   "value": 1.96,
+   "value": 1.81,
    "target": ">= 0.8",
    "ok": true,
    "note": "panel edge above the bezel",
@@ -282,7 +354,7 @@
   },
   {
    "name": "beam vs knob",
-   "value": 3.05,
+   "value": 0.55,
    "target": ">= 0.5",
    "ok": true,
    "note": "swept fan stays off the dial",
@@ -290,7 +362,7 @@
   },
   {
    "name": "beam vs joystick",
-   "value": 3.44,
+   "value": 1.09,
    "target": ">= 0.5",
    "ok": true,
    "note": "fan stays off the carrier and the lip",
@@ -337,19 +409,19 @@
    "owner": "case"
   },
   {
-   "name": "PETG under the countersink",
+   "name": "PETG under the screw head",
    "value": 1.5,
    "target": ">= 1.5",
    "ok": true,
-   "note": "pad 2.40 on the 0.96 tongue; countersink 1.86; left under the head 1.50; pocket wall stays 2.14",
+   "note": "DIN 7984 head 2.00, counterbore 2.10 (head 0.10 below the face); pad 2.64 on the 0.96 tongue; left under the head 1.50",
    "owner": "case"
   },
   {
-   "name": "corner screw beside the PCB",
-   "value": 3.6,
-   "target": ">= 1.5",
+   "name": "corner screw through the notch",
+   "value": 3.3,
+   "target": ">= 0.3",
    "ok": true,
-   "note": "boss centre x 29.60, thread stays off the board edge",
+   "note": "notch \u00d89.60 at x 19.95, y -43.40",
    "owner": "case"
   },
   {
@@ -394,10 +466,10 @@
   },
   {
    "name": "case mass",
-   "value": 59.952,
+   "value": 51.903,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 46117 mm\u00b3 (46.1 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 39925 mm\u00b3 (39.9 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {
@@ -405,7 +477,7 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "overall 70.82 \u00d7 128.50 \u00d7 67.08 mm; faceplate to PCB 34.50 mm",
+   "note": "overall 50.50 \u00d7 128.50 \u00d7 67.08 mm; faceplate to PCB 34.50 mm",
    "owner": "case"
   }
  ],

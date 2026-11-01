@@ -108,15 +108,15 @@ def _tap(D, z0, length):
 
 
 def _screw(D, z_head, z_shank1, z_th0, length):
-    """ISO 10642 head flush at z_head, thread running toward +Z from z_th0."""
+    """DIN 7984 socket head. z_head is the outer face of the head. Thread runs toward +Z from z_th0."""
     d = D["screw_d"]
-    k = D["csink_depth"]
-    head = Pos(0, 0, z_head) * Cone(D["screw_dk"] / 2.0, d / 2.0, k, align=A)
-    shank = _cyl_z(d / 2.0 - D["thread_fit"], z_head + k, z_shank1, 0.0, 0.0)
+    k = D["head_k"]
+    head = _cyl_z(D["screw_dk"] / 2.0, z_head, z_head + k, 0.0, 0.0)
+    shank = _cyl_z(d / 2.0 - D["thread_fit"], z_head + k, max(z_shank1, z_head + k), 0.0, 0.0)
     core = _pilot(D, z_th0, z_th0 + length, internal=False)
     tooth = _thread_groove(D, z_th0, length, internal=False)
     sock_r = (D["screw_hex"] / 2.0) / math.cos(math.radians(30.0))
-    sock = Pos(0, 0, z_head) * Rot(0, 0, 30) * extrude(RegularPolygon(sock_r, 6), D["screw_socket"])
+    sock = Pos(0, 0, z_head) * Rot(0, 0, 30) * extrude(RegularPolygon(sock_r, 6), min(D["screw_socket"], k))
     return _sub(_add(_add(head, shank), _add(core, tooth)), sock)
 
 
@@ -201,13 +201,15 @@ def build(D):
                                D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl))
     pocket = _add(pocket, _box(D["panel_x0"], D["panel_x1"], D["bezel_y_far"], D["panel_y1"] + sl,
                                D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl))
-    for x in D["rail_x_top"]:
-        pocket = _sub(pocket, _cyl_z(D["rail_pad_r"], D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
+    if D["rail_top_ok"]:
+        for x in D["rail_x_top"]:
+            pocket = _sub(pocket, _cyl_z(D["rail_pad_r"], D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
     for x in D["rail_x_std"]:
         pocket = _sub(pocket, _cyl_z(D["rail_pad_r"], D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_bot"]))
     case = _sub(case, pocket)
-    for x in D["rail_x_top"]:
-        case = _sub(case, _cyl_z(D["rail_hole_d"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
+    if D["rail_top_ok"]:
+        for x in D["rail_x_top"]:
+            case = _sub(case, _cyl_z(D["rail_hole_d"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
     for x in D["rail_x_std"]:
         case = _sub(case, _cyl_z(D["rail_hole_d"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_bot"]))
     # labyrinth placeholder: annular grooves in the collar bore
@@ -245,6 +247,9 @@ def build(D):
                              D["z_ledge0"] - sl, D["z_fp1"], D["ox"], D["place_y"]))
     glow = _sub(glow, _box(D["shelf_x0"] - sl, D["shelf_x1"] + sl, D["shelf_y0"] - sl, D["shelf_y1"] + sl,
                            D["shelf_z0"] - sl, D["shelf_z1"] + sl))
+    for x, y in D["corners"]:
+        glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_fp1"], x, y))
+    glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
 
     # transparent PETG cover. A thin clamping tongue across the shell rim and the PCB edge,
     # a pocket behind it for the rear stack (depth unchanged), and a pad at each corner screw.
@@ -267,14 +272,13 @@ def build(D):
     cover = _add(cover, tub)
     for x, y in D["corners"]:
         cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
+        cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_pad_out"] - sl, D["z_pad_out"] + D["cbore_depth"], x, y))
         cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
-        cover = _sub(cover, Pos(x, y, D["z_pad_out"]) * Cone(D["screw_dk"] / 2.0 + D["thread_fit"], D["hole_r"],
-                                                             D["csink_depth"], align=A))
     screws = {}
     for i, (x, y) in enumerate(D["corners"]):
-        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, D["z_pad_out"], D["z_thread0"], D["z_thread0"], D["tap_len"]))
+        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, D["z_pad_out"] + D["head_below"], D["z_thread0"], D["z_thread0"], D["tap_len"]))
     for i, (x, y) in enumerate(D["knob_bolts"]):
-        screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(D, D["z_bolt0"] - D["csink_depth"], D["z_bolt0"], D["z_bolt0"], D["tap_len"]))
+        screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(D, D["z_bolt0"] - D["head_k"], D["z_bolt0"], D["z_bolt0"], D["tap_len"]))
     pins = {}
     for i, x0, x1 in ((1, D["x_out0"] - D["cross_pin_d"], D["x_in0"]), (2, D["x_in1"], D["x_out1"] + D["cross_pin_d"])):
         pins[f"cross pin {i}"] = _box(x0, x1, D["place_y"] - D["cross_pin_d"] / 2.0, D["place_y"] + D["cross_pin_d"] / 2.0,
@@ -288,6 +292,8 @@ def build(D):
     vcsel = _box(D["x_vc"] - D["vcsel_l"] / 2, D["x_vc"] + D["vcsel_l"] / 2,
                  D["y_vc"] - D["vcsel_w"] / 2, D["y_vc"] + D["vcsel_w"] / 2, D["z_vc0"], D["z_vc1"])
     pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
+    for x, y in D["corners"]:
+        pcb = _sub(pcb, _cyl_z(D["notch_r"], D["z_pcb_back"] - sl, sl, x, y))
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
            "PCB": pcb,
            "scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,

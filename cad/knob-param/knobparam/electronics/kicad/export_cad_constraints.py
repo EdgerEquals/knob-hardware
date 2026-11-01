@@ -40,7 +40,19 @@ def main():
         rod_pad_r=D["rod_pad_r"], rod_pad_clear=D["rod_pad_clear"], h1_hole=D["h1_hole"],
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],
-        d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"], pcb=(D["pcb_w"], D["pcb_above"], D["pcb_below"]),
+        d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"],
+        # Case v0.1, 10HP: the shell sets the board width. Notches are where the M3 cover
+        # bosses sit inside the outline (frame x,y and board bx,by).
+        pcb=(D.get("nest_w", D["pcb_w"]), D.get("nest_above", D["pcb_above"]), D.get("nest_below", D["pcb_below"])),
+        case_pcb=dict(
+            hp=D.get("hp"), panel_w=D.get("panel_w"), wall=D.get("wall"),
+            pcb_w=D.get("nest_w"), pcb_above=D.get("nest_above"), pcb_below=D.get("nest_below"),
+            pcb_live_w=D["pcb_w"],
+            notches=[dict(x=round(x, 3), y=round(y, 3), bx=round(D["axis_bx"] + x, 3), by=round(D["axis_by"] - y, 3),
+                          d=round(2 * D["notch_r"], 3), kind="notch") for x, y in D.get("corners", ())],
+            screw="DIN 7984 M3 low-head socket cap, flat counterbore in the PETG cover",
+            note="Shrink the main PCB to pcb_w so 2.5 mm shell walls fit a 10HP panel. "
+                 "Cut a notch of diameter d at each (bx, by). The resin boss and the screw occupy the notch."),
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

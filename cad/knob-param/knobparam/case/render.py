@@ -94,6 +94,14 @@ def _shot(items, path, view, size, zoom, bounds=None):
         pl.camera.up = (0.0, 0.0, 1.0)
         pl.camera.parallel_scale = abs(z1 - z0) / 2.0
         pl.camera.clipping_range = (1.0, 1.0e4)
+    elif bounds is not None and view == "plan":
+        x0, x1, y0, y1, _z0, _z1 = bounds
+        cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        pl.camera.focal_point = (cx, cy, 0.0)
+        pl.camera.position = (cx, cy, abs(x1 - x0) + abs(y1 - y0))
+        pl.camera.up = (0.0, 1.0, 0.0)
+        pl.camera.parallel_scale = abs(y1 - y0) / 2.0
+        pl.camera.clipping_range = (1.0, 1.0e4)
     else:
         if view == "plan":
             pl.view_xy()
@@ -193,31 +201,53 @@ def _annotate_section(ax, D, bounds, fs):
          f"     at 16.45 mm proud the plate would be {z_alt:.2f} mm", fs)
 
 
-def _compose_preview(section, iso, out, D, bounds, footer):
-    """Section across the full sheet, labels drawn here so they stay at least 14 px."""
+def _plan_frame(D):
+    return (D["panel_x0"] - 8.0, D["panel_x1"] + 8.0, D["panel_y0"] - 10.0, D["panel_y1"] + 10.0, -40.0, 40.0)
+
+
+def _annotate_plan(ax, D, fs):
+    """Plan is viewed from +Z with +X to the right and +Y up, framed on the panel."""
+    x0, x1, y0, y1 = _plan_frame(D)[:4]
+
+    def fx(x):
+        return (x - x0) / (x1 - x0)
+
+    def fy(y):
+        return (y - y0) / (y1 - y0)
+
+    _tag(ax, fx(0.0), fy(D["panel_y1"] + 4.0), f"{D['panel_w']:.2f} mm   {D['hp']} HP", fs)
+    _tag(ax, fx(0.0), fy(D["place_y"]), f"bezel {D['bezel_w']:.1f}", fs)
+    for x, y in D["corners"]:
+        _tag(ax, fx(x + (7.5 if x > 0 else -7.5)), fy(y), "M3", fs)
+    _tag(ax, fx(0.0), fy(D["panel_y0"] + 8.0), f"PCB {D['nest_w']:.2f}   wall {D['wall']:.1f}", fs)
+
+
+def _compose_preview(section, plan, out, D, bounds, footer):
+    """Section full width, plan beside the notes. Labels are drawn here so they stay ≥ 14 px."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
     dpi = 120
     fs = 16   # 16 pt at 120 dpi = 27 px
-    fig = plt.figure(figsize=(18.5, 12.2), dpi=dpi)
-    fig.suptitle(f"Enclosure {D['case_rev']}  —  section, full width    {D['hp']} HP  {D['panel_w']:.2f} mm wide",
+    fig = plt.figure(figsize=(18.5, 18.0), dpi=dpi)
+    fig.suptitle(f"Enclosure {D['case_rev']}  —  10 HP section and plan    panel {D['panel_w']:.2f} mm    wall {D['wall']:.1f} mm",
                  fontsize=fs, fontweight="bold", x=0.01, ha="left")
-    ax = fig.add_axes((0.02, 0.30, 0.96, 0.62))
+    ax = fig.add_axes((0.02, 0.40, 0.96, 0.52))
     ax.imshow(plt.imread(section), aspect="equal")
     ax.set_axis_off()
     _annotate_section(ax, D, bounds, fs)
-    ax2 = fig.add_axes((0.62, 0.05, 0.36, 0.24))
-    ax2.imshow(plt.imread(iso))
-    ax2.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
+    ax2 = fig.add_axes((0.02, 0.03, 0.34, 0.35))
+    ax2.imshow(plt.imread(plan), aspect="equal")
+    ax2.set_title("PLAN  (+Z, panel up = +Y)", loc="left", fontsize=fs, fontweight="bold")
     ax2.set_axis_off()
+    _annotate_plan(ax2, D, fs - 2)
     handles = [Patch(facecolor=tuple(c / 255 for c in D["dye_rgb"]), label="shell, translucent 2577 C"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
-               Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 10642 screw")]
-    fig.legend(handles=handles, loc="lower left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.01, 0.02))
-    fig.text(0.01, 0.145, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
+               Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head")]
+    fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.38, 0.36))
+    fig.text(0.38, 0.05, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
     fig.savefig(out)
     plt.close(fig)
 
@@ -273,9 +303,11 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     shots = []
     joint = [("case", case), ("back cover", parts["back cover (PETG)"]),
              ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"])]
+    plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
+                 ("PCB", parts["PCB"]), ("corner screw 1", parts["corner screw 1"])]
     if preview:
-        shots = [("corner", "SECTION  —  corner screw, collar, PCB ledge, clamp rim", joint, "xz"),
-                 ("iso", "ISOMETRIC", show, "iso")]
+        shots = [("corner", "SECTION", joint, "xz"),
+                 ("plan", "PLAN", plan_show, "plan")]
     elif full:
         shots = [("corner", "SECTION  —  corner screw, collar, PCB ledge, clamp rim", joint, "xz"),
                  ("iso", "ISOMETRIC", show, "iso"),
@@ -300,6 +332,12 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
             h = 1100
             w = int(round(h * abs(x1 - x0) / max(abs(z1 - z0), 1.0)))
             shot_size = (w, h)
+        elif key == "plan":
+            bounds = _plan_frame(D)
+            x0, x1, y0, y1 = bounds[:4]
+            h = 1500
+            w = int(round(h * abs(x1 - x0) / max(abs(y1 - y0), 1.0)))
+            shot_size = (max(w, 400), h)
         _shot(items, p, view, shot_size, zoom, bounds=bounds)
         pngs.append(p)
         paths.append(p)
@@ -314,8 +352,8 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
               f"knob top {D['knob_top_used']:.2f} ({D['knob_top_src']}) − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
               f"    (at 16.45 mm proud the plate would be {z_alt:.2f})\n"
               f"PETG under the head {D['cover_skin']:.2f} mm    "
-              f"width need {D['hp_need_w']:.2f} mm driven by the Ø{2 * D['screw_boss_r']:.0f} corner boss"
-              f"    checks {nt - nf}/{nt}  clashes {nc}")
+              f"PCB max {D['pcb_max_w']:.2f} mm    wall {D['wall']:.2f}    "
+              f"bosses x ±{D['boss_x']:.2f}    checks {nt - nf}/{nt}  clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
     titles = [s[1] for s in shots]
     if preview and section_bounds is not None:

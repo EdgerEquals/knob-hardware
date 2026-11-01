@@ -40,9 +40,26 @@ def checks(D, parts):
     row("faceplate to PCB ledge", D["fp_to_pcb"], D["knob_top_used"] - D["knob_proud"],
         f"faceplate front to the PCB front (ledge datum z=0) is {D['fp_to_pcb']:.2f} mm; "
         f"model ledge face at z {D['z_ledge0']:.2f} leaves nest_gap {D['nest_gap']:.2f}")
+    row("10HP panel", D["panel_w"], 10 * D["hp_pitch"] - D["hp_gap"],
+        f"{D['hp']}HP  {D['panel_w']:.2f} mm, wall {D['wall']:.2f}")
+    row("PCB width within the shell", D["pcb_max_w"] - D["nest_w"], 0.0,
+        f"max PCB width {D['pcb_max_w']:.2f} (live board is {D['pcb_w']:.2f}, {D['scope_short']:.2f} wider)")
     row("PCB side air", D["side_air"], D["pcb_clear"],
-        f"{D['hp']}HP panel {D['panel_w']:.2f} (scope {D['hp_scope']}HP is {D['panel_w_scope']:.2f}, short by {D['scope_short']:.2f}); "
-        f"outline from {D['pcb_src']}")
+        f"wall {D['wall']:.2f} + clearance {D['pcb_clear']:.2f} each side of the {D['nest_w']:.2f} board")
+    row("bezel on the 10HP panel", D["bezel_margin"], 0.0,
+        f"bezel {D['bezel_w']:.2f} wide, {D['bezel_margin']:.2f} mm each side; a 49 mm bezel would have {D['bezel49_margin']:.2f}")
+    row("knob collar inside the panel", D["collar_margin"], D["sla_min"],
+        f"Ø{D['knob_od_used']:.2f} knob, collar Ø{D['collar_od']:.2f}, {D['collar_margin']:.2f} mm of panel outside it")
+    row("boss axis inside the PCB", D["pcb_x1"] - D["boss_x"], 0.0,
+        f"boss x ±{D['boss_x']:.2f}, PCB edge ±{D['pcb_x1']:.2f}, notch Ø{2 * D['notch_r']:.2f}")
+    row("boss clears the knob hole", D["boss_knob_clear"], D["boss_gap"],
+        f"upper bosses y {D['corners'][2][1]:.2f}, room between knob and joystick {D['boss_y_room']:.2f}")
+    row("boss clears the joystick opening", D["boss_joy_clear"], D["boss_gap"],
+        "upper pair sits under the joystick hole")
+    row("boss clears the scanner mirror", D["boss_scan_clear"], D["boss_gap"],
+        f"lower bosses y {D['corners'][0][1]:.2f}")
+    row("top rail screws", D["rail_top_web"], D["sla_min"],
+        "joystick opening leaves too little panel for a Ø3.2 hole with an SLA web both sides; top screws omitted, bottom screws stay")
     row("ledge width", D["ledge_w"], D["sla_min"], "inboard of the PCB edge, ratio of the wall")
     row("rim flush with the PCB back", abs(D["z_rim"] - D["z_pcb_back"]), 0.0,
         f"shell rim z {D['z_rim']:.2f}, PCB back {D['z_pcb_back']:.2f}", higher_ok=False)
@@ -97,11 +114,11 @@ def checks(D, parts):
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
     row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
         f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
-    row("PETG under the countersink", D["cover_under"], D["cover_under_mult"] * D["screw_d"],
-        f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; countersink {D['csink_depth']:.2f}; "
-        f"left under the head {D['cover_skin']:.2f}; pocket wall stays {D['cover_t']:.2f}")
-    row("corner screw beside the PCB", D["pcb_clear"] + D["screw_boss_r"] - D["screw_d"] / 2, D["tip_clear"],
-        f"boss centre x {D['corners'][1][0]:.2f}, thread stays off the board edge")
+    row("PETG under the screw head", D["cover_under"], D["cover_under_mult"] * D["screw_d"],
+        f"DIN 7984 head {D['head_k']:.2f}, counterbore {D['cbore_depth']:.2f} (head {D['head_below']:.2f} below the face); "
+        f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; left under the head {D['cover_skin']:.2f}")
+    row("corner screw through the notch", D["notch_r"] - D["screw_d"] / 2, D["notch_gap"],
+        f"notch Ø{2 * D['notch_r']:.2f} at x {D['corners'][1][0]:.2f}, y {D['corners'][1][1]:.2f}")
     row("corner screw tip vs faceplate", D["z_fp0"] - D["z_tip"], D["tip_clear"],
         f"tip z {D['z_tip']:.2f}, plate underside {D['z_fp0']:.2f}")
     row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
