@@ -191,7 +191,7 @@
   },
   {
    "name": "compression spring clear of the hold-downs",
-   "value": 11.653240470886935,
+   "value": 11.946205179364187,
    "target": ">= 1.0",
    "ok": true,
    "note": "the two spring sets do not share a job"
@@ -243,7 +243,35 @@
    "value": 0.020000000000003126,
    "target": "0.01-0.05",
    "ok": true,
-   "note": "and the main PCB, 0.02 short of each face"
+   "note": "hex body 0.02 short of the daughterboard. The stud continues through the main PCB"
+  },
+  {
+   "name": "stud and nut below the main PCB",
+   "value": 2.4,
+   "target": "2.30-2.50",
+   "ok": true,
+   "note": "XHHD DTTZ3033 stud 4.0 through PCB 1.6 leaves 2.40 mm. ISO 4032 M2 is 1.6 thick, 0.79 mm of stud past the nut. Back panel is 22.65 mm behind the board [A]"
+  },
+  {
+   "name": "nuts seated under the main PCB",
+   "value": 0.010000000000000009,
+   "target": "0.005-0.05",
+   "ok": true,
+   "note": "four nuts, across flats 4.0. No second screw on this end"
+  },
+  {
+   "name": "nut clear of the hold-down springs",
+   "value": 5.4622964418240585,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "stud clears the PCB hole",
+   "value": 0.19999999999999996,
+   "target": ">= 0.15",
+   "ok": true,
+   "note": "\u00d82.0 stud in the \u00d82.4 hole"
   },
   {
    "name": "standoff vs plate (screw through both)",
@@ -254,14 +282,14 @@
   },
   {
    "name": "standoff vs switch body",
-   "value": 8.003276025998092,
+   "value": 7.841424879819614,
    "target": ">= 0.8",
    "ok": true,
    "note": ""
   },
   {
    "name": "standoff vs header",
-   "value": 1.1682893416339382,
+   "value": 0.7747345803488465,
    "target": ">= 0.6",
    "ok": true,
    "note": ""
@@ -271,7 +299,7 @@
    "value": 4.449999999999999,
    "target": "3.5-6.5",
    "ok": true,
-   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 21.46, riser 35 = XHHD STTZ2032 (C50377216)"
+   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 21.46, riser 35 = XHHD DTTZ3033 (C50377642), stud 4 mm"
   },
   {
    "name": "socket count matches the headers",
@@ -292,7 +320,7 @@
    "value": 1.0,
    "target": "mirror",
    "ok": true,
-   "note": "standoffs (\u00b114.04, \u00b14.13), compression springs (\u00b124.93, \u00b117.49)"
+   "note": "standoffs (\u00b114.04, \u00b13.73), compression springs (\u00b124.93, \u00b117.49)"
   },
   {
    "name": "balls touch the carrier underside",
@@ -328,6 +356,13 @@
    "target": "on",
    "ok": true,
    "note": "hold-down hooks at x \u00b122.50 (the corner formula wanted \u00b127.35, past the PCB)"
+  },
+  {
+   "name": "M2 nut across-flats on the main PCB",
+   "value": 1.0,
+   "target": "on",
+   "ok": true,
+   "note": "nut 4.0 mm AF needs the screws at y \u00b13.73 (the pad alone would have allowed \u00b14.13)"
   },
   {
    "name": "carrier skirt above the rail",
@@ -373,7 +408,7 @@
   },
   {
    "name": "carrier volume",
-   "value": 2.791263283510512,
+   "value": 2.791263283510511,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
@@ -492,19 +527,19 @@
   "springs": [
    [
     22.5,
-    4.030000000000001
+    3.7300000000000013
    ],
    [
     22.5,
-    -4.030000000000001
+    -3.7300000000000013
    ],
    [
     -22.5,
-    4.030000000000001
+    3.7300000000000013
    ],
    [
     -22.5,
-    -4.030000000000001
+    -3.7300000000000013
    ]
   ],
   "cs_xy": [
@@ -528,19 +563,19 @@
   "standoff_xy": [
    [
     14.03770355817594,
-    4.130000000000001
+    3.7300000000000013
    ],
    [
     14.03770355817594,
-    -4.130000000000001
+    -3.7300000000000013
    ],
    [
     -14.03770355817594,
-    4.130000000000001
+    3.7300000000000013
    ],
    [
     -14.03770355817594,
-    -4.130000000000001
+    -3.7300000000000013
    ]
   ],
   "sw_xy": [
@@ -559,7 +594,7 @@
   ],
   "mate_in": 4.449999999999999,
   "sx": 14.03770355817594,
-  "sy": 4.130000000000001,
+  "sy": 3.7300000000000013,
   "hx": 9.745652750607062,
   "bx": 8.360485619547411,
   "by": 4.735652750607062,
@@ -573,7 +608,7 @@
   "glue": 0.2,
   "volume_cm3": {
    "seat plate (printed, glued)": 0.4350048990173548,
-   "joystick carrier (printed)": 2.791263283510512,
+   "joystick carrier (printed)": 2.791263283510511,
    "screen carrier (printed)": 3.771269389153187
   }
  }

@@ -75,8 +75,10 @@ P = dict(
     hdr=dict(part="Samtec TSW-103-20-T-S", lcsc="C3345998 lead style", mate=25.91, ins=2.54, tail=2.79, n=3),  # [S]
     # female socket on the main PCB. Same hanxia H11 family as the v0.2 2x3, split into two 1x3s.
     sock=dict(part="hanxia HX PM2.54-1x3P ZC H11", lcsc="C41427518", h=11.0, tail=3.2, n=3),  # [S]
-    # hex F-F. Across-flats is the "H3" in the XHHD title. Length is the riser.
-    standoff=dict(part="XHHD STTZ2032", lcsc="C50377216", length=35.0, af=3.0),  # [S] H3 x M2 x 35 brass F-F
+    # hex male-female. H3 x M2 x 35 is the body between the boards; +4 is the stud through the main PCB.
+    # STTZ2032 (C50377216, female-female) was out of stock. The nut under the PCB replaces the lower screw.
+    standoff=dict(part="XHHD DTTZ3033", lcsc="C50377642", length=35.0, af=3.0, stud=4.0),  # [S] H3*M2*35+4 brass
+    nut=dict(part="ISO 4032 M2", af=4.0, thick=1.6),  # [S] hex nut, across flats 4, height 1.6
     pad_m2=3.2,             # [A] Ø pad on the Ø2.4 M2 clearance (annular ring 0.4)
     drill_m2=2.4,           # [A]
     # ---- plate, balls, hold-down springs (kept from v0.3) ----
@@ -214,6 +216,15 @@ def derive(P_):
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
     D["standoff_d"] = so["af"] / math.cos(math.radians(30))
+    # the 4 mm stud through the 1.6 mm board leaves 2.4 mm below it. The nut lives in that 2.4 mm.
+    nt = D["nut"]
+    D["stud_d"] = 2.0
+    D["stud_below"] = so["stud"] - D["pcb_t"]
+    D["z_stud0"] = -so["stud"]
+    D["z_nut1"] = -D["pcb_t"] - 0.01
+    D["z_nut0"] = D["z_nut1"] - nt["thick"]
+    D["nut_past"] = D["z_nut0"] - D["z_stud0"]
+    D["nut_d"] = nt["af"] / math.cos(math.radians(30))
     D["plate_t"] = pm
     D["z_plate0"] = D["z_db1"]
     D["z_plate1"] = D["z_plate0"] + D["plate_t"]
@@ -300,9 +311,13 @@ def derive(P_):
     D["db_xy"] = (0.0, 0.0)
     D["sx"] = D["db_half_w"] - inset
     sy_corner = D["db_half_h"] - inset
-    sy_pcb = D["y_pcb"] - D["pcb_edge"] - D["pad_m2"] / 2
-    D["sy"] = min(sy_corner, sy_pcb)
+    sy_pad = D["y_pcb"] - D["pcb_edge"] - D["pad_m2"] / 2
+    # the nut is wider than the pad, so it sets how close the screw can sit to the PCB edge
+    sy_nut = D["y_pcb"] - D["pcb_edge"] - D["nut"]["af"] / 2
+    D["sy"] = min(sy_corner, sy_pad, sy_nut)
     D["sy_corner"] = sy_corner
+    D["sy_pad"] = sy_pad
+    D["sy_nut"] = sy_nut
     D["standoff_xy"] = [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
     D["hdr_xy"] = [(D["hx"], 0.0), (-D["hx"], 0.0)]
     D["by"] = D["db_half_h"] - D["boss_r"] - D["part_gap"]

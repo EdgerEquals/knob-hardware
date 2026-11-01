@@ -80,7 +80,7 @@ def header_1x3():
 
 def standoff_35():
     n = "Mount_M2x35_Standoff"
-    L = head(n, "M2 female-female brass standoff, 35 mm hex H3 (XHHD STTZ2032, LCSC C50377216). PTH to GND. Drill 2.4, pad 3.2.", "MH", "through_hole")
+    L = head(n, "M2 male-female brass standoff, hex H3, body 35 mm, stud 4 mm (XHHD DTTZ3033, LCSC C50377642). PTH to GND. Drill 2.4, pad 3.2. Nut under the main PCB.", "MH", "through_hole")
     L += prop("MH", n, -3.2, 3.4)
     L += ['  (fp_circle (center 0 0) (end 1.75 0) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))',
           '  (fp_circle (center 0 0) (end 2.05 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))']

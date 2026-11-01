@@ -12,7 +12,8 @@ GROUPS = [
     ("1×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
     ("1×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
     ("joystick daughterboard (1.0 FR4)", "#1b5e20", lambda n: n == "joystick daughterboard"),
-    ("M2×35 brass standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
+    ("M2×35 male-female standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
+    ("M2 nuts under the main PCB", "#f9a825", lambda n: n.startswith("M2 nut")),
     ("SKRHADE010 body (45°)", "#b0bec5", lambda n: n.startswith("SW1") and "body" in n),
     ("SKRHADE010 stem", "#fff176", lambda n: n.startswith("SW1") and "stem" in n),
     ("seat plate (glued on the daughterboard)", "#6d4c41", lambda n: n.startswith("seat plate")),
@@ -96,6 +97,7 @@ def plan(ax, D):
         for k in (-1, 0, 1):
             ax.add_patch(Circle((hx + k * D["pitch"], hy), 0.32, fc="#ffd54f", ec="k", lw=0.4, zorder=5))
     for x, y in D["standoff_xy"]:
+        ax.add_patch(Circle((x, y), D["nut"]["af"] / 2, fc="#f9a825", ec="k", lw=0.4, zorder=4))
         ax.add_patch(Circle((x, y), D["standoff_d"] / 2, fc="#c9a227", ec="k", lw=0.6, zorder=5))
         ax.add_patch(Circle((x, y), D["drill_m2"] / 2, fc="white", ec="k", lw=0.4, zorder=6))
     th = math.radians(D["sw_rot"])
@@ -179,7 +181,7 @@ def render(D, P, rows, png):
     fig.suptitle(f"Top-screen joystick {D['version']} — bezel on four compression springs, thin carrier, {D['riser_h']:g} mm riser (1 Nov 2026, Ed)", fontsize=16, weight="bold", x=0.01, ha="left", y=0.985)
     nf = sum(not r["ok"] for r in rows)
     key = (f"Stack (z from the main-PCB front): screen top {D['scr_top']:.2f} = knob top {D['z_knob_top']:.2f} − {D['scr_below_knob']:g}. "
-           f"Riser 0–{D['z_db0']:g} (four M2×{D['riser_h']:g} + two 1×3 H11 sockets) · daughterboard {D['z_db0']:g}–{D['z_db1']:g} · "
+           f"Riser 0–{D['z_db0']:g} (four M2×{D['riser_h']:g} male-female, {D['standoff']['stud']:.0f} mm stud + nut under the PCB, two 1×3 H11 sockets) · daughterboard {D['z_db0']:g}–{D['z_db1']:g} · "
            f"stem top {D['z_stem_top']:.2f} · carrier underside {D['z_c0']:.2f} · floor {D['car_floor']:.2f} · "
            f"bezel {D['z_bz0']:.2f}–{D['z_bz1']:.2f} · spring roof {D['z_roof']:.2f} · screen {D['z_scr0']:.2f}–{D['scr_top']:.2f}.\n"
            f"Tilt stop is the switch: slide {D['slide']:.2f} mm (cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}). "
@@ -241,7 +243,7 @@ def _explode(P, D):
         "top screen": 62, "screen carrier": 46, "compression spring": 36, "joystick carrier": 24,
         "grub screw": 16, "brass insert": 16, "ball ": 14,
         "seat plate": 10, "SW1": 10, "joystick daughterboard": 6, "header ": 6,
-        "brass standoff": 0, "socket ": 0, "main PCB": 0, "screen FPC": 8, "hold-down": 0,
+        "brass standoff": 0, "M2 nut": -10, "socket ": 0, "main PCB": 0, "screen FPC": 8, "hold-down": 0,
     }
     out = {}
     for n, s in P.items():

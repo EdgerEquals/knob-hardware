@@ -21,6 +21,7 @@ def run(D, P):
     plate = P["seat plate (printed, glued)"]
     stem = P["SW1 SKRHADE010 stem"]
     db = P["joystick daughterboard"]
+    pcb = P["main PCB (proxy, local patch)"]
     fpc = P["screen FPC [A]"]
     scr = [P[n] for n in P if n.startswith("top screen")][0]
     hdrs = [P[n] for n in P if n.startswith("header 1x3")]
@@ -107,7 +108,6 @@ def run(D, P):
     bend = D["scr"]["w"] / 2 - D["slot_x"][1]
     row("FPC bend room under the glass", bend, ">= 1.2", bend >= 1.2,
         f"screen +x edge to the slot end. Exit side and pin-out are still open")
-    pcb = P["main PCB (proxy, local patch)"]
     fb = fpc.distance_to(pcb)
     row("FPC vs PCB slot at full slide", fb - D["slide"], ">= 0.2", fb - D["slide"] >= 0.2 - 1e-6,
         f"hole x {D['hole_x0']:.1f}-{D['hole_x1']:.1f}, ±{D['hole_hy']:.2f}")
@@ -138,7 +138,21 @@ def run(D, P):
         min(body.distance_to(h) for h in hdrs) >= 0.3, "the switch is on top, the headers underneath")
     row("standoff count", len(stands), "4", len(stands) == 4, "one in each quadrant, all GND")
     sd = min(s.distance_to(db) for s in stands)
-    row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05, "and the main PCB, 0.02 short of each face")
+    row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05,
+        "hex body 0.02 short of the daughterboard. The stud continues through the main PCB")
+    nuts = [P[n] for n in P if n.startswith("M2 nut")]
+    row("stud and nut below the main PCB", D["stud_below"], "2.30-2.50",
+        2.30 <= D["stud_below"] <= 2.50 and D["nut_past"] >= 0.5,
+        f"{D['standoff']['part']} stud {D['standoff']['stud']:.1f} through PCB {D['pcb_t']:.1f} "
+        f"leaves {D['stud_below']:.2f} mm. {D['nut']['part']} is {D['nut']['thick']:.1f} thick, "
+        f"{D['nut_past']:.2f} mm of stud past the nut. Back panel is {D['back_panel']:.2f} mm behind the board [A]")
+    nd = min(n.distance_to(pcb) for n in nuts)
+    row("nuts seated under the main PCB", nd, "0.005-0.05", 0.005 <= nd <= 0.05,
+        f"four nuts, across flats {D['nut']['af']:.1f}. No second screw on this end")
+    row("nut clear of the hold-down springs", min(n.distance_to(s) for n in nuts for s in sprs), ">= 1.0",
+        min(n.distance_to(s) for n in nuts for s in sprs) >= 1.0)
+    row("stud clears the PCB hole", (D["drill_m2"] - D["stud_d"]) / 2, ">= 0.15",
+        (D["drill_m2"] - D["stud_d"]) / 2 >= 0.15, f"Ø{D['stud_d']:.1f} stud in the Ø{D['drill_m2']:.1f} hole")
     row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",
         min(s.distance_to(plate) for s in stands) >= 0.5, "the screw, not the standoff, passes through the plate")
     row("standoff vs switch body", min(s.distance_to(body) for s in stands), ">= 0.8",
@@ -148,7 +162,7 @@ def run(D, P):
     row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
         T["mate_min"] <= D["mate_in"] <= T["mate_max"],
         f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
-        f"air {D['mate_air']:.2f}, riser {D['riser_h']:g} = {D['standoff']['part']} ({D['standoff']['lcsc']})")
+        f"air {D['mate_air']:.2f}, riser {D['riser_h']:g} = {D['standoff']['part']} ({D['standoff']['lcsc']}), stud {D['standoff']['stud']:.0f} mm")
     row("socket count matches the headers", len(socks), "2", len(socks) == 2 and len(hdrs) == 2,
         "1x3 each side of the switch, not one 2x3 beside it")
     # 8 centring and symmetry
@@ -176,8 +190,12 @@ def run(D, P):
     holes = D["standoff_xy"] + D["hdr_xy"] + D["springs"]
     holes_ok = all(on_board(x, y, D["pad_m2"] / 2 if (x, y) in D["standoff_xy"] or (x, y) in D["hdr_xy"] else D["spr_bore"] / 2)
                    for x, y in holes)
+    nuts_on = all(on_board(x, y, D["nut"]["af"] / 2) for x, y in D["standoff_xy"])
     row("standoff, socket and spring holes on the main PCB", 1.0 if holes_ok else 0.0, "on", holes_ok,
         f"hold-down hooks at x ±{D['spr_x']:.2f} (the corner formula wanted ±{D['spr_x_raw']:.2f}, past the PCB)")
+    row("M2 nut across-flats on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
+        f"nut {D['nut']['af']:.1f} mm AF needs the screws at y ±{D['sy']:.2f} "
+        f"(the pad alone would have allowed ±{D['sy_pad']:.2f})")
     row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
         f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
     # 12 walls, floor, volumes

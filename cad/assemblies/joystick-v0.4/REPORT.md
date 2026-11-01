@@ -32,7 +32,8 @@ The bezel snaps down over a shoulder on each spring pilot. A rectangular bezel i
 | Four, in the carrier | M2×2×3.2 brass heat-set | common "M2*2*3.2" | Thread M2, length 2.0, OD 3.2, hole Ø3.0. The insert hangs down from the floor. The model is a slip fit; the real insert is an interference fit |
 | Kept | hanxia HX PM2.54-1x3P ZC H11 | C41427518 | Two sockets on the main PCB |
 | Kept | Samtec TSW-103-20-T-S | consigned | Two headers, underside. Same −20 lead as LCSC C3345998 (that one is 2-row) |
-| Kept | XHHD STTZ2032, M2×35 F-F | C50377216 | Four, all GND |
+| Between the boards, four | XHHD DTTZ3033, hex male-female H3×M2×35+4 brass | C50377642 | The riser. Replaces the out-of-stock STTZ2032 (C50377216). In stock when checked (445) |
+| Under the main PCB, four | ISO 4032 M2 hex nut | hand-fit | On the 4 mm stud. Across flats 4, thickness 1.6 |
 | Kept | four hold-down extension springs | — | 0.5 N each, length 66 mm (hook z 41.75 + PCB 1.6 + back panel 22.65 [A]) |
 
 ## Preload
@@ -83,9 +84,15 @@ The knob-facing edge is the middle of the long side, at ±14.57 mm. The four spr
 
 The carrier floor got thinner. The new mass is the bezel and the four corner towers the springs live in. Printed total is about 2 cm³ above v0.3.
 
+## Standoff
+
+XHHD **DTTZ3033**, LCSC **C50377642**: male-female hex, H3 × M2 × 35 + 4. The 35 mm body is the same riser as the old female-female part. The 4 mm stud passes through the 1.6 mm main PCB and leaves **2.40 mm** below it. The ISO 4032 nut is 1.6 mm thick, so it sits fully in that 2.40 mm with **0.79 mm** of stud past the nut. The back panel is 22.65 mm behind the board [A], so the stud and nut do not meet it. Pairwise clash check: **none**.
+
+The nut is 4 mm across flats, wider than the Ø3.2 pad, so the screws move in from y ±4.13 to **y ±3.73** and the nut stays 0.30 mm inside the PCB edge. The Ø2.4 hole is unchanged: the Ø2.0 stud has 0.20 mm radial clearance.
+
 ## Daughterboard
 
-**31.88 × 13.87 mm** (v0.3 was 31.88 × 17.52). The width is unchanged. The −y tab is gone, so the outline is symmetric about the switch. Headers stay at x = ±9.75. Standoffs move from y = ±4.08 to **y = ±4.13**, still one per quadrant and still on the main PCB.
+**31.88 × 13.87 mm** (v0.3 was 31.88 × 17.52). The width is unchanged. The −y tab is gone, so the outline is symmetric about the switch. Headers stay at x = ±9.75. Standoffs are at **y = ±3.73** (the M2 nut, not the Ø3.2 pad, sets this). They stay one per quadrant and on the main PCB.
 
 KiCad (`make_project.py`, rev v0.4): **ERC 0, DRC 0** (all severities), schematic parity 0, 0 unconnected. The bottom GND bus moved from y = −7.4 / −8.6 (on the old tab) to **y = −6.30**, inboard of the new edge and clear of the Ø3.2 pads. Fab pack `joystick-daughterboard/fab/` is READY TO QUOTE. J1 and J2 stay the consigned Samtec lines.
 
@@ -100,7 +107,7 @@ KiCad (`make_project.py`, rev v0.4): **ERC 0, DRC 0** (all severities), schemati
 
 ## Checks
 
-`cad/joystick-param/build.py`: **57/57 PASS, 0 clashes.**
+`cad/joystick-param/build.py`: **62/62 PASS, 0 clashes.**
 
 `cad/knob-param/build.py --contract` is OK. `--sub electronics` is 2/2 PASS. The main PCB KiCad project was not edited.
 
@@ -109,7 +116,7 @@ KiCad (`make_project.py`, rev v0.4): **ERC 0, DRC 0** (all severities), schemati
 Carrier centre is board **(25.25, 16.53)** (v0.3 was 16.48). Knob-frame `place_y` is **36.37**.
 
 - Two 1×3 sockets at carrier-local **(±9.75, 0)**, unchanged.
-- Four Ø2.4 PTH to GND, pad Ø3.2, at **(±14.04, ±4.13)**.
+- Four Ø2.4 PTH to GND, pad Ø3.2, at **(±14.04, ±3.73)**. An ISO 4032 M2 nut goes on the stud under the board. No screw from the back.
 - Four Ø3.4 hold-down holes at **(±22.50, ±4.03)**. The corner formula would have put them at x = ±27.35, which is off the 49 mm PCB, so they stop at the copper-edge limit. v0.3 was about (±20.5, ±4.0).
 - No grub-screw holes and no new keep-outs.
 - FPC slot at local x 16.4–20.1, ±4.95. Exit side, pin count, pitch and pin-out are still open.
@@ -119,6 +126,6 @@ Carrier centre is board **(25.25, 16.53)** (v0.3 was 16.48). Knob-frame `place_y
 - DO0164FMST05 FPC exit side, pin count, pitch and pin-out.
 - Screen mass. 8 g is assumed. The preload check uses five times that weight; a heavier module still fits inside the 0.77 N preload until it reaches about 15 g.
 - Back-panel depth. Hold-down length is still **66 mm**.
-- STTZ2032 stock. The length and the thread are right; the bin was empty on the day v0.3 was picked.
+- DTTZ3033 was in stock (445) when the out-of-stock STTZ2032 was replaced. Re-check the bin before ordering.
 - Rail front height, if it is taller than z 10. Skirt bottom is z 35.25.
 - Knob v0.17 is still not in this tree. The plan is sized to Ø41.7 with 0.50 mm to spare.

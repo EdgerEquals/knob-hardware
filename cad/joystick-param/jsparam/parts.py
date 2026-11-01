@@ -5,6 +5,7 @@ compression springs. Each spring sits on an M2 grub screw in the carrier, set be
 assembled. A flat plate glued on the daughterboard carries the ball seats. There is no spider,
 no plunger, no round stop and no printed base.
 """
+import math
 from build123d import *
 
 A = (Align.CENTER, Align.CENTER, Align.MIN)
@@ -17,6 +18,11 @@ def cbox(w, h, z0, z1, x=0.0, y=0.0):
 
 def cyl(d, z0, z1, x=0.0, y=0.0):
     return Pos(x, y, z0) * Cylinder(d / 2, z1 - z0, align=A)
+
+def hex_at(af, z0, z1, x=0.0, y=0.0):
+    """Hex prism, across-flats `af`. A flat faces +y so the wrench flat is parallel to the PCB edge."""
+    r = (af / 2) / math.cos(math.radians(30))
+    return Pos(x, y, z0) * Rot(0, 0, 30) * extrude(RegularPolygon(radius=r, side_count=6), z1 - z0)
 
 def notched(D, z0, z1):
     """Full corner rectangle, with the middle of each long side cut back to h_mid.
@@ -139,7 +145,13 @@ def build(D):
         for k in (-1, 0, 1):
             out[f"header pin {i + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], y)
     for i, (x, y) in enumerate(D["standoff_xy"]):
-        out[f"brass standoff M2x35 {i + 1}"] = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
+        # hex body is the 35 mm riser. The 4 mm stud continues down through the main PCB.
+        body = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
+        stud = cyl(D["stud_d"], D["z_stud0"], 0.04, x, y)
+        out[f"brass standoff M2x35 {i + 1}"] = body + stud
+        nut = hex_at(D["nut"]["af"], D["z_nut0"], D["z_nut1"], x, y)
+        nut -= cyl(D["stud_d"] + 0.30, D["z_nut0"] - 0.04, D["z_nut1"] + 0.04, x, y)
+        out[f"M2 nut {i + 1}"] = nut
     body, stem = switch(D)
     out["SW1 SKRHADE010 body (45°)"] = body
     out["SW1 SKRHADE010 stem"] = stem
