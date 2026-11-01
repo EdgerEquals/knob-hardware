@@ -173,7 +173,7 @@ def checks(D, parts):
 
     row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
-    if False  # v0.19: brass insert; see "resin wall round the insert":
+    if False:  # v0.19: brass insert; see "resin wall round the insert"
         row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
             f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
     row("PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
