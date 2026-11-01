@@ -15,7 +15,10 @@ def build(D):
     ex, ey = D["enc_xy"]; b -= cyl(D["brg"]["D"] / 2, -t - 1, t + 2, ex, ey)          # H2 press bore
     F = D["feel"]; pw, pl = F["pad"]   # (radial, tangential) copper around each lead hole
     for px, py in D["fm_pad_xy"]:
-        b -= cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py)                          # M2 lead holes (shaft no longer passes the board)
+        b -= cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py)                          # M2 lead holes
+    # v0.17: 716 shaft and the compound-idler pin pass the board. Holes are in the proxy; KiCad NPTHs are still to add.
+    b -= cyl(D["fm_shaft_hole"] / 2, -t - 1, t + 2, *D["fm_xy"])
+    b -= cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"])
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         b -= Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + 0.3, M["term_w"] + 0.3, t + 2, align=A)
@@ -47,7 +50,12 @@ def pcb_full(D):
     """The real board (KiCad STEP export, committed in electronics/kicad/knob-main-pcb/), moved into the dial frame.
     Needs NO KiCad: only build123d's STEP import. Regenerate the STEP with kicad-cli after editing the board (see AGENTS.md)."""
     s = import_step(STEP); zf = s.bounding_box().max.Z
-    return Pos(-D["axis_bx"], D["axis_by"], -zf) * s
+    s = Pos(-D["axis_bx"], D["axis_by"], -zf) * s
+    # same two NPTHs the proxy drills; the KiCad board does not have them yet (see design notes)
+    t = D["pcb_t"]
+    s -= cyl(D["fm_shaft_hole"] / 2, -t - 2, t + 4, *D["fm_xy"])
+    s -= cyl(D["fg_hole"] / 2, -t - 2, t + 4, *D["fg_xy"])
+    return s
 
 def kicad_step_path():
     return STEP

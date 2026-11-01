@@ -46,6 +46,7 @@ def build(D):
         ring_mag = cyl(ro_ / 2, zt_ - th_, th_) - cyl(ri_ / 2, zt_ - th_ - 0.01, th_ + 0.02)
     h0, h = D["h_skirt0"], D["bot_face"]
     ring = cyl(D["knob_od"] / 2, h0, h) - int_cutter(D, D["z_ring"], h0, h)
+    ring -= Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], D["ot_rg"])   # v0.17 flat thrust groove in the skirt underside
     R = D["kb_ball_d"] / 2; n = D["kb_n"]
     balls = Compound(children=[Pos(D["kb_rc"] * math.cos(2 * math.pi * i / n), D["kb_rc"] * math.sin(2 * math.pi * i / n), D["kb_zc"]) * Sphere(R) for i in range(n)])
     out = {"knob body (cap+skirt+hub gear)": body, "bottom internal ring": ring, f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}

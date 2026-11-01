@@ -10,8 +10,10 @@ def checks(D, parts):
     m = D["module"]
     r.row("motor pinion tip vs skirt ID (radial)", D["skirt_id"] / 2 - D["offset"] - (D["z_pinion"] + 2) * m / 2, 1.0,
           f"{D['z_pinion']}T pinion / {D['z_hub_gear']}T hub gear, ratio {D['ratio_knob_motor']:.3f}")
-    note = (f"{D['z_feel']}T at {D['fm_ang']:.1f}° into the {D['z_ring']}T ring, ratio {D['fm_ratio']:.2f}, "
-            f"knob Ø{D['knob_od']:.2f}; " + ", ".join(f"{k} {v:.2f}" for k, v in sorted(D["fm_clear"].items(), key=lambda kv: kv[1])))
+    note = (f"{D['fg_pinion']['part']} {D['fg_z_pin']}T × {D['fg_z_gear']}T on the {D['fg_ang']:.0f}° idler, "
+            f"then {D['z_enc_pinion']}T into the {D['z_ring']}T ring, overall {D['fm_ratio']:.2f}:1, "
+            f"716 stays at {D['fm_ang']:.1f}°; knob Ø{D['knob_od']:.2f}; "
+            + ", ".join(f"{k} {v:.2f}" for k, v in sorted(D["fm_clear"].items(), key=lambda kv: kv[1])))
     r.row("feel placement (worst plan clearance)", min(D["fm_clear"].values()), F["clear"], note)
     ro = F["can_d"] / 2 + D["motor_glue"] + D["fm_band_t"]
     r.row("feel saddle strap vs skirt ID (radial)", D["skirt_id"] / 2 - D["fm_cd"] - ro, F["clear"],
@@ -26,5 +28,13 @@ def checks(D, parts):
     pin = _one(parts, "feel motor pinion")
     r.row("feel can vs 1220 motor", can.distance_to(parts["motor"]), F["clear"])
     for i in (1, 2):
-        r.row(f"feel pinion vs idler {i}", pin.distance_to(parts[f"idler pinion {i}"]), F["clear"])
+        if i - 1 == D["fg_idler"]:
+            r.row("feel pinion vs compound gear (centre-distance error, mm)", abs(D["fg_cd_err"]), 0.12,
+                  f"CD {D['fg_cd']:.3f}, nominal {(D['fg_z_gear'] + D['fg_z_pin']) * D['fg_mod'] / 2:.3f} "
+                  f"({D['fg_pinion']['part']}, {D['fg_pinion']['material']}, bore Ø{D['fg_pinion']['bore']:g}); "
+                  f"shaft stick-out {D['fg_shaft_len']:.1f} mm", higher_ok=False)
+        else:
+            r.row(f"feel pinion vs idler {i}", pin.distance_to(parts[f"idler pinion {i}"]), F["clear"])
+    r.row("cradle web left round a support after the bridge cut", D["cr_web_min"], D["cr_web_min"],
+          f"fillet R{D['cr_bridge_fillet']:g} at the narrowest point of each top-idler breakout")
     return r

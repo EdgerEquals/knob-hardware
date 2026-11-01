@@ -18,6 +18,8 @@ P = dict(
     rod_proud=0.5,   # [S]/[A]
     # ---- base cradle [A] ----
     cr_clear=0.5,
+    cr_web_min=1.2,   # [Ed] v0.17: webs left round every support after the skinny-bridge cuts
+    cr_bridge_fillet=0.5,   # [Ed] v0.17: fillet on those cuts (cut at the narrowest point)
     pad_cb=(7.0, 0.6),
     motor_glue=0.1,
     motor_collar_wall=1.4,
@@ -45,7 +47,8 @@ P = dict(
     det_leg_w=3.0,   # [A] leg / bridge width
     det_leg_len=2.4,   # [A] leg radial length inboard of the fan
     # ---- v0.16 centring springs + cushions ----
-    stop_len=2.0,   # [A] stop block length beside the lever
+    stop_len=0.8,   # [A] v0.17: stop block tangential length. Short, so the block stops the lever without reaching the detent ear
+    stop_bias=0.1,   # [A] deg. Parks the stop face a hair out so the at-rest gap stays ≥ 0.3 mm and contact is still at ±travel..
     stop_over=0.2,   # [A] stop block past the lever end
     sl_post_d=1.8,   # [A] spring anchor post
     # ---- v0.16 feel-motor open saddle clamp [Ed] ----
@@ -98,8 +101,11 @@ def derive(D):
     D["det_z_thread0"] = D["det_z_grub0"] - D["det_grub_adj"]
     D["det_z1"] = D["det_z_grub0"] + D["det_grub_len"] + D["det_grub_adj"]
     D["det_boss_d"] = D["det_thread_d"] + 2 * D["det_boss_wall"]
-    D["det_leg_r1"] = D["fan_r0"] - D["fan_clear"] - 0.1                   # leg stays inboard of the swept fan wing
+    # v0.17: foot stops below the moving ear; the bridge and boss stay above the ear (det_z0)
+    ear_r0 = min(D["bt_rs"]) - D["bt_groove_r"] - D["fan_clear"]
+    D["det_leg_r1"] = max(D["dial_tube_od"] / 2 + D["det_leg_len"], ear_r0 - D["fan_clear"])
     D["det_leg_r0"] = D["det_leg_r1"] - D["det_leg_len"]
+    D["det_foot_z1"] = D["fan_z0"] - D["fan_clear"]
     # ---- v0.16 centring springs: anchors tangential from the lever pin, one hook-to-hook length each way ----
     a = math.radians(D["sl_ang"]); L = D["sl_spring"][1]
     px, py = D["sl_pin_r"] * math.cos(a), D["sl_pin_r"] * math.sin(a); tx, ty = -math.sin(a), math.cos(a)
@@ -111,7 +117,8 @@ def derive(D):
     D["fm_grip"] = F["clip_frac"] * F["can_len"]   # [A] collar length = this fraction of the can, from the shaft end
     # wall uses whatever skirt margin the placement left, capped at the 1220 collar wall
     D["fm_wall"] = min(D["motor_collar_wall"], D["skirt_id"] / 2 - (D["fm_cd"] + F["can_d"] / 2 + D["motor_glue"]) - F["clear"])
-    D["fm_pocket_r"] = D["fm_tip"] + D["pocket_clear"]
+    D["fm_pocket_r"] = D["feel"]["shaft_d"] / 2 + D["motor_bore_clear"]   # v0.17: shaft only; the pinion is under the PCB
+    D["fg_shaft_len"] = D["fm_z_can0"] - D["fg_z_bot"]                    # 716 shaft stick-out down through the catalogue pinion
     D["fm_rib_r0"] = D["dial_tube_od"] / 2 + F["clear"]                 # outside the dial tube
     D["fm_rib_r1"] = D["fm_cd"] - D["fm_pocket_r"] - D["motor_glue"]    # inside the pinion pocket
     D["fm_rib_w"] = F["can_d"] / 2                                      # [A] tangential width, half the can

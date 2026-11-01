@@ -47,6 +47,17 @@ def ring_phase(D, a, zp=None):
 def ext_phase(z_gear, z_pinion):
     """Gear spin so a space faces the pinion on the +X line (gear_pts puts a tooth at 0 deg)."""
     return 180.0 / z_gear if z_pinion % 2 == 0 else 0.0
+def ext_mesh_spin(z_gear, z_pin, alpha_deg, pin_spin=0.0):
+    """World spin (deg) of an external gear so it meshes a pinion.
+
+    gear_pts puts a tooth at local 0. `alpha_deg` is the world angle of the pinion from the gear centre.
+    `pin_spin` is the world angle the pinion's tooth 0 points at. The two profiles are standard 20° full depth,
+    so a half-pitch complement along the line of centres is a mesh."""
+    pitch_p = 360.0 / z_pin
+    pitch_g = 360.0 / z_gear
+    face = (alpha_deg + 180.0 - pin_spin) % pitch_p   # 0 = pinion tooth toward the gear
+    off = face / pitch_p
+    return alpha_deg - pitch_g * ((0.5 - off) % 1.0)
 def thrust_groove(pcd, groove_r, z_ball):
     """Torus groove for a ring of thrust balls (cut into BOTH the cradle plate and the dial tube end; numbers are the
     control_dial exports tb_pcd / tb_groove_r / tb_z_ball)."""

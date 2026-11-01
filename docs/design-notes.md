@@ -1,10 +1,25 @@
-# Knob module: design notes (current: CAD v0.16b, 1 Nov 2026)
+# Knob module: design notes (current: CAD v0.17, 1 Nov 2026)
 
 A short summary of the current design. The parametric model in `cad/knob-param/` is the source of truth for
 dimensions. Values marked [A] are assumptions that still need checking with calipers or on a prototype.
-Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `check.json`); v0.16 kept in
-`cad/assemblies/knob-stack-v0.16/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
+Renders: `cad/assemblies/knob-stack-v0.17/` (clean section + iso, plan view, `check.json`); v0.16b kept in
+`cad/assemblies/knob-stack-v0.16b/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
 `docs/top-screen-joystick.md`).
+
+## v0.17 changes (Ed, 1 Nov 2026)
+
+Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gears. The cuts below only open those ligaments.
+
+- **Lip wall 1.2 mm** [Ed], three 0.4 mm nozzle lines, thickened outward. Knob OD derives to **Ø41.65** (minimum 41.641). Far-side wall 1.205, wall outside the COF-bend pocket 1.205, near side 2.24. A check requires printed lip walls ≥ 1.0 mm.
+- The bottom ring stays **75T** [Ed: clear the existing ring; the encoder stays on the H2 press]. The extra OD is skirt wall (2.58 mm from tip to OD). Skirt ID Ø36.50.
+- **Dial travel ±10°** at the detents [Ed]. The hard stop is derived a ball-bore-play past that: **±10.61°**. Hall curvature follows: g = 1.06 °/mm, radial pitch stays 2.5, magnet radii 6.6–16.6. Poles stay N/S/N/S/N. Middle sensor stays the TMAG5273A2, the other four TMAG5253BA3. Fields still pass: TMAG5253 peak |Bz| 46.0 mT (≤ 72), TMAG5273 worst axis 83.9 mT (≤ 119.7), angle noise 0.004° rms.
+- **Cushion magnets removed.** Spring-ball detents latch at the centre and at both ends. They sit inboard of the pinion tips (r 9.45, ±40° from the Hall arm): at ±10° the old fan-wing seat between the Hall window and the pinions has no overlap. Hard stops kept.
+- **Hall-arm rib** [Ed]: width 3.0 at the hub to 5.2 at the hammerhead (r 13.85), on to r 17. Top at the lever top (z 6.8). Bottom stays z 4.6 over the thrust cage and drops to z 3.8 beyond r 4.95. In-plane tip deflection under 2 N at r 15.5, PA12 E 1.7 GPa: **0.060 mm** (limit 0.07).
+- **Cradle:** no big cut. The ligaments where the 54° and 150° idler pockets break the OD are opened at the narrowest point with R0.5 fillets, leaving a 1.2 mm web round each pin. The feel pinion is no longer in that plane (it moved under the PCB), so that bridge went away with the pocket. The Hall window is one smooth offset of the swept bar, even clearance, not the old stepped zig-zag.
+- **Outer thrust** [Ed]: flat horizontal race, no 45° faces. Ø1.5 steel balls on r 19.54, between a torus groove in the skirt underside and a carrier printed as part of the cradle (located on the centre-tube clamp and the existing encoder Ø5 press; no new PCB holes). The carrier skips 124–137°, the C20–C22/U20 keep-out. Floor under the seat is 1.0 mm. Radial land in the skirt wall is **0.51 mm** — see open items. The 45° cone race between knob and dial is unchanged; this race takes the vertical clamp load, and the pinions locate the knob radially.
+- **Screen carrier** [Ed]: the Ø2×1 magnet and steel disc are two Ø3×1 N52 magnets facing each other (attracting), one in the carrier and one in the dial shoulder, at 90°, opposite the Ø1 pin at 270°. Stray field at H3 is 0.016 mT.
+- **Feel second stage** [Ed], no extra shaft. The 716 stays at 102°, shaft down. The 150° idler (the one away from the 1220) is a compound gear: its 14T stays in the 75T ring, and a printed 32T m0.5 gear on the same pin, under the PCB, is driven by a **KHK DS0.5-15** POM pinion (Duracon, bore Ø2, face 3, hub Ø4.5×4). Brass alternate: KHK BSS0.5-15A, bore Ø3. Overall ratio **(32/15)×(75/14) = 11.43:1**. Centre distance is 0.015 mm tight of nominal, inside the tooth-backlash relief. The 716 shaft stick-out to the bottom of the pinion is **12.2 mm**.
+- **Encoder:** the compound gear occupies the old disc depth, so the disc and the EE-SX1321 drop **3.6 mm**. The sensor sits on a small daughterboard (0.8 mm) on a header and two standoffs. CAD proxy only. KiCad is not done: see open items.
 
 ## v0.16b changes (Ed, 1 Nov 2026)
 - **Relative knob-vs-dial sensor removed** (duplicate of the encoder + Hall row): no ring magnet in the knob, no
@@ -110,6 +125,12 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
 - The board needs its signals carried over the screen service strap. The screen-adapter board no longer
   carries U3.
 
+## Check status (v0.17)
+- **62/62 gap checks PASS, 0 clashes** on the proxy and on `--full` (committed main-PCB STEP). Owner split: main_knob 3, control_dial 17, base_drive 11, under_pcb 2, electronics 2, assembly 27. The AGENTS.md tally is taken from `cad/assemblies/knob-stack-v0.17/check.json`.
+- Swept samples are −10.61°, −10°, 0, +10°, +10.61°. Centring springs follow the lever pin; track balls roll at half the dial angle.
+- The contract check passes.
+- `--full` drills the two new NPTHs into the committed STEP so the 716 shaft and the compound pin are not a false clash; the KiCad board does not have those holes yet.
+
 ## Check status (v0.16b)
 - 54/54 gap checks PASS (the two dial-TMAG5273 rows are replaced by the TMAG5273 air-gap and field rows).
 - The contract check passes.
@@ -117,13 +138,21 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
   (`electronics/kicad/knob-main-pcb/pcb_proxy.json`). `build.py` and `build.py --full` both give 54/54 PASS.
 
 ## Open items
-- **KiCad (1 Nov 2026):** main PCB v0.11 and screen adapter v0.4 match v0.16b (Hall row, rod pad, 716 lead pads +
+- **KiCad for v0.17 (not done):**
+  - Main PCB: NPTH for the 716 shaft at the 102° axis (Ø1.6) and for the compound idler pin at 150° (Ø1.8). The proxy and the `--full` STEP have these holes as a CAD drill only.
+  - Replace the EE-SX1321 footprint with a header for the encoder daughterboard. New board: small riser, 0.8 mm, the EE-SX1321, a 1×6 2.54 mm header and two standoffs, dropped 3.6 mm so the slot meets the rim. Schematic, footprint, fab pack.
+  - Hall row pitch and the 2.5 mm spacing are unchanged; no Hall footprint move.
+- **716 shaft:** the catalogue pinion needs **12.2 mm** of shaft below the can. A stock 716 shaft is shorter. Needs a long-shaft variant or a pressed extension. The pinion bore is Ø2, so the Ø1 shaft also needs a Ø2/Ø1 sleeve.
+- **Thrust land:** the Ø1.5 groove in the 75T skirt wall has **0.51 mm** of radial land each side. The lip wall is 1.2 mm; this land is not. A smaller ball or a local skirt thickening would fix it.
+- **Centring hardware moved** so ±10° fits: lever at 296° (was 276°), spring hook-to-hook 2.6 mm (was 4.5), lever width 1.6 mm (was 2.4), anchors above the lever. Worth a check on the real spring.
+- **Detents** are inboard (r 9.45) because the fan wings cannot hold ±10°. Confirm the feel is what Ed wants there.
+- **KiCad (1 Nov 2026, v0.16b, still the boards in the tree):** main PCB v0.11 and screen adapter v0.4 match v0.16b (Hall row, rod pad, 716 lead pads +
   DRV8837, joystick J2/holes/slot/keep-out; U3 removed from the adapter). Main PCB v0.11 is **READY TO QUOTE**: U2 is
   now the EE-SX1321 (LCSC C469128) and J2 the FG FG-PM2.54-2-03P-H8.5 (LCSC C42391433); routed, ERC 0 / DRC 0, every
   BOM line has an LCSC part. Still open: the MCU section (J10 is a placeholder test-pad field with an assumed pin-out),
   the 1220 driver, and the adapter's display-tail wiring / VCC regulator (adapter is placed, not routed).
 - TMAG5273 Hall-element height (0.65 above the PCB) is assumed. Check it against the TI drawing.
-- The ±5.5° travel was an interface change (from ±10°) and needs confirming.
+- v0.17 puts the dial back to ±10° (hard stop ±10.61°). The old ±5.5° question is closed.
 - Inside the closed lip, about 0.9 mm of the bend pocket shows at −X.
 - Spring sourcing: the detent springs and the extension springs must be non-magnetic (stainless 316 or
   phosphor bronze).

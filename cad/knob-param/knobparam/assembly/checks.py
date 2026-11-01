@@ -21,7 +21,8 @@ def cross(D, parts):
     from .. import control_dial as cd
     from . import hall_dyn
     T = D["tgt"]; r = Rows("assembly"); row = r.row
-    TR = (-D["travel_deg"], 0, D["travel_deg"]); on = D["screen_on_dial"]
+    Tdeg = D["travel_deg"]
+    TR = (-Tdeg, -D["det_deg"], 0.0, D["det_deg"], Tdeg); on = D["screen_on_dial"]
     Dc = model.view(D, "control_dial")
     if on:
         stat = {n: parts[n] for n in parts if n.startswith("adapter part") and not n.endswith(D["b2b_at"])}
@@ -62,17 +63,17 @@ def cross(D, parts):
         if D["fan_on"]:
             stops = cr - cr_far
             lv = lambda t: cd.arm(Dc, t)
-            row("dial lever vs cushion stops at rest", lv(0).distance_to(stops), T["arm_vs_cradle"])
-            row("dial lever vs cushion stops when latched at ±det_deg", min(lv(t).distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02,
-                f"stop contact at ±{D['travel_deg']:g}° (overtravel {D['travel_deg'] - D['det_deg']:g}° onto the magnet cushions)")
+            row("dial lever vs hard stops at rest", lv(0).distance_to(stops), T["arm_vs_cradle"])
+            row("dial lever vs hard stops when latched at ±det_deg", min(lv(t).distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02,
+                f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, the ball's bore play)")
             row("dial lever meets the stop faces at ±travel (gap)", max(lv(t).distance_to(stops) for t in (-D["travel_deg"], D["travel_deg"])), 0.02, "flush contact = hard end stop", higher_ok=False)
-            # cushion magnets: dipole field at the nearest Hall-row sensor (worst case on-axis), vs the sensor range
-            md, mh = D["cu_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md / 2e3) ** 2 * (mh / 1e3)
-            cus = [parts[n] for n in parts if n.startswith("cushion magnet")]
-            dmin = min(c.distance_to(s_) for c in cus for s_ in sens) + md / 2
-            bst = 1e3 * 2e-7 * m_dip / (dmin / 1e3) ** 3 * len(cus)
-            row("cushion magnets: stray field at the nearest Hall-row sensor / range", bst / D["hv_sensor"]["range_mt"], D["cu_stray_max"],
-                f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT (all summed, on-axis worst case); static/slow -> calibrated", higher_ok=False)
+            if D["cu_on"]:
+                md, mh = D["cu_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md / 2e3) ** 2 * (mh / 1e3)
+                cus = [parts[n] for n in parts if n.startswith("cushion magnet")]
+                dmin = min(c.distance_to(s_) for c in cus for s_ in sens) + md / 2
+                bst = 1e3 * 2e-7 * m_dip / (dmin / 1e3) ** 3 * len(cus)
+                row("cushion magnets: stray field at the nearest Hall-row sensor / range", bst / D["hv_sensor"]["range_mt"], D["cu_stray_max"],
+                    f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT", higher_ok=False)
             fan_d = min(cd.arm(Dc, t).distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
             row("fan vs detent springs / grubs (±travel)", fan_d, T["arm_vs_cradle"])
         mi = D["hv_mid"]["idx"] if D["hv_mid"] else -1
@@ -105,11 +106,33 @@ def cross(D, parts):
     pin = [parts[n] for n in feel_names if "pinion" in n][0]
     knob = [parts[n] for n in parts if n.startswith("knob body")][0]
     row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
-        f"can {can.distance_to(knob):.2f} inside the skirt; {D['z_feel']}T at {D['fm_ang']:.1f}°, knob Ø{D['knob_od']:.2f}")
+        f"can {can.distance_to(knob):.2f} inside the skirt; {D['fg_pinion']['part']} at {D['fm_ang']:.1f}°, overall {D['fm_ratio']:.2f}:1, knob Ø{D['knob_od']:.2f}")
     row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
     row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
     row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
     row("feel motor vs Hall arm (±travel)", min(p.distance_to(cd.arm(Dc, t)) for t in TR for p in feels), T["hall_vs_pinions"])
+    # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
+    from ..base_drive.parts.mech import springs_at, track_balls_at
+    # coils seat on the anchor posts, so the cradle distance is ~0 there; check they stay clear of the drive
+    obstacles = [parts["motor"], parts["encoder pinion"], parts["bottom internal ring"]]
+    spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
+    row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
+        f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
+    roll_left = min(D["bt_half"] - abs(th) / 2 for th in TR)
+    row("track balls stay in the groove across ±travel (deg of groove left)", roll_left,
+        math.degrees((D["bt_ball"] / 2) / min(D["bt_rs"])),
+        "ball rolls at θ/2 between the plate groove and the ear; end detents at ±%.2f°, hard stop ±%.2f°" % (D["det_deg"], D["travel_deg"]))
+    gear = parts[f"feel compound gear {D['fg_z_gear']}T"]
+    tb_d = min(b.distance_to(gear) for th in TR for b in track_balls_at(D, th))
+    row("track balls vs compound gear across ±travel", tb_d, D["feel"]["clear"],
+        "balls posed at θ/2 for each sample")
+    row("compound gear vs encoder rim (axial)", D["fg_z_bot"] - D["rim_top"], D["fg_clear"],
+        f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
+    ot = [parts[n] for n in parts if n.startswith("outer thrust")][0]
+    row("outer thrust balls vs bottom ring", ot.distance_to(ring), 0.0,
+        f"Ø{D['ot_ball_d']:g} × {D['ot_n']} on r {D['ot_r']:.2f}, land {D['ot_land']:.2f}; keep-out {D['ot_keep_ang'][0]:.0f}–{D['ot_keep_ang'][1]:.0f}°")
+    row("outer thrust carrier top vs ring underside", D["h_skirt0"] - D["ot_z_top"], D["ot_axial_gap"],
+        f"carrier is part of the cradle; floor under the seat {D['ot_floor']:.2f}")
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
         B = ring_field(D)

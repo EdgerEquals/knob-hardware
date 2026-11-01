@@ -42,8 +42,9 @@ P = dict(
     # ---- control dial [Ed/A] ----
     dial_tube_id=5.12,   # [Ed] dial tube Ø5.12/Ø8.12
     dial_tube_wall=1.5,   # [Ed] dial tube Ø5.12/Ø8.12
-    travel_deg=5.5,   # [Ed/A] v0.16: dial ±5.5° = detent latch det_deg + overtravel onto the magnet cushions (v0.15: ±10)
-    det_deg=5.0,   # [Ed] v0.16: dial latches ("cocked") at ±5° by the spring-ball detents
+    travel_deg=5.5,   # overwritten in derive [Ed]: hard-stop angle. v0.17 = det_deg + the ball's bore play (see det_stop_clear)
+    det_deg=10.0,   # [Ed] v0.17: dial latches at the centre and at both ends, ±10° (v0.16 was ±5°)
+    det_stop_clear=0.10,   # [A] mm arc at the detent radius: hard stop past the seated end detent (ball bore play; the closest the ball allows)
     # ---- brass tube, rod ----
     rod_d=1.6,   # [S]/[A]
     rod_pad_t=0.035,   # [K] v0.16: B.Cu VBUS pad under the bottom rod nut (1 oz); no washer [Ed]
@@ -115,21 +116,47 @@ P = dict(
     bt_groove_r=0.55,   # [A] groove radius in the plate and in the wing underside
     bt_rows=2,   # [A] concentric track rows under each detent (one ball per row)
     bt_row_pitch=1.4,   # [A] radial pitch of the rows (groove 1.1 + 0.3 land)
-    sl_ang=276.0,   # [A] spring lever angle (clear of the Hall window, 1220 collar and encoder pocket)
+    sl_ang=296.0,   # [Ed] v0.17: lever angle. The ±10° ear leads to ~275° and the 1220 collar owns angles past ~316°, so the lever sits between them.
     sl_r=8.6,   # [A] lever end radius
-    sl_w=2.4,   # [A] lever width
+    sl_w=1.6,   # [Ed] v0.17: lever width. 2.4 swung into the 1220 collar at ±10°; 1.6 stays 0.3 clear.
     sl_z0=4.0,   # [A] lever end-block bottom (the bar near the hub stays above the thrust cage)
     sl_top=6.8,   # [A] lever + stop-block top; springs run above it
     sl_pin_r=7.0,   # [A] spring hook pin on the lever top
     sl_pin_d=0.8,   # [A]
-    sl_spring=(1.2, 4.5, 0.15),   # [A] extension spring OD, hook-to-hook length, wire (non-magnetic: phosphor bronze / 316)
-    sl_spring_gap=0.2,   # [A] spring coil above the lever / blocks
-    cu_mag=(1.5, 0.5),   # [Ed/A] tiny weak N52 cushion magnets (repelling), axis tangential
+    sl_spring=(1.2, 2.6, 0.15),   # [Ed] v0.17: OD, hook-to-hook, wire. Shorter than the v0.16 4.5 so the anchors clear the detent ears (non-magnetic: phosphor bronze / 316)
+    sl_spring_gap=0.40,   # [A] v0.17: coil above the lever. The anchors sit 0.3 above the lever so ±travel sweeps under them.
+    cu_on=False,   # [Ed] v0.17: cushion magnets removed (v0.16 had three Ø1.5×0.5 repelling cushions)
+    cu_mag=(1.5, 0.5),   # [Ed/A] unused when cu_on is False (kept so a --set cu_on=True rebuilds v0.16)
     cu_mag_r=7.8,   # [A] cushion magnet radius on the lever end
     cu_stray_max=0.03,   # [A] cushion stray field at the nearest Hall-row sensor / sensor range
+    # ---- v0.17 Hall-arm rib [Ed]: tapered spine on the sweeping arm, PA12 ----
+    ha_rib_w0=3.0,   # [Ed] rib width at the hub
+    ha_rib_w1=5.2,   # [Ed] rib width at the hammerhead (fan_r0) and on out to ha_rib_r1
+    ha_rib_r1=17.0,   # [Ed] rib continues to this radius
+    ha_rib_load=2.0,   # [Ed] N, tangential (in-plane) tip load for the deflection check
+    ha_rib_rload=15.5,   # [Ed] radius of that load
+    ha_rib_E=1700.0,   # [Ed] PA12 Young's modulus, N/mm² (1.7 GPa)
+    ha_rib_defl=0.07,   # [Ed] mm, max in-plane deflection at ha_rib_rload
+    # ---- v0.17 outer thrust [Ed]: flat horizontal race, Ø1.5 balls, no 45° faces ----
+    ot_ball_d=1.5,   # [Ed] steel ball diameter
+    ot_seat_gap=0.05,   # [A] groove radius over the ball radius (round seat, contact normal vertical)
+    ot_axial_gap=0.30,   # [A] carrier top under the ring underside
+    ot_web=0.45,   # [A] mm between balls along the race
+    ot_keep_ang=(124.0, 137.0),   # [Ed] no balls / no carrier flange here (C20–C22 / U20 plan keep-out)
+    ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
+    # ---- v0.17 feel second stage [Ed]: catalogue pinion into a compound idler, no extra shaft ----
+    fg_mod=0.5,   # [Ed] pinion module (catalogue, within 0.3–0.5)
+    fg_z_pin=15,   # [Ed] KHK DS0.5-15 tooth count (POM). Brass alternate BSS0.5-15A is bore Ø3
+    fg_pinion=dict(part="KHK DS0.5-15", vendor="KHK", material="POM (Duracon acetal M90-44)", bore=2.0, face=3.0, hub_d=4.5, hub_w=4.0,
+                   note="bore Ø2 on the Ø1 716 shaft needs a Ø2/Ø1 sleeve [A]; brass alternate KHK BSS0.5-15A bore Ø3"),
+    fg_back_h=0.8,   # [K] tallest PCB-back part the big gear can sit over (U20 / C22)
+    fg_clear=0.30,   # [A] big gear below those parts, and the encoder rim below the gear
+    fg_hole=1.8,   # [A] PCB NPTH for the compound idler pin (Ø1.5 pin + clearance). KiCad still to add
+    fm_shaft_hole=1.6,   # [A] PCB NPTH for the 716 shaft (Ø1 + clearance). KiCad still to add
     # ---- v0.16 knob size [Ed]: the least OD that clears the AMOLED ledge + COF bend with a printable lip wall all round ----
     nozzle=0.4,   # [A] printer nozzle (line width)
-    lip_wall_lines=2,   # [Ed] thinnest lip wall = 2 lines (0.8): far side AND outside the COF-bend pocket (lip is a closed ring)
+    lip_wall_lines=3,   # [Ed] v0.17: lip wall 3 lines = 1.2 mm, thickened outward (v0.16 was 2 lines / 0.8)
+    print_wall_min=1.0,   # [Ed] v0.17: printed walls (lip far side and outside the bend pocket) at least this
     bend_clear=0.1,   # [A] COF bend / ledge to the lip pocket wall
     knob_od_step=0.01,   # [A] knob OD rounded up to this
     rel_sensor=False,   # [Ed] v0.16b: knob ring magnet + dial TMAG5273 REMOVED (duplicate of the encoder + Hall row). True = v0.16
@@ -265,39 +292,152 @@ def _place_feel(D):
     D["fm_pad_xy"] = [(xy[0] + tx * p, xy[1] + ty * p), (xy[0] - tx * p, xy[1] - ty * p)]
 
 
+def _det_r_nom(D):
+    """Detent radius inboard of the bottom-ring pinion tips.
+
+    At ±10° the old fan-wing seat (between the Hall window and the pinion angle) has no overlap: the window grows
+    with travel and the fan edge shrinks with it. Inboard of the tips the ear can be as wide as the travel needs."""
+    r_in = D["enc_cd"] - D["d_pin_tip"] / 2 - D["fan_clear"]
+    return r_in - (D["bt_rows"] - 1) / 2 * D["bt_row_pitch"] - D["bt_ball"] / 2 - D["fan_clear"]
+
+
+def _set_travel(D):
+    """[Ed] hard stop just past ±det_deg, by the ball's bore play at the detent radius. Overwrites travel_deg."""
+    D["det_r_nom"] = _det_r_nom(D)
+    D["travel_deg"] = D["det_deg"] + math.degrees(D["det_stop_clear"] / D["det_r_nom"])
+
+
+def _place_compound(D):
+    """v0.17 feel drive [Ed]: the 716 stays on the idler bisector (shaft down). Its catalogue pinion, under the PCB,
+    meshes a big gear on the existing idler shaft that is farther from the 1220. The idler's small gear still meshes the ring."""
+    F = D["feel"]; m = D["fg_mod"]
+    angs = D["idler_angs"]
+    # motor seat: the same bisector _place_feel picked (102° between 54° and 150°). Radius stays the ring-mesh seat.
+    i = max(range(len(angs)), key=lambda k: min((angs[k] - 0.0) % 360.0, (0.0 - angs[k]) % 360.0))
+    ix, iy = D["idler_xy"][i]
+    fx, fy = D["fm_xy"]
+    cd = math.hypot(fx - ix, fy - iy)
+    z_pin = D["fg_z_pin"]
+    z_gear = int(round(2.0 * cd / m - z_pin))
+    cd_nom = (z_gear + z_pin) * m / 2
+    ratio = (z_gear / z_pin) * (D["z_ring"] / D["z_enc_pinion"])
+    tip = (z_gear + 2) * m / 2
+    pin_tip = (z_pin + 2) * m / 2
+    # big gear just under the tallest back-side parts; hub of the catalogue pinion hangs below the tooth face
+    z_top = D["z_pcb_back"] - D["fg_back_h"] - D["fg_clear"]
+    face = D["fg_pinion"]["face"]
+    hub_extra = max(0.0, D["fg_pinion"]["hub_w"] - face)   # catalogue hub longer than the tooth face, hung downward
+    z_bot = z_top - face - hub_extra
+    D["fg_idler"] = i
+    D["fg_ang"] = angs[i]
+    D["fg_xy"] = (ix, iy)
+    D["fg_cd"] = cd
+    D["fg_z_gear"] = z_gear
+    D["fg_cd_nom"] = cd_nom
+    D["fg_cd_err"] = cd - cd_nom          # + = loose (extra backlash); backlash radial relief is ~0.14 mm at m0.5
+    D["fg_ratio"] = ratio
+    D["fg_tip"] = tip
+    D["fg_pin_tip"] = pin_tip
+    D["fg_z_top"] = z_top
+    D["fg_z_bot"] = z_bot
+    D["fg_face"] = face
+    D["fm_ratio"] = ratio                 # overall feel ratio (compound); the 716 no longer meshes the ring
+
+
+def _place_outer_thrust(D):
+    """Flat horizontal Ø1.5 race in the skirt underside. Ball-centre height leaves print_wall_min under the seat.
+    PCD centred in the skirt annulus. Balls and the carrier flange skip the C20–C22/U20 keep-out."""
+    rb = D["ot_ball_d"] / 2
+    rg = rb + D["ot_seat_gap"]
+    z_ball = D["print_wall_min"] + rg                         # torus bottom at z = print_wall_min (floor under the seat)
+    tip_r, R = D["skirt_id"] / 2, D["R"]
+    face = D["h_skirt0"]
+    half_w = math.sqrt(max(rg * rg - (face - z_ball) ** 2, 0.0))
+    # centre the groove in the annulus outside the ring tip; clamp so it stays inside the skirt
+    r = (tip_r + R) / 2
+    r = min(max(r, tip_r + half_w), R - half_w)
+    land_in, land_out = r - half_w - tip_r, R - (r + half_w)
+    a0, a1 = D["ot_keep_ang"]
+    pitch = D["ot_ball_d"] + D["ot_web"]
+    # usable arc is the full circle minus the keep-out (and one pitch of margin each side)
+    span = 360.0 - ((a1 - a0) % 360.0)
+    marg = math.degrees(pitch / r)
+    n = max(3, int((span - 2 * marg) / 360.0 * (2 * math.pi * r) / pitch))
+    step = (span - 2 * marg) / n
+    angs = []
+    a = (a1 + marg) % 360.0
+    for _ in range(n):
+        angs.append(a % 360.0)
+        a += step
+    D["ot_rg"] = rg
+    D["ot_z"] = z_ball
+    D["ot_r"] = r
+    D["ot_half_w"] = half_w
+    D["ot_land"] = min(land_in, land_out)
+    D["ot_land_in"] = land_in
+    D["ot_land_out"] = land_out
+    D["ot_n"] = len(angs)
+    D["ot_angs"] = angs
+    # keep the flange under the Hall bar (the outer pad reaches the cradle OD) as well as under the ring
+    D["ot_z_top"] = min(face - D["ot_axial_gap"], D["hv_z_mag0"] - D["tgt"]["arm_vs_cradle"])
+    D["ot_floor"] = z_ball - rg                               # material under the seat, from the PCB front
+
+
 def _place_mech(D):
-    """v0.16 fan wings + detents (angles from the Hall window and the pinions, so they follow any layout change)."""
+    """Fan wings + detents. v0.17: detents sit inboard of the pinion tips (det_r_nom) so ±travel still clears the Hall window."""
     R2D = math.degrees; T = D["travel_deg"]; c = D["fan_clear"]
     D["cr_r_out"] = D["skirt_id"] / 2 - 0.5                                 # (= base_drive r_out with cr_clear 0.5)
     D["fan_r1"] = D["skirt_id"] / 2 - D["fan_ring_clear"]
     D["fan_r0"] = D["fan_r0_frac"] * D["cr_r_out"]
     D["fan_z0"] = D["plate_t"] + 2 * D["bt_up"]
-    # Hall window edge at the wing radii (outer pads, swept +-travel, slot clear 0.5 [base_drive default])
-    win = 0.0
-    if D["hall_layout"] == "vernier":
-        for r, a in zip(D["hv_r"], D["hv_phi_m"]):
-            if r + D["hv_pad_r"] < D["fan_r0"] - 1e-6: continue
-            r0 = r - D["hv_pad_r"] - 0.5
-            win = max(win, abs(a - D["ha_ang0"]) + T + R2D(math.asin(min((D["hv_pad_r"] + 0.5) / r0, 1))))
-    # nearest bottom-ring pinion either side of the Hall arm
     gap = min(min((a - D["ha_ang0"]) % 360, (D["ha_ang0"] - a) % 360) for a in (D["enc_ang"], *D["idler_angs"]))
-    rm = (D["fan_r0"] + D["fan_r1"]) / 2
     pin_half = R2D(math.asin(min((D["d_pin_tip"] / 2 + c) / D["enc_cd"], 1)))
     D["fan_w1"] = gap - pin_half - T                                        # fan sector edge (swept clear of the pinions)
     D["fan_half"] = D["fan_w1"]
-    D["det_r"] = D["fan_r0"] + D["det_r_frac"] * (D["fan_r1"] - D["fan_r0"])
+    D["det_r"] = D["det_r_nom"]
     n = D["bt_rows"]; D["bt_rs"] = [D["det_r"] + (i - (n - 1) / 2) * D["bt_row_pitch"] for i in range(n)]
-    rmin = min(D["bt_rs"])
-    D["bt_half"] = T / 2 + R2D((D["bt_ball"] / 2 + 0.1) / rmin)             # groove half-span: the ball rolls travel/2
-    # detent angle: track groove (plate) clear of the Hall window by 0.5 wall, plunger + ball inside the fan at -travel
-    D["det_lo"] = win + R2D((0.5 + D["bt_groove_r"]) / rmin) + D["bt_half"]
-    D["det_hi"] = D["fan_half"] - T - R2D(D["det_ball"] / 2 / D["det_r"])
-    D["det_off"] = (D["det_lo"] + D["det_hi"]) / 2
+    rmin = min(D["bt_rs"]); rmax = max(D["bt_rs"])
+    D["bt_half"] = T / 2 + R2D((D["bt_ball"] / 2 + D["det_stop_clear"]) / rmin)   # the ball rolls travel/2
+    # window half-angle at the detent radius: only the bar that actually crosses this radius, swept ±travel
+    clr = D["ha_win_clear"]; win = 0.0
+    if D["hall_layout"] == "vernier":
+        pr = D["hv_pad_r"]
+        for r, a in zip(D["hv_r"], D["hv_phi_m"]):
+            if r + pr + clr < rmin - 1e-6 or r - pr - clr > rmax + 1e-6: continue
+            win = max(win, abs(a - D["ha_ang0"]) + T + R2D(math.asin(min((pr + clr) / rmin, 1))))
+    # far limit: the fixed groove's outer edge stays clear of the nearest pinion tip
+    def _pin_clear(off, rad):
+        a = math.radians(D["ha_ang0"] + off)
+        x, y = rad * math.cos(a), rad * math.sin(a)
+        worst = 1e9
+        for pa, pr, tip in ((D["enc_ang"], D["enc_cd"], D["d_pin_tip"] / 2),
+                            *[(aa, D["enc_cd"], D["d_pin_tip"] / 2) for aa in D["idler_angs"]],
+                            (D["fm_ang"], D["fm_cd"], D["feel"]["shaft_d"] / 2 + c)):
+            px, py = pr * math.cos(math.radians(pa)), pr * math.sin(math.radians(pa))
+            worst = min(worst, math.hypot(x - px, y - py) - tip)
+        return worst
+    # det_hi: largest offset whose groove (and the ear, which sweeps ±travel above the pinions) keeps fan_clear
+    hi = win
+    for off in [win + i * 0.5 for i in range(int((180 - win) * 2))]:
+        if _pin_clear(off + D["bt_half"], rmax) < c: break
+        hi = off
+    ear = T + R2D(D["det_ball"] / 2 / D["det_r"])
+    lever_off = min((D["sl_ang"] - D["ha_ang0"]) % 360.0, (D["ha_ang0"] - D["sl_ang"]) % 360.0)
+    # ears must not meet each other or the centring lever
+    D["det_lo"] = win + R2D((clr + D["bt_groove_r"]) / rmin) + D["bt_half"]
+    D["det_hi"] = min(hi, 90.0 - ear, lever_off - ear - c)
+    D["det_off"] = D["det_lo"] if D["det_lo"] <= D["det_hi"] else (D["det_lo"] + D["det_hi"]) / 2
     D["det_angs"] = [D["ha_ang0"] - D["det_off"], D["ha_ang0"] + D["det_off"]]
     D["hall_win_out"] = win
     D["bt_z"] = D["plate_t"] + D["bt_up"]
-    D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4   # spring coil above the lever, pin a bit above
-    D["cu_z"] = (D["sl_z0"] + D["sl_top"]) / 2                                     # cushion magnet centre height (lever end block)
+    D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4
+    D["cu_z"] = (D["sl_z0"] + D["sl_top"]) / 2
+    # rib section (shared with the deflection check and the arm solid)
+    D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
+    D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
+    D["ha_rib_z_top"] = D["sl_top"]                                         # up to the lever top
+    D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"]                           # 3.8, over the cradle window
+    # ha_rib_z_cage (over the thrust cage) is hv_spoke_z0, set by control_dial once the cage is known
 
 
 def derive(D):
@@ -320,8 +460,9 @@ def derive(D):
     D["tgt"] = dict(D["tgt"], lip_wall=D["lip_wall_min"])
     D["scr_off_opt"], D["knob_od_min"] = _screen_knob(dict(SCREENS[D["screen"]], **({} if D["cof_bend"] is None else {"bend": D["cof_bend"]})),
                                                       D["lip_wall_min"], D["bend_clear"])
-    z_scr = int(math.floor((D["knob_od_min"] - 2 * D["knob_wall"]) / m + 2 + 1e-9))   # biggest ring that keeps knob_wall
-    D["z_ring"] = max(int(math.ceil(need_id / m + 2 - 1e-9)), z_scr)    # bottom internal ring: tip Ø = skirt ID
+    # v0.17 [Ed]: the lip growth is skirt wall, not more teeth. z_scr would walk the encoder off the existing
+    # H2 press (75T → enc_cd 15.25). The ring stays 75T; the motor only needs 73.
+    D["z_ring"] = max(int(math.ceil(need_id / m + 2 - 1e-9)), 75)
     D["skirt_id"] = (D["z_ring"] - 2) * m
     st = D["knob_od_step"]
     D["knob_od"] = max(D["skirt_id"] + 2 * D["knob_wall"], math.ceil(D["knob_od_min"] / st - 1e-9) * st)
@@ -330,6 +471,7 @@ def derive(D):
     D["enc_cd"] = (D["z_ring"] - D["z_enc_pinion"]) * m / 2
     D["ratio_knob_motor"] = D["z_hub_gear"] / D["z_pinion"]
     D["d_pin_tip"] = (D["z_enc_pinion"] + 2) * m
+    _set_travel(D)   # v0.17: ±det_deg latch, hard stop a ball-clearance past it (hall arc and the fan follow this)
     D["h_skirt0"] = D["skirt_gap"]
     D["h_band1"] = D["knob_hub_z0"] + D["hub_gear_face"]
     # ---- angles / gear centres ----
@@ -386,6 +528,8 @@ def derive(D):
         D["hv_mid_elem_gap"] = (D["hv_z_mag0"] - mid["elem_z"]) if mid else None
     _place_feel(D)
     _place_mech(D)
+    _place_compound(D)
+    _place_outer_thrust(D)
     # ---- v0.16 knob ring magnet / dial sensor ----
     D["tm_r"] = (D["tm_ring"][0] + D["tm_ring"][1]) / 4                  # sensor element over the ring mid radius
     D["tm_xy"] = (D["tm_r"] * math.cos(math.radians(D["tm_ang"])), D["tm_r"] * math.sin(math.radians(D["tm_ang"])))

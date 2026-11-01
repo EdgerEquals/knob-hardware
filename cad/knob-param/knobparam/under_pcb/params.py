@@ -19,6 +19,13 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] PCB back to the back panel inner face (bearing 2 seat)
+    # ---- v0.17 encoder daughterboard [Ed]: the EE-SX1321 moves off the main PCB so its slot meets the rim at the new depth ----
+    enc_db_t=0.8,   # [A] daughterboard thickness
+    enc_db_clear=0.6,   # [A] board margin past the sensor body
+    enc_header_pitch=2.54,   # [S] pin header pitch
+    enc_header_n=6,   # [S] EE-SX1321 has 6 pins; the header stands in for them on the riser
+    enc_header_d=0.64,   # [A] header pin diameter
+    enc_standoff_d=2.5,   # [A] printed standoff OD
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"]}
@@ -31,10 +38,20 @@ def derive(D):
     sn = D["sens"]
     D["win_pitch"] = sn["ap_pitch"] / 0.75; D["sens_r"] = D["n_win"] * D["win_pitch"] / (2 * math.pi)
     D["rim_r0"], D["rim_r1"] = D["sens_r"] - D["rim_t"] / 2, D["sens_r"] + D["rim_t"] / 2
-    D["z_sens_open"] = D["z_pcb_back"] - sn["body_h"]
+    # nominal (sensor on the main PCB) then drop so the rim clears the compound gear where they overlap in plan
+    z_open0 = D["z_pcb_back"] - sn["body_h"]
+    rim0 = z_open0 + sn["slot_d"] - D["rim_in"]
+    ix, iy = D["fg_xy"]; ex, ey = D["enc_xy"]
+    dist = math.hypot(ix - ex, iy - ey)
+    overlap = dist < D["sens_r"] + D["rim_t"] / 2 + D["fg_tip"] + D["fg_clear"]
+    drop = max(0.0, rim0 - (D["fg_z_bot"] - D["fg_clear"])) if overlap else 0.0
+    # the riser is at least the daughterboard; a shorter drop still gets the board
+    D["enc_drop"] = max(drop, D["enc_db_t"])
+    D["z_sens_open"] = z_open0 - D["enc_drop"]
     D["z_slot_bot"] = D["z_sens_open"] + sn["slot_d"]
     D["z_axis"] = D["z_sens_open"] + sn["axis_from_open"]
     D["rim_top"] = D["z_slot_bot"] - D["rim_in"]
+    D["enc_standoff_h"] = D["enc_drop"] - D["enc_db_t"]
     D["h_big_top"] = D["z_sens_open"] - D["gear_sensor_gap"]; D["h_big_bot"] = D["h_big_top"] - D["big_face"]
     D["h_hub_bot"] = D["h_big_bot"] - D["big_hub"][1]
     D["win_z0"], D["win_z1"] = D["z_axis"] - sn["ap_h"] / 2 - 0.6, D["z_axis"] + sn["ap_h"] / 2 + 0.3

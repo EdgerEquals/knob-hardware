@@ -13,10 +13,18 @@ def _local(D, x0, x1, y0, y1, z0, z1, a):   # box in the lever frame (x radial a
 def det_block(D, a):
     """Leg on the plate inboard of the fan wing, bridge over the wing, boss with the plunger bore."""
     x, y = _pol(D["det_r"], a); w = D["det_leg_w"]; z0, z1 = D["det_z0"], D["det_z1"]
-    leg = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_leg_r1"]) / 2, 0, D["plate_t"] - 0.01) * Box(D["det_leg_r1"] - D["det_leg_r0"], w, z1 - D["plate_t"] + 0.01, align=A)
-    bridge = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_r"]) / 2, 0, z0) * Box(D["det_r"] - D["det_leg_r0"], w, z1 - z0, align=A)
+    # support column on the side of the detent away from the Hall arm, clear of the rib's ±travel sweep
+    away = 1 if a > D["ha_ang0"] else -1
+    # past the ear's swept leading edge (the ear is ±(travel + ball) and then swings another ±travel)
+    off = 2 * D["travel_deg"] + math.degrees((D["det_ball"] / 2) / D["det_r"]) + 10.0
+    cx, cy = _pol(D["det_r"] + D["det_leg_len"], a + away * off)   # outboard of the lever tip
+    # the Hall rib tops out at sl_top and sweeps under this bridge, so the bridge starts above the rib
+    z_b = max(z0, D["sl_top"] + D["tgt"]["arm_vs_cradle"])
+    col = cyl(0.8, D["plate_t"] - 0.01, z_b - D["plate_t"] + 0.01, cx, cy)
+    bridge = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_r"]) / 2, 0, z_b) * Box(max(D["det_r"] - D["det_leg_r0"], 0.2), w, z1 - z_b, align=A)
+    link = Pos((x + cx) / 2, (y + cy) / 2, z_b) * Rot(0, 0, math.degrees(math.atan2(cy - y, cx - x))) * Box(math.hypot(cx - x, cy - y), w, z1 - z_b, align=A)
     boss = cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
-    return leg + bridge + boss
+    return col + bridge + link + boss
 
 def det_bore(D, a):
     x, y = _pol(D["det_r"], a)
@@ -32,16 +40,23 @@ def track_grooves(D):
     return out
 
 def stop_blocks(D):
-    """Cushion stops: faces parallel to the lever sides at +-travel (flush contact at the end of travel), + spring anchor posts."""
+    """Hard stops: faces parallel to the lever sides at ±travel (flush at the end of travel), plus the spring anchor posts.
+    v0.17: no cushion-magnet pockets. The stop is as close past the end detent as the ball's bore play allows (travel_deg)."""
     a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]; L = D["stop_len"]
-    x0 = D["cu_mag_r"] - D["cu_mag"][0] / 2 - 0.6; x1 = D["sl_r"] + D["stop_over"]
-    z0, z1 = D["plate_t"] - 0.01, D["sl_top"]
+    # stay inboard of the detent track so the ear (which has to cover the track) never meets the stop
+    x1 = min(D["sl_r"] + D["stop_over"], min(D["bt_rs"]) - D["bt_groove_r"] - D["fan_clear"] - 0.3)
+    x0 = x1 - 1.0
+    T = T + D["stop_bias"]
+    z0, z1 = D["plate_t"] - 0.01, D["sl_top"] - 0.4   # below the lever top so the top corners are not the close pair
     s = _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
+    # anchors stand above the lever; the ±travel sweep passes underneath
+    z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
     for (px, py) in D["sl_anchor_xy"]:
-        s += cyl(D["sl_post_d"] / 2, z0, z1 - z0, px, py)
-    md, mh = D["cu_mag"]
-    for sg, aa in ((1, a + T), (-1, a - T)):   # magnet pockets, faces flush with the stop faces
-        s -= Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01))
+        s += cyl(D["sl_post_d"] / 2, z_post, max(D["sl_pin_top"] - z_post, 0.4), px, py)
+    if D["cu_on"]:
+        md, mh = D["cu_mag"]
+        for sg, aa in ((1, a + T), (-1, a - T)):
+            s -= Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01))
     return s
 
 def cradle_add(D):
@@ -53,27 +68,49 @@ def cradle_cut(D):
     s = track_grooves(D)
     for a in D["det_angs"]: s += det_bore(D, a)
     for (px, py) in D["sl_anchor_xy"]:
-        s += cyl(D["sl_pin_d"] / 2, D["sl_top"] - 1.0, 1.01, px, py)        # anchor pin press hole
+        z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
+        s += cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post + 0.01, px, py)   # anchor pin press hole
     return s
 
+def springs_at(D, theta):
+    """Centring springs with the lever pin rotated by `theta` (anchors stay put)."""
+    od, _L, wire = D["sl_spring"]; zc = D["sl_top"] + D["sl_spring_gap"] + od / 2
+    px, py = _pol(D["sl_pin_r"], D["sl_ang"] + theta)
+    out = []
+    for ax, ay in D["sl_anchor_xy"]:
+        ang = math.degrees(math.atan2(ay - py, ax - px))
+        # cylinder is centred on the midpoint, so the subtracted length is shared by the two ends
+        Ls = math.hypot(ax - px, ay - py) - D["sl_pin_d"] / 2 - D["sl_post_d"] / 2 - 0.7
+        out.append(Pos((ax + px) / 2, (ay + py) / 2, zc) * Rot(0, 0, ang) * Rot(0, 90, 0) * (Cylinder(od / 2, max(Ls, 0.2)) - Cylinder(max(od / 2 - wire, 0.05), max(Ls, 0.2) + 0.02)))
+    return out
+
+def track_balls_at(D, theta):
+    """Track balls roll at half the dial angle (trapped between the fixed plate groove and the ear)."""
+    out = []
+    for a in D["det_angs"]:
+        for r in D["bt_rs"]:
+            out.append(Pos(*_pol(r, a + theta / 2), D["bt_z"]) * Sphere(D["bt_ball"] / 2))
+    return out
+
 def build(D):
-    out = {}; md, mh = D["cu_mag"]; db = D["det_ball"]; so, sl, sw = D["det_spring"]
+    out = {}; db = D["det_ball"]; so, sl, sw = D["det_spring"]
+    z_seat = D["det_z_ball"] - D["det_dimple"]   # rest pose is the centre latch: the ball sits in the dimple
+    spring_l = max(D["det_spring_inst"] - D["det_dimple"], sw * 2)
     for i, a in enumerate(D["det_angs"], 1):
         x, y = _pol(D["det_r"], a)
-        out[f"detent {i} ball Ø{db:g}"] = Pos(x, y, D["det_z_ball"]) * Sphere(db / 2)
-        out[f"detent {i} spring"] = cyl(so / 2, D["det_z_ball"] + db / 2, D["det_spring_inst"], x, y) - cyl(so / 2 - sw, D["det_z_ball"] + db / 2 - 0.01, D["det_spring_inst"] + 0.02, x, y)
+        out[f"detent {i} ball Ø{db:g}"] = Pos(x, y, z_seat) * Sphere(db / 2)
+        out[f"detent {i} spring"] = cyl(so / 2, z_seat + db / 2, spring_l, x, y) - cyl(so / 2 - sw, z_seat + db / 2 - 0.01, spring_l + 0.02, x, y)
         out[f"detent {i} grub M{D['det_thread_d']:g}x{D['det_grub_len']:g}"] = cyl(D["det_thread_d"] / 2 - 0.01, D["det_z_grub0"], D["det_grub_len"], x, y)
         for j, r in enumerate(D["bt_rs"], 1):
             bx, by = _pol(r, a)
             out[f"track ball {i}.{j} Ø{D['bt_ball']:g}"] = Pos(bx, by, D["bt_z"]) * Sphere(D["bt_ball"] / 2)
-    a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
-    for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
-        out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
-    od, L, wire = D["sl_spring"]; zc = D["sl_top"] + D["sl_spring_gap"] + od / 2
-    px, py = _pol(D["sl_pin_r"], a)
-    for k, (ax, ay) in enumerate(D["sl_anchor_xy"], 1):
-        ang = math.degrees(math.atan2(ay - py, ax - px)); Ls = math.hypot(ax - px, ay - py) - D["sl_pin_d"] - 0.1
-        coil = Pos((ax + px) / 2, (ay + py) / 2, zc) * Rot(0, 0, ang) * Rot(0, 90, 0) * (Cylinder(od / 2, Ls) - Cylinder(od / 2 - wire, Ls + 0.02))
+    if D["cu_on"]:
+        md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
+        for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
+            out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
+    for k, coil in enumerate(springs_at(D, 0.0), 1):
         out[f"centring spring {k} (non-magnetic)"] = coil
-        out[f"spring anchor pin {k}"] = cyl(D["sl_pin_d"] / 2, D["sl_top"] - 1.0, D["sl_pin_top"] - D["sl_top"] + 1.0, ax, ay)
+    for k, (ax, ay) in enumerate(D["sl_anchor_xy"], 1):
+        z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
+        out[f"spring anchor pin {k}"] = cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post, ax, ay)
     return out
