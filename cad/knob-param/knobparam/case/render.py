@@ -83,8 +83,9 @@ def _shot(items, path, view, size, zoom, bounds=None):
             continue
         any_mesh = True
         faces = np.hstack([np.full((len(T), 1), 3), T]).ravel()
+        # Flat shading. Smooth normals on a coarse helix turn each printed M3 thread into a capsule.
         pl.add_mesh(pv.PolyData(np.ascontiguousarray(P), faces), color=rgb, opacity=opacity,
-                    smooth_shading=True, specular=0.25, ambient=0.35, diffuse=0.7)
+                    smooth_shading=False, specular=0.05, ambient=0.35, diffuse=0.75)
     if not any_mesh:
         pl.close()
         return path
@@ -327,7 +328,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     rev = D["case_rev"]
     out = os.path.join(ROOT, "assemblies", f"case-{rev}")
     os.makedirs(out, exist_ok=True)
-    tol = 0.28 if preview else 0.15
+    tol = 0.08 if preview else 0.08
     size = (1100, 780) if preview else (1400, 1000)
     zoom = 1.15
     case = parts["case"]
