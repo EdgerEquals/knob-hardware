@@ -213,6 +213,8 @@ P = dict(
     em_pin_len_k=0.5,   # [A] hollow-pin engagement / board thickness. Stops short of the body on the back.
     em_cover_k=0.05,   # [A] package past the hole, each side, / smaller package side
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
+    fm_keepout=[(160.0, 222.0, 6.0, 9.5)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
+    fg_edge_x=22.45,   # [A] v0.19: panel |x| the compound gear tip may reach (cover side wall 22.75 - 0.3)
     fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
     fg_z_pin=12,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08) but only gains 15.75 -> 15.82, because the centre tube and rod nut cap the compound gear. Kept 12T.
@@ -400,10 +402,16 @@ def _place_herringbone(D, R):
                 if enc - (pp + ha * mn) - dial_r < 0.4:
                     continue
                 zmax = int(math.floor((enc - keep) / (D["fg_mod"] / 2) - 2 * D["spur_addendum"] + 1e-9))
+                # v0.19: the compound gear (under the PCB) must stay inside the cover side wall in the panel frame
+                px = enc * abs(math.cos(math.radians(idler_ang + D["mech_rot"])))
+                zmax = min(zmax, int(math.floor((D["fg_edge_x"] - px) / (D["fg_mod"] / 2) - 2 * D["spur_addendum"] + 1e-9)))
                 if zmax < D["fg_z_pin"] + 8:
                     continue
-                zbig = min(range(max(D["fg_z_pin"] + 4, zmax - 8), zmax + 1),
-                           key=lambda z: abs(z / D["fg_z_pin"] * zr / zp - D["hb_ratio_target"]))
+                if D["fg_ratio_max"]:
+                    zbig = zmax   # [Ed] as big as the space allows
+                else:
+                    zbig = min(range(max(D["fg_z_pin"] + 4, zmax - 8), zmax + 1),
+                               key=lambda z: abs(z / D["fg_z_pin"] * zr / zp - D["hb_ratio_target"]))
                 total = (zbig / D["fg_z_pin"]) * (zr / zp)
                 cd = (zbig + D["fg_z_pin"]) * D["fg_mod"] / 2
                 if _motor_room(enc, idler_ang, cd, tip_r, D) < D["feel"]["clear"]:
@@ -466,6 +474,14 @@ def _place_feel(D):
         # the nylon pinion is under the PCB and the can is above the ring pinions, so a plan overlap is not a hit
         parts["gear"] = 1e9
         parts["hall"] = _hall_clear(D, x, y, can_r)
+        # v0.19: keep-out sectors (mechanism frame) for the swept detent ear on the dial
+        for a0, a1, r0, r1 in D["fm_keepout"]:
+            ac = math.degrees(math.atan2(y, x)) % 360.0
+            if r + can_r + F["saddle_rad"] < r0 or r - can_r - F["saddle_rad"] > r1:
+                continue
+            gap = min((a0 - ac) % 360.0, (ac - a1) % 360.0)
+            inside = ((ac - a0) % 360.0) <= ((a1 - a0) % 360.0)
+            parts["det_ear"] = -1.0 if inside else math.radians(gap) * max(r0, 1.0) - can_r - F["saddle_rad"]
         worst = min(parts.values())
         if best is None or worst > best[0]:
             best = (worst, x, y, r, parts)

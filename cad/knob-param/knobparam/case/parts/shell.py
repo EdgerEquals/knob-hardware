@@ -176,6 +176,9 @@ def build(D):
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["x_in0"], -D["pcb_x1"] + lw, D["pcb_y0"], D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["pcb_x1"] - lw, D["x_in1"], D["pcb_y0"], D["pcb_y1"], z0, z1))
+    # v0.19: the v0.18 knob base (cradle r 20.9, knob land r 21.0) is wider than the gap between the side ledges.
+    # The ledge is cut back round the knob; the PCB is still seated above and below it.
+    case = _sub(case, _cyl_z(D["knob_hole_r"] + D["ledge_knob_clear"], z0 - sl, z1 + sl, D["ox"], D["oy"]))
     if D["tft_on_front"]:
         # Side ledges would cross a front window. Pull only that ledge band back.
         eps = 0.02
@@ -272,6 +275,7 @@ def build(D):
         # PETG corner tubes from the cover floor up to the PCB back; each bears on the board round its corner notch
         for x, y in D["corners"]:
             t = _cyl_z(D["notch_r"] + D["tube_press"], D["z_cover_in"] - fu, D["z_pcb_land"], x, y)
+            t = t & _box(D["void_x0"] - fu, D["void_x1"] + fu, D["void_y0"] - fu, D["void_y1"] + fu, D["z_cover_in"] - 2 * fu, D["z_pcb_land"] + fu)
             cover = _add(cover, _sub(t, _cyl_z(D["hole_r"], D["z_cover_in"] - sl, D["z_pcb_land"] + sl, x, y)))
     else:
         land = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_rim_seat"], D["z_pcb_land"])

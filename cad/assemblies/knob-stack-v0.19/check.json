@@ -357,21 +357,21 @@
   },
   {
    "name": "feel placement (worst plan clearance)",
-   "value": -3.02,
+   "value": 2.712,
    "target": ">= 0.5",
-   "ok": false,
-   "note": "nylon 0.5M-12T 12T \u00d7 42T on the 300\u00b0 idler, then 12T into the 54T herringbone, overall 15.75:1, can at 15.5\u00b0; knob \u00d842.00; dial_can -3.02, body_can -3.01, hall 2.65, skirt 8.65, gear 1000000000.00",
+   "ok": true,
+   "note": "nylon 0.5M-12T 12T \u00d7 42T on the 60\u00b0 idler, then 12T into the 54T herringbone, overall 15.75:1, can at 125.9\u00b0; knob \u00d842.00; dial_can 2.71, skirt 2.92, hall 6.41, body_can 9.23, gear 1000000000.00",
    "owner": "base_drive",
-   "slack": -3.52
+   "slack": 2.212
   },
   {
    "name": "feel saddle strap vs skirt ID (radial)",
-   "value": 8.655,
+   "value": 2.923,
    "target": ">= 0.5",
    "ok": true,
    "note": "open saddle: 2 bands \u00d7 1.2 over 8.0 of the \u00d87\u00d716 can, ears at \u00b1100\u00b0",
    "owner": "base_drive",
-   "slack": 8.155
+   "slack": 2.423
   },
   {
    "name": "detent ball guided in its bore when latched (centre above the boss underside)",
@@ -383,31 +383,31 @@
    "slack": 0.1
   },
   {
-   "name": "detent angle margin inside its window (min of both sides, deg)",
-   "value": -4.749,
+   "name": "detent angle margin inside its window (one detent, deg)",
+   "value": 0.0,
    "target": ">= 0",
-   "ok": false,
-   "note": "detents at \u00b144.1\u00b0 from the Hall arm, r 7.65; latch \u00b110\u00b0",
+   "ok": true,
+   "note": "detents at \u00b148.8\u00b0 from the Hall arm, r 7.65; latch \u00b110\u00b0",
    "owner": "base_drive",
-   "slack": -4.749
+   "slack": 0.0
   },
   {
    "name": "feel mount rib (radial depth)",
-   "value": -1.17,
+   "value": 4.562,
    "target": ">= 0.5",
-   "ok": false,
-   "note": "r 4.56-3.39, under the saddle seat",
+   "ok": true,
+   "note": "r 4.56-9.12, under the saddle seat",
    "owner": "base_drive",
-   "slack": -1.67
+   "slack": 4.062
   },
   {
    "name": "feel can vs 1220 motor",
-   "value": 0.0,
+   "value": 9.225,
    "target": ">= 0.5",
-   "ok": false,
+   "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": -0.5
+   "slack": 8.725
   },
   {
    "name": "feel pinion vs compound gear (centre-distance error, mm)",
@@ -420,12 +420,12 @@
   },
   {
    "name": "feel pinion vs idler 2",
-   "value": 6.435,
+   "value": 17.189,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": 5.935
+   "slack": 16.689
   },
   {
    "name": "cradle web left round a support after the bridge cut",
@@ -501,12 +501,12 @@
   },
   {
    "name": "rod VBUS pad (B.Cu) vs back-side parts / pads",
-   "value": 0.358,
+   "value": 0.609,
    "target": ">= 0.29",
    "ok": true,
-   "note": "pad \u00d87.32 (was the \u00d84 washer footprint); nut clamps straight on it, no washer",
+   "note": "pad \u00d89.77 (was the \u00d84 washer footprint); nut clamps straight on it, no washer",
    "owner": "electronics",
-   "slack": 0.068
+   "slack": 0.319
   },
   {
    "name": "cover flush in X",
@@ -536,6 +536,24 @@
    "slack": 1.7
   },
   {
+   "name": "top posts stop under the joystick board",
+   "value": 5.3,
+   "target": ">= 1",
+   "ok": true,
+   "note": "post top z 21.80; joystick daughterboard about z 27.1 [A]",
+   "owner": "case",
+   "slack": 4.3
+  },
+  {
+   "name": "resin wall round the insert",
+   "value": 1.5,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "M3 insert \u00d84.6 in a \u00d87.6 boss",
+   "owner": "case",
+   "slack": 0.3
+  },
+  {
    "name": "back AMOLEDs overlap behind the knob",
    "value": 21.62,
    "target": ">= 15",
@@ -546,12 +564,12 @@
   },
   {
    "name": "back AMOLEDs inside the cover pocket",
-   "value": 5.09,
+   "value": 3.39,
    "target": ">= 0.3",
    "ok": true,
-   "note": "38.72 wide in a 48.90 pocket",
+   "note": "38.72 wide in a 45.50 pocket",
    "owner": "case",
-   "slack": 4.79
+   "slack": 3.09
   },
   {
    "name": "cover depth from the screen rule",
@@ -752,15 +770,6 @@
    "slack": 19.261
   },
   {
-   "name": "boss clears the joystick opening",
-   "value": -3.8,
-   "target": ">= 0.4",
-   "ok": false,
-   "note": "upper pair sits under the joystick hole",
-   "owner": "case",
-   "slack": -4.2
-  },
-  {
    "name": "top rail screws omitted",
    "value": 1.0,
    "target": ">= 1",
@@ -786,15 +795,6 @@
    "note": "shell rim z -1.60, PCB back -1.60",
    "owner": "case",
    "slack": 0.0
-  },
-  {
-   "name": "clamp clears B-side parts",
-   "value": 0.425,
-   "target": ">= 0.8",
-   "ok": false,
-   "note": "overlap 0.80, nearest J10 is 1.22 from the outline",
-   "owner": "case",
-   "slack": -0.375
   },
   {
    "name": "preload before the rim seats",
@@ -831,15 +831,6 @@
    "note": "3U, not taller",
    "owner": "case",
    "slack": 0.0
-  },
-  {
-   "name": "cover depth past the rear stack",
-   "value": -12.3,
-   "target": ">= 2.136",
-   "ok": false,
-   "note": "placeholder rear stack 26.70 (bearing 2); cover cavity 14.40; retainer plate on 0050274 has not reported a depth yet",
-   "owner": "case",
-   "slack": -14.436
   },
   {
    "name": "carrier fits the rounded opening",
@@ -950,15 +941,6 @@
    "slack": 0.833
   },
   {
-   "name": "boss wall / diameter",
-   "value": 0.767,
-   "target": ">= 1",
-   "ok": false,
-   "note": "boss \u00d87.60 around the \u00d83.00 thread",
-   "owner": "case",
-   "slack": -0.233
-  },
-  {
    "name": "PETG under the screw head",
    "value": 1.5,
    "target": ">= 1.5",
@@ -1029,15 +1011,6 @@
    "note": "0 bolts up into the shell, tip z 35.80",
    "owner": "case",
    "slack": 0.5
-  },
-  {
-   "name": "knob bolts present",
-   "value": 0.0,
-   "target": ">= 2",
-   "ok": false,
-   "note": "0 on the lower arc; the TFT window and the bosses leave room for fewer than 0",
-   "owner": "case",
-   "slack": -2.0
   },
   {
    "name": "corner boss is resin",
@@ -1230,48 +1203,48 @@
   },
   {
    "name": "feel saddle vs knob skirt",
-   "value": 9.386,
+   "value": 4.378,
    "target": ">= 0.5",
    "ok": true,
-   "note": "can 10.81 inside the skirt; nylon 0.5M-12T at 15.5\u00b0, overall 15.75:1, knob \u00d842.00",
+   "note": "can 5.08 inside the skirt; nylon 0.5M-12T at 125.9\u00b0, overall 15.75:1, knob \u00d842.00",
    "owner": "assembly",
-   "slack": 8.886
+   "slack": 3.878
   },
   {
    "name": "feel can/saddle vs bottom ring",
-   "value": 7.786,
+   "value": 2.778,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 7.286
+   "slack": 2.278
   },
   {
    "name": "feel pinion vs encoder pinion",
-   "value": 11.819,
+   "value": 6.612,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 11.319
+   "slack": 6.112
   },
   {
    "name": "feel motor vs dial tube",
-   "value": 0.0,
+   "value": 0.654,
    "target": ">= 0.5",
-   "ok": false,
+   "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": -0.5
+   "slack": 0.154
   },
   {
    "name": "feel motor vs Hall arm (\u00b1travel)",
-   "value": 0.0,
+   "value": 0.15,
    "target": ">= 0.3",
    "ok": false,
    "note": "",
    "owner": "assembly",
-   "slack": -0.3
+   "slack": -0.15
   },
   {
    "name": "centring springs vs motor / encoder / ring across \u00b1travel",
@@ -1293,12 +1266,12 @@
   },
   {
    "name": "track balls vs compound gear across \u00b1travel",
-   "value": 8.054,
+   "value": 9.755,
    "target": ">= 0.5",
    "ok": true,
    "note": "balls posed at \u03b8/2 for each sample",
    "owner": "assembly",
-   "slack": 7.554
+   "slack": 9.255
   },
   {
    "name": "printed spur stays on the feel side of the centre tube",
@@ -1329,12 +1302,12 @@
   },
   {
    "name": "resin caps vs everything they do not mount on",
-   "value": 0.0,
+   "value": 0.375,
    "target": ">= 0.3",
-   "ok": false,
-   "note": "nearest feel motor pinion cap / encoder disc + slotted rim; UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "ok": true,
+   "note": "nearest idler pinion 2 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
-   "slack": -0.3
+   "slack": 0.075
   },
   {
    "name": "bottom thrust land, clear resin under the groove",
@@ -1540,35 +1513,10 @@
   }
  ],
  "clashes": {
-  "PCB rod pad VBUS \u00d87.3 (B.Cu) / feel motor shaft \u00d82 [A]": 0.0023728119770347568,
-  "motor / feel motor coreless \u00d82 [A]": 221.318212257192,
-  "motor / feel motor shaft \u00d82 [A]": 2.428226469326277,
-  "motor / feel motor saddle screw": 6.77473886787998,
-  "motor / feel motor saddle strap [A]": 16.903428503121106,
-  "brass tube / feel motor coreless \u00d82 [A]": 52.12447467317463,
-  "brass tube / feel motor saddle seat [A]": 2.9112892817780134,
-  "rod M1.6 (VBUS_DATA) / feel motor saddle seat [A]": 1.0721597860748209,
-  "rod sleeve / feel motor coreless \u00d82 [A]": 3.8241862797516837,
-  "rod sleeve / feel motor saddle seat [A]": 1.692006229099589,
-  "rod nut bottom / feel motor pinion nylon 0.5M-12T 12T": 0.06032627486468141,
-  "base cradle / feel motor coreless \u00d82 [A]": 2.485586668811274,
-  "base cradle / feel motor saddle strap [A]": 4.501857425417984,
-  "base cradle / feel motor saddle screw": 0.7847611697152024,
   "base cradle / case": 3.5524590627073027,
   "outer thrust load balls 28 x \u00d82 / case": 0.08830773814899938,
-  "thrust carrier / feel motor shaft \u00d82 [A]": 0.3999252318515549,
   "knob lower-cap land / case": 1.2658133347474596,
-  "control dial / feel motor coreless \u00d82 [A]": 141.15958403209507,
-  "control dial / feel motor shaft \u00d82 [A]": 0.8297127948358807,
-  "control dial / feel motor saddle seat [A]": 6.6263782964258695,
-  "control dial / feel motor saddle screw": 0.3645152782666218,
-  "encoder bearing 2 (seat on the PCB back) / encoder bearing 2 seat (printed, glued)": 5.564577403597472,
-  "encoder standoff / back cover (PETG)": 3.8052817940569383,
-  "encoder disc + slotted rim / feel motor pinion cap": 0.4435319455571311,
-  "feel compound gear 42T / back cover (PETG)": 0.05219063865083828,
-  "feel motor saddle seat [A] / centring spring 1 (non-magnetic)": 0.00967455812696729,
-  "glow coat (inside walls) / jack 1 PJ366ST body + pins [S]": 14.64750000000042,
-  "glow coat (inside walls) / jack 4 PJ366ST body + pins [S]": 14.647499999999999
+  "feel compound gear 42T / back cover (PETG)": 0.8145018373925872
  },
  "set": [],
  "sub": null

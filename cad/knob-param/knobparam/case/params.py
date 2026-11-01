@@ -153,6 +153,7 @@ P = dict(
     amo_lower_y_up=23.5,   # [Ed] lower screen bottom edge above the panel bottom (frame y -52.1 with the v0.2 knob at 0)
     amo_upper_top_up=105.0,   # [Ed] upper screen top edge above the panel bottom (frame y 29.4 with the v0.2 knob at 0)
     screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
+    ledge_knob_clear=0.3,  # [A] side ledge cut back this far past the knob hole radius round the knob base
     joy_board_z=27.1,      # [A] joystick daughterboard underside (v0.18 design notes); the top posts must stop under it
     cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
     tube_press=1.0,        # [A] width of the tube ring that bears on the PCB round the corner notch
