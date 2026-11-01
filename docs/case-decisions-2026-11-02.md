@@ -40,3 +40,20 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 ## Next
 - PCB routing and slots: slots first, then route around them (to be agreed).
 - Read sub/pcb-lighting-v01 (PR #8) before any PCB work.
+
+## Update, 2 Nov 2026 (later): top bolts, lasers, joystick requirements
+- [Ed] Laser placeholders removed from the case model (scanner is parked). Done on branch sub/case-v02 (not merged).
+- [Ed] The case's side-access cross pins are removed too. The joystick v0.4 carries its own Ø1.2 cross pins in a rear anchor glued to the PCB back, so the case ones are obsolete. Done on sub/case-v02.
+- [Ed] Top bolts go to the top corners (the bottom pair already sit at the bottom corners). The y position is a placeholder that mirrors the bottom pair (about y = 34.9). Not yet in the CAD.
+- [Ed] Knob, joystick screen and OLED to move down on the panel so all four rail screws fit. The bezel lip, not the hole web, sets the amount: about 4 mm (the estimate of 3.4 mm earlier today was too small). Not yet in the CAD.
+- [Ed] Back screen stays as the current AMOLED. A second layer in front of it is wanted for depth. Candidates: a small colour screen about 30 x 18 mm halfway back, or an edge-lit etched acrylic sheet (no driver, transparent). Not chosen.
+- [C] Top-corner posts merge into the side wall and stop below the joystick slab (about z 30, read from the section picture, not measured).
+
+### Requirements on the joystick redesign (PR #5), not applied
+- The v0.4 carrier is 57.7 x 42.8 mm, wider than the 50.5 mm panel and the 44.7 mm cavity. It must fit inside about +/-21.4 mm in X.
+- Keep clear of the top-corner post volume: x 15.45 to 24.45, y 30.4 to 39.4 (placeholder), below about z = 30.
+- Nearest M2 riser to a Ø9 boss there is about 0.4 mm clear.
+
+### Corrections to the open checks above
+- The model's bosses are Ø9, not the Ø7 assumed in items 1 and 3. At Ø9 the outer jacks (7.8 mm nut) overlap the bottom bosses by about 0.3 mm. The brass-sleeve design may let the boss shrink. Not decided.
+- The jack part in the model is the Thonkiconn PJ398SM (6.0 mm hole, 7.8 mm nut).
