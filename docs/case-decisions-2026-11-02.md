@@ -57,3 +57,48 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 ### Corrections to the open checks above
 - The model's bosses are Ø9, not the Ø7 assumed in items 1 and 3. At Ø9 the outer jacks (7.8 mm nut) overlap the bottom bosses by about 0.3 mm. The brass-sleeve design may let the boss shrink. Not decided.
 - The jack part in the model is the Thonkiconn PJ398SM (6.0 mm hole, 7.8 mm nut).
+
+## Update, 2 Nov 2026 (early morning): mechanism, motors, screens, build plan
+
+### Source of truth
+- The latest CAD is **v0.18** on `sub/assembly-v017` (with `sub/review-v017` on top). It was never merged into `param-dev`, which still describes v0.16b. Several numbers above came from v0.16b and are redone on v0.18 in the merge.
+- [Ed] Merge order: v0.18 (`sub/assembly-v017` + `sub/review-v017`) is the base, the parked review patch is applied, then the case work (`sub/case-v02`), then the joystick redesign, then the PCB regenerated for the H7B0. Everything lands in `param-dev`; nothing goes to `main` without Danny's sign-off.
+- [Ed] Faceplate height: v0.18 wins (38.8 mm above the PCB front, from `knob_proud` 18). The case model follows it.
+
+### Case and display
+- [Ed] Knob bolts are removed from the case.
+- [Ed] Four PJ366ST jacks; until a real part arrives, use the clacktronics/AudioJacks STEP dimensions (MIT, credit Barwise).
+- [Ed] Back screens: two AMOLEDs overlapped, lower screen in front, upper behind on the cover floor. Screen order stays.
+- [Ed] Minimum air gap from any part behind the PCB to a screen: **1.0 mm**. The cover depth is worked out backwards: deepest stack + 1.0 mm. No fixed number.
+- [Ed] Claude picks a stock M3 brass sleeve and shrinks the Ø9 bosses to suit (also clears the outer jack nuts).
+- [Ed] Joystick keeps the DWO DO0164FMST05. The bezel gets a finger chamfer. A smaller panel is parked (candidate: Gesight 1.47" E1473AC63.B).
+- [Ed] See-through zones (sketch only, `zones_layers.png`): layer 1 = A to E, layer 2 = parts that may be printed clear, layer 3 = reserved board. Zone contents and the case cut-aways for strength are parked until the end.
+
+### Control dial
+- [Ed] Travel **±10°** (v0.18 already has it; hard stop ±10.61°).
+- [Ed] **One** spring-ball detent with three dimples (0, ±10°). Position is free: place it where it packs best.
+- [Ed] The arm sits on three small ball tracks (one under the detent, two about 120° round the hub) with **alternating big and small separator balls**.
+- [Ed] Centre-screen cartridge hold-down: **two opposing magnets** (no steel disc), self-aligning. The Ø1 locating pin stays. Start from Ø2 × 1 N52 and size up only if the hold is weak. [C] Recompute the stray field at the Hall row.
+
+### Drive and motors
+- [Ed] The whole mechanism rotates so the **1220 main motor sits at the bottom (270°)**.
+- [Ed] Encoder wheel at the **top**. Its pinion angle on the ring is chosen in CAD to keep it clear of the feel compound gear under the PCB. Keep the full-size wheel; the cover depth follows.
+- [Ed] Drive stays geared: the 1220 planetary gives the torque. No direct-drive gimbal motor.
+- [Ed] The 716 only takes up the gearbox slop and adds a little resistance. Target cost about $5; no premium motor.
+- [Ed] The 716 keeps the v0.18 **two-stage** feel train (no planetary head on it, which would add slop). A shaft extension is accepted if needed. Rule: the compound gear under the PCB is **as big as the space allows**, and the motor pinion **as small as the gear check allows**.
+  - Ballpark (assumed motor constants, to be replaced by the bench test): one stage gives about 0.7 mNm continuous at the knob; two stages about 2 mNm continuous and 8 mNm in bursts. An Alps RK09L pot is 2–25 mNm.
+- [Ed] The 1220 (Industrial Pearl Store, 3–12 V, 30–123 RPM) and an N30 spare are on order. Danny bench-tests them; listing figures are not trusted. Test sheet: Claude Doc "Motor bench test sheet".
+- [Ed] The 716's rear shaft (for a prism) is not a priority.
+
+### Light show
+- [Ed] Board light list: 12 red VCSELs + 12 RGB LEDs in the ring, one 405 nm Civillaser violet module, two Risley motors. **The spinning-mirror scanner, its 13th VCSEL and the grating are dropped.**
+- [Ed] Risley: two cheap coreless motors spin two printed clear-resin wedge prisms. The beam scatters back up into the dial and out into the enclosure onto the Shimicoat glow coat. Claude finds the best fit in CAD. The prisms must overhang their motors so the beam clears the motor body. No speed sensors.
+- [C] UTR-8100 transmission and yellowing at 405 nm: test with the UV coupon (405 nm module through a 2–3 mm coupon onto glow coat). Fallback: acrylic wedges.
+
+### Screens (to verify)
+- [C] Back AMOLED 38.7 × 51.6: best match is the 2.4" 450 × 600 RM690B0 family (e.g. Gesight B024JMV-N50-6DP0, 38.72 × 51.56 × 0.5). If confirmed: no QSPI (MIPI, SPI or 8-bit 8080), so drive both over the H7B0 FMC bus; it needs an ELVDD/ELVSS supply on the board; 45-pin flex.
+- [C] Clear OLED 42.04 × 27.22: Waveshare 1.51" transparent 128 × 64 (SPI/I2C), lit area 35.05 × 15.32.
+
+### Build plan approved (2 Nov, 05:20)
+- [Ed] Claude may pick: sleeves, cartridge magnets, and materials from the existing recipe (MJF PA-12 gears and structure, SLA UTR-8100 clear parts, PETG cover), flagging any part without one.
+- [Ed] Done means: STEP per part with material and process, a BOM, an assembly drawing, a pass/fail report, and a fresh-eyes review by a second agent. Claude may push to sub branches and `param-dev`; `main` only on Danny's sign-off.
