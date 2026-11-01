@@ -42,10 +42,14 @@ def checks(D, parts):
             r.row(f"feel pinion vs idler {i}", pin.distance_to(parts[f"idler pinion {i}"]), F["clear"])
     r.row("cradle web left round a support after the bridge cut", D["cr_web_min"], D["cr_web_min"],
           f"fillet R{D['cr_bridge_fillet']:g} at the narrowest point of each top-idler breakout")
-    # The clear lower race is fused into the cradle; these pins are on that annulus, which is what touches the PCB.
-    r.row("lower thrust race pins clear the ball track and the light path",
-          D["ot_r"] - D["ot_rg"] - (D["ot_pin_r"] + D["ot_pin_d"] / 2), 0.0,
-          f"cradle carries the race; Ø{D['ot_pin_d']:.2f} at r {D['ot_pin_r']:.2f}, "
-          f"{D['ot_pin_ang'][0]:.0f}° round Ø{D['ot_pin_hole_d']:.2f} / {D['ot_pin_ang'][1]:.0f}° slot {D['ot_pin_slot']:.2f}, "
-          f"into the board {D['ot_pin_len']:.2f} mm; nearest neighbour {D['ot_pin_clear']:.2f} mm")
+    # The clear race is fused into the cradle and sits flat on the PCB. Pins are hollow tubes in two VCSEL holes.
+    from ..common.process import PROCESS
+    r.row("hollow race pin wall vs the SLA feature floor", D["em_wall"], PROCESS["sla"]["feature"],
+          f"bore Ø{D['em_ap']:.2f} is the aperture; pin OD Ø{D['em_pin_od']:.2f}")
+    r.row("emitter package covers its hole", D["em_pkg_min"] - D["em_hole_d"], 2 * D["em_cover_k"] * D["em_pkg_min"],
+          f"smaller body Ø{D['em_pkg_min']:.2f}; pin hole Ø{D['em_hole_d']:.2f}; open hole Ø{D['em_ap']:.2f}; reverse mount")
+    r.row("race web beside a pin hole", D["em_web"], D["ot_seat_gap"],
+          f"annulus each side of Ø{D['em_hole_d']:.2f} at r {D['ot_r']:.2f}; SLA feature floor is {PROCESS['sla']['feature']:.2f} and does not fit")
+    r.row("emitter hole centre clears the nearest ball", D["em_ball_clear"], 0.0,
+          f"holes sit in the ball gaps; pins in VCSEL holes {D['em_pin_i'][0]} and {D['em_pin_i'][1]}")
     return r

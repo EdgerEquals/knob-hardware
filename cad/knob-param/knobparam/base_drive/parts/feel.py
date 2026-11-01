@@ -49,8 +49,11 @@ def saddle(D):
                                     band_in=D["fm_band_in"], ear_k=D["saddle_ear_k"], edge_k=D["saddle_edge_k"])
     ri, ro = can_r + g, can_r + g + D["fm_band_t"]
     cd = D["fm_cd"]; r0 = D["fm_rib_r0"]
-    sp_len = cd - ro + 0.05 - r0
+    sp_len = cd - ro - D["cr_clear"] - r0
     seat += Pos(-(ro - 0.05) - sp_len / 2, 0, D["fm_z_can0"]) * Box(max(sp_len, 0.2), D["fm_spine_w"], D["fm_grip"], align=A)
     seat -= cyl(ri, D["fm_z_can0"] - 0.2, D["fm_grip"] + 0.4)
     x, y = D["fm_xy"]; P = Pos(x, y, 0) * Rot(0, 0, D["fm_ang"])
-    return P * seat, P * strap, P * screws
+    seat = P * seat
+    # The 1220 collar reaches this saddle. Cut the seat back so the two parts do not meet.
+    seat -= cyl(D["motor_collar_od"] / 2 + D["cr_clear"], -0.1, D["motor_collar_top"] + 1, D["offset"], 0)
+    return seat, P * strap, P * screws

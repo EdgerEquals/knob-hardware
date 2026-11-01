@@ -26,6 +26,7 @@ GROUPS = [  # (legend, colour, match)
     ("detent balls, track balls, steel pins + disc", "#cfd8dc", lambda n: (n.startswith("detent") and " ball" in n) or n.startswith(("track ball", "spring anchor pin", "screen carrier steel", "screen carrier locating"))),
     ("detent springs, grub screws, centring springs (non-magnetic)", "#fdd835", lambda n: n.startswith(("detent", "centring spring"))),
     ("Hall sensors on the PCB front", "#212121", lambda n: n.startswith("hall sensor")),
+    ("reverse-mount VCSEL / RGB", "#ff8a65", lambda n: n.startswith("emitter ")),
     ("thrust carrier + balls", "#78909c", lambda n: n.startswith("thrust") or n.startswith("outer thrust")),
     ("encoder bearings + shaft", "#607d8b", lambda n: n.startswith(("encoder bearing", "encoder shaft"))),
     ("encoder pinion", "#ffa726", lambda n: n == "encoder pinion"),
@@ -70,6 +71,10 @@ def region_solid(spec):
         pts.append((0.0, 0.0))
         wedge = Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), z1 - z0)
         return allb - wedge
+    if spec["kind"] == "plan":   # keep Z <= z; the cut face is the horizontal plane
+        x0, y0, z0, x1, y1, _z1 = spec["bb"]
+        zc = spec["z"]
+        return Pos(x0, y0, z0) * Box(x1 - x0, y1 - y0, zc - z0, align=(Align.MIN,) * 3)
     o, a, (u0, u1), depth, (z0, z1) = spec["o"], spec["a"], spec["u"], spec["depth"], spec["z"]
     return Pos(o[0], o[1], z0) * Rot(0, 0, a) * Pos(u0, -depth, 0) * Box(u1 - u0, depth, z1 - z0, align=(Align.MIN,) * 3)
 
@@ -80,6 +85,7 @@ def cut_planes(spec):
         def _n(a):
             a = math.radians(a); return (-math.sin(a), math.cos(a), 0.0)
         return [((0, 0, 0), _n(spec.get("a0", 0.0))), ((0, 0, 0), _n(spec.get("a1", 90.0)))]
+    if spec["kind"] == "plan": return [((0.0, 0.0, spec["z"]), (0.0, 0.0, 1.0))]
     a = math.radians(spec["a"]); return [((spec["o"][0], spec["o"][1], 0), (-math.sin(a), math.cos(a), 0))]
 
 def _solids(s):
@@ -169,7 +175,8 @@ def _rim_light(D):
     rm = (D["sleeve_id"] / 2 + D["knob_od"] / 2) / 2
     y = 0.45
     z_top = D.get("z_lip0", D["sleeve_z1"] + 6.0)
-    pts = [(D["ot_r"], y, D["ot_z"]), (rm, y, D["sleeve_z0"] + D["sleeve_chamfer"]),
+    z_back = -D.get("pcb_t", 1.6) - D.get("em_vcsel", (0, 0, 0.8))[2]
+    pts = [(D["ot_r"], y, z_back), (D["ot_r"], y, D["ot_z"]), (rm, y, D["sleeve_z0"] + D["sleeve_chamfer"]),
            (rm, y, D["sleeve_z1"]), (rm, y, z_top + 1.2)]
     def extra(pl, pv):
         pairs = []

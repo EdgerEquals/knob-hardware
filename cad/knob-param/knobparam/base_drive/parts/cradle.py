@@ -49,11 +49,16 @@ def _thrust_track(D):
     return fl
 
 def _thrust_blank(D):
-    """Printed filler in the C20–C22/U20 sector. A closed cageless ring cannot skip that arc."""
+    """Keep-out filler, only the air inside the groove. A smaller torus keeps it off both races."""
     a0, a1 = D["ot_keep_ang"]
-    rb = D["ot_ball_d"] / 2
     g = D["ot_blank_clear"]
-    return sector(D["ot_r"] - rb, D["ot_r"] + rb, (a1 - a0) / 2, D["ot_z"] - rb + g, D["ot_ball_d"] - 2 * g, (a0 + a1) / 2)
+    rg = D["ot_rg"] - g
+    if rg <= 0.2:
+        return None
+    ball = Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], rg)
+    wedge = sector(D["ot_r"] - D["ot_rg"], D["ot_r"] + D["ot_rg"], (a1 - a0) / 2,
+                   D["ot_z"] - D["ot_rg"], 2 * D["ot_rg"], (a0 + a1) / 2)
+    return ball & wedge
 
 def build(D):
     pt, ro, mx = D["plate_t"], D["r_out"], D["offset"]
@@ -82,7 +87,7 @@ def build(D):
     c -= cyl(D["dial_clear_d"] / 2, pt, h)
     c -= Pos(0, 0, pt) * Box(mx - D["motor_bore_d"] / 2 + 1.0, D["dial_clear_d"], h, align=(Align.MIN, Align.CENTER, Align.MIN))
     c -= thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"])   # control_dial export: thrust-ball ring
-    c -= Pos(mx + D["collar_trim"], 0, pt) * Box(20, 40, D["motor_collar_top"], align=(Align.MIN, Align.CENTER, Align.MIN))
+    c -= Pos(mx + D["collar_trim"], 0, 0) * Box(20, 40, D["motor_collar_top"], align=(Align.MIN, Align.CENTER, Align.MIN))
     c -= hall_slot.window(D)
     c += mech.cradle_add(D)     # detent blocks, hard stops, spring posts
     c -= mech.cradle_cut(D)     # ball-track grooves, detent bores, anchor-pin holes
@@ -95,10 +100,14 @@ def build(D):
     if fl is not None: c += fl
     blank = _thrust_blank(D)
     c = c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"]), -0.01, D["z_top"])
-    # The clear race is this same solid. Its pins drop through the PCB; the round/slot holes are drilled there.
-    z_pin = D["ot_land_th"] - D["ot_seat_gap"]
-    for x, y in D["ot_pin_xy"]:
-        c += cyl(D["ot_pin_d"] / 2, -D["ot_pin_len"], D["ot_pin_len"] + z_pin, x, y)
+    # Flat race: a light bore at every emitter, no pocket. Two bores grow a hollow pin down into the PCB hole.
+    for h in D["em_holes"]:
+        c -= cyl(D["em_ap"] / 2, -0.02, D["ot_land_th"] + 0.05, h["x"], h["y"])
+    for h in D["em_holes"]:
+        if not h["pin"]:
+            continue
+        c += (cyl(D["em_pin_od"] / 2, -D["em_pin_len"], D["em_pin_len"], h["x"], h["y"])
+              - cyl(D["em_ap"] / 2, -D["em_pin_len"] - 0.01, D["em_pin_len"] + 0.02, h["x"], h["y"]))
     out = {"base cradle": c, "outer thrust blank": blank}
     ruby = set(D["ot_ruby_idx"])
     load, gems = [], []

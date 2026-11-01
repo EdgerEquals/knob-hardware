@@ -190,6 +190,11 @@ def cross(D, parts):
     rim_d, rim_who = min(((s.distance_to(rim), n) for n, s in near), default=(1e9, ""))
     row("printed parts clear the glass top rim", rim_d, ch,
         f"nearest {rim_who}; end face r {ri:.2f}–{ro:.2f} at z {zi:.2f} stays open into the dial")
+    entry = min(D["ot_r"] - D["sleeve_id"] / 2, D["knob_od"] / 2 - D["ot_r"])
+    row("light path through the emitter holes, the race and into the glass", min(D["em_ap"] / 2, entry), D["ot_seat_gap"],
+        f"{2 * D['em_n']} reverse-mount holes on r {D['ot_r']:.2f}; aperture Ø{D['em_ap']:.2f}; "
+        f"hollow pins in VCSEL {D['em_pin_i'][0] // 2 + 1} (round) and {D['em_pin_i'][1] // 2 + 1} (radial slot); "
+        f"land {D['ot_land_th']:.2f} mm")
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
         B = ring_field(D)

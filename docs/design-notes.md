@@ -3,18 +3,18 @@
 A short summary of the current design. The parametric model in `cad/knob-param/` is the source of truth for
 dimensions. Values marked [A] are assumptions that still need checking with calipers or on a prototype.
 Renders: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan view, `check.json`); v0.17 kept in
-`cad/assemblies/knob-stack-v0.17/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
-`docs/top-screen-joystick.md`).
+`cad/assemblies/knob-stack-v0.17/`. Current-state sheet (knob, joystick, main PCB, 10HP case): `cad/assemblies/state-2026-11-01/sheet.png`.
+Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see `docs/top-screen-joystick.md`).
 
 ## Glass sleeve (Ed, 1 Nov 2026)
 
 The see-through band of the main knob is a bought borosilicate 3.3 tube, not printed PETG. `knob_od` is the measured sleeve OD, nominal **42.0** (the screen still needs at least Ø41.641). Nominal wall **2.15** mm, inside the bought **2.0–2.3** band, so the nominal bore is **Ø37.70** and the thick-wall bore is **Ø37.40**. The cut length is the visible band, **38.95 mm** (z 5.05 to 44.00), not the 20 mm starting guess. Ends are chamfered 0.26 mm for the fire polish.
 
-Printed caps glue into that bore on one datum, spigot Ø37.20, radial glue **0.25** mm (the 0.20–0.30 band). The lower cap carries the 54T ring and the bottom thrust race; a clear land outside a 1 mm nylon hoop is the light path up into the glass (0.15 mm of clear entry at the race). The upper cap stays inside the bore: it carries the 45° race and does not cover the glass top face. That rim stays bare so the light leaves the wall and enters the dial above it. Both plugs enter 4.30 mm. The land under the groove stays **1.00 mm**.
+Printed caps glue into that bore on one datum. The spigot is fitted to the minor bore, **Ø36.80** = (ID − 0.50 ovality) / 2 − 0.20, so the tight axis is **0.20 mm** of glue and the loose axis is **0.45 mm** (0.20 + ovality/2). A round tube at the measured ID would use **0.25 mm**, inside the 0.20–0.30 band; the oval is what opens the loose side. The lower cap carries the 54T ring and the bottom thrust race; a clear land outside a 1 mm nylon hoop is the light path up into the glass (0.15 mm of clear entry at the race). The upper cap stays inside the bore: it carries the 45° race and does not cover the glass top face. That rim stays bare so the light leaves the wall and enters the dial above it. Both plugs enter 4.30 mm. The land under the groove stays **1.00 mm**.
 
-The clear lower thrust race is not a separate ring. It is fused into the base cradle, and that annulus is the face that sits on the PCB, so the locating pins are on the cradle. Two pins, Ø1.82 at r 17.81, drop 0.96 mm into the board: 110° is a round NPTH Ø1.93, 230° is a radial slot 2.73 mm long. They bite the race lip and stop 0.025 mm short of the groove, 0.05 mm clear of the ball shadow, so they miss the track and the light column. Positions and diameters are `ot_pins` in `cad_constraints.json`. KiCad does not have the holes yet.
+The 12 VCSELs and 12 RGB LEDs sit on the **back** of the main PCB and fire up through holes on the thrust pitch (r 19.79), in the gaps between the balls. The clear race stays part of the cradle, flat on the PCB front, with no pockets. Land under the balls stays 1.00 mm. Two VCSEL holes, about 86° and 278° (nearly opposite), take a hollow clear pin: the bore is the Ø0.62 aperture, so those two still emit. 86° is a round fit (hole Ø1.71), 278° is a radial slot 2.57 mm long. The other 22 holes are open at Ø0.62. `em_reverse` and `em_holes` are in `cad_constraints.json`. KiCad is not edited. The race annulus is only 2.2 mm wide, so the material beside a pin hole is 0.24 mm, under the 0.5 mm SLA feature floor.
 
-The tube has to absorb OD ±0.6, wall ±0.2 and 0.5 mm ovality. Stacked, the bore can be **Ø36.20**. That still clears the ring tips (Ø34.79, 0.71 mm radially, against a Ø36.50 skirt on the old printed knob) and the cans inside the sleeve (outermost r 16.75). It does not keep the glue line inside 0.20–0.30 all the way around: the tight side goes to −0.20 mm and the loose side to 0.70 mm. The caps are sized to the measured bore, so those two rows fail on purpose. A round cap flush with the measured OD also stands 0.25 mm proud of the oval minor axis, and that minor axis (Ø41.50) is 0.14 mm under the screen minimum.
+The tube has to absorb OD ±0.6, wall ±0.2 and 0.5 mm ovality. Stacked, the bore can be **Ø36.20**. That still clears the ring tips (Ø34.79, 0.71 mm radially, against a Ø36.50 skirt on the old printed knob) and the cans inside the sleeve (outermost r 16.75). The lower cap flange is still the measured OD, so on the oval minor axis (Ø41.50) that flange stands 0.25 mm proud of the glass, and that minor axis is 0.14 mm under the screen minimum.
 
 Case opening, from `cad_constraints.json`: nominal hole **Ø42.80** (`knob_od` + 2 × 0.40). If the plate is cut before the tube is measured, the hole has to clear OD + 0.6, **Ø43.40**. The old hole was Ø42.45. A collar or seal on this OD has to live with ±0.6 mm and 0.5 mm ovality; nothing in this tree is a seal. The joystick carrier, still on the old place, loses the 0.175 mm of radius and is about **0.10 mm** off the knob instead of 0.275 mm.
 
@@ -194,7 +194,10 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   carries U3.
 
 ## Check status (v0.18)
-- **69/69 gap checks PASS, 0 clashes** on the proxy and on `--full` (committed STEP, with H2 re-drilled at the new centre distance). Owner split: main_knob 4, control_dial 17, base_drive 14, under_pcb 2, electronics 2, assembly 30. The AGENTS.md tally is taken from `cad/assemblies/knob-stack-v0.18/check.json`.
+- **105/105 gap checks PASS, 0 clashes** on the proxy. Owner split: main_knob 17, control_dial 17, base_drive 18, under_pcb 2, electronics 2, assembly 49. The AGENTS.md tally is taken from `cad/assemblies/knob-stack-v0.18/check.json`.
+- The two glue-band rows pass against the minor-bore spigot (tight 0.20 mm, loose 0.45 mm). The Hall inner pad clears the thrust cage by 0.30 mm (cage OD 8.58; 8.60 was 0.295 mm). The keep-out blank sits inside the groove, the 1220 collar is trimmed through the cradle plate, and the feel saddle is cut clear of that collar.
+- `UNDER PROCESS TOLERANCE`: outer thrust balls vs bottom ring 0.050 < 0.251. The row still passes.
+- Current-state sheet: `cad/assemblies/state-2026-11-01/sheet.png`. Parked work: `cad/knob-param/PARKED.md`.
 - Swept samples are −10.75°, −10°, 0, +10°, +10.75°.
 
 ## Check status (v0.17)

@@ -33,7 +33,7 @@ P = dict(
     tb_ball_up=0.3,
     tb_pocket_d=1.1,
     tb_web_min=0.65,
-    tb_cage=(5.3, 8.6, 0.4),   # [A] cage ID, OD, thickness
+    tb_cage=(5.3, 8.58, 0.4),   # [A] cage ID, OD, thickness. OD 8.58 leaves the inner Hall pad 0.30 mm clear (8.60 was 0.295).
     # ---- screen holder + adapter ----
     hold_z0_socket=5.0,   # [A] socket engagement on the tube
     socket_d=5.2,   # [A]
@@ -78,7 +78,7 @@ P = dict(
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     fan_on=True,   # [Ed] v0.16 fan arm + lever (False = v0.15 bar only)
     hv_spoke_w=3.0,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
-    hv_spoke_clear=0.3,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
+    hv_spoke_clear=0.31,   # [A] spoke bottom above the thrust balls / cage. 0.30 left the solid 0.295 mm clear.
 )
 
 IMPORTS = {"electronics": ["adapter_d", "adapter_fps", "adapter_env"]}

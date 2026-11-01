@@ -188,9 +188,14 @@ P = dict(
     ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
     ot_keep_ang=(124.0, 137.0),   # [Ed] C20–C22 / U20. A cageless ring cannot skip this; a printed blank fills it
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
-    ot_pin_len_k=0.6,   # [A] locating-pin engagement / PCB thickness. One hole round, one slotted, same scheme as the cradle pegs.
-    ot_pin_slot_k=0.5,   # [A] extra slot length / pin diameter
-    ot_pin_fit_k=0.06,   # [A] NPTH oversize / pin diameter, so the pin is not a clash with the hole
+    em_n=12,   # [Ed] VCSELs, and the same count of RGB, alternating, reverse-mounted under the race
+    em_vcsel=(2.8, 3.5, 0.8),   # [S] JNJ 2835 body, mm. On the PCB back.
+    em_rgb=(2.0, 2.0, 0.9),   # [A] addressable 2020 body until a catalogue part is locked
+    em_ap_k=0.22,   # [A] clear aperture / smaller VCSEL side
+    em_fit_k=0.06,   # [A] pin-hole oversize / pin OD
+    em_slot_k=0.5,   # [A] extra radial slot length / pin-hole diameter (one locating hole)
+    em_pin_len_k=0.5,   # [A] hollow-pin engagement / board thickness. Stops short of the body on the back.
+    em_cover_k=0.05,   # [A] package past the hole, each side, / smaller package side
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
     fg_z_pin=12,   # [Ed] 0.5 module 12T
@@ -583,44 +588,99 @@ def _place_outer_thrust(D):
     D["ot_land_th"] = z_ball - rg                 # clear resin under the groove bottom, PCB front = 0
 
 
-def _place_ot_pins(D):
-    """Two pins on the clear lower race. That race is already part of the cradle, and its annulus is what sits on the PCB.
-    The pin lives inboard of the groove, so it misses the ball track and the light column under the balls.
-    One PCB hole is round; the other is a radial slot."""
-    r0 = D["ot_r"] - D["ot_rg"] - D["ot_seat_gap"]
-    outer = r0 + D["ot_seat_gap"] / 2                     # bites the race lip, stops short of the groove
-    d = outer - D["cr_r_out"]
-    r = D["cr_r_out"] + d / 2
-    pr = d / 2
-    blocks = [(0.0, 0.0, D["dial_tube_od"] / 2),
-              (D["offset"], 0.0, D["can_r"]),
-              (*D["enc_xy"], D["brg"]["D"] / 2),
-              (*D["fm_xy"], D["feel"]["can_d"] / 2)]
-    for x, y in D["idler_xy"]:
-        blocks.append((x, y, D["d_pin_tip"] / 2))
-    if D.get("hv_r"):
-        for rr, a in zip(D["hv_r"], D["hv_phi_s"]):
-            blocks.append((rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), D["hv_pad_r"]))
-    def clear(a):
-        x, y = r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
-        return min(math.hypot(x - bx, y - by) - br for bx, by, br in blocks)
+def _place_emitters(D):
+    """24 holes on the thrust pitch: 12 VCSELs and 12 RGB, alternating, reverse-mounted on the PCB back.
+    Two VCSEL holes take a hollow clear pin (one round fit, one radial slot). The bore stays the aperture, so those two still emit."""
+    from ..common.process import PROCESS
+    n = D["em_n"]
+    kind_r = {}
+    for a in D["ot_angs"]:
+        kind_r[a] = D["ot_ball_d"] / 2.0
+    for a in D["ot_spacer_angs"]:
+        kind_r[a] = (D["ot_spacer_min"] + D["ot_spacer_max"]) / 4.0
+    angs = sorted(kind_r)
+    k0, k1 = D["ot_keep_ang"]
+    keep = (k1 - k0) % 360.0
+    mids = []
+    for i, a in enumerate(angs):
+        b = angs[(i + 1) % len(angs)]
+        span = (b - a) % 360.0
+        if span > keep + 1.0:                         # the empty keep-out, not a ball gap
+            continue
+        chord = 2.0 * D["ot_r"] * math.sin(math.radians(span) / 2.0)
+        gap = chord - kind_r[a] - kind_r[b]
+        if gap <= 0 or chord <= 0:
+            continue
+        # centre of the air, not the midpoint of the two centres (the load ball is the larger one)
+        frac = (kind_r[a] + gap / 2.0) / chord
+        mid = (a + frac * span) % 360.0
+        # The keep-out parts (C20–C22 / U20) sit just inboard of this pitch. A body centred
+        # inside a margin of that sector lands on them, so those gaps are not emitter sites.
+        reach = math.hypot(D["em_vcsel"][0], D["em_vcsel"][1]) / 2 + math.hypot(D["em_rgb"][0], D["em_rgb"][1]) / 2
+        margin = math.degrees(reach / D["ot_r"])
+        da = min((mid - k0) % 360.0, (k0 - mid) % 360.0, (mid - k1) % 360.0, (k1 - mid) % 360.0)
+        inside = k0 < mid < k1
+        if inside or da < margin:
+            continue
+        mids.append(mid)
+    mids.sort()
+    if len(mids) < 2 * n:
+        raise ValueError("not enough ball gaps for the emitter ring")
+    step = len(mids) / (2 * n)
+    chosen = sorted(mids[int(i * step)] for i in range(2 * n))
+    vx, vy, vh = D["em_vcsel"]
+    rx, ry, rh = D["em_rgb"]
+    ap = D["em_ap_k"] * min(vx, vy)
+    wall = PROCESS["sla"]["feature"]
+    pin_od = ap + 2.0 * wall
+    hole_pin = pin_od * (1.0 + D["em_fit_k"])
+    slot_l = hole_pin * (1.0 + D["em_slot_k"])
+    # two VCSEL holes (even index) nearest to opposite
+    vcsel_i = list(range(0, 2 * n, 2))
     best = None
-    for a in range(0, 360, 5):
-        for b in range(a + 90, a + 270, 5):
-            c = min(clear(a), clear(b % 360))
-            if best is None or c > best[0]:
-                best = (c, a, b % 360)
-    _c, a, b = best
-    def xy(ang):
-        return (r * math.cos(math.radians(ang)), r * math.sin(math.radians(ang)))
-    D["ot_pin_d"] = d
-    D["ot_pin_r"] = r
-    D["ot_pin_ang"] = [a, b]
-    D["ot_pin_xy"] = [xy(a), xy(b)]
-    D["ot_pin_len"] = D["pcb_t"] * D["ot_pin_len_k"]
-    D["ot_pin_hole_d"] = d * (1.0 + D["ot_pin_fit_k"])
-    D["ot_pin_slot"] = d * (1.0 + D["ot_pin_slot_k"])
-    D["ot_pin_clear"] = _c - pr                          # plan clearance of the tighter pin to the nearest neighbour
+    for i in vcsel_i:
+        for j in vcsel_i:
+            if j <= i:
+                continue
+            diff = abs(chosen[j] - chosen[i]) % 360.0
+            diff = min(diff, 360.0 - diff)
+            sep = abs(diff - 180.0)
+            if best is None or sep < best[0]:
+                best = (sep, i, j)
+    _sep, i0, i1 = best
+    holes = []
+    r = D["ot_r"]
+    for i, a in enumerate(chosen):
+        kind = "VCSEL" if i % 2 == 0 else "RGB"
+        pin = i in (i0, i1)
+        slot = i == i1
+        holes.append(dict(
+            i=i, kind=kind, ang=a, pin=pin, slot=slot,
+            x=r * math.cos(math.radians(a)), y=r * math.sin(math.radians(a)),
+            hole_d=hole_pin if pin else ap, slot_l=slot_l if slot else None,
+        ))
+    D["em_ap"] = ap
+    D["em_wall"] = wall
+    D["em_pin_od"] = pin_od
+    D["em_pin_id"] = ap
+    D["em_hole_d"] = hole_pin
+    D["em_slot_l"] = slot_l
+    D["em_pin_len"] = D["pcb_t"] * D["em_pin_len_k"]
+    D["em_pin_i"] = [i0, i1]
+    D["em_holes"] = holes
+    D["em_pkg_min"] = min(vx, vy, rx, ry)
+    D["em_reverse"] = True
+    r0 = r - D["ot_rg"] - D["ot_seat_gap"]
+    r1 = r + D["ot_rg"] + D["ot_seat_gap"]
+    D["em_web"] = (r1 - r0 - hole_pin) / 2.0          # race material each side of a pin hole
+    # nearest ball centre, as a chord clearance outside the ball radius
+    worst = 1e9
+    for h in holes:
+        best_b = min(angs, key=lambda b: min((h["ang"] - b) % 360.0, (b - h["ang"]) % 360.0))
+        da = min((h["ang"] - best_b) % 360.0, (best_b - h["ang"]) % 360.0)
+        chord = 2.0 * r * math.sin(math.radians(da) / 2.0)
+        worst = min(worst, chord - kind_r[best_b])
+    D["em_ball_clear"] = worst
 
 
 def _place_det_columns(D):
@@ -764,10 +824,12 @@ def derive(D):
     D["sleeve_wall_worst"] = max(D["sleeve_wall_hi"], D["sleeve_wall"] + D["sleeve_wall_tol"])
     D["sleeve_id_worst"] = (D["knob_od"] - D["sleeve_od_tol"]) - 2 * D["sleeve_wall_worst"] - D["sleeve_ovality"]
     D["sleeve_chamfer"] = D["sleeve_wall"] * D["sleeve_chamfer_k"]
-    D["sleeve_spigot_r"] = D["sleeve_id"] / 2 - D["sleeve_glue"]          # both caps, one datum
+    # Fitted to the minor bore so the tight axis keeps the minimum glue. A round spigot
+    # in an oval bore opens the opposite axis by the ovality. The wall is the measured wall.
+    D["sleeve_spigot_r"] = (D["sleeve_id"] - D["sleeve_ovality"]) / 2 - D["sleeve_glue_lo"]
     D["sleeve_lip_r"] = D["motor_offset"] + D["can_r"] + D["ring_can_clear"]
-    D["sleeve_gap_lo"] = D["sleeve_glue"] - D["sleeve_ovality"] / 2 - D["sleeve_wall_tol"]
-    D["sleeve_gap_hi"] = D["sleeve_glue"] + D["sleeve_ovality"] / 2 + D["sleeve_wall_tol"]
+    D["sleeve_gap_lo"] = D["sleeve_glue_lo"]
+    D["sleeve_gap_hi"] = D["sleeve_glue_lo"] + D["sleeve_ovality"] / 2
     D["cap_r"] = D["knob_od"] / 2
     _place_herringbone(D, D["cap_r"])
     D["skirt_wall"] = (D["knob_od"] - D["skirt_id"]) / 2
@@ -833,7 +895,7 @@ def derive(D):
     _place_feel(D)
     _place_mech(D)
     _place_outer_thrust(D)
-    _place_ot_pins(D)
+    _place_emitters(D)
     # Cans stand up into the sleeve. The ring tips and the pinions stop at the cap, under the glass.
     D["sleeve_inside_r"] = max(D["motor_offset"] + D["can_r"], math.hypot(*D["fm_xy"]) + D["feel"]["can_d"] / 2)
     # ---- v0.16 knob ring magnet / dial sensor ----

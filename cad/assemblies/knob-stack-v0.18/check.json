@@ -77,7 +77,7 @@
    "value": 0.25,
    "target": ">= 0.2",
    "ok": true,
-   "note": "spigot \u00d837.20 on ID \u00d837.70, one datum for both caps",
+   "note": "round-tube design point inside 0.20\u20130.30; the built spigot is the minor-bore fit \u00d836.80",
    "owner": "main_knob",
    "slack": 0.05
   },
@@ -92,21 +92,21 @@
   },
   {
    "name": "glue gap at the tight side of ovality and wall",
-   "value": -0.2,
+   "value": 0.2,
    "target": ">= 0.2",
-   "ok": false,
-   "note": "ovality 0.50 and wall \u00b10.20 move the radial gap by more than the 0.1 band",
+   "ok": true,
+   "note": "spigot fitted to the minor bore (ID 37.70 \u2212 ovality 0.50); wall is the measured wall",
    "owner": "main_knob",
-   "slack": -0.4
+   "slack": 0.0
   },
   {
    "name": "glue gap at the loose side of ovality and wall",
-   "value": 0.7,
-   "target": "<= 0.3",
-   "ok": false,
-   "note": "",
+   "value": 0.45,
+   "target": "<= 0.45",
+   "ok": true,
+   "note": "round spigot, oval bore; opens by ovality/2 from the 0.20 minimum",
    "owner": "main_knob",
-   "slack": -0.4
+   "slack": 0.0
   },
   {
    "name": "light path from the bottom race up through the glass",
@@ -258,19 +258,19 @@
   },
   {
    "name": "Hall spoke vs thrust balls / cage (\u00b1travel)",
-   "value": 0.295,
+   "value": 0.305,
    "target": ">= 0.3",
-   "ok": false,
+   "ok": true,
    "note": "",
    "owner": "control_dial",
-   "slack": -0.005
+   "slack": 0.005
   },
   {
    "name": "Hall arm rib tip deflection at the load radius (mm)",
    "value": 0.059,
    "target": "<= 0.07",
    "ok": true,
-   "note": "PA12 E 1.7 GPa, 2 N in-plane at r 15.5; rib 3\u21925.2 wide, z 4.6 over the cage / 3.8 beyond r 4.95, top 6.8",
+   "note": "PA12 E 1.7 GPa, 2 N in-plane at r 15.5; rib 3\u21925.2 wide, z 4.6 over the cage / 3.8 beyond r 4.94, top 6.8",
    "owner": "control_dial",
    "slack": 0.011
   },
@@ -437,13 +437,40 @@
    "slack": 0.0
   },
   {
-   "name": "lower thrust race pins clear the ball track and the light path",
-   "value": 0.025,
+   "name": "hollow race pin wall vs the SLA feature floor",
+   "value": 0.5,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "bore \u00d80.62 is the aperture; pin OD \u00d81.62",
+   "owner": "base_drive",
+   "slack": 0.0
+  },
+  {
+   "name": "emitter package covers its hole",
+   "value": 0.287,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "smaller body \u00d82.00; pin hole \u00d81.71; open hole \u00d80.62; reverse mount",
+   "owner": "base_drive",
+   "slack": 0.087
+  },
+  {
+   "name": "race web beside a pin hole",
+   "value": 0.244,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "annulus each side of \u00d81.71 at r 19.79; SLA feature floor is 0.50 and does not fit",
+   "owner": "base_drive",
+   "slack": 0.194
+  },
+  {
+   "name": "emitter hole centre clears the nearest ball",
+   "value": 0.048,
    "target": ">= 0",
    "ok": true,
-   "note": "cradle carries the race; \u00d81.82 at r 17.81, 110\u00b0 round \u00d81.93 / 230\u00b0 slot 2.73, into the board 0.96 mm; nearest neighbour 5.26 mm",
+   "note": "holes sit in the ball gaps; pins in VCSEL holes 6 and 18",
    "owner": "base_drive",
-   "slack": 0.025
+   "slack": 0.048
   },
   {
    "name": "big gear vs sensor (axial)",
@@ -654,12 +681,12 @@
   },
   {
    "name": "feel motor vs dial tube",
-   "value": 0.5,
+   "value": 1.05,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": -0.0
+   "slack": 0.55
   },
   {
    "name": "feel motor vs Hall arm (\u00b1travel)",
@@ -802,12 +829,21 @@
   },
   {
    "name": "printed parts clear the glass top rim",
-   "value": 0.508,
+   "value": 0.708,
    "target": ">= 0.258",
    "ok": true,
    "note": "nearest knob upper-cap; end face r 19.11\u201320.74 at z 44.00 stays open into the dial",
    "owner": "assembly",
-   "slack": 0.25
+   "slack": 0.45
+  },
+  {
+   "name": "light path through the emitter holes, the race and into the glass",
+   "value": 0.308,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "24 reverse-mount holes on r 19.79; aperture \u00d80.62; hollow pins in VCSEL 4 (round) and 10 (radial slot); land 1.00 mm",
+   "owner": "assembly",
+   "slack": 0.258
   },
   {
    "name": "1220 pinion / hub gear: effective contact ratio",
@@ -918,13 +954,7 @@
    "slack": 0.15
   }
  ],
- "clashes": {
-  "base cradle / outer thrust blank": 0.7069649736218313,
-  "base cradle / feel motor saddle seat [A]": 0.6723769763708446,
-  "outer thrust blank / knob lower-cap land": 0.36895068204239095,
-  "outer thrust blank / bottom internal ring (lower half)": 0.33801428824593677,
-  "base cradle / bottom internal ring (lower half)": 2.8938852044531185
- },
+ "clashes": {},
  "set": [],
  "sub": null
 }

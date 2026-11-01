@@ -49,9 +49,11 @@ def main():
         knob_hole_d=D["knob_od"] + 2 * D["knob_hole_clear"],
         knob_hole_d_max=D["knob_od"] + D["sleeve_od_tol"] + 2 * D["knob_hole_clear"],
         faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
-        ot_pins=[dict(x=x, y=y, d=D["ot_pin_d"], hole="round" if i == 0 else "slot",
-                      hole_d=D["ot_pin_hole_d"], slot_l=D["ot_pin_slot"], ang=D["ot_pin_ang"][i],
-                      len=D["ot_pin_len"]) for i, (x, y) in enumerate(D["ot_pin_xy"])],
+        em_reverse=D["em_reverse"],
+        em_ap=D["em_ap"], em_hole_d=D["em_hole_d"], em_pin_od=D["em_pin_od"], em_pin_len=D["em_pin_len"],
+        em_holes=[dict(i=h["i"], kind=h["kind"], x=h["x"], y=h["y"], ang=h["ang"],
+                       hole="slot" if h["slot"] else "round", hole_d=h["hole_d"], slot_l=h["slot_l"],
+                       pin=h["pin"], aperture=D["em_ap"]) for h in D["em_holes"]],
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

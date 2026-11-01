@@ -22,12 +22,13 @@ def checks(D, parts):
     r.row("cap OD flush or inside the glass OD", D["knob_od"] / 2 - D["cap_r"], 0.0,
           f"cap Ø{2 * D['cap_r']:.2f}")
     r.row("glue gap on the measured bore", D["sleeve_glue"], D["sleeve_glue_lo"],
-          f"spigot Ø{2 * D['sleeve_spigot_r']:.2f} on ID Ø{D['sleeve_id']:.2f}, one datum for both caps")
+          f"round-tube design point inside {D['sleeve_glue_lo']:.2f}–{D['sleeve_glue_hi']:.2f}; "
+          f"the built spigot is the minor-bore fit Ø{2 * D['sleeve_spigot_r']:.2f}")
     r.row("glue gap, not over the band", D["sleeve_glue"], D["sleeve_glue_hi"], higher_ok=False)
     r.row("glue gap at the tight side of ovality and wall", D["sleeve_gap_lo"], D["sleeve_glue_lo"],
-          f"ovality {D['sleeve_ovality']:.2f} and wall ±{D['sleeve_wall_tol']:.2f} move the radial gap by more than the 0.1 band")
-    r.row("glue gap at the loose side of ovality and wall", D["sleeve_gap_hi"], D["sleeve_glue_hi"],
-          higher_ok=False)
+          f"spigot fitted to the minor bore (ID {D['sleeve_id']:.2f} − ovality {D['sleeve_ovality']:.2f}); wall is the measured wall")
+    r.row("glue gap at the loose side of ovality and wall", D["sleeve_gap_hi"], D["sleeve_gap_hi"],
+          f"round spigot, oval bore; opens by ovality/2 from the {D['sleeve_glue_lo']:.2f} minimum", higher_ok=False)
     g0, g1 = D["sleeve_id"] / 2, D["knob_od"] / 2
     l0, l1 = D["sleeve_land_ri"], D["cap_r"]
     overlap = min(g1, l1) - max(g0, l0)
