@@ -32,7 +32,7 @@ def sym_def(name, pins, lib="knob", ref="U", power=False):
     out.append("  )"); out.append("  (embedded_fonts no)"); out.append(")")
     return "\n".join(out), pos, h, w
 
-def write(path, title, project, comps, rev="", comment=""):
+def write(path, title, project, comps, rev="", comment="", paper="A3"):
     """comps: [dict(ref, sym, pins=[(num,name,etype,side)], value, footprint, nets={num: net or None(NC)}, fields={}, bom=True)]"""
     root = uid(project, "root")
     libs, placed, labels, ncs = {}, [], [], []
@@ -65,7 +65,7 @@ def write(path, title, project, comps, rev="", comment=""):
                 ang, just = (180, "right") if side == "L" else (0, "left")
                 labels.append(f'(global_label {_q(n)} (shape passive) (at {sx:.2f} {sy:.2f} {ang}) (fields_autoplaced yes) (effects (font (size 1.0 1.0)) (justify {just})) (uuid {_q(uid(project, c["ref"], "lbl", num))})'
                               f' (property "Intersheetrefs" "${{INTERSHEET_REFS}}" (at {sx:.2f} {sy:.2f} 0) (effects (font (size 1.0 1.0)) (hide yes))))')
-    hdr = [f'(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")', f'  (uuid {_q(root)})', '  (paper "A3")',
+    hdr = [f'(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")', f'  (uuid {_q(root)})', f'  (paper {_q(paper)})',
            f'  (title_block (title {_q(title)}) (rev {_q(rev)}) (comment 1 {_q(comment)}))', '  (lib_symbols']
     body = hdr + ["\n".join("    " + l for l in libs[k][0].replace('(symbol "knob:', '(symbol "knob:').split("\n")) for k in libs] + ["  )"]
     body += placed + labels + ncs + ['(sheet_instances (path "/" (page "1")))', "(embedded_fonts no)", ")"]
