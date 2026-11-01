@@ -13,6 +13,7 @@ P = dict(
     adapter_fps={"J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0), "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", -2.55, -5.2, 90)},   # [K] KiCad screen-adapter v0.4 (U3/R1/R2 removed)
     adapter_env={"FPC_14P_0.5mm_Top": (10.6, 3.6, 1.0), "QFN-20_3x3": (3.0, 3.0, 0.75), "SOT-23-6_TMAG5273": (1.6, 2.9, 1.45), "C_0402": (1.0, 0.5, 0.5), "R_0402": (1.0, 0.5, 0.35)},   # [A] envelopes
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
+    pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side
     hall_z=0.65,   # [A] TMAG5273 element above the adapter top
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     hv_adc_bits=12,   # [A] MCU ADC

@@ -52,7 +52,8 @@ def _thrust_blank(D):
     """Printed filler in the C20–C22/U20 sector. A closed cageless ring cannot skip that arc."""
     a0, a1 = D["ot_keep_ang"]
     rb = D["ot_ball_d"] / 2
-    return sector(D["ot_r"] - rb, D["ot_r"] + rb, (a1 - a0) / 2, D["ot_z"] - rb + 0.15, D["ot_ball_d"] - 0.3, (a0 + a1) / 2)
+    g = D["ot_blank_clear"]
+    return sector(D["ot_r"] - rb, D["ot_r"] + rb, (a1 - a0) / 2, D["ot_z"] - rb + g, D["ot_ball_d"] - 2 * g, (a0 + a1) / 2)
 
 def build(D):
     pt, ro, mx = D["plate_t"], D["r_out"], D["offset"]
@@ -93,7 +94,7 @@ def build(D):
     fl = _thrust_track(D)
     if fl is not None: c += fl
     blank = _thrust_blank(D)
-    out = {"base cradle": c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + 0.4), -0.01, 40.01),
+    out = {"base cradle": c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"]), -0.01, D["z_top"]),
            "outer thrust blank": blank}
     ruby = set(D["ot_ruby_idx"])
     load, gems = [], []

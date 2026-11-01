@@ -27,3 +27,5 @@ with the axis drawn in red.
 | `full-2026-11-01-iso-above.png` | Quarter cut-away from above |
 | `full-2026-11-01-iso-below.png` | Quarter cut-away from below |
 | `full-2026-11-01-exploded.png` | Exploded along Z |
+
+Exports (STEP, STL, USDZ) are in `exports/`. USDZ is metres, Y up, one material per part. Feature sizes that used to be literals in the part solids (cap bosses, gear web, panel outline, thrust-blank clearance, Hall lead, 0402 body) now live in the `params.py` files. Boolean cuts that run a few hundredths of a millimetre past a face, so two solids join, are construction slop and stay in the part code.

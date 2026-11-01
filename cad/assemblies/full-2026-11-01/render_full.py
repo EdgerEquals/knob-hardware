@@ -49,11 +49,11 @@ def load_joystick():
 
 def faceplate_panel(D, J):
     """10HP x 3U plate at this branch's faceplate. Knob hole and the joystick opening."""
-    w, h, t = 10 * 5.08 - 0.30, 128.5, D["faceplate_t"]
+    w, h, t = D["hp"] * D["hp_pitch"] - D["hp_gap"], D["panel_h"], D["faceplate_t"]
     z0, z1 = D["faceplate_z_back"], D["faceplate_z"]
     y1 = D["axis_by"]
     p = Pos(0, y1 - h / 2, z0) * Box(w, h, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    p -= Pos(0, 0, z0 - 1) * Cylinder(D["knob_od"] / 2 + 0.4, t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    p -= Pos(0, 0, z0 - 1) * Cylinder(D["knob_od"] / 2 + D["knob_hole_clear"], t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
     hw, hh = J["hole_hw"], J["hole_hh"]
     p -= Pos(0, J["place_y"], z0 - 1) * Box(2 * hw, 2 * hh, t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return p

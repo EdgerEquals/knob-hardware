@@ -13,7 +13,7 @@ def idler(D):
     g = (g + hub) - cyl(D["idler_bore"] / 2, D["idler_floor"], D["h_pin1"] - D["idler_floor"])
     # underside of the tooth tips cleared for the Ø1.5 thrust balls, which sit just under this band
     tip = D["d_pin_tip"] / 2
-    g -= cyl(tip + 0.05, D["h_pin0"] - 0.02, 0.55) - cyl(tip - 0.9, D["h_pin0"] - 0.04, 0.6)
+    g -= cyl(tip + 0.05, D["h_pin0"] - 0.02, 0.55) - cyl(tip - D["fg_tip_relief"], D["h_pin0"] - 0.04, 0.6)
     return g
 
 def compound_gear(D):
@@ -22,13 +22,13 @@ def compound_gear(D):
     Dm = dict(D); Dm["module"] = m
     face, z1 = D["fg_face"], D["fg_z_top"]
     zb = z1 - face
-    root_r = max((z - 2.5) * m / 2, D["pin_d"])
-    hub_r = D["pin_d"] / 2 + 0.9
-    web_t = 0.8   # [A]
+    root_r = max((z - 2 * D["spur_dedendum"]) * m / 2, D["pin_d"])
+    hub_r = D["pin_d"] / 2 + D["fg_hub_wall"]
+    web_t = D["fg_web"]
     web_z = zb + (face - web_t) / 2
     g = ext_gear(Dm, z, zb, face, dthick=-D["brass_backlash"] / 2, addendum=D["spur_addendum"], dedendum=D["spur_dedendum"])
-    g -= cyl(root_r - 0.3, zb - 0.02, face + 0.04) - cyl(hub_r, zb - 0.04, face + 0.08)
-    g += cyl(root_r - 0.2, web_z, web_t) - cyl(hub_r - 0.01, web_z - 0.02, web_t + 0.04)
+    g -= cyl(root_r - D["fg_web_pocket"], zb - 0.02, face + 0.04) - cyl(hub_r, zb - 0.04, face + 0.08)
+    g += cyl(root_r - D["fg_web_land"], web_z, web_t) - cyl(hub_r - 0.01, web_z - 0.02, web_t + 0.04)
     g -= cyl(D["pin_d"] / 2 + 0.05, zb - 0.05, face + 0.1)
     hub_h = zb - D["fg_z_bot"]
     if hub_h > 0.05:
@@ -47,7 +47,7 @@ def build(D):
         out[f"idler pinion {i}"] = Pos(x, y, 0) * Rot(0, 0, ring_phase(D, a)) * idler(D)
         root_r = D["z_enc_pinion"] * D["hb_mt"] / 2 - D["hb_dedendum"] * D["hb_mn"]
         out[f"idler pinion {i} cap"] = Pos(x, y, 0) * fresnel_cap(
-            2 * (root_r - 0.25), D["pin_head"][0] + 2 * D["cap_fit_gap"], D["h_pin1"] + D["cap_seat_gap"],
+            2 * (root_r - D["cap_root_inset"]), D["pin_head"][0] + 2 * D["cap_fit_gap"], D["h_pin1"] + D["cap_seat_gap"],
             D["cap_t"], D["cap_rings"], D["cap_step_h"], D["cap_step_w"])
         pin = cyl(D["pin_d"] / 2, 0, D["pin_z1"] - ht, x, y) + cyl(hd / 2, D["pin_z1"] - ht, ht, x, y)
         if i - 1 == D["fg_idler"]:

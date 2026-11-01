@@ -49,6 +49,7 @@ P = dict(
     cap_rings=3,   # [A]
     cap_fit_gap=0.04,   # [A] radial press clearance in the model (the real part is a press or a snap)
     cap_seat_gap=0.02,   # [A] axial seat gap in the model so the cap is not a clash with its gear
+    cap_root_inset=0.25,   # [A] cap outside diameter sits this far inside the tooth root
     spur_tooth_min=0.30,   # [A] short-feature floor for those catalogue-module teeth (MJF can form ~0.3 mm in XY; 0.5 is the preferred wall)
     enc_ang=270.0,   # [K] encoder pinion / H2 angle (90 deg from the motor)
     idler2_from_enc=-120.0,   # [A] idler 2 = encoder angle - 120 = 150 deg
@@ -96,6 +97,7 @@ P = dict(
     ha_mag_edge=0.5,
     ha_pitch=12.0,
     ha_sens_h=1.12,
+    ha_body=(1.3, 2.92),   # [S] DRV5055 body, used only when hall_layout is not vernier
     ha_gap=1.2,
     ha_arm=(4.4, 1.5, 3.0, 3.0),
     ha_win_clear=0.5,
@@ -132,7 +134,7 @@ P = dict(
     # v0.16b [Ed]: the MIDDLE row sensor is a 3D TMAG5273 (I2C; reads Bx/By/Bz of the middle magnet -> dial angle cross-check
     # in 3D); the other four stay TMAG5253 linear. Keep the 2.5 pitch. SOT-23-6 (DBV) is much taller than the X2SON, so the
     # magnet bar sits at max(5253 top + hv_gap, 5273 top + hv_gap_mid).
-    hv_mid=dict(idx=2, part="TMAG5273A2 (TI) SOT-23-6 DBV", l=2.9, w=1.6, lead_w=2.8, h=1.45, elem_z=0.65, range_mt=133.0),   # [S] body l×w, lead span, max height; elem_z = Hall element above the PCB [A]; A2 ±133/±266 mT (A1 ±40/±80 would saturate: Bz 84 mT at 1.10)
+    hv_mid=dict(idx=2, part="TMAG5273A2 (TI) SOT-23-6 DBV", l=2.9, w=1.6, lead_w=2.8, h=1.45, elem_z=0.65, range_mt=133.0, lead_h=0.45, lead_inset=0.2),   # [S] body l×w, lead span, max height; elem_z = Hall element above the PCB [A]; lead_h / lead_inset = gull-wing proxy; A2 ±133/±266 mT (A1 ±40/±80 would saturate: Bz 84 mT at 1.10)
     hv_gap_mid=0.3,   # [A] TMAG5273 package top -> magnet face (min air gap; dial lift is stopped at 0.3 by the adapter board)
     # ---- v0.16 dial mechanics [Ed]: fan arm off the dial hub, top-loaded spring-ball detents latching at ±det_deg on the fan
     # wings, a Ø1 ball track under each detent, two tangential extension springs centring the dial, tiny magnet end cushions ----
@@ -181,6 +183,8 @@ P = dict(
     ot_ruby_d=2.0,   # [Ed] ruby diameter (2.0 carries load; set equal to the spacer to accent a spacer)
     ot_seat_gap=0.05,   # [A] groove radius over the load-ball radius
     ot_land_min=1.0,   # [Ed] clear resin under the bottom track (groove bottom to the PCB front). The laser comes up through it; not a metal insert.
+    ot_blank_clear=0.15,   # [A] keep-out blank stays this far off the ball, top and bottom
+    ot_track_extra=0.4,   # [A] bottom track annulus past the groove, each side
     ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
     ot_keep_ang=(124.0, 137.0),   # [Ed] C20–C22 / U20. A cageless ring cannot skip this; a printed blank fills it
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out

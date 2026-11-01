@@ -21,7 +21,8 @@ def build(D):
     b -= cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"])
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
-        b -= Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + 0.3, M["term_w"] + 0.3, t + 2, align=A)
+        c = D["pcb_slot_clear"]
+        b -= Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + c, M["term_w"] + c, t + 2, align=A)
     K = D["pcb_kicad"]
     for h in K.get("holes", []): b -= cyl(h["d"] / 2, -t - 1, t + 2, h["x"], h["y"])               # M1 relief, joystick springs / pins
     for sl in K.get("slots", []):                                                                       # joystick FPC slot (oval)
@@ -34,7 +35,8 @@ def build(D):
     else:
         pts = [(D["ha_r_m"] * math.cos(math.radians(a)), D["ha_r_m"] * math.sin(math.radians(a)), a) for a in D["ha_sens_angs"]]
     for x, y, a in pts:
-        comps.append(Pos(x, y, -t - 0.5) * Rot(0, 0, a) * Box(0.5, 1.0, 0.5, align=A))
+        cl, cw, ch = D["adapter_env"]["C_0402"]
+        comps.append(Pos(x, y, -t - ch) * Rot(0, 0, a) * Box(cw, cl, ch, align=A))
     for p in K.get("back_parts", []):
         if p["ref"].startswith("C1") and len(p["ref"]) == 3: continue   # C11..C15 = the Hall decouplers above
         comps.append(Pos(p["x"], p["y"], -t - p["h"]) * Box(p["w"], p["l"], p["h"], align=A))

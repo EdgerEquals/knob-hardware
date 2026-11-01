@@ -26,6 +26,10 @@ P = dict(
     enc_header_n=6,   # [S] EE-SX1321 has 6 pins; the header stands in for them on the riser
     enc_header_d=0.64,   # [A] header pin diameter
     enc_standoff_d=2.5,   # [A] printed standoff OD
+    enc_pip_r=1.35,   # [A] cap boss on the pinion top face
+    enc_pip_h=0.60,   # [A] that boss height
+    enc_tip_relief=0.9,   # [A] tooth-tip underside opened this far in, clear of the thrust balls
+    enc_pin_gap=0.05,   # [A] header and standoffs stop this short of the main PCB
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
