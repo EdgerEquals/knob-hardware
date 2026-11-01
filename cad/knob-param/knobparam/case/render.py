@@ -66,7 +66,7 @@ def _cut(shape, kind, screw=None):
     return shape
 
 
-def _shot(items, path, view, size, zoom, bounds=None, labels=None):
+def _shot(items, path, view, size, zoom, bounds=None):
     import pyvista as pv
     pv.OFF_SCREEN = True
     pl = pv.Plotter(off_screen=True, window_size=size)
@@ -79,17 +79,14 @@ def _shot(items, path, view, size, zoom, bounds=None, labels=None):
         faces = np.hstack([np.full((len(T), 1), 3), T]).ravel()
         pl.add_mesh(pv.PolyData(np.ascontiguousarray(P), faces), color=rgb, opacity=opacity,
                     smooth_shading=True, specular=0.25, ambient=0.35, diffuse=0.7)
-    if labels:
-        pl.add_point_labels([p for p, _ in labels], [t for _, t in labels],
-                            font_size=16, text_color="black", point_color="black", point_size=8,
-                            shape_color="white", shape_opacity=0.85, always_visible=True, bold=True)
     if not any_mesh:
         pl.close()
         return path
     pl.enable_parallel_projection()
     if bounds is not None and view == "xz":
-        # fit the cut, looking along +Y onto the section. A plain reset_camera widens the
-        # frame to the long axis and pulls the deep cover pocket into view.
+        # The window aspect matches the cut, so the frame is exactly the bounds:
+        # collar through the corner screw, pad through the faceplate, nothing cropped.
+        # Camera sits on +Y. With +Z up, world +X lands on the left of the image.
         x0, x1, _y0, _y1, z0, z1 = bounds
         cx, cz = (x0 + x1) / 2.0, (z0 + z1) / 2.0
         pl.camera.focal_point = (cx, 0.0, cz)
@@ -112,26 +109,23 @@ def _shot(items, path, view, size, zoom, bounds=None, labels=None):
 
 
 def _section_frame(D):
-    """Camera box and labels for the cut that holds one corner screw and the collar."""
+    """Camera box for the cut that holds one corner screw and the collar. Margin stays inside the frame."""
     sx, sy = D["corners"][0]
-    ang = math.atan2(sy, sx)
     rad = math.hypot(sx, sy)
-    # the cut rotates that screw onto +X; labels sit on the cut face, just toward the camera
-    y = 0.6
-    t = _ray_hit(ang, D["pcb_x1"], D["pcb_y0"], D["pcb_y1"])
-    labels = [
-        ((-D["collar_r"] + 8.0, y, (D["z_collar0"] + D["z_fp0"]) / 2), "collar"),
-        ((-4.0, y, D["lab_z0"] + 2.5), "labyrinth"),
-        ((t * 0.35, y, D["z_pcb_back"] - 3.5), "PCB"),
-        ((t * 0.55, y, D["z_ledge1"] + 2.2), "shell ledge"),
-        ((t - 4.0, y, D["z_flange_out"] - 3.0), "clamp rim"),
-        ((rad - 7.0, y, (D["z_thread0"] + D["z_tip"]) / 2 + 2.0), "printed thread"),
-        ((rad + 7.0, y, D["z_pad_out"] - 1.5), "PETG pad"),
-        ((rad + 7.0, y, (D["z_pad_out"] + D["z_rim"]) / 2), "M3 screw"),
-    ]
-    x0, x1 = -D["collar_r"] - 10.0, rad + D["screw_boss_r"] + 16.0
-    z0, z1 = D["z_pad_out"] - 5.0, D["z_fp1"] + 3.0
-    return (x0, x1, -2.0, 2.0, z0, z1), labels
+    x0, x1 = -D["collar_r"] - 14.0, rad + D["screw_boss_r"] + 18.0
+    z0, z1 = D["z_pad_out"] - 8.0, D["z_fp1"] + 6.0
+    return (x0, x1, -2.0, 2.0, z0, z1)
+
+
+def _fx(x, bounds):
+    """Image fraction from the left. Camera on +Y puts world +X on the left."""
+    x0, x1 = bounds[0], bounds[1]
+    return (x1 - x) / (x1 - x0)
+
+
+def _fz(z, bounds):
+    z0, z1 = bounds[4], bounds[5]
+    return (z - z0) / (z1 - z0)
 
 
 def _ray_hit(ang, x1, y0, y1):
@@ -163,6 +157,69 @@ def _items(D, shapes, tol):
         rgb, op = _colour(D, name)
         out.append((P, T, rgb, op))
     return out
+
+
+def _tag(ax, x, y, text, fs):
+    ax.text(x, y, text, transform=ax.transAxes, fontsize=fs, fontweight="bold", color="black",
+            ha="center", va="center", zorder=5,
+            bbox=dict(boxstyle="round,pad=0.18", facecolor="white", edgecolor="#222", alpha=0.92))
+
+
+def _annotate_section(ax, D, bounds, fs):
+    """Part names and the dimensions Ed asked to be able to read. fs is in points on the final figure."""
+    sx, sy = D["corners"][0]
+    ang = math.atan2(sy, sx)
+    rad = math.hypot(sx, sy)
+    t = _ray_hit(ang, D["pcb_x1"], D["pcb_y0"], D["pcb_y1"])
+    z_alt = D["knob_top_used"] - 16.45
+    _tag(ax, _fx(-D["collar_r"] + 2.0, bounds), _fz(D["z_fp0"] + 2.8, bounds), "collar", fs)
+    _tag(ax, _fx(-14.0, bounds), _fz(D["lab_z0"], bounds), "labyrinth", fs)
+    _tag(ax, _fx(-8.0, bounds), _fz(D["z_pcb_back"] - 1.6, bounds), "PCB", fs)
+    _tag(ax, _fx(t - 2.0, bounds), _fz(16.0, bounds), "shell ledge", fs)
+    _tag(ax, _fx(4.0, bounds), _fz(D["z_flange_out"] - 5.2, bounds), "clamp rim", fs)
+    _tag(ax, _fx(rad - 30.0, bounds), _fz(8.0, bounds), "printed thread", fs)
+    _tag(ax, _fx(rad - 1.0, bounds), _fz(D["z_pad_out"] - 5.2, bounds), "PETG pad", fs)
+    _tag(ax, _fx(rad - 2.0, bounds), _fz(22.0, bounds), "M3 screw", fs)
+    # faceplate front → PCB front
+    xd = _fx(t * 0.18, bounds)
+    ax.annotate("", xy=(xd, _fz(D["z_fp1"], bounds)), xytext=(xd, _fz(0.0, bounds)),
+                xycoords=ax.transAxes, textcoords=ax.transAxes,
+                arrowprops=dict(arrowstyle="<->", color="#111", lw=1.4))
+    _tag(ax, xd + 0.055, _fz(D["z_fp1"] * 0.62, bounds), f"{D['fp_to_pcb']:.2f} mm\nfaceplate to PCB", fs)
+    _tag(ax, _fx(rad - 12.0, bounds), _fz(D["z_pcb_back"] - 2.4, bounds),
+         f"{D['cover_skin']:.2f} mm PETG\nunder the head", fs)
+    _tag(ax, 0.50, 0.97,
+         f"knob_proud {D['knob_proud']:.2f} mm  →  plate {D['z_fp1']:.2f} mm"
+         f"     at 16.45 mm proud the plate would be {z_alt:.2f} mm", fs)
+
+
+def _compose_preview(section, iso, out, D, bounds, footer):
+    """Section across the full sheet, labels drawn here so they stay at least 14 px."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+    dpi = 120
+    fs = 16   # 16 pt at 120 dpi = 27 px
+    fig = plt.figure(figsize=(18.5, 12.2), dpi=dpi)
+    fig.suptitle(f"Enclosure {D['case_rev']}  —  section, full width    {D['hp']} HP  {D['panel_w']:.2f} mm wide",
+                 fontsize=fs, fontweight="bold", x=0.01, ha="left")
+    ax = fig.add_axes((0.02, 0.30, 0.96, 0.62))
+    ax.imshow(plt.imread(section), aspect="equal")
+    ax.set_axis_off()
+    _annotate_section(ax, D, bounds, fs)
+    ax2 = fig.add_axes((0.62, 0.05, 0.36, 0.24))
+    ax2.imshow(plt.imread(iso))
+    ax2.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
+    ax2.set_axis_off()
+    handles = [Patch(facecolor=tuple(c / 255 for c in D["dye_rgb"]), label="shell, translucent 2577 C"),
+               Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
+               Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
+               Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 10642 screw")]
+    fig.legend(handles=handles, loc="lower left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.01, 0.02))
+    fig.text(0.01, 0.145, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
+    fig.savefig(out)
+    plt.close(fig)
 
 
 def _compose(paths, titles, out, D, footer):
@@ -235,30 +292,36 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
             cut_shapes.append((name, shape))
         items = _items(D, cut_shapes, 0.08 if key == "corner" else tol)
         p = os.path.join(tmp, key + ".png")
-        bounds, labels = (None, None)
+        bounds = None
         shot_size = size
         if key == "corner":
-            bounds, labels = _section_frame(D)
+            bounds = _section_frame(D)
             x0, x1, _y0, _y1, z0, z1 = bounds
-            h = 860
-            w = int(h * abs(x1 - x0) / max(abs(z1 - z0), 1.0))
-            shot_size = (min(w, 1800), h)
-        _shot(items, p, view, shot_size, zoom, bounds=bounds, labels=labels)
+            h = 1100
+            w = int(round(h * abs(x1 - x0) / max(abs(z1 - z0), 1.0)))
+            shot_size = (w, h)
+        _shot(items, p, view, shot_size, zoom, bounds=bounds)
         pngs.append(p)
         paths.append(p)
+    section_bounds = _section_frame(D) if any(s[0] == "corner" for s in shots) else None
     mass = case.volume * D["case_rho"]
     nf = sum(not r["ok"] for r in rows) if rows else 0
     nt = len(rows) if rows else 0
     nc = len(clashes or {})
+    z_alt = D["knob_top_used"] - 16.45
     footer = (f"{D['hp']} HP × 3U   {D['panel_w']:.2f} × {D['panel_h']:.1f} × {D['z_fp1'] - D['z_foot']:.2f} mm"
               f"    faceplate to PCB {D['fp_to_pcb']:.2f} mm    shell {case.volume / 1000:.1f} cm³  {mass:.1f} g\n"
-              f"knob top {D['knob_top_used']:.2f} ({D['knob_top_src']}) − proud {D['knob_proud']:.1f} → plate {D['z_fp1']:.2f}; "
-              f"rear stack {D['rear_stack']:.2f} + ratio {D['cover_clear_ratio']:.2f} → cover depth {D['cover_depth']:.2f}\n"
-              f"thread M{D['screw_d']:.0f} engagement {D['tap_len']:.2f} ({D['tap_len'] / D['screw_d']:.2f}×d)  "
-              f"boss wall {(D['screw_boss_r'] - D['screw_d'] / 2) / D['screw_d']:.2f}×d    checks {nt - nf}/{nt}  clashes {nc}")
+              f"knob top {D['knob_top_used']:.2f} ({D['knob_top_src']}) − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
+              f"    (at 16.45 mm proud the plate would be {z_alt:.2f})\n"
+              f"PETG under the head {D['cover_skin']:.2f} mm    "
+              f"width need {D['hp_need_w']:.2f} mm driven by the Ø{2 * D['screw_boss_r']:.0f} corner boss"
+              f"    checks {nt - nf}/{nt}  clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
     titles = [s[1] for s in shots]
-    _compose(pngs, titles, sheet, D, footer)
+    if preview and section_bounds is not None:
+        _compose_preview(pngs[0], pngs[1], sheet, D, section_bounds, footer)
+    else:
+        _compose(pngs, titles, sheet, D, footer)
     paths = [sheet]
     if full and not preview:
         qshots = []
