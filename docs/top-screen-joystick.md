@@ -37,15 +37,17 @@ up and down, and presses in.
 
 ## Switch shortlist (researched 1 Nov 2026; recheck prices and stock before ordering)
 
-| # | Part | Size W×D, body / stem top | Tilt force | Centre force | Travel tilt / centre | Life | Notes |
+| # | Part | Size W×D, body / stem top | Stem tilt force (switch spec) | Centre force | Travel stem tilt / centre | Life | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | **Alps SKRHADE010** (chosen) | 7.45×7.5, 1.85 / 5.0 | 1.2 ±0.69 N | 2.35 ±0.69 N | 0.25 / 0.15 mm | 1M per direction, 100 mΩ | Tactile in all 5 actions. Guide bosses. Ø3 stem, □1.95 keytop socket. Directions at 45°. LCSC C202415 |
 | 2 | Alps SKRHACE010 | same | 1.2 N | 2.35 N | 0.25 / 0.15 | 1M | As #1 without the bosses |
-| 3 | Alps SKRHABE010 | 7.35×7.5, 1.8 / 5.0 | 1.23 ±0.69 N | 2.35 ±0.69 N | 0.25 / 0.15 | 200k, 500 mΩ | Fallback with deep stock. LCSC C139794 |
-| 4 | E-Switch JS1400BFQ | 7.4×7.7 | ~1.57 N | ~3.53 N | 5° / 0.25 | 100k | Second source. Land pattern looks near-identical to SKRH (verify) |
+| 3 | Alps SKRHABE010 | 7.35×7.5, 1.8 / 5.0 | 1.23 ±0.69 N | 2.35 ±0.69 N | 0.25 / 0.15 | 200k, 500 mΩ | **Only approved alternate** (same footprint, deep stock). LCSC C139794 |
+| 4 | E-Switch JS1400BFQ | 7.4×7.7 | ~1.57 N | ~3.53 N | 5° / 0.25 | 100k | **No auto-substitute**: higher forces, land pattern unverified. Only with Ed's approval after a footprint check |
 | 5 | Korean Hroparts K1-1506SN-01 | 10×10 | ~1.57 N | ~2.94 N | n/s | 100k | LCSC C145910 |
 | 6 | C&K TPA511G | subminiature | 1.85 N | 4.0 N | 0.35 / 0.25 | 200k | Reported obsolete |
 
+- **Approved for the BOM:** SKRHADE010, with **SKRHABE010 as the only approved alternate**. JS1400BFQ is marked
+  "no auto-substitute" (PCBWay must not swap it in). The switch spec quotes "tilt" for the stem; the carrier itself only slides.
 - **Rejected:** Alps SKRV (NRND), SKQUCAA010 (snap-in, NRND), SKQUDBE010 (old), E-Switch JS5208 (12.4 mm
   body), Swiclick KAN0741A (50k life).
 - **Sources:** Alps product page and SKRH catalogue (tech.alpsalpine.com), E-Switch JS1400 datasheet, and LCSC
@@ -79,7 +81,8 @@ Model: `cad/joystick-param/` (run `build.py --render`). Image: `cad/assemblies/j
 - **FPC:** 8 wide [A] at local x 15. The carrier slot is x 13.6–15.6 at ±4.75. The base notch and main-PCB slot are x 13.0–16.2 at ±5.35.
 
 **Main-PCB requirements** (not yet in the main KiCad project):
-- J2: a 2×3 2.54 female socket (8.5 tall) at local (5.6, 0).
+- J2: a 2×3 2.54 female socket (8.5 tall) at local (5.6, 0): FG FG-PM2.54-2-03P-H8.5 (LCSC C42391433; alt SHOU HAN
+  PM2.54-2x3PZZ-H8.5, C54876739), main PCB v0.11.
 - 4 × Ø3.4 spring holes at (±10.8, ±6.6).
 - 4 × Ø1.3 base-pin holes at (±6, ±8.5).
 - An FPC slot 3.2×10.7 at local x 13.0–16.2.

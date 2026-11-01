@@ -104,7 +104,7 @@ for i in range(14):
 write("Pads_2x14_P2.00_SMD", L)
 # ---- J2: 2x3 2.54 female socket for the joystick daughterboard (docs/top-screen-joystick.md v0.1) ----
 # pads mirror the daughterboard J1 (joystick-daughterboard/make_project.py: header centre CAD x 5.6, pin 1 at KiCad (-1.27, -2.54))
-L = head("PinSocket_2x03_P2.54_Vertical_8.5mm", "2x3 2.54 mm female socket, 8.5 mm tall, THT (Ø1.0 drill / Ø1.7 pad); joystick daughterboard J1 plugs in from the top = the riser. Pin 1 UP 2 CENTER 3 RIGHT 4 LEFT 5 GND 6 DOWN",
+L = head("PinSocket_2x03_P2.54_Vertical_8.5mm", "2x3 2.54 mm female socket, 8.5 mm tall, THT (Ø1.0 drill / Ø1.7 pad; fits FG FG-PM2.54-2-03P-H8.5, LCSC C42391433: 0.64 sq pins, datasheet hole Ø1.02 +-0.05, body 5.0 wide); joystick daughterboard J1 plugs in from the top = the riser. Pin 1 UP 2 CENTER 3 RIGHT 4 LEFT 5 GND 6 DOWN",
          attr="through_hole", ref_y=-4.6, val_y=4.6)
 L += [rect(-2.54, -3.81, 2.54, 3.81, "F.Fab", 0.1), rect(-2.79, -4.06, 2.79, 4.06, "F.CrtYd")]
 for i in range(6):

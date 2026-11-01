@@ -8,7 +8,7 @@ magnets N/S/N/S/N). v0.16 was: no adapter cup (centre bolt clamps the stack), sc
 two tangential centring springs, top-loaded spring-ball detents at ±5° over a Ø1 ball track, magnet cushions at
 ±5.5°, 716 feel motor in an open saddle at 102°, dial TMAG5273 reading a diametric ring in the knob
 (relative knob-vs-dial angle), toothless encoder disc, enlarged rod VBUS pad (no washer).
-54/54 gap checks PASS, 1 known clash (PCB / motor). Output: `cad/assemblies/knob-stack-v0.16b/`
+54/54 gap checks PASS, no known clashes (`check.json`, proxy and `--full`). Output: `cad/assemblies/knob-stack-v0.16b/`
 (clean + opposite sections, plan view, check.json). Design notes: `docs/design-notes.md`.
 
 ## Branch model
@@ -51,7 +51,7 @@ cad/knob-param/
     control_dial/     dial tube + lip, screen, carrier cartridge + FPC strap, dial TMAG5273 board, Hall arm + fan + lever, thrust balls
     base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers, 716 feel motor + open saddle,
                       mech (detents, ball track, cushion stops, centring springs)
-    under_pcb/        encoder disc (slotted rim, no teeth), EE-SX1131
+    under_pcb/        encoder disc (slotted rim, no teeth), EE-SX1321
     electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, rod VBUS pad, connectors;
                       kicad/ = KiCad projects (knob-main-pcb, screen-adapter), footprints, footprint generators
 ```
@@ -125,11 +125,14 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`): main_knob 3, control_dial 13, base_drive 8, under_pcb 2, electronics 1, plus 15 cross rows (42 total).
-* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (PCB / motor).
-* v0.16: 41/42 PASS. The one known FAIL is an open design item, not a harness bug:
-  * control_dial: dial lip wall far side 0.36 < 0.4 (`--set cof_bend=0.26` → 0.405 PASS)
-* v0.15d also failed "geared feel motor depth 25.8 > 25" behind the PCB. v0.16 removes that check: the 716 is no longer under the board.
+* **Local** (`<sub>/checks.py`): main_knob 3, control_dial 15, base_drive 10, under_pcb 2, electronics 2, plus 22 cross
+  rows (`assembly`) = **54 total**. These counts come from `cad/assemblies/knob-stack-v0.16b/check.json` (`rows[].owner`);
+  re-count from that file whenever checks are added or removed, rather than editing numbers by hand.
+* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.16b).
+* **v0.16b: 54/54 PASS, 0 clashes**, with the proxy board and with `--full` (real KiCad STEP, main PCB v0.11). The old
+  PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
+* History: v0.16 had 41/42 (dial lip wall far side 0.36 < 0.4, fixed by the closed 0.8 lip); v0.15d also failed
+  "geared feel motor depth 25.8 > 25" (removed in v0.16: the 716 is no longer under the board).
 * A sub PR must not turn any other row red; the assembly agent re-runs everything before merging.
 
 ## KiCad
@@ -142,7 +145,7 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
   (`apt install kicad` or the KiCad PPA). After regenerating the STEP, commit it.
 * `kicad/*/knob_main_pcb.py` and `screen_adapter.py` are legacy generators that need `cad/tools/sheet`;
   they are not used by the parametric build.
-* v0.16b boards (main PCB v0.10, screen adapter v0.4) are **generated**: `cad_constraints.json`
+* v0.16b boards (main PCB v0.11, screen adapter v0.4, joystick daughterboard v0.1) are **generated**: `cad_constraints.json`
   (`export_cad_constraints.py`, cadenv) -> `make_v016_footprints.py` -> `<board>/kicad/make_board.py`
   (`/usr/bin/python3`, pcbnew; one netlist -> schematic + board, DRC schematic parity; main board
   `--route` = Freerouting 2.1.0 on Java 21, retried until 0 unconnected) -> `export_pcb_proxy.py`
@@ -153,5 +156,5 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 * Sections PNG: A-A on the left, iso quarter cut on the right, insets along the bottom; clashes are
   reported as text only (no red overlays). No GLB/USDZ.
-* Knob OD stays Ø39.5 [Ed].
+* Knob OD: the old Ø39.5 rule is relaxed [Ed]; it grows by the minimum the lip wall needs (Ø40.85 in v0.16b).
 * Bump `version` in `assembly/params.py` for a new release; outputs land in `cad/assemblies/knob-stack-<version>/`.

@@ -1,4 +1,4 @@
-"""under_pcb own params + derive (encoder pinion/shaft/bearings, big gear + slotted rim, EE-SX1131, back-panel depth).
+"""under_pcb own params + derive (encoder pinion/shaft/bearings, big gear + slotted rim, EE-SX1321, back-panel depth).
 The 716 feel motor is a base_drive part as of v0.16. Reads: interface + own + IMPORTS (electronics board outline)."""
 import math
 
@@ -7,7 +7,7 @@ P = dict(
     pcb_margin=0.5,   # [A] big gear tip to the board edge
     # ---- encoder take-off [A] ----
     enc_shaft_d=2.0,
-    sens=dict(body_x=5.0, body_y=4.0, body_h=4.0, slot_w=2.0, slot_d=2.8, axis_from_open=1.0, ap_w=0.3, ap_h=1.0, ap_pitch=0.8, term_w=1.0, term_t=0.2, term_h=1.0, term_pitch=1.4),   # [S] Omron EE-SX1131
+    sens=dict(body_x=5.1, body_y=4.0, body_h=4.0, slot_w=2.0, slot_d=2.8, axis_from_open=1.0, ap_w=0.3, ap_h=1.0, ap_pitch=0.8, term_w=1.0, term_t=0.2, term_h=1.0, term_pitch=1.4),   # [S] Omron EE-SX1321 datasheet p3 (2026-11-01; was EE-SX1131 5.0 wide): 1.55 arm + 2.0 slot + 1.55 arm, slot 2.8 deep, axis 1.0 below the open face, 2 apertures 0.3 x 1.0 along the slot, terminal pitch 1.4
     n_win=119,
     rim_t=1.2,
     rim_in=0.6,

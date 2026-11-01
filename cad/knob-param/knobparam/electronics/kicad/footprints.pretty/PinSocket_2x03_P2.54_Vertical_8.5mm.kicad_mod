@@ -1,7 +1,7 @@
 (footprint "PinSocket_2x03_P2.54_Vertical_8.5mm"
   (version 20241229) (generator "make_v016_footprints.py")
   (layer "F.Cu")
-  (descr "2x3 2.54 mm female socket, 8.5 mm tall, THT (Ø1.0 drill / Ø1.7 pad); joystick daughterboard J1 plugs in from the top = the riser. Pin 1 UP 2 CENTER 3 RIGHT 4 LEFT 5 GND 6 DOWN")
+  (descr "2x3 2.54 mm female socket, 8.5 mm tall, THT (Ø1.0 drill / Ø1.7 pad; fits FG FG-PM2.54-2-03P-H8.5, LCSC C42391433: 0.64 sq pins, datasheet hole Ø1.02 +-0.05, body 5.0 wide); joystick daughterboard J1 plugs in from the top = the riser. Pin 1 UP 2 CENTER 3 RIGHT 4 LEFT 5 GND 6 DOWN")
   (attr through_hole)
   (property "Reference" "REF**" (at 0 -4.60 0) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.08))))
   (property "Value" "PinSocket_2x03_P2.54_Vertical_8.5mm" (at 0 4.60 0) (layer "F.Fab") (effects (font (size 0.4 0.4) (thickness 0.06))))

@@ -27,7 +27,7 @@ GROUPS = [  # (legend, colour, match)
     ("encoder bearings + shaft", "#607d8b", lambda n: n.startswith(("encoder bearing", "encoder shaft"))),
     ("encoder pinion", "#ffa726", lambda n: n == "encoder pinion"),
     ("encoder disc + slotted rim (no teeth)", "#26a69a", lambda n: n.startswith("encoder disc")),
-    ("encoder sensor EE-SX1131", "#37474f", lambda n: n.startswith("encoder sensor")),
+    ("encoder sensor EE-SX1321", "#37474f", lambda n: n.startswith("encoder sensor")),
     ("idler pinions + pin 2", "#ff8a65", lambda n: n.startswith("idler")),
     ("feel motor + shaft [A]", "#00838f", lambda n: n.startswith("feel motor") and "saddle" not in n),
     ("feel motor open saddle (seat + strap) [A]", "#80deea", lambda n: n.startswith("feel motor saddle")),
@@ -215,7 +215,7 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
     insets = []
     if not preview:
         t = time.time()
-        # B-B: plane through H2 and the EE-SX1131 (radial from the dial axis through H2)
+        # B-B: plane through H2 and the EE-SX1321 (radial from the dial axis through H2)
         ex, ey = D["enc_xy"]; a = D["enc_ang"]; ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
         rs = D["enc_cd"] + D["sens_r"]; sx, sy = rs * ca, rs * sa
         zb0, zb1 = D["h_hub_bot"] - 0.3, 0.6
@@ -327,13 +327,13 @@ def compose(D, parts, rawA, rawI, insets, out, preview, clash_lines, gap_lines, 
     if insets:
         y0, hh = 0.195, 0.17
         if D["hall_layout"] == "vernier":
-            put([0.005, y0, 0.15, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1131, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True, fs=8)
+            put([0.005, y0, 0.15, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1321, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True, fs=8)
             put([0.162, y0, 0.20, hh], insets[1], f"C-C  Hall bar, radial at {D['ha_ang0']:g}° (~5x)", f"Arm down through the cradle slot; {D['hv_n']} × Ø{D['hv_mag'][0]:g}×{D['hv_mag'][1]:g} N52 " + "/".join("N" if p > 0 else "S" for p in D['hv_pol']) + f"\nover 4 × TMAG5253 X2SON + TMAG5273 (H3, 3D), magnets z {D['hv_z_mag0']:.2f}\n(element {D['hv_elem_gap']:.2f}); pitch {D['hv_pitch']:g}, r {D['hv_r'][0]:.1f}-{D['hv_r'][-1]:.1f}.", frame=True, fs=8)
             put([0.372, y0, 0.15, hh], insets[2], "D  45° cone race + seat (~17x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° line.\nSeat groove R{D['kb_seat_r']:g} (blue) × {D['kb_seat_depth']:g} deep in the\nDIAL cone, ±{D['kb_seat_w']:.2f} wide, centre on the 45° line.\nASSEMBLY: dial lip-down, grease the groove,\ndrop the {D['kb_n']} balls in (they sit + stay),\nlower the knob on axially, flip, fit.", frame=True, fs=7.5)
             put([0.53, y0, 0.25, hh], insets[4], "H  Hall vernier: plan at ±travel + field", f"Magnet arc +{D['hv_g']:.3f}°/mm, sensor arc -{D['hv_g']:.3f}°/mm (cross at r{D['hv_r_mid']:.1f}, θ=0);\ncrossing moves {1 / (2 * D['hv_g']):.2f} mm/deg -> end pair at ±{D['hv_cross_travel']:g}°.", frame=True, fs=8)
             put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['z_feel']}T into the {D['z_ring']}T ring\n(ratio {D['fm_ratio']:.2f}).", frame=True, fs=8)
         else:
-            put([0.005, y0, 0.20, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1131, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True)
+            put([0.005, y0, 0.20, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1321, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True)
             put([0.215, y0, 0.25, hh], insets[1], "C-C  Hall array (~6x)", f"{D['ha_n']} × Ø{D['ha_mag'][0]:g}×{D['ha_mag'][1]:g} N52 alternating over\n2 × DRV5055A3, gap {D['ha_gap']:.1f}.", frame=True)
         if D["hall_layout"] != "vernier":
           put([0.475, y0, 0.20, hh], insets[2], "D  top 45° cone race (~11x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° contact line\n(dial cone up-in, knob cone down-out).\nAssemble: dial lip-down, grease the ring in,\nlower the knob on axially, flip, fit.", frame=True)

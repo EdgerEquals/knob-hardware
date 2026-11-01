@@ -433,9 +433,7 @@
    "owner": "assembly"
   }
  ],
- "clashes": {
-  "PCB / motor": 4.241150082346223
- },
+ "clashes": {},
  "set": [],
  "sub": null
 }

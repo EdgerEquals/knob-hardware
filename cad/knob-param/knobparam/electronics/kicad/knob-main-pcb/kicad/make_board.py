@@ -22,12 +22,17 @@ v0.10 (2026-11-01, knob CAD v0.16, Ed):
     (+-6, +-8.5), FPC slot 3.2 x 10.7 at x 13.0-16.2; F.Cu 'no footprints' keep-out for the 31.2 x 18.2 base (J2 exempt).
     Carrier centre = board (25.25, 21.1).
   - J10 = 2x14 MCU-link test pads (PLACEHOLDER pin-out, design.py J10_PINS) until the MCU section is drawn.
+v0.11 (2026-11-01, Ed approved):
+  - U2 encoder sensor: Omron EE-SX1131 (discontinued, not at LCSC) -> EE-SX1321 (LCSC C469128). New footprint from the 1321
+    datasheet (make_eesx1321_footprint.py): pads at +-2.55 (was +-2.5), 1 A / 2+3 K / 4 E2 / 5 E1 / 6 C (1131 had 2 NC and the
+    detector column numbered the other way). R30 LED resistor 150R -> 220R (IF ~10 mA, inside the 1321 temperature derating).
+  - J2 = FG FG-PM2.54-2-03P-H8.5 (LCSC C42391433), 2x3 2.54 female, 8.5 tall; 10k resistors -> YAGEO RC0402FR-0710KL (C60490).
 Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from the panel top (same as the layout)."""
 import os, sys, json, math, subprocess, pcbnew
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, "..", ".."))
 import design, sch_gen
 
-NAME, PCB_VERSION = "knob-main-pcb", "v0.10"
+NAME, PCB_VERSION = "knob-main-pcb", "v0.11"
 ORIGIN = (100.0, 100.0)
 PANEL_W, PANEL_H = 50.5, 128.5        # [L] 10HP x 3U
 RAIL, EDGE_CLEAR, RAIL_CLEAR, CORNER_R = 10.0, 0.75, 0.5, 1.0

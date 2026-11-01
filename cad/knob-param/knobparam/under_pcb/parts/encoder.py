@@ -1,5 +1,5 @@
 """Encoder take-off at H2: F682ZZ x2, Ø2 shaft, 14T pinion in the bottom ring, plain disc + slotted rim behind the PCB,
-Omron EE-SX1131 on the PCB back. All built in the encoder frame, moved to enc_xy."""
+Omron EE-SX1321 on the PCB back. All built in the encoder frame, moved to enc_xy."""
 import math
 from build123d import *
 from ...common.util import A, cyl, tube, ext_gear, ring_phase
@@ -16,7 +16,7 @@ def pinion(D):
 def wheel(D):
     hd, hl = D["big_hub"]; zb, zt = D["h_big_bot"], D["h_big_top"]
     # v0.16 [Ed]: plain disc, no teeth (nothing ever meshed with the old big-gear teeth: the wheel is driven by its own
-    # shaft from the 14T pinion in the bottom ring); the vertical slotted rim is all the EE-SX1131 needs
+    # shaft from the 14T pinion in the bottom ring); the vertical slotted rim is all the EE-SX1321 needs
     g = cyl(D["disc_r"], zb, D["big_face"]) + cyl(hd / 2, zb - hl, hl)
     g -= cyl(D["enc_shaft_d"] / 2, zb - hl, D["big_face"] + hl)
     h = zt - zb + 0.2
@@ -46,4 +46,4 @@ def build(D):
             "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["h_b2_bot"], D["h_pin1"] - D["h_b2_bot"]),
             "encoder bearing 2 (back panel)": T * bearing(D, D["h_b2_top"]),
             "encoder disc + slotted rim": T * wheel(D),
-            "encoder sensor EE-SX1131": T * sensor(D)}
+            "encoder sensor EE-SX1321": T * sensor(D)}

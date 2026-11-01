@@ -45,15 +45,21 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
   (ratio 3.41). It is held by an **open saddle clamp**: an inboard seat (2 bands + spine onto a cradle rib) and an
   outboard strap (2 × 1.2 mm C-bands, ears + M1 screw). Most of the can stays open for airflow.
 - **Position encoder:** a 14T pinion in the bottom ring drives a shaft (2 × F682ZZ) through the PCB to a plain
-  disc with a vertical slotted rim, read by an Omron EE-SX1131 on the PCB back. The old big-gear rim teeth were
-  removed in v0.16 because nothing meshed with them.
+  disc with a vertical slotted rim, read by an Omron **EE-SX1321** on the PCB back (main PCB v0.11, 1 Nov 2026; it
+  replaces the discontinued EE-SX1131). The old big-gear rim teeth were removed in v0.16 because nothing meshed with them.
+  - EE-SX1321 (datasheet): body 5.1 × 4 × 4, slot 2.0 ±0.2 wide and 2.8 deep, optical axis 1.0 below the open face, two
+    0.3 × 1.0 detector apertures 0.8 apart along the slot. Pins: 1 anode, 2 + 3 cathode, 4 E2, 5 E1, 6 collector
+    (common). Net map: 1 ENC_LED (220R to 3V3, IF ≈ 10 mA), 2/3 GND, 6 +3V3, 5 ENC_A, 4 ENC_B (10k loads to GND).
+  - Fit: the 1.2 rim sits in the 2.0 slot with 0.4 a side (0.3 at the slot's −0.2 tolerance), its tip 0.6 short of the
+    slot floor; 119 windows at 1.067 pitch put the 0.8 aperture spacing at 3/4 period (quadrature). The disc face
+    clears the sensor's open face by 0.30. The model uses the 1321 body (`under_pcb` `sens.body_x` 5.1).
 
 ## Stack (centre)
 - **Fixed centre:** a brass 5×3 stock tube on the dial axis, knurled at the dial end. A printed square flange
   is bonded to the PCB. An M1.6 rod with a sleeve and nuts down the middle is the **centre bolt**: it clamps the
   stack (adapter board → tube → PCB).
 - **Rod VBUS pad (v0.16):** the bottom nut clamps straight onto an enlarged B.Cu pad, Ø11.48 sized from the
-  clearances in the model. There is no washer. In KiCad (main PCB v0.10, H1 B.Cu ring).
+  clearances in the model. There is no washer. In KiCad (main PCB v0.11, H1 B.Cu ring).
 - **Dial-centre link:** one PTFE wire down the tube carries power and data (single-wire, LIN/1-Wire style),
   with the brass tube as the ground return. A CH32V003 on the adapter board behind the centre screen splits
   them. No slip ring, no wireless.
@@ -111,10 +117,11 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
   (`electronics/kicad/knob-main-pcb/pcb_proxy.json`). `build.py` and `build.py --full` both give 54/54 PASS.
 
 ## Open items
-- **KiCad (1 Nov 2026):** main PCB v0.10 and screen adapter v0.4 match v0.16b (Hall row, rod pad, 716 lead pads +
-  DRV8837, joystick J2/holes/slot/keep-out; U3 removed from the adapter). Still open: the MCU section (J10 is a
-  placeholder test-pad field with an assumed pin-out), the 1220 driver, the EE-SX1131 (discontinued, no LCSC), the
-  J2 socket part number, and the adapter's display-tail wiring / VCC regulator (adapter is placed, not routed).
+- **KiCad (1 Nov 2026):** main PCB v0.11 and screen adapter v0.4 match v0.16b (Hall row, rod pad, 716 lead pads +
+  DRV8837, joystick J2/holes/slot/keep-out; U3 removed from the adapter). Main PCB v0.11 is **READY TO QUOTE**: U2 is
+  now the EE-SX1321 (LCSC C469128) and J2 the FG FG-PM2.54-2-03P-H8.5 (LCSC C42391433); routed, ERC 0 / DRC 0, every
+  BOM line has an LCSC part. Still open: the MCU section (J10 is a placeholder test-pad field with an assumed pin-out),
+  the 1220 driver, and the adapter's display-tail wiring / VCC regulator (adapter is placed, not routed).
 - TMAG5273 Hall-element height (0.65 above the PCB) is assumed. Check it against the TI drawing.
 - The ±5.5° travel was an interface change (from ±10°) and needs confirming.
 - Inside the closed lip, about 0.9 mm of the bend pocket shows at −X.
@@ -124,5 +131,5 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
 
 ## Top-screen joystick v0.1 (1 Nov 2026)
 See `docs/top-screen-joystick.md` and `cad/joystick-param/`. The carrier centre is board (25.25, 21.1) and knob frame (0, 31.8).
-The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB v0.10 carries the J2 socket,
+The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB v0.11 carries the J2 socket (FG FG-PM2.54-2-03P-H8.5),
 the spring/pin holes, the FPC slot and the base keep-out (listed in that doc).

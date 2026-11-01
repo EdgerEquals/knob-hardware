@@ -63,13 +63,13 @@ if __name__ == "__main__":
         sh.note("front", x0 + 2, -hy - 44, "H2 encoder bearing F682ZZ press fit from the FRONT through the base cradle floor [A]", 6.5)
     sh.note("front", x0 + 2, -hy - 34, "H1 on the dial axis [L]: TubeRodClamp_Main_M1.6, NPTH Ø1.8; F.Cu ring Ø3.4–Ø6.4 GND (tube soldered),", 6.5)
     sh.note("front", x0 + 2, -hy - 36.5, "    B.Cu ring Ø2.4–Ø4.4 VBUS_DATA under the M1.6 washer/nut [A]", 6.5)
-    sh.note("front", x0 + 2, -hy - 46.5, "U2 Omron EE-SX1131 encoder sensor on B.Cu, 20.20 below H2 (36.20 below the dial axis), slot along x", 6.5)
+    sh.note("front", x0 + 2, -hy - 46.5, "U2 Omron EE-SX1321 encoder sensor on B.Cu, 20.20 below H2 (36.20 below the dial axis), slot along x", 6.5)
     sh.note("front", x0 + 2, -hy - 39, "M1 Motor_1220_Tabs: 2 plated slots 0.7 × 1.6 [A], pitch 6.0", 6.5)
     sh.note("front", x0 + 2, -hy - 41.5, "v0.10: motor offset 10.75 = 12T pinion on the knob's 31T hub gear, m0.5 (v0.9: 11.0); H2 14.75 = 73T ring − 14T (v0.9: 16.0)", 6.5)
     sh.hdim("side", -zf, -zb, -y1, -y1 - 4, f"{f['thickness']:.1f} board")
     sh.note("side", -zf - 1, -y1 - 11, f"front (F) face at {Z_PCB_FRONT:.1f} behind panel front [L]", 6.5, ha="center")
     title = "Knob main PCB — v0.10, 2026-10-31"
-    sub = ["KiCad kicad/knob-main-pcb.kicad_pcb (STEP). v0.10: motor 10.75, H2 14.75, U2 EE-SX1131 on B; DRC 0.",
+    sub = ["KiCad kicad/knob-main-pcb.kicad_pcb (STEP). v0.10: motor 10.75, H2 14.75, U2 EE-SX1321 on B; DRC 0.",
            f"Board x {x0:.2f}–{x1:.2f}, y {y0:.1f}–{y1:.1f} from panel top-left. [L] layout v5, [A] assumed.",
            f"Third-angle projection · mm · STEP body {step_t:.2f} (KiCad omits copper+mask)"]
     sh.dxf(os.path.join(HERE, "knob-main-pcb.dxf"), [title] + sub)

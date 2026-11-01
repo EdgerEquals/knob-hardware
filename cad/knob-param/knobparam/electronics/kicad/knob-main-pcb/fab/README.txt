@@ -1,9 +1,9 @@
-knob-main-pcb v0.10 PCBWay pack, generated 2026-11-01 17:22 AWST by fab_export.py
-NOT READY TO ORDER (see below)
+knob-main-pcb v0.11 PCBWay pack, generated 2026-11-01 17:33 AWST by fab_export.py
+READY TO QUOTE
 
 {
   "board": "knob-main-pcb",
-  "rev": "v0.10",
+  "rev": "v0.11",
   "erc_messages": 0,
   "erc_errors": 0,
   "erc_warnings": 0,
@@ -13,10 +13,7 @@ NOT READY TO ORDER (see below)
   "bom_rows": 10,
   "cpl_parts": 22,
   "gerber_files": 14,
-  "bom_rows_without_lcsc": [
-    "J2",
-    "U2"
-  ]
+  "bom_rows_without_lcsc": []
 }
 
 Board: 2 layers, FR-4; thickness per the .kicad_pcb (main 1.6 mm, adapter 1.0 mm); HASL or ENIG; green mask, white silk [A].
