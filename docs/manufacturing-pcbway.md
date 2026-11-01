@@ -33,7 +33,7 @@
 - Joystick switch: Alps SKRHADE010 (C202415); **only approved alternate SKRHABE010** (C139794); E-Switch
   JS1400BFQ is **no auto-substitute**. The joystick carrier slides in-plane (it never tilts).
 - Joystick v0.4 does not edit the main PCB. It needs two hanxia HX PM2.54-1x3P ZC H11 sockets (C41427518) and
-  four M2×35+4 male-female standoff holes (XHHD DTTZ3033, LCSC C50377642) plus an ISO 4032 M2 nut on each stud under the board, listed in `docs/top-screen-joystick.md`. The v0.11 J2 8.5 mm 2×3 socket is the old riser.
+  four M2 male-female standoff holes plus an ISO 4032 M2 nut on each stud under the board. The catalog line is still XHHD DTTZ3033 (LCSC C50377642, M2×35+4); the derived riser is 23.45 mm, so that body does not fit. See `docs/top-screen-joystick.md`. The v0.11 J2 8.5 mm 2×3 socket is the old riser.
   The four M2 grub screws are heat-set inserts in the printed carrier, not holes in this board.
 - STEP files per printed part from the parametric model, with the material and process for each.
 - A purchased-parts BOM with quantities per kit.

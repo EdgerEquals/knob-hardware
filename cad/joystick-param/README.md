@@ -1,8 +1,8 @@
 # joystick-param — top-screen joystick sub-assembly (v0.4)
 
 Parametric build123d model of the top-screen 5-way joystick. An Alps SKRHADE010 sits on the carrier axis,
-on a daughterboard raised by four XHHD DTTZ3033 male-female M2×35+4 brass standoffs (LCSC C50377642)
-and two 1×3 headers. An ISO 4032 M2 nut on the 4 mm stud holds each standoff under the main PCB. A flat plate glued on that
+on a daughterboard raised by four male-female M2 standoffs and two 1×3 headers. The catalog
+standoff is still the XHHD DTTZ3033 (LCSC C50377642, M2×35+4). `knob_proud` derives a 23.45 mm riser, so that 35 mm body does not fit. An ISO 4032 M2 nut on the 4 mm stud holds each standoff under the main PCB. A flat plate glued on that
 board carries the four ball seats. The screen is glued to a separate bezel, which floats on four Lee Spring
 CI 008B 01 M compression springs. An M2 grub screw under each spring sets the preload, from under the
 carrier, before the stack is assembled. Four hold-down extension springs still hold the carrier on the balls.

@@ -1,6 +1,20 @@
 # Joystick v0.4
 
-The four hold-down springs stop just behind the main PCB. Installed length **45.4 mm** (was 65.9 mm to the back panel). Free length **37.4 mm**, stretch **8.0 mm**, force still **0.50 N** each (0.062 N/mm). A printed rear anchor, **18.3 × 12.0 × 4.65 mm**, **0.83 cm³**, bond outline **220 mm²**, is glued to the PCB back. Two Ø1.20 mm cross pins, shaft 16.7 mm, run along X at y ±3.50. Each pin passes both hooks on that row. The bore is Ø1.50, open on +x, stopped by a 1 mm wall on −x. The anchor clears the M2 nuts by **2.4 mm**.
+## Faceplate height and the riser (1 Nov 2026)
+
+`knob_proud` = **18.0 mm** puts the knob top 18 mm above the faceplate front face. `origin/sub/assembly-v017` (0050274) does not publish that key yet, so the joystick uses Ed's 18.0 mm until it does. Live knob top is z **52.50**, so the faceplate front is z **34.50**. The 2.5 mm UTR-8100 proxy runs z 32.00–34.50. The 1.2 mm bezel sits 0.02 mm above that face.
+
+The riser is whatever body length lands the stem 1.35 mm under the carrier. That length is **23.45 mm**. The drawn standoffs are that length. The catalog part is still XHHD **DTTZ3033** (C50377642, H3×M2×**35**+4, 445 in stock). It is **11.55 mm too long** and does not fit.
+
+Nearest stocked male-female M2, LCSC on 1 Nov 2026: **XHHD DTTZ2020**, H3×M2×**20**+3, C50377589, 940 in stock, **3.45 mm short**. The stud is only 3 mm. Through the 1.6 mm PCB that leaves 1.4 mm, and the ISO 4032 nut is 1.6 mm thick, so the nut does not seat. Nearest stocked part that keeps the 4 mm stud: **XHHD DTTZ3016**, H3×M2×**18**+4, C50377625, 820 in stock, **5.45 mm short**. H3×M2×23+4 (DTTZ3022, C50377630) and ×24+4 (DTTZ3023, C50377631) are both out of stock. The part was not swapped.
+
+The screen follows the bezel, so the glass top is z **36.32**, **16.18 mm** below the knob top. The old "5 mm under the knob" target does not survive a 1.2 mm lip on a faceplate 18 mm down.
+
+The Samtec TSW-103-20-T-S pin (25.91 mm) does not mate this riser. Engagement is **16.0 mm** against a 3.5–6.5 mm window. The pin tip is at z **−5.00**, through the main PCB. Six pin/PCB clashes of 0.51 mm³, and three pins clip the rear anchor. A shorter lead is needed. The header was not changed.
+
+Checks: **75/77 PASS, 2 FAIL** (the 35 mm body, and the header mate), **9 clashes**, all of them those header pins. Section preview only.
+
+The four hold-down springs stop just behind the main PCB. Installed length **34.0 mm** (45.4 mm before the faceplate moved, 65.9 mm when they reached the back panel). Free length **26.0 mm**, stretch **8.0 mm**, force still **0.50 N** each (0.062 N/mm). A printed rear anchor, **18.3 × 12.0 × 4.65 mm**, **0.83 cm³**, bond outline **220 mm²**, is glued to the PCB back. Two Ø1.20 mm cross pins, shaft 16.7 mm, run along X at y ±3.50. Each pin passes both hooks on that row. The bore is Ø1.50, open on +x, stopped by a 1 mm wall on −x. The anchor clears the M2 nuts by **2.4 mm**.
 
 Each Ø2 ball sits in a pair of shallow spherical cups, one in the seat post and one in the carrier. Cup radius **1.396 mm** (1.396 × the ball radius), depth **0.60 mm** (0.30 × the diameter). The cups still hold the ball out to **0.65 mm** of carrier travel; the slide is 0.45 mm, so the margin is **0.20 mm**. The wider posts put the balls at **(±9.51, ±4.14)**.
 
@@ -12,7 +26,7 @@ Ed dials that preload on the carrier-and-bezel sub-assembly, from underneath, be
 
 The four hold-down extension springs are unchanged in kind from v0.3. They still hold the carrier down on the balls. They do not touch the new springs.
 
-Screen top stays at **z 47.50**. The switch stays on the carrier axis. The riser stays 35 mm, four grounded standoffs.
+The switch stays on the carrier axis. Four grounded standoffs. The riser length follows the faceplate, above.
 
 ## What was removed
 
@@ -72,7 +86,7 @@ Process numbers used as the gaps: SLA ±0.20 (the wide end of PCBWay's ±0.1–0
 | Bezel guide, radial | — | **0.20 mm** | SLA, pilot body in the lip |
 | Glue gap around the glass | 0.20 | **0.20 mm** | SLA. The glass sits on the ledge |
 | Screen-well wall | 1.00 | **1.00 mm** | PCBWay SLS/MJF minimum. The well is in the bezel now |
-| Carrier floor | 2.05 | **1.00 mm** | the print minimum. The 35 mm riser still sets the height |
+| Carrier floor | 2.05 | **1.00 mm** | the print minimum. The riser is now derived (23.45 mm), not the 35 mm catalog body |
 | Up-stop, lip under the shoulder | — | 0.02 mm design | captive without another spring |
 
 The knob-facing edge is the middle of the long side, at ±14.57 mm. The four spring corners stand out to ±21.41 mm, outside the knob's plan, so they do not push the module off the main-PCB screws. Bounding box of that outline is 57.70 × 42.82 mm. v0.3 was a plain 44.02 × 29.14 rectangle.
@@ -92,7 +106,7 @@ The carrier floor got thinner. The new mass is the bezel and the four corner tow
 
 ## Standoff
 
-XHHD **DTTZ3033**, LCSC **C50377642**: male-female hex, H3 × M2 × 35 + 4. The 35 mm body is the same riser as the old female-female part. The 4 mm stud passes through the 1.6 mm main PCB and leaves **2.40 mm** below it. The ISO 4032 nut is 1.6 mm thick, so it sits fully in that 2.40 mm with **0.79 mm** of stud past the nut. The back panel is 22.65 mm behind the board [A], so the stud and nut do not meet it. Pairwise clash check: **none**.
+XHHD **DTTZ3033**, LCSC **C50377642**: male-female hex, H3 × M2 × 35 + 4. The catalog body is 35 mm. The stack now needs **23.45 mm**, so this part does not fit (see the top of this report). The 4 mm stud, if this part were the riser, passes through the 1.6 mm main PCB and leaves **2.40 mm** below it. The ISO 4032 nut is 1.6 mm thick, so it sits fully in that 2.40 mm with **0.79 mm** of stud past the nut. The back panel is 22.65 mm behind the board [A], so the stud and nut do not meet it. Pairwise clash check: **none**.
 
 The nut is 4 mm across flats, wider than the Ø3.2 pad, so the screws move in from y ±4.13 to **y ±3.73** and the nut stays 0.30 mm inside the PCB edge. The Ø2.4 hole is unchanged: the Ø2.0 stud has 0.20 mm radial clearance.
 
@@ -113,7 +127,7 @@ KiCad (`make_project.py`, rev v0.4): **ERC 0, DRC 0** (all severities), schemati
 
 ## Checks
 
-`cad/joystick-param/build.py`: **62/62 PASS, 0 clashes.**
+`cad/joystick-param/build.py --section`: **75/77 PASS, 2 FAIL, 9 clashes.** The fails are the 35 mm catalog body against the 23.45 mm derived riser, and the 25.91 mm header pin in that riser. The clashes are those pins through the PCB and into the rear anchor.
 
 `cad/knob-param/build.py --contract` is OK. `--sub electronics` is 2/2 PASS. The main PCB KiCad project was not edited.
 
@@ -132,6 +146,6 @@ Carrier centre is board **(25.25, 16.53)** (v0.3 was 16.48). Knob-frame `place_y
 - DO0164FMST05 FPC exit side, pin count, pitch and pin-out.
 - Screen mass. 8 g is assumed. The preload check uses five times that weight; a heavier module still fits inside the 0.77 N preload until it reaches about 15 g.
 - Back-panel depth. Hold-down length is still **66 mm**.
-- DTTZ3033 was in stock (445) when the out-of-stock STTZ2032 was replaced. Re-check the bin before ordering.
+- DTTZ3033 is still in stock (445) and is 11.55 mm too long for `knob_proud` 18. Nearest stocked male-female M2 is DTTZ2020, 20+3 (C50377589, 940). Nearest that still takes the nut is DTTZ3016, 18+4 (C50377625, 820). 23+4 and 24+4 are out of stock. The −20 header pin is too long for a 23.45 mm riser.
 - Rail front height, if it is taller than z 10. Skirt bottom is z 35.25.
 - Knob v0.17 is still not in this tree. The plan is sized to Ø41.7 with 0.50 mm to spare.

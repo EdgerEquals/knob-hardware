@@ -39,7 +39,8 @@ P = dict(
     # ---- screen (DWO DO0164FMST05, landscape: datasheet portrait 26.74 W x 41.62 H) ----
     scr=dict(part="DWO DO0164FMST05 1.64\" 456x280 AMOLED", w=41.62, h=26.74, t=1.5, active=(35.57, 21.84),
              mass_g=8.0),  # [S] outline/thickness; mass [A] until the module is weighed
-    scr_below_knob=5.0,     # [Ed] screen top is 5 mm below the knob top
+    scr_below_knob=5.0,     # [Ed] old screen target. knob_proud now places the faceplate; the screen follows the bezel
+    knob_proud=18.0,        # [Ed] knob top above the faceplate front face. Overwritten when knob-param publishes the key
     print_min=1.0,          # [S] PCBWay SLS nylon minimum wall (SLA resin is 0.8). Structural walls use this
     # FPC: exit side, width, pitch and pin-out are OPEN. Model is [A].
     fpc_w=8.0,              # [A]
@@ -64,7 +65,7 @@ P = dict(
     # ---- cup. The bore is derived: stem diameter plus one SLA tolerance per side ----
     cup_od=5.0,             # [A]
     cup_engage=1.2,         # [A]
-    stem_below=1.35,        # [A] carrier underside above the stem top. The 35 mm riser fixes this slack
+    stem_below=1.35,        # [A] carrier underside above the stem top. The riser length is derived to keep this
     # ---- switch ----
     sw=dict(part="Alps SKRHADE010", w=7.45, d=7.5, h=1.85, stem_d=3.0, stem_top=5.0, pivot=0.49, ref_h=4.3,
             tilt_travel=0.25, push_travel=0.15, tilt_f=1.2, push_f=2.35, f_tol=0.69,   # [S]
@@ -81,7 +82,7 @@ P = dict(
     sock=dict(part="hanxia HX PM2.54-1x3P ZC H11", lcsc="C41427518", h=11.0, tail=3.2, n=3),  # [S]
     # hex male-female. H3 x M2 x 35 is the body between the boards; +4 is the stud through the main PCB.
     # STTZ2032 (C50377216, female-female) was out of stock. The nut under the PCB replaces the lower screw.
-    standoff=dict(part="XHHD DTTZ3033", lcsc="C50377642", length=35.0, af=3.0, stud=4.0),  # [S] H3*M2*35+4 brass
+    standoff=dict(part="XHHD DTTZ3033", lcsc="C50377642", length=35.0, af=3.0, stud=4.0),  # [S] H3*M2*35+4 brass. Catalog length; the riser is derived
     nut=dict(part="ISO 4032 M2", af=4.0, thick=1.6),  # [S] hex nut, across flats 4, height 1.6
     pad_m2=3.2,             # [A] Ø pad on the Ø2.4 M2 clearance (annular ring 0.4)
     drill_m2=2.4,           # [A]
@@ -107,17 +108,45 @@ P = dict(
 )
 
 
+# XHHD hex male-female H3×M2 that LCSC had in stock on 1 Nov 2026.
+# (body mm, stud mm, part, lcsc, qty). The +3 stud cannot seat the ISO 4032 nut; +4 can.
+M2_MF_STOCK = (
+    (2, 3, "DTTZ2000", "C50377571", 2100), (3, 3, "DTTZ2001", "C50377572", 1080),
+    (4, 3, "DTTZ2002", "C50377573", 1960), (5, 3, "DTTZ2003", "C50377574", 4700),
+    (6, 3, "DTTZ2004", "C50377575", 740), (7, 3, "DTTZ2007", "C50377576", 600),
+    (8, 3, "DTTZ2008", "C50377577", 940), (9, 3, "DTTZ2009", "C50377578", 880),
+    (10, 3, "DTTZ2010", "C50377579", 1680), (11, 3, "DTTZ2011", "C50377580", 780),
+    (12, 3, "DTTZ2012", "C50377581", 1800), (14, 3, "DTTZ2014", "C50377583", 1900),
+    (15, 3, "DTTZ2015", "C50377584", 870), (20, 3, "DTTZ2020", "C50377589", 940),
+    (3, 4, "DTTZ3001", "C50377610", 3380), (4, 4, "DTTZ3002", "C50377611", 1780),
+    (5, 4, "DTTZ3003", "C50377612", 60), (6, 4, "DTTZ3004", "C50377613", 1640),
+    (7, 4, "DTTZ3005", "C50377614", 360), (8, 4, "DTTZ3006", "C50377615", 380),
+    (14, 4, "DTTZ3012", "C50377621", 930), (18, 4, "DTTZ3016", "C50377625", 820),
+    (35, 4, "DTTZ3033", "C50377642", 445),
+)
+
+
+def _nearest_m2(need, stud_min=None):
+    rows = [r for r in M2_MF_STOCK if stud_min is None or r[1] + 1e-9 >= stud_min]
+    body, stud, part, lcsc, qty = min(rows, key=lambda r: (abs(r[0] - need), -r[1], r[0]))
+    return dict(length=float(body), stud=float(stud), part="XHHD " + part, lcsc=lcsc, qty=qty)
+
+
 def _knob_data():
-    """Read knob-param as data only (do not modify it). Live OD and the knob top set the plan and the stack."""
+    """Read knob-param as data only (do not modify it). Live OD and the knob top set the plan and the stack.
+    knob_proud is included only once the assembly interface publishes it."""
     here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     kp = os.path.join(here, "knob-param")
     if kp not in sys.path:
         sys.path.insert(0, kp)
     from knobparam.common import model
     D = model.derive(model.default_params())
-    return dict(knob_od=float(D["knob_od"]), z_knob_top=float(D["z_knob_top"]),
-                pcb_above=float(D["pcb_above"]), pcb_w=float(D["pcb_w"]), pcb_t=float(D["pcb_t"]),
-                axis_bx=float(D["axis_bx"]), axis_by=float(D["axis_by"]))
+    out = dict(knob_od=float(D["knob_od"]), z_knob_top=float(D["z_knob_top"]),
+               pcb_above=float(D["pcb_above"]), pcb_w=float(D["pcb_w"]), pcb_t=float(D["pcb_t"]),
+               axis_bx=float(D["axis_bx"]), axis_by=float(D["axis_by"]))
+    if "knob_proud" in D:
+        out["knob_proud"] = float(D["knob_proud"])
+    return out
 
 
 def _rot(x, y, deg):
@@ -206,32 +235,35 @@ def derive(P_):
     D["car"] = (2 * D["half_w"], 2 * D["half_h"])
     D["pocket"] = (S["w"] + 2 * D["glue"], S["h"] + 2 * D["glue"])
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
-    # screen top from the knob top. The riser does not move the screen
-    D["scr_top"] = D["z_knob_top"] - D["scr_below_knob"]
-    # bezel is bz_t thick. Its bottom is where the old glass bottom was. The glass sits on the
-    # 0.30 mm spring pads, so the glass top is 0.30 above the old 47.50 target.
-    D["z_bz0"] = D["scr_top"] - S["t"]
+    # Faceplate front is knob_proud below the knob top. The bezel rests on that face, and the
+    # screen sits on the 0.30 mm pads in the bezel. The old "5 mm under the knob" target does not.
+    D["knob_proud_live"] = "knob_proud" in K
+    D["z_fp1"] = D["z_knob_top"] - D["knob_proud"]
+    D["z_fp0"] = D["z_fp1"] - D["fp_t"]
+    D["z_bz0"] = D["z_fp1"] + D["up_gap"]
     D["z_bz1"] = D["z_bz0"] + D["bz_t"]
     D["z_roof"] = D["z_bz0"] + 0.30
     D["z_scr0"] = D["z_roof"]
     D["scr_top"] = D["z_scr0"] + S["t"]
-    so, hd, sk = D["standoff"], D["hdr"], D["sock"]
-    D["z_db0"] = so["length"]
-    D["z_db1"] = D["z_db0"] + D["db_t"]
-    D["z_sw1"] = D["z_db1"] + sw["h"]
-    D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
-    D["z_pivot"] = D["z_db1"] + sw["pivot"]
-    D["z_ref"] = D["z_db1"] + sw["ref_h"]
-    # faceplate under the lip. The bezel sits 0.02 mm above it so the faces do not fuse.
-    D["z_fp1"] = D["z_bz0"] - D["up_gap"]
-    D["z_fp0"] = D["z_fp1"] - D["fp_t"]
+    D["scr_drop"] = D["z_knob_top"] - D["scr_top"]
     D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
     # carrier floor is one SLA tolerance under the faceplate, so the module hangs below it
     D["car_floor"] = pm
     D["z_floor1"] = D["z_fp0"] - sla
     D["z_c0"] = D["z_floor1"] - D["car_floor"]
-    D["stem_below"] = D["z_c0"] - D["z_stem_top"]
+    # stem_below is the design slack. The riser is the length that lands the stem under the carrier.
+    so, hd, sk = D["standoff"], D["hdr"], D["sock"]
+    D["z_stem_top"] = D["z_c0"] - D["stem_below"]
+    D["z_db1"] = D["z_stem_top"] - sw["stem_top"]
+    D["z_db0"] = D["z_db1"] - D["db_t"]
+    D["z_sw1"] = D["z_db1"] + sw["h"]
+    D["z_pivot"] = D["z_db1"] + sw["pivot"]
+    D["z_ref"] = D["z_db1"] + sw["ref_h"]
     D["riser_h"] = D["z_db0"]
+    D["riser_catalog"] = so["length"]
+    D["riser_near"] = _nearest_m2(D["riser_h"])
+    D["riser_near_stud"] = _nearest_m2(D["riser_h"], stud_min=so["stud"])
+    D["z_hdr_tip"] = D["z_db0"] - hd["ins"] - hd["mate"]
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
     D["standoff_d"] = so["af"] / math.cos(math.radians(30))

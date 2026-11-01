@@ -13,7 +13,7 @@ GROUPS = [
     ("1×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
     ("1×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
     ("joystick daughterboard (1.0 FR4)", "#1b5e20", lambda n: n == "joystick daughterboard"),
-    ("M2×35 male-female standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
+    ("M2 male-female standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
     ("M2 nuts under the main PCB", "#f9a825", lambda n: n.startswith("M2 nut")),
     ("SKRHADE010 body (45°)", "#b0bec5", lambda n: n.startswith("SW1") and "body" in n),
     ("SKRHADE010 stem", "#fff176", lambda n: n.startswith("SW1") and "stem" in n),
@@ -158,8 +158,9 @@ def section_preview(D, P, png):
     y = D["spr_y"]
     rem = Pos(0, y - BIG / 2, 0) * Box(BIG, BIG, BIG)
     m = _meshes(P, rem, [((0, y, 0), (0, 1, 0))], tol=0.12)
+    zc = 0.5 * (D["scr_top"] + D["z_pin"])
     im = _shot(m, (0, -1, 0), (0, 0, 1), os.path.join(tmp, "s.png"), (1100, 800),
-               centre=(0.0, y, 18.0), scale=32.0)
+               centre=(0.0, y, zc), scale=30.0)
     fig, ax = plt.subplots(figsize=(11, 8), dpi=70)
     ax.imshow(im); ax.axis("off")
     ax.set_title(f"Top-screen joystick {D['version']} — section through the +y pin (y={y:.2f})", fontsize=12, weight="bold", loc="left")
@@ -196,8 +197,9 @@ def render(D, P, rows, png):
     sw = D["sw"]
     fig.suptitle(f"Top-screen joystick {D['version']} — bezel on four compression springs, thin carrier, {D['riser_h']:g} mm riser (1 Nov 2026, Ed)", fontsize=16, weight="bold", x=0.01, ha="left", y=0.985)
     nf = sum(not r["ok"] for r in rows)
-    key = (f"Stack (z from the main-PCB front): screen top {D['scr_top']:.2f} = knob top {D['z_knob_top']:.2f} − {D['scr_below_knob']:g}. "
-           f"Riser 0–{D['z_db0']:g} (four M2×{D['riser_h']:g} male-female, {D['standoff']['stud']:.0f} mm stud + nut under the PCB, two 1×3 H11 sockets) · daughterboard {D['z_db0']:g}–{D['z_db1']:g} · "
+    key = (f"Stack (z from the main-PCB front): faceplate front {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − knob_proud {D['knob_proud']:.1f}. "
+           f"Screen top {D['scr_top']:.2f}. "
+           f"Derived riser 0–{D['z_db0']:.2f} (catalog {D['standoff']['part']} is {D['standoff']['length']:.0f} mm, {D['standoff']['stud']:.0f} mm stud + nut) · daughterboard {D['z_db0']:.2f}–{D['z_db1']:.2f} · "
            f"stem top {D['z_stem_top']:.2f} · carrier underside {D['z_c0']:.2f} · floor {D['car_floor']:.2f} · "
            f"bezel {D['z_bz0']:.2f}–{D['z_bz1']:.2f} · spring roof {D['z_roof']:.2f} · screen {D['z_scr0']:.2f}–{D['scr_top']:.2f}.\n"
            f"Tilt stop is the switch: slide {D['slide']:.2f} mm (cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}). "

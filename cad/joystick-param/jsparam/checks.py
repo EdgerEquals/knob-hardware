@@ -196,10 +196,25 @@ def run(D, P):
         min(s.distance_to(body) for s in stands) >= 0.8)
     row("standoff vs header", min(min(s.distance_to(h) for h in hdrs) for s in stands), ">= 0.6",
         min(min(s.distance_to(h) for h in hdrs) for s in stands) >= 0.6)
+    near, near4 = D["riser_near"], D["riser_near_stud"]
+    row("catalog standoff is the derived riser", D["riser_h"], f"{D['riser_catalog']:.0f}",
+        abs(D["riser_h"] - D["riser_catalog"]) <= 0.25,
+        f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − knob_proud {D['knob_proud']:.1f}"
+        f"{'' if D['knob_proud_live'] else ' (Ed 1 Nov; not on origin/sub/assembly-v017 yet)'}. "
+        f"Need {D['riser_h']:.2f} mm. {D['standoff']['part']} is {D['riser_catalog']:.0f} mm "
+        f"({D['riser_h'] - D['riser_catalog']:+.2f}). "
+        f"Nearest stocked male-female M2 is {near['part']} H3×M2×{near['length']:.0f}+{near['stud']:.0f} "
+        f"({near['lcsc']}, {near['qty']} in stock on 1 Nov), {near['length'] - D['riser_h']:+.2f} mm. "
+        f"That stud is {near['stud']:.0f} mm, so the nut does not seat. "
+        f"Nearest with a {D['standoff']['stud']:.0f} mm stud is {near4['part']} "
+        f"H3×M2×{near4['length']:.0f}+{near4['stud']:.0f} ({near4['lcsc']}, {near4['qty']}), "
+        f"{near4['length'] - D['riser_h']:+.2f} mm. "
+        f"H3×M2×23+4 (DTTZ3022, C50377630) and ×24+4 (DTTZ3023, C50377631) are both out of stock")
     row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
         T["mate_min"] <= D["mate_in"] <= T["mate_max"],
         f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
-        f"air {D['mate_air']:.2f}, riser {D['riser_h']:g} = {D['standoff']['part']} ({D['standoff']['lcsc']}), stud {D['standoff']['stud']:.0f} mm")
+        f"air {D['mate_air']:.2f}, derived riser {D['riser_h']:.2f} mm, pin tip z {D['z_hdr_tip']:.2f}. "
+        f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm")
     row("socket count matches the headers", len(socks), "2", len(socks) == 2 and len(hdrs) == 2,
         "1x3 each side of the switch, not one 2x3 beside it")
     # 8 centring and symmetry
@@ -246,7 +261,7 @@ def run(D, P):
     row("bezel lip", D["bz_lip"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_lip"] <= 1.5 + 1e-9,
         f"matches the other bezel. Glue gap around the glass is {D['glue']:.2f}")
     row("carrier floor", D["car_floor"], f">= {D['print_min']}", D["car_floor"] >= D["print_min"] - 1e-9,
-        f"the 35 mm riser leaves the floor at the print minimum. Screen top {D['scr_top']:.2f}")
+        f"floor is the print minimum. Derived riser {D['riser_h']:.2f} mm. Screen top {D['scr_top']:.2f}")
     row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
         D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
     row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],

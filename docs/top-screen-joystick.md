@@ -181,4 +181,12 @@ The spider, the plunger and the round stop are gone. The switch is the only stop
 
 Nominal preload is half a turn: **0.77 N** on the up-stop, **2.12 N** when the centre push bottoms (inside 2.35 ± 0.69 N). One spring is 0.385 N per turn; all four are 1.54 N per turn. The useful window is 0.25 to 1.08 turns. The hex stays reachable out to 1.50 turns.
 
-The knob gap is **0.50 mm** against the design Ø41.7 (was 0.60). The cup clearance is **0.20 mm** (was 0.075, which SLA cannot hold). The daughterboard is **31.88 × 13.87** (the −y stop tab is gone). Carrier floor is 1.00 mm. Carrier volume 2.79 cm³, bezel 3.77 cm³, plate 0.44 cm³. Screen top is still z 47.50. FPC pin-out is still open.
+The knob gap is **0.50 mm** against the design Ø41.7 (was 0.60). The cup clearance is **0.20 mm** (was 0.075, which SLA cannot hold). The daughterboard is **31.88 × 13.87** (the −y stop tab is gone). Carrier floor is 1.00 mm. FPC pin-out is still open.
+
+### knob_proud (1 Nov 2026)
+
+`knob_proud` = 18.0 mm is the knob top above the faceplate front. It is not on `origin/sub/assembly-v017` yet (tip 0050274); the joystick reads it from knob-param when the key appears and uses 18.0 mm until then. Faceplate front is z 34.50 (knob top 52.50 − 18). The bezel stays a 1.2 mm lip on that face, so the glass top comes down to **z 36.32** (16.18 mm below the knob, not the old 5 mm).
+
+The riser is derived from that faceplate, with 1.35 mm of stem slack under the carrier: **23.45 mm**. DTTZ3033's 35 mm body is 11.55 mm too long. Nearest stocked male-female M2 on LCSC that day is DTTZ2020, H3×M2×20+3 (C50377589, 940), 3.45 mm short, and its 3 mm stud does not seat the M2 nut. Nearest with a 4 mm stud is DTTZ3016, H3×M2×18+4 (C50377625, 820), 5.45 mm short. 23+4 and 24+4 are out of stock. The part was not changed.
+
+The Samtec −20 pin (25.91 mm) then engages 16 mm and the tip sits at z −5, through the main PCB. Checks 75/77, the two fails being that length and that mate, plus 9 pin clashes. Section preview only.

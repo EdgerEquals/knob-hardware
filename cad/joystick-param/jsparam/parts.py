@@ -183,10 +183,10 @@ def build(D):
         for k in (-1, 0, 1):
             out[f"header pin {i + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], y)
     for i, (x, y) in enumerate(D["standoff_xy"]):
-        # hex body is the 35 mm riser. The 4 mm stud continues down through the main PCB.
+        # hex body is the derived riser. The catalog stud continues down through the main PCB.
         body = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
         stud = cyl(D["stud_d"], D["z_stud0"], 0.04, x, y)
-        out[f"brass standoff M2x35 {i + 1}"] = body + stud
+        out[f"brass standoff M2x{D['riser_h']:.2f} {i + 1}"] = body + stud
         nut = hex_at(D["nut"]["af"], D["z_nut0"], D["z_nut1"], x, y)
         nut -= cyl(D["stud_d"] + 0.30, D["z_nut0"] - 0.04, D["z_nut1"] + 0.04, x, y)
         out[f"M2 nut {i + 1}"] = nut

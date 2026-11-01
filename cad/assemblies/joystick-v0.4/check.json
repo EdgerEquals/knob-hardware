@@ -12,7 +12,7 @@
    "value": 0.5,
    "target": ">= 0.2",
    "ok": true,
-   "note": "cup z 39.80-42.28, ref z 40.30, stem top 41.00"
+   "note": "cup z 28.25-30.80, ref z 28.75, stem top 29.45"
   },
   {
    "name": "slide is the switch tilt, no extra overtravel",
@@ -23,7 +23,7 @@
   },
   {
    "name": "peg tip to stem top (rest)",
-   "value": 0.20000000000000284,
+   "value": 0.1999999999999993,
    "target": "0.20",
    "ok": true,
    "note": "one SLA tolerance. The peg is part of the bezel, not a separate plunger"
@@ -100,10 +100,10 @@
   },
   {
    "name": "carrier below the faceplate",
-   "value": 0.20000000000000284,
+   "value": 0.1999999999999993,
    "target": ">= 0.20",
    "ok": true,
-   "note": "faceplate 2.50 mm assumed (UTR-8100 wall). Carrier top z 43.28, faceplate bottom z 43.48"
+   "note": "faceplate 2.50 mm assumed (UTR-8100 wall). Carrier top z 31.80, faceplate bottom z 32.00"
   },
   {
    "name": "carrier drops through the faceplate hole",
@@ -149,10 +149,10 @@
   },
   {
    "name": "insert hangs in free air under the floor",
-   "value": 1.1599999999999966,
+   "value": 1.1600000000000001,
    "target": "0.5-3.0",
    "ok": true,
-   "note": "insert bottom z 41.12, carrier underside z 42.28. Modelled as a slip fit"
+   "note": "insert bottom z 29.64, carrier underside z 30.80. Modelled as a slip fit"
   },
   {
    "name": "grub screw modelled clear of the insert",
@@ -201,7 +201,7 @@
    "value": 0.24999999999999994,
    "target": ">= 0.1",
    "ok": true,
-   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, installed 45.4 mm (was 65.9 to the back panel). Free 37.4, stretch 8.0"
+   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, installed 34.0 mm (was 54.5 to the back panel). Free 26.0, stretch 8.0"
   },
   {
    "name": "hold-down spring vs plate (rest)",
@@ -212,14 +212,14 @@
   },
   {
    "name": "compression spring clear of the hold-downs",
-   "value": 13.052823752342766,
+   "value": 13.052823752342768,
    "target": ">= 1.0",
    "ok": true,
    "note": "the two spring sets do not share a job"
   },
   {
    "name": "compression spring clear of the plate",
-   "value": 7.84505676319799,
+   "value": 7.901734975168332,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -261,7 +261,7 @@
   },
   {
    "name": "standoffs meet the daughterboard",
-   "value": 0.020000000000003126,
+   "value": 0.019999999999999574,
    "target": "0.01-0.05",
    "ok": true,
    "note": "hex body 0.02 short of the daughterboard. The stud continues through the main PCB"
@@ -313,7 +313,7 @@
    "value": 0.5,
    "target": "0.50",
    "ok": true,
-   "note": "rate 0.062 N/mm over 8.0 mm stretch. Length 65.9 \u2192 45.4 mm"
+   "note": "rate 0.062 N/mm over 8.0 mm stretch. Length 54.5 \u2192 34.0 mm"
   },
   {
    "name": "two pins, each through a pair",
@@ -352,7 +352,7 @@
   },
   {
    "name": "standoff vs plate (screw through both)",
-   "value": 1.0200000000000031,
+   "value": 1.0199999999999996,
    "target": ">= 0.5",
    "ok": true,
    "note": "the screw, not the standoff, passes through the plate"
@@ -372,11 +372,18 @@
    "note": ""
   },
   {
+   "name": "catalog standoff is the derived riser",
+   "value": 23.45,
+   "target": "35",
+   "ok": false,
+   "note": "faceplate front z 34.50 = knob top 52.50 \u2212 knob_proud 18.0 (Ed 1 Nov; not on origin/sub/assembly-v017 yet). Need 23.45 mm. XHHD DTTZ3033 is 35 mm (-11.55). Nearest stocked male-female M2 is XHHD DTTZ2020 H3\u00d7M2\u00d720+3 (C50377589, 940 in stock on 1 Nov), -3.45 mm. That stud is 3 mm, so the nut does not seat. Nearest with a 4 mm stud is XHHD DTTZ3016 H3\u00d7M2\u00d718+4 (C50377625, 820), -5.45 mm. H3\u00d7M2\u00d723+4 (DTTZ3022, C50377630) and \u00d724+4 (DTTZ3023, C50377631) are both out of stock"
+  },
+  {
    "name": "header mates the H11 socket",
-   "value": 4.449999999999999,
+   "value": 16.0,
    "target": "3.5-6.5",
-   "ok": true,
-   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 21.46, riser 35 = XHHD DTTZ3033 (C50377642), stud 4 mm"
+   "ok": false,
+   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 9.91, derived riser 23.45 mm, pin tip z -5.00. Catalog XHHD DTTZ3033 body is 35 mm"
   },
   {
    "name": "socket count matches the headers",
@@ -464,10 +471,10 @@
   },
   {
    "name": "carrier skirt above the rail",
-   "value": 25.25,
+   "value": 13.7,
    "target": ">= 0",
    "ok": true,
-   "note": "skirt bottom z 35.25, rail z 10 [A]"
+   "note": "skirt bottom z 23.70, rail z 10 [A]"
   },
   {
    "name": "bezel lip",
@@ -481,7 +488,7 @@
    "value": 1.0,
    "target": ">= 1.0",
    "ok": true,
-   "note": "the 35 mm riser leaves the floor at the print minimum. Screen top 47.80"
+   "note": "floor is the print minimum. Derived riser 23.45 mm. Screen top 36.32"
   },
   {
    "name": "plate frame outside the switch opening",
@@ -502,18 +509,18 @@
    "value": 1.0,
    "target": "solid",
    "ok": true,
-   "note": "wall probe y 14.07 at z 46.75; pocket probe y 13.47"
+   "note": "wall probe y 14.07 at z 35.27; pocket probe y 13.47"
   },
   {
    "name": "carrier volume",
-   "value": 1.830301995055142,
+   "value": 1.838117437413725,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
   },
   {
    "name": "screen-carrier volume",
-   "value": 0.49576115898961626,
+   "value": 0.49593928729307496,
    "target": "< 8",
    "ok": true,
    "note": "cm3, the bezel the screen is glued to"
@@ -523,7 +530,7 @@
    "value": 0.020000000000003126,
    "target": "0.01-0.30",
    "ok": true,
-   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 47.80"
+   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 36.32"
   },
   {
    "name": "no printed base, spider or round stop",
@@ -533,26 +540,36 @@
    "note": "removed from v0.3: spider, plunger, round stop. Hold-down springs stay"
   }
  ],
- "clashes": {},
+ "clashes": {
+  "main PCB (proxy, local patch) / header pin 1.1": 0.5067074790974976,
+  "main PCB (proxy, local patch) / header pin 1.2": 0.5067074790974979,
+  "main PCB (proxy, local patch) / header pin 1.3": 0.5067074790974979,
+  "main PCB (proxy, local patch) / header pin 2.1": 0.5067074790974984,
+  "main PCB (proxy, local patch) / header pin 2.2": 0.5067074790974982,
+  "main PCB (proxy, local patch) / header pin 2.3": 0.506707479097498,
+  "header pin 1.1 / rear spring anchor (printed)": 1.0704195495934643,
+  "header pin 1.2 / rear spring anchor (printed)": 0.33305958117981604,
+  "header pin 2.3 / rear spring anchor (printed)": 1.0704195495934639
+ },
  "set": [],
  "key": {
   "version": "v0.4",
-  "riser_h": 35.0,
-  "stack_h": 47.8,
-  "scr_top": 47.8,
+  "riser_h": 23.45,
+  "stack_h": 36.32,
+  "scr_top": 36.32,
   "z_knob_top": 52.5,
-  "z_db0": 35.0,
-  "z_db1": 36.0,
-  "z_stem_top": 41.0,
-  "z_c0": 42.279999999999994,
-  "z_ball": 41.279999999999994,
-  "z_scr0": 46.3,
-  "z_bz0": 46.0,
-  "z_bz1": 47.2,
-  "z_roof": 46.3,
-  "z_seat": 43.12,
-  "z_tip": 43.32,
-  "z_skirt0": 35.25,
+  "z_db0": 23.45,
+  "z_db1": 24.45,
+  "z_stem_top": 29.45,
+  "z_c0": 30.8,
+  "z_ball": 29.8,
+  "z_scr0": 34.82,
+  "z_bz0": 34.52,
+  "z_bz1": 35.720000000000006,
+  "z_roof": 34.82,
+  "z_seat": 31.64,
+  "z_tip": 31.84,
+  "z_skirt0": 23.7,
   "slide": 0.45,
   "slide_need": 0.45,
   "press_gap": 0.2,
@@ -592,7 +609,7 @@
    25.25,
    16.53
   ],
-  "spr_len": 45.449999999999996,
+  "spr_len": 33.97,
   "back_panel": 22.65,
   "knob_od_live": 40.85,
   "knob_od_design": 41.7,
@@ -690,7 +707,7 @@
     0.0
    ]
   ],
-  "mate_in": 4.449999999999999,
+  "mate_in": 16.0,
   "sx": 14.03770355817594,
   "sy": 3.7300000000000013,
   "hx": 9.745652750607062,
@@ -705,9 +722,9 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "seat plate (printed, glued)": 0.47875920155979984,
-   "joystick carrier (printed)": 1.830301995055142,
-   "screen carrier (printed)": 0.49576115898961626
+   "seat plate (printed, glued)": 0.48247609136988007,
+   "joystick carrier (printed)": 1.838117437413725,
+   "screen carrier (printed)": 0.49593928729307496
   }
  }
 }
