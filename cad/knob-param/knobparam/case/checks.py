@@ -33,9 +33,25 @@ def checks(D, parts):
     row("web, knob hole to joystick hole", D["web_knob_joy"], sla, "plan width of the bridge")
     row("bezel above the faceplate", D["z_bz0"] - D["z_fp1"], 0.0,
         f"lip z {D['z_bz0']:.2f}–{D['z_bz1']:.2f}, plate top {D['z_fp1']:.2f}")
+    row("knob stands proud of the faceplate", D["knob_top_used"] - D["z_fp1"], D["knob_proud"],
+        f"knob top {D['knob_top_used']:.2f} from {D['knob_top_src']}; faceplate front {D['z_fp1']:.2f}")
+    row("knob proud, not more", D["knob_top_used"] - D["z_fp1"], D["knob_proud"],
+        "faceplate z is the knob top minus knob_proud", higher_ok=False)
+    row("faceplate to PCB ledge", D["fp_to_pcb"], D["knob_top_used"] - D["knob_proud"],
+        f"faceplate front to the PCB front (ledge datum z=0) is {D['fp_to_pcb']:.2f} mm; "
+        f"model ledge face at z {D['z_ledge0']:.2f} leaves nest_gap {D['nest_gap']:.2f}")
     row("PCB side air", D["side_air"], D["pcb_clear"],
-        f"{D['hp']}HP panel {D['panel_w']:.2f} (scope {D['hp_scope']}HP is {D['panel_w_scope']:.2f}, short by {D['scope_short']:.2f})")
-    row("rear envelope air", D["rear_air"], D["rear_clear"], f"d_big_tip Ø{D['d_big_tip']:.2f}")
+        f"{D['hp']}HP panel {D['panel_w']:.2f} (scope {D['hp_scope']}HP is {D['panel_w_scope']:.2f}, short by {D['scope_short']:.2f}); "
+        f"outline from {D['pcb_src']}")
+    row("ledge width", D["ledge_w"], D["sla_min"], "inboard of the PCB edge, ratio of the wall")
+    row("rim flush with the PCB back", abs(D["z_rim"] - D["z_pcb_back"]), 0.0,
+        f"shell rim z {D['z_rim']:.2f}, PCB back {D['z_pcb_back']:.2f}", higher_ok=False)
+    row("clamp clears B-side parts", D["bside_clear"] - D["clamp_overlap"], D["sla_min"],
+        f"overlap {D['clamp_overlap']:.2f}, nearest {D['bside_ref'] or 'edge'} is {D['bside_clear']:.2f} from the outline")
+    row("preload before the rim seats", D["preload_gap"], D["seat_gap"],
+        f"PCB land at {D['z_pcb_land']:.2f}, shell seat at {D['z_rim_seat']:.2f}; tongue {D['clamp_t']:.2f} closes the step")
+    row("pocket clears the rear envelope", D["pocket_gap"], D["cover_pocket"],
+        f"d_big_tip Ø{D['d_big_tip']:.2f} at the encoder; cavity depth {D['cover_depth']:.2f} unchanged")
     row("body clears the rails", D["rail_clear"], sla, "outer 10 mm of the panel, behind the face only")
     row("panel height", D["panel_h"], 128.5, "3U")
     row("panel height cap", D["panel_h"], 128.5, "3U, not taller", higher_ok=False)
@@ -52,12 +68,14 @@ def checks(D, parts):
 
     # probes: the booleans really left a wall, a hole, an open back, a thin rim
     z_mid = (D["z_fp0"] + D["z_fp1"]) / 2
-    z_cavity = (D["z_seat"] + D["z_fp0"]) / 2
-    wall_x = (D["panel_x0"] + D["x_in0"]) / 2
+    z_cavity = (D["z_ledge1"] + D["z_fp0"]) / 2
+    wall_x = (D["x_out0"] + D["x_in0"]) / 2
     row("side wall is material", 1.0 if _inside(case, wall_x, D["body_yc"], z_cavity) else 0.0, 1.0, "probe in the left wall")
+    row("ledge is material", 1.0 if _inside(case, 0.0, D["pcb_y0"] + D["ledge_w"] / 2, (D["z_ledge0"] + D["z_ledge1"]) / 2) else 0.0,
+        1.0, "bottom ledge, under the PCB front edge")
     row("knob hole is open", 0.0 if _inside(case, D["ox"], D["oy"], z_mid) else 1.0, 1.0, "probe on the dial axis, in the plate")
-    row("shell back is open for the cover", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_cover_in"] + D["z_pcb_back"]) / 2) else 1.0, 1.0,
-        "the shell drops down over the PCB; the PETG plate closes the back")
+    row("shell back is open for the PCB", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_rim"] + D["z_ledge0"]) / 2) else 1.0, 1.0,
+        "the PCB drops in from the back and stops on the ledge; the cover clamps it")
     row("collar bore is open", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_collar0"] + D["z_fp0"]) / 2) else 1.0, 1.0,
         "knob module slides down through the collar")
     rim_y = D["panel_y0"] + D["edge_w"] / 2
@@ -79,10 +97,13 @@ def checks(D, parts):
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
     row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
         f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
-    row("countersink vs cover thickness", D["cover_t"] - D["csink_depth"], D["csink_depth"] * D["cover_web_ratio"],
-        f"ISO 10642 countersink {D['csink_depth']:.2f} in PETG {D['cover_t']:.2f} (smoky grey, see-through)")
-    row("corner screw tip vs PCB", D["z_pcb_back"] - D["z_tip"], D["tip_clear"],
-        f"tip z {D['z_tip']:.2f}, PCB back {D['z_pcb_back']:.2f}")
+    row("PETG under the countersink", D["cover_under"], D["cover_under_mult"] * D["screw_d"],
+        f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; countersink {D['csink_depth']:.2f}; "
+        f"left under the head {D['cover_skin']:.2f}; pocket wall stays {D['cover_t']:.2f}")
+    row("corner screw beside the PCB", D["pcb_clear"] + D["screw_boss_r"] - D["screw_d"] / 2, D["tip_clear"],
+        f"boss centre x {D['corners'][1][0]:.2f}, thread stays off the board edge")
+    row("corner screw tip vs faceplate", D["z_fp0"] - D["z_tip"], D["tip_clear"],
+        f"tip z {D['z_tip']:.2f}, plate underside {D['z_fp0']:.2f}")
     row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
         f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
     row("knob bolts present", float(len(D["knob_bolts"])), float(D["knob_bolt_n"]), "lower arc, clear of the bezel")
@@ -90,7 +111,7 @@ def checks(D, parts):
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,
         "printed thread, no insert")
-    row("cross pin opens the side", 0.0 if _inside(case, D["panel_x0"] + D["wall"] / 2, D["place_y"], D["pin_z"]) else 1.0, 1.0,
+    row("cross pin opens the side", 0.0 if _inside(case, wall_x, D["place_y"], D["pin_z"]) else 1.0, 1.0,
         f"Ø{D['cross_pin_d']:.2f} pin, hole Ø{2 * D['pin_hole_r']:.2f}, z {D['pin_z']:.2f} (axis not yet exported by joystick v0.4)")
 
     vol = case.volume
@@ -98,5 +119,6 @@ def checks(D, parts):
     row("case mass", mass, D["mass_max"],
         f"volume {vol:.0f} mm³ ({vol / 1000:.1f} cm³), UTR-8100 {D['case_rho'] * 1000:.2f} g/cm³", higher_ok=False)
     row("one hollow shell", 1.0 if vol > 0 else 0.0, 1.0,
-        f"overall {D['panel_w']:.2f} × {D['panel_h']:.2f} × {D['z_fp1'] - D['z_foot']:.2f} mm")
+        f"overall {D['panel_w']:.2f} × {D['panel_h']:.2f} × {D['z_fp1'] - D['z_foot']:.2f} mm; "
+        f"faceplate to PCB {D['fp_to_pcb']:.2f} mm")
     return r

@@ -155,28 +155,30 @@ def build(D):
     r = D["fillet_r"]
     # ---- faceplate, full HP × 3U ----
     case = _plate(D["panel_w"], D["panel_h"], D["fp_corner_r"], D["z_fp0"], D["z_fp1"], D["ox"], D["panel_yc"])
-    # ---- sides run from the cover seat up to the plate, outside the PCB, so the shell drops over it ----
-    case = _add(case, _box(D["panel_x0"], D["x_in0"], D["body_y0"], D["body_y1"], D["z_wall0"], D["z_fp0"] + fu))
-    case = _add(case, _box(D["x_in1"], D["panel_x1"], D["body_y0"], D["body_y1"], D["z_wall0"], D["z_fp0"] + fu))
-    # top and bottom returns stop at the PCB plane: the PCB never has to pass through them
-    case = _add(case, _box(D["x_in0"] - fu, D["x_in1"] + fu, D["body_y0"], D["y_in0"], D["z_seat"], D["z_fp0"] + fu))
-    case = _add(case, _box(D["x_in0"] - fu, D["x_in1"] + fu, D["y_in1"], D["body_y1"], D["z_seat"], D["z_fp0"] + fu))
-    # corners grown to the printed-thread boss
+    # side walls outside the PCB, from the back rim (flush with the PCB back) up to the plate
+    case = _add(case, _box(D["x_out0"], D["x_in0"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
+    case = _add(case, _box(D["x_in1"], D["x_out1"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
+    # ledge the PCB front sits against. Inboard of the outline; top and bottom have no outboard wall
+    # (the rail zone starts 0.5 mm outside the board).
+    lw, z0, z1 = D["ledge_w"], D["z_ledge0"], D["z_ledge1"]
+    case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y0"] + lw, z0, z1))
+    case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
+    case = _add(case, _box(D["x_in0"], -D["pcb_x1"] + lw, D["pcb_y0"], D["pcb_y1"], z0, z1))
+    case = _add(case, _box(D["pcb_x1"] - lw, D["x_in1"], D["pcb_y0"], D["pcb_y1"], z0, z1))
+    # corner posts beside the PCB. The thread is the lower part; the post runs up into the plate.
     for x, y in D["corners"]:
-        case = _add(case, _cyl_z(D["screw_boss_r"], D["z_wall0"], D["z_thread1"], x, y))
+        case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_fp0"] + fu, x, y))
     # collar under the knob opening; the knob module slides down through it
     case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_bolt0"], D["z_fp0"] + fu, x, y))
-    # ---- fillet beads. The scanner corner (−X, −Y) is left square so the motor keeps its air. ----
-    case = _add(case, _bead_y(D["x_in0"], D["z_fp0"], D["body_y0"], D["body_y1"], r))
+    # fillet beads where the side walls meet the plate. The scanner corner is left square.
+    case = _add(case, _bead_y(D["x_in0"], D["z_fp0"], D["y_mot"] + D["mirror_r"], D["body_y1"], r))
     case = _add(case, _bead_y(D["x_in1"], D["z_fp0"], D["body_y0"], D["body_y1"], r))
-    case = _add(case, _cyl_z(r, D["z_seat"], D["z_fp0"] + fu, D["x_in0"], D["y_in1"]))
-    case = _add(case, _cyl_z(r, D["z_seat"], D["z_fp0"] + fu, D["x_in1"], D["y_in0"]))
-    case = _add(case, _cyl_z(r, D["z_seat"], D["z_fp0"] + fu, D["x_in1"], D["y_in1"]))
-    # ---- grating ledge, tied into the bottom wall ----
+    # grating shelf, and a cheek down onto the bottom ledge so the shelf is not a cantilever
     shelf = _box(D["shelf_x0"], D["shelf_x1"], D["shelf_y0"] - fu, D["shelf_y1"], D["shelf_z0"], D["shelf_z1"])
-    case = _add(case, shelf)
+    cheek = _box(D["shelf_x0"], D["shelf_x1"], D["pcb_y0"], D["pcb_y0"] + lw, D["z_ledge1"] - fu, D["shelf_z1"])
+    case = _add(case, _add(shelf, cheek))
     # ---- openings. The knob bore continues through the collar. ----
     case = _sub(case, _cyl_z(D["knob_hole_r"], D["z_collar0"] - sl, D["z_fp1"] + sl, D["ox"], D["oy"]))
     joy = _plate(D["joy_hole"][0], D["joy_hole"][1], D["hole_corner_r"], D["z_seat"] - sl, D["z_fp1"] + sl,
@@ -218,40 +220,63 @@ def build(D):
     for x, y in D["knob_bolts"]:
         case = _sub(case, _at(x, y, _tap(D, D["z_bolt0"], D["tap_len"])))
     # cross-pin access, one hole through each side wall
-    case = _sub(case, _box(D["panel_x0"] - sl, D["x_in0"] + sl, D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
+    # the corner posts stand outboard of the wall, so the hole has to cross the post as well as the wall
+    case = _sub(case, _box(D["x_out0"] - D["cross_pin_d"] - sl, D["x_in0"] + sl,
+                           D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
                            D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
-    case = _sub(case, _box(D["x_in1"] - sl, D["panel_x1"] + sl, D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
+    case = _sub(case, _box(D["x_in1"] - sl, D["x_out1"] + D["cross_pin_d"] + sl,
+                           D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
                            D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
     # film slot, open toward the cavity
     case = _sub(case, _box(D["slot_x0"], D["slot_x1"], D["slot_y0"], D["slot_y1"], D["slot_z0"], D["slot_z1"]))
     case = _one(case)
 
-    # ---- glow coat, inside the four walls, kept off the beads and the shelf ----
+    # ---- glow coat on the inside faces Ed brushes: the side walls, and the ledge lips ----
     g0, gt = D["glow_gap"], D["glow_t"]
     z_glow1 = D["z_fp0"] - r - g0
-    glow = _box(D["x_in0"] + g0, D["x_in0"] + g0 + gt, D["y_in0"] + r, D["y_in1"] - r, D["z_seat"], z_glow1)
-    glow = _add(glow, _box(D["x_in1"] - g0 - gt, D["x_in1"] - g0, D["y_in0"] + r, D["y_in1"] - r, D["z_seat"], z_glow1))
-    glow = _add(glow, _box(D["x_in0"] + r, D["x_in1"] - r, D["y_in0"] + g0, D["y_in0"] + g0 + gt, D["z_seat"], z_glow1))
-    glow = _add(glow, _box(D["x_in0"] + r, D["x_in1"] - r, D["y_in1"] - g0 - gt, D["y_in1"] - g0, D["z_seat"], z_glow1))
+    glow = _box(D["x_in0"] + g0, D["x_in0"] + g0 + gt, D["y_in0"] + r, D["y_in1"] - r, D["z_ledge1"], z_glow1)
+    glow = _add(glow, _box(D["x_in1"] - g0 - gt, D["x_in1"] - g0, D["y_in0"] + r, D["y_in1"] - r, D["z_ledge1"], z_glow1))
+    # keep the lip coat inboard of the side ledges, which run the full board height
+    gx0 = -D["pcb_x1"] + lw + g0
+    gx1 = D["pcb_x1"] - lw - g0
+    glow = _add(glow, _box(gx0, gx1, D["pcb_y0"] + lw + g0, D["pcb_y0"] + lw + g0 + gt, D["z_ledge0"], D["z_ledge1"]))
+    glow = _add(glow, _box(gx0, gx1, D["pcb_y1"] - lw - g0 - gt, D["pcb_y1"] - lw - g0, D["z_ledge0"], D["z_ledge1"]))
     glow = _sub(glow, _plate(D["joy_hole"][0] + gt, D["joy_hole"][1] + gt, D["hole_corner_r"],
-                             D["z_seat"] - sl, D["z_fp1"], D["ox"], D["place_y"]))
+                             D["z_ledge0"] - sl, D["z_fp1"], D["ox"], D["place_y"]))
     glow = _sub(glow, _box(D["shelf_x0"] - sl, D["shelf_x1"] + sl, D["shelf_y0"] - sl, D["shelf_y1"] + sl,
                            D["shelf_z0"] - sl, D["shelf_z1"] + sl))
 
-    # transparent PETG back cover. Countersink is in this plate; the thread is in the resin.
+    # transparent PETG cover. A thin clamping tongue across the shell rim and the PCB edge,
+    # a pocket behind it for the rear stack (depth unchanged), and a pad at each corner screw.
     body_h = D["body_y1"] - D["body_y0"]
-    cover = _plate(D["panel_w"], body_h, D["fp_corner_r"], D["z_cover_out"], D["z_cover_in"], D["ox"], D["body_yc"])
+    cover = _plate(D["panel_w"], body_h, D["fp_corner_r"], D["z_flange_out"], D["z_rim_seat"], D["ox"], D["body_yc"])
+    ov = D["clamp_overlap"]
+    window = _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
+                  D["z_flange_out"] - sl, D["z_rim_seat"] + sl)
+    cover = _sub(cover, window)
+    land = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_rim_seat"], D["z_pcb_land"])
+    land = _sub(land, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
+                           D["z_rim_seat"] - sl, D["z_pcb_land"] + sl))
+    cover = _add(cover, land)
+    wall = D["cover_t"]
+    vx0, vx1 = D["void_x0"] - wall, D["void_x1"] + wall
+    vy0, vy1 = D["void_y0"] - wall, D["void_y1"] + wall
+    cover = _add(cover, _box(vx0, vx1, vy0, vy1, D["z_cover_out"], D["z_cover_in"]))
+    tub = _box(vx0, vx1, vy0, vy1, D["z_cover_in"] - fu, D["z_flange_out"] + fu)
+    tub = _sub(tub, _box(D["void_x0"], D["void_x1"], D["void_y0"], D["void_y1"], D["z_cover_in"] - sl, D["z_flange_out"] + sl))
+    cover = _add(cover, tub)
     for x, y in D["corners"]:
-        cover = _sub(cover, _cyl_z(D["hole_r"], D["z_cover_out"] - sl, D["z_cover_in"] + sl, x, y))
-        cover = _sub(cover, Pos(x, y, D["z_cover_out"]) * Cone(D["screw_dk"] / 2.0 + D["thread_fit"], D["hole_r"],
-                                                               D["csink_depth"], align=A))
+        cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
+        cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
+        cover = _sub(cover, Pos(x, y, D["z_pad_out"]) * Cone(D["screw_dk"] / 2.0 + D["thread_fit"], D["hole_r"],
+                                                             D["csink_depth"], align=A))
     screws = {}
     for i, (x, y) in enumerate(D["corners"]):
-        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, D["z_cover_out"], D["z_cover_in"], D["z_thread0"], D["tap_len"]))
+        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, D["z_pad_out"], D["z_thread0"], D["z_thread0"], D["tap_len"]))
     for i, (x, y) in enumerate(D["knob_bolts"]):
         screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(D, D["z_bolt0"] - D["csink_depth"], D["z_bolt0"], D["z_bolt0"], D["tap_len"]))
     pins = {}
-    for i, x0, x1 in ((1, D["panel_x0"] - D["cross_pin_d"], D["x_in0"]), (2, D["x_in1"], D["panel_x1"] + D["cross_pin_d"])):
+    for i, x0, x1 in ((1, D["x_out0"] - D["cross_pin_d"], D["x_in0"]), (2, D["x_in1"], D["x_out1"] + D["cross_pin_d"])):
         pins[f"cross pin {i}"] = _box(x0, x1, D["place_y"] - D["cross_pin_d"] / 2.0, D["place_y"] + D["cross_pin_d"] / 2.0,
                                       D["pin_z"] - D["cross_pin_d"] / 2.0, D["pin_z"] + D["cross_pin_d"] / 2.0)
 
@@ -262,7 +287,9 @@ def build(D):
                 D["shelf_z"] - D["film_t"] / 2, D["shelf_z"] + D["film_t"] / 2)
     vcsel = _box(D["x_vc"] - D["vcsel_l"] / 2, D["x_vc"] + D["vcsel_l"] / 2,
                  D["y_vc"] - D["vcsel_w"] / 2, D["y_vc"] + D["vcsel_w"] / 2, D["z_vc0"], D["z_vc1"])
+    pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
+           "PCB": pcb,
            "scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
            "grating film": film, "VCSEL 665 nm": vcsel}
     out.update(screws)

@@ -85,23 +85,79 @@
    "value": 0.02,
    "target": ">= 0",
    "ok": true,
-   "note": "lip z 46.00\u201347.20, plate top 45.98",
+   "note": "lip z 34.52\u201335.72, plate top 34.50",
+   "owner": "case"
+  },
+  {
+   "name": "knob stands proud of the faceplate",
+   "value": 18.0,
+   "target": ">= 18",
+   "ok": true,
+   "note": "knob top 52.50 from placeholder; faceplate front 34.50",
+   "owner": "case"
+  },
+  {
+   "name": "knob proud, not more",
+   "value": 18.0,
+   "target": "<= 18",
+   "ok": true,
+   "note": "faceplate z is the knob top minus knob_proud",
+   "owner": "case"
+  },
+  {
+   "name": "faceplate to PCB ledge",
+   "value": 34.5,
+   "target": ">= 34.5",
+   "ok": true,
+   "note": "faceplate front to the PCB front (ledge datum z=0) is 34.50 mm; model ledge face at z 0.05 leaves nest_gap 0.05",
    "owner": "case"
   },
   {
    "name": "PCB side air",
-   "value": 0.79,
+   "value": 0.6,
    "target": ">= 0.6",
    "ok": true,
-   "note": "11HP panel 55.58 (scope 10HP is 50.50, short by 4.70)",
+   "note": "14HP panel 70.82 (scope 10HP is 50.50, short by 19.30); outline from cad_constraints",
    "owner": "case"
   },
   {
-   "name": "rear envelope air",
-   "value": 1.29,
+   "name": "ledge width",
+   "value": 1.5,
    "target": ">= 0.8",
    "ok": true,
-   "note": "d_big_tip \u00d848.00",
+   "note": "inboard of the PCB edge, ratio of the wall",
+   "owner": "case"
+  },
+  {
+   "name": "rim flush with the PCB back",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "shell rim z -1.60, PCB back -1.60",
+   "owner": "case"
+  },
+  {
+   "name": "clamp clears B-side parts",
+   "value": 4.304,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "overlap 3.52, nearest J10 is 7.82 from the outline",
+   "owner": "case"
+  },
+  {
+   "name": "preload before the rim seats",
+   "value": 0.086,
+   "target": ">= 0.08",
+   "ok": true,
+   "note": "PCB land at -1.68, shell seat at -1.77; tongue 0.96 closes the step",
+   "owner": "case"
+  },
+  {
+   "name": "pocket clears the rear envelope",
+   "value": 0.4,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "d_big_tip \u00d848.00 at the encoder; cavity depth 28.84 unchanged",
    "owner": "case"
   },
   {
@@ -177,6 +233,14 @@
    "owner": "case"
   },
   {
+   "name": "ledge is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "bottom ledge, under the PCB front edge",
+   "owner": "case"
+  },
+  {
    "name": "knob hole is open",
    "value": 1.0,
    "target": ">= 1",
@@ -185,11 +249,11 @@
    "owner": "case"
   },
   {
-   "name": "shell back is open for the cover",
+   "name": "shell back is open for the PCB",
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "the shell drops down over the PCB; the PETG plate closes the back",
+   "note": "the PCB drops in from the back and stops on the ledge; the cover clamps it",
    "owner": "case"
   },
   {
@@ -218,7 +282,7 @@
   },
   {
    "name": "beam vs knob",
-   "value": 3.24,
+   "value": 3.05,
    "target": ">= 0.5",
    "ok": true,
    "note": "swept fan stays off the dial",
@@ -226,7 +290,7 @@
   },
   {
    "name": "beam vs joystick",
-   "value": 3.63,
+   "value": 3.44,
    "target": ">= 0.5",
    "ok": true,
    "note": "fan stays off the carrier and the lip",
@@ -250,7 +314,7 @@
   },
   {
    "name": "beam reaches the rim",
-   "value": 43.08,
+   "value": 31.6,
    "target": ">= 12.08",
    "ok": true,
    "note": "rises from the mirror to the faceplate underside",
@@ -273,19 +337,27 @@
    "owner": "case"
   },
   {
-   "name": "countersink vs cover thickness",
-   "value": 0.279,
-   "target": ">= 0.279",
+   "name": "PETG under the countersink",
+   "value": 1.5,
+   "target": ">= 1.5",
    "ok": true,
-   "note": "ISO 10642 countersink 1.86 in PETG 2.14 (smoky grey, see-through)",
+   "note": "pad 2.40 on the 0.96 tongue; countersink 1.86; left under the head 1.50; pocket wall stays 2.14",
    "owner": "case"
   },
   {
-   "name": "corner screw tip vs PCB",
-   "value": 20.256,
+   "name": "corner screw beside the PCB",
+   "value": 3.6,
    "target": ">= 1.5",
    "ok": true,
-   "note": "tip z -21.86, PCB back -1.60",
+   "note": "boss centre x 29.60, thread stays off the board edge",
+   "owner": "case"
+  },
+  {
+   "name": "corner screw tip vs faceplate",
+   "value": 25.1,
+   "target": ">= 1.5",
+   "ok": true,
+   "note": "tip z 6.90, plate underside 32.00",
    "owner": "case"
   },
   {
@@ -293,7 +365,7 @@
    "value": 3.0,
    "target": ">= 2.5",
    "ok": true,
-   "note": "4 bolts up into the shell, tip z 42.98",
+   "note": "4 bolts up into the shell, tip z 31.50",
    "owner": "case"
   },
   {
@@ -317,15 +389,15 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "\u00d81.60 pin, hole \u00d82.24, z 36.97 (axis not yet exported by joystick v0.4)",
+   "note": "\u00d81.60 pin, hole \u00d82.24, z 27.21 (axis not yet exported by joystick v0.4)",
    "owner": "case"
   },
   {
    "name": "case mass",
-   "value": 82.49,
+   "value": 59.952,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 63454 mm\u00b3 (63.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 46117 mm\u00b3 (46.1 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {
@@ -333,7 +405,7 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "overall 55.58 \u00d7 128.50 \u00d7 78.56 mm",
+   "note": "overall 70.82 \u00d7 128.50 \u00d7 67.08 mm; faceplate to PCB 34.50 mm",
    "owner": "case"
   }
  ],

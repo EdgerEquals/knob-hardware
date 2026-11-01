@@ -30,6 +30,8 @@ def _colour(D, name):
         return (0.75, 0.05, 0.08), 1.0
     if name.startswith("back cover"):
         return tuple(c / 255.0 for c in D["cover_rgb"]), D["cover_opacity"]
+    if name == "PCB":
+        return (0.12, 0.42, 0.22), 1.0
     if name.startswith("corner screw") or name.startswith("knob bolt"):
         return (0.72, 0.74, 0.78), 1.0
     if name.startswith("cross pin"):
@@ -64,7 +66,7 @@ def _cut(shape, kind, screw=None):
     return shape
 
 
-def _shot(items, path, view, size, zoom):
+def _shot(items, path, view, size, zoom, bounds=None, labels=None):
     import pyvista as pv
     pv.OFF_SCREEN = True
     pl = pv.Plotter(off_screen=True, window_size=size)
@@ -77,21 +79,76 @@ def _shot(items, path, view, size, zoom):
         faces = np.hstack([np.full((len(T), 1), 3), T]).ravel()
         pl.add_mesh(pv.PolyData(np.ascontiguousarray(P), faces), color=rgb, opacity=opacity,
                     smooth_shading=True, specular=0.25, ambient=0.35, diffuse=0.7)
+    if labels:
+        pl.add_point_labels([p for p, _ in labels], [t for _, t in labels],
+                            font_size=16, text_color="black", point_color="black", point_size=8,
+                            shape_color="white", shape_opacity=0.85, always_visible=True, bold=True)
     if not any_mesh:
         pl.close()
         return path
     pl.enable_parallel_projection()
-    if view == "plan":
-        pl.view_xy()
-    elif view == "section":
-        pl.view_yz()
+    if bounds is not None and view == "xz":
+        # fit the cut, looking along +Y onto the section. A plain reset_camera widens the
+        # frame to the long axis and pulls the deep cover pocket into view.
+        x0, x1, _y0, _y1, z0, z1 = bounds
+        cx, cz = (x0 + x1) / 2.0, (z0 + z1) / 2.0
+        pl.camera.focal_point = (cx, 0.0, cz)
+        pl.camera.position = (cx, abs(x1 - x0) + abs(z1 - z0), cz)
+        pl.camera.up = (0.0, 0.0, 1.0)
+        pl.camera.parallel_scale = abs(z1 - z0) / 2.0
+        pl.camera.clipping_range = (1.0, 1.0e4)
     else:
-        pl.view_isometric()
-    pl.reset_camera()
-    pl.camera.zoom(zoom)
+        if view == "plan":
+            pl.view_xy()
+        elif view == "section":
+            pl.view_yz()
+        else:
+            pl.view_isometric()
+        pl.reset_camera()
+        pl.camera.zoom(zoom)
     pl.screenshot(path)
     pl.close()
     return path
+
+
+def _section_frame(D):
+    """Camera box and labels for the cut that holds one corner screw and the collar."""
+    sx, sy = D["corners"][0]
+    ang = math.atan2(sy, sx)
+    rad = math.hypot(sx, sy)
+    # the cut rotates that screw onto +X; labels sit on the cut face, just toward the camera
+    y = 0.6
+    t = _ray_hit(ang, D["pcb_x1"], D["pcb_y0"], D["pcb_y1"])
+    labels = [
+        ((-D["collar_r"] + 8.0, y, (D["z_collar0"] + D["z_fp0"]) / 2), "collar"),
+        ((-4.0, y, D["lab_z0"] + 2.5), "labyrinth"),
+        ((t * 0.35, y, D["z_pcb_back"] - 3.5), "PCB"),
+        ((t * 0.55, y, D["z_ledge1"] + 2.2), "shell ledge"),
+        ((t - 4.0, y, D["z_flange_out"] - 3.0), "clamp rim"),
+        ((rad - 7.0, y, (D["z_thread0"] + D["z_tip"]) / 2 + 2.0), "printed thread"),
+        ((rad + 7.0, y, D["z_pad_out"] - 1.5), "PETG pad"),
+        ((rad + 7.0, y, (D["z_pad_out"] + D["z_rim"]) / 2), "M3 screw"),
+    ]
+    x0, x1 = -D["collar_r"] - 10.0, rad + D["screw_boss_r"] + 16.0
+    z0, z1 = D["z_pad_out"] - 5.0, D["z_fp1"] + 3.0
+    return (x0, x1, -2.0, 2.0, z0, z1), labels
+
+
+def _ray_hit(ang, x1, y0, y1):
+    """Distance from the origin to the PCB rectangle along a ray at angle ang."""
+    dx, dy = math.cos(ang), math.sin(ang)
+    ts = []
+    if abs(dx) > 1e-9:
+        for x in (-x1, x1):
+            t = x / dx
+            if t > 0 and y0 - 1e-6 <= t * dy <= y1 + 1e-6:
+                ts.append(t)
+    if abs(dy) > 1e-9:
+        for y in (y0, y1):
+            t = y / dy
+            if t > 0 and -x1 - 1e-6 <= t * dx <= x1 + 1e-6:
+                ts.append(t)
+    return min(ts) if ts else x1
 
 
 def _items(D, shapes, tol):
@@ -144,24 +201,26 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     rev = D["case_rev"]
     out = os.path.join(ROOT, "assemblies", f"case-{rev}")
     os.makedirs(out, exist_ok=True)
-    tol = 0.55 if preview else 0.22
-    size = (780, 640) if preview else (1280, 1040)
+    tol = 0.28 if preview else 0.15
+    size = (1100, 780) if preview else (1400, 1000)
     zoom = 1.15
     case = parts["case"]
     glow = parts["glow coat (inside walls)"]
     beam = beam_solid(D)
     show = [("case", case), ("glow", glow), ("back cover", parts["back cover (PETG)"]),
-            ("corner screw 1", parts["corner screw 1"]), ("beam", beam)]
+            ("PCB", parts["PCB"]), ("corner screw 1", parts["corner screw 1"]), ("beam", beam)]
     if not preview:
         show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (PETG)", "corner screw 1")]
     clean = [("case", case), ("back cover", parts["back cover (PETG)"]), ("glow", glow)]
     paths = []
     shots = []
+    joint = [("case", case), ("back cover", parts["back cover (PETG)"]),
+             ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"])]
     if preview:
-        shots = [("corner", "SECTION through a corner screw and the knob collar", show, "section"),
+        shots = [("corner", "SECTION  —  corner screw, collar, PCB ledge, clamp rim", joint, "xz"),
                  ("iso", "ISOMETRIC", show, "iso")]
     elif full:
-        shots = [("corner", "SECTION through a corner screw and the knob collar", show, "section"),
+        shots = [("corner", "SECTION  —  corner screw, collar, PCB ledge, clamp rim", joint, "xz"),
                  ("iso", "ISOMETRIC", show, "iso"),
                  ("plan", "PLAN  (panel up = +Y)", show, "plan"),
                  ("clean", "CLEAN  (shell, cover, glow)", clean, "iso")]
@@ -174,9 +233,17 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
             if key == "corner":
                 shape = _cut(shape, "corner", D["corners"][0])
             cut_shapes.append((name, shape))
-        items = _items(D, cut_shapes, tol)
+        items = _items(D, cut_shapes, 0.08 if key == "corner" else tol)
         p = os.path.join(tmp, key + ".png")
-        _shot(items, p, view, size, zoom)
+        bounds, labels = (None, None)
+        shot_size = size
+        if key == "corner":
+            bounds, labels = _section_frame(D)
+            x0, x1, _y0, _y1, z0, z1 = bounds
+            h = 860
+            w = int(h * abs(x1 - x0) / max(abs(z1 - z0), 1.0))
+            shot_size = (min(w, 1800), h)
+        _shot(items, p, view, shot_size, zoom, bounds=bounds, labels=labels)
         pngs.append(p)
         paths.append(p)
     mass = case.volume * D["case_rho"]
@@ -184,9 +251,9 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     nt = len(rows) if rows else 0
     nc = len(clashes or {})
     footer = (f"{D['hp']} HP × 3U   {D['panel_w']:.2f} × {D['panel_h']:.1f} × {D['z_fp1'] - D['z_foot']:.2f} mm"
-              f"    shell {case.volume / 1000:.1f} cm³  {mass:.1f} g\n"
-              f"rear stack {D['rear_stack']:.2f} + ratio {D['cover_clear_ratio']:.2f} → cover depth {D['cover_depth']:.2f}; "
-              f"PETG {D['cover_t']:.2f} (countersink {D['csink_depth']:.2f})\n"
+              f"    faceplate to PCB {D['fp_to_pcb']:.2f} mm    shell {case.volume / 1000:.1f} cm³  {mass:.1f} g\n"
+              f"knob top {D['knob_top_used']:.2f} ({D['knob_top_src']}) − proud {D['knob_proud']:.1f} → plate {D['z_fp1']:.2f}; "
+              f"rear stack {D['rear_stack']:.2f} + ratio {D['cover_clear_ratio']:.2f} → cover depth {D['cover_depth']:.2f}\n"
               f"thread M{D['screw_d']:.0f} engagement {D['tap_len']:.2f} ({D['tap_len'] / D['screw_d']:.2f}×d)  "
               f"boss wall {(D['screw_boss_r'] - D['screw_d'] / 2) / D['screw_d']:.2f}×d    checks {nt - nf}/{nt}  clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")

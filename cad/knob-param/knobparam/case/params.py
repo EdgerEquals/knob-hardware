@@ -13,6 +13,8 @@ Geometry that belongs to the other two open branches is snapshotted here, not im
 * Knob v0.17 OD — commit 00502746fa2fb2aaef44580e1b9edbcc907f73e7 (origin/sub/assembly-v017).
   Design notes: minimum Ø41.641, drawn Ø41.65. The joystick sizes the plan to Ø41.70.
   z_knob_top is 52.5 on both that branch and param-dev (z_glass 56.8 − lip 4.0 − knob_run 0.3).
+  The faceplate front is that height minus knob_proud (18 mm). When cad_constraints grows a
+  z_knob_top / knob_top key, the plate follows it.
 
 The live interface knob_od (v0.16b Ø40.85 on param-dev) is read as well; the opening uses
 whichever is larger, so a later merge cannot make the hole smaller than the knob.
@@ -20,7 +22,9 @@ whichever is larger, so a later merge cannot make the hole smaller than the knob
 Tags: [Ed] Ed's decision, [L] module scope (knob-module-v1 panel layout), [S] datasheet / PCBWay,
 [K] KiCad, [A] assumed, [J] joystick v0.4 snapshot, [N] knob v0.17 snapshot.
 """
+import json
 import math
+import os
 
 P = dict(
     case_rev="v0.1",
@@ -52,7 +56,8 @@ P = dict(
     glow_gap=0.30,         # [A] air between the drawn coat and the wall (keeps the solids apart)
     # ---- knob opening (v0.17 / joystick plan) ----
     knob_od_design=41.70,  # [N]/[J] joystick v0.4 sizes to this; v0.17 derives Ø41.65
-    z_knob_snap=52.5,      # [N] z_knob_top on v0.16b and v0.17 (not exported by main_knob)
+    z_knob_snap=52.5,      # [N] z_knob_top on v0.16b and v0.17, until cad_constraints carries it
+    knob_proud=18.0,       # [Ed] knob top stands this far above the faceplate front face
     knob_rad_clear=0.20,   # [A] = one SLA tolerance, radial, dial and knob share this hole
     # ---- joystick bezel (v0.4 snapshot; formulas match jsparam.derive) ----
     scr_w=41.62,           # [J] DO0164FMST05 landscape width
@@ -114,7 +119,8 @@ P = dict(
     # plate. Today the tallest back-side part is encoder bearing 2, seated on under_pcb's back panel.
     rear_panel_snap=25.0,  # [A] under_pcb back_panel (not exported). Bearing 2 sits here.
     cover_clear_ratio=0.08,# [A] extra depth past that stack, as a fraction of the stack
-    cover_web_ratio=0.15,  # [A] cover thicker than the countersink by this fraction of the countersink
+    cover_web_ratio=0.15,  # [A] field of the cover, past the countersink, as a fraction of the countersink
+    cover_under_mult=0.5,  # [Ed] PETG left under the countersink at each screw, in screw diameters
     cover_rho=1.27e-3,     # [A] PETG, g/mm³
     cover_rgb=(132, 136, 142),  # [A] smoky grey, still see-through
     cover_opacity=0.34,    # [A]
@@ -130,7 +136,13 @@ P = dict(
     cross_pin_d=1.6,       # [A] cross pin diameter
     pin_clear_ratio=0.2,   # [A] hole over the pin, as a fraction of the pin
     pin_below_ratio=0.15,  # [A] pin centre below the faceplate underside, as a fraction of the plate height above the PCB
-    seat_gap=0.08,         # [A] air so the cover and the shell do not fuse
+    seat_gap=0.08,         # [A] air so the cover, the shell and the PCB do not fuse in the model
+    nest_gap=0.05,         # [A] air, PCB front face to the ledge stop (solids stay apart)
+    ledge_ratio=0.60,      # [A] ledge width / wall, inboard of the PCB edge
+    preload_ratio=0.04,    # [A] shell-rim seat recessed by this fraction of the cover field; the PCB land touches first
+    clamp_t_ratio=0.45,    # [A] clamp tongue / cover field, thin enough to close the preload
+    clamp_keep=0.45,       # [A] clamp overlap uses this fraction of the nearest B-side edge clearance
+    cover_pocket=0.40,     # [A] air, pocket wall to the rear envelope (d_big_tip)
     pcb_clear=0.60,        # [A] air, PCB edge to the inner side wall
     rear_clear=0.80,       # [A] air, d_big_tip envelope to the inner side wall
     fuse=0.02,             # [A] overlap so adjacent walls fuse into one solid
@@ -150,7 +162,7 @@ P = dict(
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "under_pcb": ["d_big_tip"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
-           "joy_hole", "mounts_frame", "mounts_board", "z_fp0", "z_fp1", "z_foot"]
+           "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb"]
 
 
 def _place_for(x, y_edge, rc):
@@ -158,6 +170,50 @@ def _place_for(x, y_edge, rc):
     if abs(x) >= rc - 1e-9:
         return -y_edge
     return -y_edge + math.sqrt(rc * rc - x * x)
+
+
+def _json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except OSError:
+        return {}
+
+
+def _data_files():
+    here = os.path.dirname(os.path.abspath(__file__))
+    kicad = os.path.normpath(os.path.join(here, "..", "electronics", "kicad"))
+    return (os.path.join(kicad, "cad_constraints.json"),
+            os.path.join(kicad, "knob-main-pcb", "pcb_proxy.json"))
+
+
+def _knob_top(cons, fallback):
+    """Knob-top z from cad_constraints when the knob branch writes it; else the snapshot."""
+    for key in ("z_knob_top", "knob_top"):
+        if key in cons and isinstance(cons[key], (int, float)):
+            return float(cons[key]), "cad_constraints"
+    return float(fallback), "placeholder"
+
+
+def _pcb_outline(cons, pcb_w, above, below):
+    pcb = cons.get("pcb")
+    if isinstance(pcb, (list, tuple)) and len(pcb) == 3:
+        return float(pcb[0]), float(pcb[1]), float(pcb[2]), "cad_constraints"
+    return float(pcb_w), float(above), float(below), "interface"
+
+
+def _bside_clear(parts, pcb_w, above, below):
+    """Smallest plan gap from a B-side box to the PCB outline. Negative means the box crosses the edge."""
+    x1 = pcb_w / 2.0
+    y0, y1 = -below, above
+    best = min(x1, y1 - y0)
+    hit = ""
+    for p in parts:
+        hx, hy = p["w"] / 2.0, p["l"] / 2.0
+        d = min((p["x"] - hx) + x1, x1 - (p["x"] + hx), (p["y"] - hy) - y0, y1 - (p["y"] + hy))
+        if d < best:
+            best, hit = d, p.get("ref", "")
+    return best, hit
 
 
 def derive(D):
@@ -179,17 +235,42 @@ def derive(D):
     # press rebate, same stack as the joystick proxy
     D["press_travel"] = D["tol_sla"] + D["sw_push"]
     D["fp_rebate"] = D["press_travel"] + D["tol_sla"]
-    # faceplate height from the knob top, matching joystick z_bz0 / z_fp
-    scr_top_nom = D["z_knob_snap"] - D["scr_below_knob"]
-    D["z_bz0"] = scr_top_nom - D["scr_t"]
-    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
-    D["z_fp1"] = D["z_bz0"] - D["up_gap"]
+    # Faceplate from the knob top. The bezel still rests on the plate; the plate is no longer
+    # parked 5 mm under the knob. Knob top comes from cad_constraints when that key lands.
+    cons_path, proxy_path = _data_files()
+    cons = _json(cons_path)
+    D["knob_top_used"], D["knob_top_src"] = _knob_top(cons, D["z_knob_snap"])
+    D["z_fp1"] = D["knob_top_used"] - D["knob_proud"]
     D["z_fp0"] = D["z_fp1"] - D["wall"]
     D["fp_t"] = D["wall"]
-    # smallest HP whose panel can hold the PCB, the rear envelope and the walls
-    need = max(D["pcb_w"] + 2 * (D["pcb_clear"] + D["wall"]),
-               D["d_big_tip"] + 2 * (D["rear_clear"] + D["wall"]),
-               2 * D["half_w"] + 2 * D["wall"])
+    D["fp_to_pcb"] = D["z_fp1"]
+    D["z_bz0"] = D["z_fp1"] + D["up_gap"]
+    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
+    # PCB outline from cad_constraints (the KiCad export), else the live electronics numbers.
+    D["nest_w"], D["nest_above"], D["nest_below"], D["pcb_src"] = _pcb_outline(
+        cons, D["pcb_w"], D["pcb_above"], D["pcb_below"])
+    D["pcb_x1"] = D["nest_w"] / 2.0
+    D["pcb_y0"] = -D["nest_below"]
+    D["pcb_y1"] = D["nest_above"]
+    # The PCB drops in from the back. Its back face is flush with the shell rim; the ledge
+    # stops the front face. nest_gap keeps the two solids from fusing.
+    D["z_rim"] = D["z_pcb_back"]
+    D["z_ledge0"] = D["nest_gap"]
+    D["z_ledge1"] = D["z_ledge0"] + D["wall"]
+    D["ledge_w"] = D["ledge_ratio"] * D["wall"]
+    D["screw_boss_r"] = D["screw_d"] * (0.5 + D["boss_wall_mult"])
+    D["pad_r"] = D["screw_boss_r"]
+    D["hole_r"] = D["screw_d"] * (0.5 + D["screw_hole_ratio"])
+    D["tip_clear"] = D["tip_clear_ratio"] * D["screw_d"]
+    # Side walls and the corner bosses sit outside the PCB in X. Y has no room past the
+    # board before the rail zone, so the top and bottom are ledges, not walls.
+    D["x_in1"] = D["pcb_x1"] + D["pcb_clear"]
+    D["x_in0"] = -D["x_in1"]
+    D["x_out1"] = D["x_in1"] + D["wall"]
+    D["x_out0"] = -D["x_out1"]
+    br = D["screw_boss_r"]
+    boss_out = D["x_in1"] + 2.0 * br
+    need = max(2.0 * (boss_out + D["web_min"]), 2.0 * D["half_w"] + 2.0 * D["wall"])
     D["hp_need_w"] = need
     D["hp"] = int(math.ceil((need + D["hp_gap"]) / D["hp_pitch"] - 1e-9))
     D["panel_w"] = D["hp"] * D["hp_pitch"] - D["hp_gap"]
@@ -203,14 +284,13 @@ def derive(D):
     D["body_y1"] = D["panel_y1"] - D["rail_clear"]
     D["body_y0"] = D["panel_y0"] + D["rail_clear"]
     D["body_yc"] = (D["body_y0"] + D["body_y1"]) / 2
-    D["x_in0"] = D["panel_x0"] + D["wall"]
-    D["x_in1"] = D["panel_x1"] - D["wall"]
-    D["y_in0"] = D["body_y0"] + D["wall"]
-    D["y_in1"] = D["body_y1"] - D["wall"]
+    D["y_in0"] = D["pcb_y0"]
+    D["y_in1"] = D["pcb_y1"]
     D["z_seat"] = D["seat_gap"]
     # Placeholder rear stack: bearing 2 bottom behind the PCB back. Same arithmetic as under_pcb
     # (back panel seat + flange − bearing width). The retainer plate on sub/assembly-v017 replaces
-    # rear_panel_snap when it reports a depth; the cover then moves with it.
+    # rear_panel_snap when it reports a depth; the cover cavity then moves with it. The cavity
+    # depth itself is not changed here.
     B = D["brg"]
     D["rear_stack"] = D["rear_panel_snap"] - B["ft"] + B["B"]
     D["z_bearing_bot"] = D["z_pcb_back"] - D["rear_stack"]
@@ -219,13 +299,22 @@ def derive(D):
     D["csink_depth"] = (D["screw_dk"] - D["screw_d"]) / 2.0
     D["cover_t"] = D["csink_depth"] * (1.0 + D["cover_web_ratio"])
     D["z_cover_out"] = D["z_cover_in"] - D["cover_t"]
-    D["z_foot"] = D["z_cover_out"]
-    D["z_wall0"] = D["z_cover_in"] + D["seat_gap"]
-    avail = (D["z_pcb_back"] - D["tip_clear_ratio"] * D["screw_d"]) - D["z_cover_in"]
+    # Clamping rim. The PCB land is seat_gap off the board; the shell-rim seat is recessed a
+    # further preload_gap so the screws clamp the PCB before the cover bottoms on the rim.
+    # The tongue is thinner than the pocket wall so it can close that gap.
+    D["preload_gap"] = D["preload_ratio"] * D["cover_t"]
+    D["z_pcb_land"] = D["z_pcb_back"] - D["seat_gap"]
+    D["z_rim_seat"] = D["z_pcb_land"] - D["preload_gap"]
+    D["clamp_t"] = D["clamp_t_ratio"] * D["cover_t"]
+    D["z_flange_out"] = D["z_rim_seat"] - D["clamp_t"]
+    D["cover_under"] = D["cover_under_mult"] * D["screw_d"]
+    D["pad_h"] = max(0.0, D["cover_under"] + D["csink_depth"] - D["clamp_t"])
+    D["z_pad_out"] = D["z_flange_out"] - D["pad_h"]
+    D["cover_skin"] = D["clamp_t"] + D["pad_h"] - D["csink_depth"]
+    D["z_foot"] = min(D["z_pad_out"], D["z_cover_out"])
+    D["z_wall0"] = D["z_rim"]
+    avail = (D["z_fp0"] - D["tip_clear"]) - D["z_rim"]
     D["engage"] = min(D["engage_mult"] * D["screw_d"], avail)
-    D["screw_boss_r"] = D["screw_d"] * (0.5 + D["boss_wall_mult"])
-    D["hole_r"] = D["screw_d"] * (0.5 + D["screw_hole_ratio"])
-    D["tip_clear"] = D["tip_clear_ratio"] * D["screw_d"]
     D["knob_hole_r"] = D["knob_r"] + D["knob_rad_clear"]
     # bridge between the two openings, along +Y
     D["joy_y_near"] = D["place_y"] - D["hole_hh"]
@@ -240,10 +329,36 @@ def derive(D):
     D["car_corner_dist"] = math.hypot(D["car_hw"] - cx, D["car_hh"] - cy)
     D["car_in_hole"] = D["hole_corner_r"] - D["car_corner_dist"]
     # side clearances the HP choice is supposed to buy
-    D["side_air"] = (D["x_in1"] - D["x_in0"] - D["pcb_w"]) / 2
+    D["side_air"] = (D["x_in1"] - D["x_in0"] - D["nest_w"]) / 2
     D["rear_air"] = (D["x_in1"] - D["x_in0"]) / 2 - D["d_big_tip"] / 2
-    D["pcb_y0"] = -D["pcb_below"]
-    D["pcb_y1"] = D["pcb_above"]
+    # B-side keep-out: KiCad proxy boxes plus the pad courtyards written into cad_constraints.
+    boxes = list(_json(proxy_path).get("back_parts") or [])
+    feel = cons.get("feel") or {}
+    pw, pl = (feel.get("pad") or (1.8, 1.8))[:2]
+    for xy in cons.get("fm_pad_xy") or []:
+        boxes.append({"ref": "feel pad", "x": xy[0], "y": xy[1], "w": pw, "l": pl})
+    rod_r = cons.get("rod_pad_r")
+    if isinstance(rod_r, (int, float)) and rod_r > 0:
+        boxes.append({"ref": "rod pad", "x": 0.0, "y": 0.0, "w": 2.0 * rod_r, "l": 2.0 * rod_r})
+    D["bside_clear"], D["bside_ref"] = _bside_clear(boxes, D["nest_w"], D["nest_above"], D["nest_below"])
+    D["clamp_overlap"] = max(D["sla_min"], D["clamp_keep"] * D["bside_clear"])
+    # wide pocket behind the tongue: the flange window is the overlap; the cavity opens out to the
+    # rear envelope so the disc and the bearing retainer are not asked to pass through the lip.
+    ex, ey = D["enc_xy"]
+    R = D["d_big_tip"] / 2.0 + D["cover_pocket"]
+    ov = D["clamp_overlap"]
+    D["void_x0"] = min(-D["pcb_x1"] + ov, ex - R)
+    D["void_x1"] = max(D["pcb_x1"] - ov, ex + R)
+    D["void_y0"] = min(D["pcb_y0"] + ov, ey - R)
+    D["void_y1"] = max(D["pcb_y1"] - ov, ey + R)
+    keep = D["screw_boss_r"] + D["pcb_clear"]
+    for sx, sy in ((D["x_in1"] + br, D["body_y0"] + br), (D["x_in1"] + br, D["body_y1"] - br),
+                   (-(D["x_in1"] + br), D["body_y0"] + br), (-(D["x_in1"] + br), D["body_y1"] - br)):
+        if sx >= 0:
+            D["void_x1"] = min(D["void_x1"], sx - keep)
+        else:
+            D["void_x0"] = max(D["void_x0"], sx + keep)
+    D["pocket_gap"] = min(ex - D["void_x0"], D["void_x1"] - ex, ey - D["void_y0"], D["void_y1"] - ey) - D["d_big_tip"] / 2.0
     # rail screws. Bottom stations stay on the Doepfer 7.5 mm grid.
     # Top stations move outboard of the joystick opening: the bezel crosses the usual columns,
     # and a Eurorack rail takes the nut anywhere along its slot.
@@ -297,7 +412,7 @@ def derive(D):
     # VCSEL on the PCB, under the film, emitting +Z
     D["x_vc"] = D["x_beam"]
     D["y_vc"] = D["y_beam"]
-    D["z_vc0"] = 0.0
+    D["z_vc0"] = D["nest_gap"]
     D["z_vc1"] = D["vcsel_h"]
     # swept fan: along the inner left wall and the inner bottom wall, then up to the rim
     D["beam_x"] = D["x_in0"] + D["beam_gap"] + D["beam_t"] / 2
@@ -311,18 +426,20 @@ def derive(D):
     D["lab_w"] = D["lab_pitch"] * D["lab_w_ratio"]
     D["lab_d"] = D["collar_wall"] * D["lab_d_ratio"]
     D["lab_z0"] = D["z_collar0"] + (D["collar_h"] - (D["lab_n"] - 1) * D["lab_pitch"]) / 2.0
-    # knob bolts: on the bolt circle outside the collar, only where the boss stays inside the shell
-    # and clear of the joystick opening. The free arc is the bottom (away from the bezel).
+    # knob bolts: on the bolt circle outside the collar, on the underside of the plate,
+    # clear of the joystick opening and of the rail zone. The free arc is the bottom.
     D["bolt_r"] = D["collar_r"] + D["seat_gap"] + D["screw_boss_r"]
-    limit_x = abs(D["x_in0"]) - D["screw_boss_r"] - D["seat_gap"]
+    limit_x = D["panel_w"] / 2.0 - D["screw_boss_r"] - D["web_min"]
     bolts = []
-    # walk the lower semicircle; keep the first knob_bolt_n that fit
     steps = 36
     for i in range(steps):
         ang = math.pi * (1.0 + (i + 0.5) / steps)   # π .. 2π: the bottom half, away from the bezel at +Y
         x = D["bolt_r"] * math.cos(ang)
         y = D["bolt_r"] * math.sin(ang)
-        if abs(x) > limit_x or y - D["screw_boss_r"] < D["y_in0"]:
+        if abs(x) > limit_x or y - D["screw_boss_r"] < D["body_y0"] or y + D["screw_boss_r"] > D["body_y1"]:
+            continue
+        # keep the whole boss (and the head below it) inboard of the side walls
+        if abs(x) + D["screw_boss_r"] + D["seat_gap"] > D["x_in1"]:
             continue
         dx = max(abs(x) - D["hole_hw"], 0.0)
         dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
@@ -339,14 +456,13 @@ def derive(D):
         bolts = seen
     D["knob_bolts"] = tuple(bolts)
     D["z_bolt0"] = D["z_fp0"] - D["engage"]
-    # four cover screws, one per corner of the rail-safe body. The post is boss_r, so the
-    # corner grows inward until the printed thread has a full diameter of wall.
-    br = D["screw_boss_r"]
-    D["corners"] = ((D["panel_x0"] + br, D["body_y0"] + br),
-                    (D["panel_x1"] - br, D["body_y0"] + br),
-                    (D["panel_x0"] + br, D["body_y1"] - br),
-                    (D["panel_x1"] - br, D["body_y1"] - br))
-    D["z_thread0"] = D["z_wall0"]
+    # four cover screws beside the PCB in X, inside the rail-safe band in Y.
+    # The post is boss_r; its inner face is the inner side wall.
+    D["corners"] = ((D["x_in0"] - br, D["body_y0"] + br),
+                    (D["x_in1"] + br, D["body_y0"] + br),
+                    (D["x_in0"] - br, D["body_y1"] - br),
+                    (D["x_in1"] + br, D["body_y1"] - br))
+    D["z_thread0"] = D["z_rim"]
     D["tap_len"] = D["engage"] - D["screw_p"]
     D["z_thread1"] = D["z_thread0"] + D["tap_len"]
     D["z_tip"] = D["z_thread1"]
