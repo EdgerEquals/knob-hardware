@@ -188,6 +188,9 @@ P = dict(
     ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
     ot_keep_ang=(124.0, 137.0),   # [Ed] C20–C22 / U20. A cageless ring cannot skip this; a printed blank fills it
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
+    ot_pin_len_k=0.6,   # [A] locating-pin engagement / PCB thickness. One hole round, one slotted, same scheme as the cradle pegs.
+    ot_pin_slot_k=0.5,   # [A] extra slot length / pin diameter
+    ot_pin_fit_k=0.06,   # [A] NPTH oversize / pin diameter, so the pin is not a clash with the hole
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
     fg_z_pin=12,   # [Ed] 0.5 module 12T
@@ -580,6 +583,46 @@ def _place_outer_thrust(D):
     D["ot_land_th"] = z_ball - rg                 # clear resin under the groove bottom, PCB front = 0
 
 
+def _place_ot_pins(D):
+    """Two pins on the clear lower race. That race is already part of the cradle, and its annulus is what sits on the PCB.
+    The pin lives inboard of the groove, so it misses the ball track and the light column under the balls.
+    One PCB hole is round; the other is a radial slot."""
+    r0 = D["ot_r"] - D["ot_rg"] - D["ot_seat_gap"]
+    outer = r0 + D["ot_seat_gap"] / 2                     # bites the race lip, stops short of the groove
+    d = outer - D["cr_r_out"]
+    r = D["cr_r_out"] + d / 2
+    pr = d / 2
+    blocks = [(0.0, 0.0, D["dial_tube_od"] / 2),
+              (D["offset"], 0.0, D["can_r"]),
+              (*D["enc_xy"], D["brg"]["D"] / 2),
+              (*D["fm_xy"], D["feel"]["can_d"] / 2)]
+    for x, y in D["idler_xy"]:
+        blocks.append((x, y, D["d_pin_tip"] / 2))
+    if D.get("hv_r"):
+        for rr, a in zip(D["hv_r"], D["hv_phi_s"]):
+            blocks.append((rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), D["hv_pad_r"]))
+    def clear(a):
+        x, y = r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
+        return min(math.hypot(x - bx, y - by) - br for bx, by, br in blocks)
+    best = None
+    for a in range(0, 360, 5):
+        for b in range(a + 90, a + 270, 5):
+            c = min(clear(a), clear(b % 360))
+            if best is None or c > best[0]:
+                best = (c, a, b % 360)
+    _c, a, b = best
+    def xy(ang):
+        return (r * math.cos(math.radians(ang)), r * math.sin(math.radians(ang)))
+    D["ot_pin_d"] = d
+    D["ot_pin_r"] = r
+    D["ot_pin_ang"] = [a, b]
+    D["ot_pin_xy"] = [xy(a), xy(b)]
+    D["ot_pin_len"] = D["pcb_t"] * D["ot_pin_len_k"]
+    D["ot_pin_hole_d"] = d * (1.0 + D["ot_pin_fit_k"])
+    D["ot_pin_slot"] = d * (1.0 + D["ot_pin_slot_k"])
+    D["ot_pin_clear"] = _c - pr                          # plan clearance of the tighter pin to the nearest neighbour
+
+
 def _place_det_columns(D):
     """One support column per detent, the shortest link that clears the sweeping arm and the feel saddle."""
     R2D = math.degrees
@@ -790,6 +833,7 @@ def derive(D):
     _place_feel(D)
     _place_mech(D)
     _place_outer_thrust(D)
+    _place_ot_pins(D)
     # Cans stand up into the sleeve. The ring tips and the pinions stop at the cap, under the glass.
     D["sleeve_inside_r"] = max(D["motor_offset"] + D["can_r"], math.hypot(*D["fm_xy"]) + D["feel"]["can_d"] / 2)
     # ---- v0.16 knob ring magnet / dial sensor ----

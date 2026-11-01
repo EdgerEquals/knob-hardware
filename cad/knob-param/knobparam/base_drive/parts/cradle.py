@@ -94,8 +94,12 @@ def build(D):
     fl = _thrust_track(D)
     if fl is not None: c += fl
     blank = _thrust_blank(D)
-    out = {"base cradle": c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"]), -0.01, D["z_top"]),
-           "outer thrust blank": blank}
+    c = c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"]), -0.01, D["z_top"])
+    # The clear race is this same solid. Its pins drop through the PCB; the round/slot holes are drilled there.
+    z_pin = D["ot_land_th"] - D["ot_seat_gap"]
+    for x, y in D["ot_pin_xy"]:
+        c += cyl(D["ot_pin_d"] / 2, -D["ot_pin_len"], D["ot_pin_len"] + z_pin, x, y)
+    out = {"base cradle": c, "outer thrust blank": blank}
     ruby = set(D["ot_ruby_idx"])
     load, gems = [], []
     for i, a in enumerate(D["ot_angs"]):

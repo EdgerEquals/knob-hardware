@@ -4,7 +4,8 @@ board; this keeps it in step with the parametric model). Run with the knob-param
 Frame: dial axis origin, x toward the 1220 motor, y up (frame); make_board.py converts to board coords (bx = axis_bx + x,
 by = axis_by - y). Contents: the base-cradle footprint on the PCB front (section at z = 0.02, outer + openings), the Hall row
 (radius, angle, part per sensor, magnet polarity), the 716 lead holes, the rod-pad radius, encoder/motor axes, idlers, detents,
-spring anchors, and the faceplate (front z and thickness in the knob frame, PCB front = 0) for sub/case-v01."""
+spring anchors, the lower-race locating pins (one round NPTH, one radial slot), and the faceplate
+(front z and thickness in the knob frame, PCB front = 0) for sub/case-v01."""
 import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..", "..", "..")))   # cad/knob-param
@@ -48,6 +49,9 @@ def main():
         knob_hole_d=D["knob_od"] + 2 * D["knob_hole_clear"],
         knob_hole_d_max=D["knob_od"] + D["sleeve_od_tol"] + 2 * D["knob_hole_clear"],
         faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
+        ot_pins=[dict(x=x, y=y, d=D["ot_pin_d"], hole="round" if i == 0 else "slot",
+                      hole_d=D["ot_pin_hole_d"], slot_l=D["ot_pin_slot"], ang=D["ot_pin_ang"][i],
+                      len=D["ot_pin_len"]) for i, (x, y) in enumerate(D["ot_pin_xy"])],
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

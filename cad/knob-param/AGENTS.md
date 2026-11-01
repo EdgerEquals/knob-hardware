@@ -122,11 +122,11 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`): main_knob 17, control_dial 17, base_drive 14, under_pcb 2, electronics 2, plus 48 cross
-  rows (`assembly`) = **100 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
+* **Local** (`<sub>/checks.py`): main_knob 17, control_dial 17, base_drive 15, under_pcb 2, electronics 2, plus 48 cross
+  rows (`assembly`) = **101 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
   re-count from that file whenever checks are added or removed, rather than editing numbers by hand.
 * **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.18).
-* **v0.18 glass sleeve: 97/100 gap checks PASS, 5 clashes** on the proxy. The two glue rows fail because 0.5 mm ovality and ±0.2 mm wall do not fit a 0.20–0.30 mm glue band; the Hall spoke is 0.295 mm against a 0.3 mm target. The glass top rim is clear (nearest printed part 0.51 mm). v0.17 was 62/62. v0.16b was 54/54.
+* **v0.18 glass sleeve: 98/101 gap checks PASS, 5 clashes** on the proxy. The two glue rows fail because 0.5 mm ovality and ±0.2 mm wall do not fit a 0.20–0.30 mm glue band; the Hall spoke is 0.295 mm against a 0.3 mm target. The glass top rim is clear (nearest printed part 0.51 mm). v0.17 was 62/62. v0.16b was 54/54.
   The old PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
 * History: v0.16 had 41/42 (dial lip wall far side 0.36 < 0.4, fixed by the closed 0.8 lip); v0.15d also failed
   "geared feel motor depth 25.8 > 25" (removed in v0.16: the 716 is no longer under the board).

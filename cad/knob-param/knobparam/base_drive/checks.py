@@ -42,4 +42,10 @@ def checks(D, parts):
             r.row(f"feel pinion vs idler {i}", pin.distance_to(parts[f"idler pinion {i}"]), F["clear"])
     r.row("cradle web left round a support after the bridge cut", D["cr_web_min"], D["cr_web_min"],
           f"fillet R{D['cr_bridge_fillet']:g} at the narrowest point of each top-idler breakout")
+    # The clear lower race is fused into the cradle; these pins are on that annulus, which is what touches the PCB.
+    r.row("lower thrust race pins clear the ball track and the light path",
+          D["ot_r"] - D["ot_rg"] - (D["ot_pin_r"] + D["ot_pin_d"] / 2), 0.0,
+          f"cradle carries the race; Ø{D['ot_pin_d']:.2f} at r {D['ot_pin_r']:.2f}, "
+          f"{D['ot_pin_ang'][0]:.0f}° round Ø{D['ot_pin_hole_d']:.2f} / {D['ot_pin_ang'][1]:.0f}° slot {D['ot_pin_slot']:.2f}, "
+          f"into the board {D['ot_pin_len']:.2f} mm; nearest neighbour {D['ot_pin_clear']:.2f} mm")
     return r

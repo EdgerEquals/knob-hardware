@@ -437,6 +437,15 @@
    "slack": 0.0
   },
   {
+   "name": "lower thrust race pins clear the ball track and the light path",
+   "value": 0.025,
+   "target": ">= 0",
+   "ok": true,
+   "note": "cradle carries the race; \u00d81.82 at r 17.81, 110\u00b0 round \u00d81.93 / 230\u00b0 slot 2.73, into the board 0.96 mm; nearest neighbour 5.26 mm",
+   "owner": "base_drive",
+   "slack": 0.025
+  },
+  {
    "name": "big gear vs sensor (axial)",
    "value": 0.3,
    "target": ">= 0.3",

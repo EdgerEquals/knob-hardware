@@ -19,6 +19,7 @@ def build(D):
     # v0.17: 716 shaft and the compound-idler pin pass the board. Holes are in the proxy; KiCad NPTHs are still to add.
     b -= cyl(D["fm_shaft_hole"] / 2, -t - 1, t + 2, *D["fm_xy"])
     b -= cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"])
+    b = _ot_pin_holes(b, D, t, 1.0)
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         c = D["pcb_slot_clear"]
@@ -59,7 +60,17 @@ def pcb_full(D):
     s -= cyl(D["fm_shaft_hole"] / 2, -t - 2, t + 4, *D["fm_xy"])
     s -= cyl(D["fg_hole"] / 2, -t - 2, t + 4, *D["fg_xy"])
     s -= cyl(D["brg"]["D"] / 2, -t - 2, t + 4, *D["enc_xy"])
+    s = _ot_pin_holes(s, D, t, 2.0)
     return s
+
+def _ot_pin_holes(board, D, t, extra):
+    """NPTH for the lower-race locating pins. KiCad does not have these yet; cad_constraints.json carries them."""
+    x0, y0 = D["ot_pin_xy"][0]
+    board -= cyl(D["ot_pin_hole_d"] / 2, -t - extra, t + 2 * extra, x0, y0)
+    x1, y1 = D["ot_pin_xy"][1]
+    board -= Pos(x1, y1, -t - extra) * Rot(0, 0, D["ot_pin_ang"][1]) * extrude(
+        SlotOverall(D["ot_pin_slot"], D["ot_pin_hole_d"]), t + 2 * extra)
+    return board
 
 def kicad_step_path():
     return STEP
