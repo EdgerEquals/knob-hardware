@@ -10,8 +10,9 @@ P = dict(
     h1_hole=1.8,   # [K] H1 NPTH (rod)
     # ---- screen holder + adapter ----
     adapter_d=15.5,   # [K]/[A] (cord room over the nut [Ed])
-    adapter_fps={"R2": ("R_0402", -3.3, -3.6, 0), "J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0), "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", 3.3, -3.2, 0), "U3": ("SOT-23-6_TMAG5273", 5.7, -0.2, 90), "R1": ("R_0402", -3.3, -2.6, 0)},   # [K]
+    adapter_fps={"R2": ("R_0402", -3.3, -3.6, 0), "J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0), "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", 3.3, -3.2, 0), "R1": ("R_0402", -3.3, -2.6, 0)},   # [K]
     adapter_env={"FPC_14P_0.5mm_Top": (10.6, 3.6, 1.0), "QFN-20_3x3": (3.0, 3.0, 0.75), "SOT-23-6_TMAG5273": (1.6, 2.9, 1.45), "C_0402": (1.0, 0.5, 0.5), "R_0402": (1.0, 0.5, 0.35)},   # [A] envelopes
+    rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     hall_z=0.65,   # [A] TMAG5273 element above the adapter top
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     hv_adc_bits=12,   # [A] MCU ADC
@@ -26,5 +27,15 @@ EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> under_pcb (big-gear 
 
 
 def derive(D):
-    D["z_hall"] = D["z_board_top"] + D["hall_z"]          # TMAG5273 element height
+    # v0.16 [Ed]: the bottom rod pad grows as far as the nearest back-side neighbour allows (Hall decouplers, 716 lead pads,
+    # H2 bore, 1220 tab slots), minus rod_pad_clear. KiCad knob-main-pcb still to update.
+    obs = []
+    if D["hall_layout"] == "vernier":
+        obs += [math.hypot(r * math.cos(math.radians(a)), r * math.sin(math.radians(a))) - math.hypot(0.25, 0.5) for r, a in zip(D["hv_r"], D["hv_phi_s"])]
+    F = D["feel"]
+    obs += [math.hypot(x, y) - math.hypot(*F["pad"]) / 2 for x, y in D["fm_pad_xy"]]
+    obs += [math.hypot(*D["enc_xy"]) - D["brg"]["D"] / 2]
+    M = D["motor"]; obs += [D["offset"] - M["term_pitch"] / 2 - (M["term_w"] + 0.3) / 2]
+    D["rod_pad_r"] = min(obs) - D["rod_pad_clear"]
+    # v0.16 [Ed]: U3 TMAG5273 removed from the fixed adapter board (it moved to a sensor board in the dial); KiCad screen-adapter to update
     return D

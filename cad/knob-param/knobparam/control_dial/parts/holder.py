@@ -16,6 +16,15 @@ def build(D):
     win = Pos(xo + 0.3, 0, zh - 1) * Box(L + 0.6, W + 0.6, 5, align=(Align.MAX, Align.CENTER, Align.MIN))
     win += Pos(S["r_edge"], 0, zh - 1) * Box(3.0, S["ledge_w"] + 0.6, 5, align=A)
     carrier = screen.place(D, plate) - screen.place(D, win)
+    extra = {}
+    if D["screen_on_dial"]:   # v0.16 cartridge: steel disc + pin hole in the carrier underside
+        (sx, sy), (px, py) = D["carr_mag_xy"], D["carr_pin_xy"]; sd, st = D["carr_steel"]; pd, pp, pe = D["carr_pin"]
+        carrier -= cyl(sd / 2, zh - 0.01, st + 0.01, sx, sy)
+        carrier -= cyl(pd / 2 + D["carr_pin_clear"], zh - 0.01, pe + 0.11, px, py)
+        md, mh = D["carr_mag"]
+        extra = {"screen carrier steel disc": cyl(sd / 2, zh, st, sx, sy),
+                 f"screen carrier magnet {md:g}x{mh:g}": cyl(md / 2, zh - D["carr_mag_gap"] - mh, mh, sx, sy),
+                 "screen carrier locating pin": cyl(pd / 2, zh - pp, pp + pe, px, py)}
     if D["screen_on_dial"]:   # carrier bonded on the dial shoulder, panel bonded on the carrier: turns with the dial
-        return ({"adapter cup (fixed)": h} if D["adapter_cup"] else {}) | {"screen carrier (on dial)": carrier}
+        return ({"adapter cup (fixed)": h} if D["adapter_cup"] else {}) | {"screen carrier (on dial)": carrier} | extra
     return {"screen holder": h + carrier}

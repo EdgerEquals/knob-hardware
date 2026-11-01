@@ -12,7 +12,12 @@ def checks(D, parts):
     on = D["screen_on_dial"]; TR = (-D["travel_deg"], 0, D["travel_deg"])
     if on:
         row("dial lip wall (far side, lip bonded round the panel)", D["lip_wall"], T["lip_wall"],
-            f"lip ID Ø{D['lip_id']:.2f} = panel Ø{D['S']['od']:.2f} + 2×bond {D['lip_bond_gap']:.2f}, centred on the panel (offset {D['scr_off']:.3f}); near side {D['lip_wall_near']:.2f}")
+            f"lip ID Ø{D['lip_id']:.2f} = panel Ø{D['S']['od']:.2f} + 2×bond {D['lip_bond_gap']:.2f}, centred on the panel (offset {D['scr_off']:.3f}); near side {D['lip_wall_near']:.2f}; {D['lip_wall_lines']} lines × {D['nozzle']:g}")
+        if D["lip_closed"]:
+            row("dial lip wall outside the COF-bend pocket (closed ring)", D["lip_wall_bend"], T["lip_wall"],
+                f"bend reaches r {D['bend_reach_ax']:.3f} + clear {D['bend_clear']:g}; knob Ø{D['knob_od']:.2f} (min {D['knob_od_min']:.3f})")
+            row("dial up-stop: free lift to the adapter board (no cup)", D["dial_lift"], 0.1, "board clamped by the rod nut; 45° race carries the knob up-load into the dial")
+            row("dial up-stop: free lift (max)", D["dial_lift"], 0.5, "", higher_ok=False)
     else:
         row("dial lip wall (far side of the offset panel)", D["lip_wall"], T["lip_wall"], f"lip ID Ø{D['lip_id']:.2f} = panel Ø{D['S']['od']:.2f} + 2×(offset {D['scr_off']:.2f} + run {D['run_gap']:.2f})")
     dial = parts["control dial"]
@@ -31,6 +36,8 @@ def checks(D, parts):
           row("screen carrier vs fixed adapter cup", parts["screen carrier (on dial)"].distance_to(parts["adapter cup (fixed)"]), T["carrier_vs_cup"], f"carrier_run {D['carrier_run']:g}")
     else:
         row("panel vs dial lip (running gap)", parts[pn].distance_to(dial), D["run_gap"] - 0.01)
+    row("screen carrier magnet: stray field at the dial TMAG5273 / range", D["carr_stray_mt"] / D["tm_range_mt"], D["carr_stray_max"],
+        f"{D['carr_stray_mt']:.2f} mT on-axis dipole worst case; co-rotates with the sensor -> fixed offset, calibrated out", higher_ok=False)
     if D["hall_layout"] == "vernier":
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]

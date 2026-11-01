@@ -3,8 +3,8 @@ Hall window, feel-motor rib + pinion pocket + lead holes."""
 import math
 from build123d import *
 from ...common.util import A, cyl, thrust_groove
-from . import hall_slot
-SRC_DEPS = [hall_slot]
+from . import hall_slot, mech
+SRC_DEPS = [hall_slot, mech]
 
 def build(D):
     pt, ro, mx = D["plate_t"], D["r_out"], D["offset"]
@@ -35,4 +35,6 @@ def build(D):
     c -= thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"])   # control_dial export: thrust-ball ring
     c -= Pos(mx + D["collar_trim"], 0, pt) * Box(20, 40, D["motor_collar_top"], align=(Align.MIN, Align.CENTER, Align.MIN))
     c -= hall_slot.window(D)
+    c += mech.cradle_add(D)     # v0.16 detent blocks, cushion stops, spring posts
+    c -= mech.cradle_cut(D)     # v0.16 ball-track grooves, detent bores, anchor-pin holes
     return {"base cradle": c & cyl(ro, 0, 40)}

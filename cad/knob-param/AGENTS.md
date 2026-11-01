@@ -1,9 +1,14 @@
 # knob-param — agent guide (parallel work by sub-assembly)
 
-Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø39.5).
-Default params are **v0.16**: the 716 feel motor sits on the PCB top, inside the base cradle (axial, own pinion
-into the bottom ring). 41/42 gap checks PASS, 1 known clash (PCB / motor),
-`cad/assemblies/knob-stack-v0.16/` (clean sections PNG, check.json). v0.15d is the previous snapshot.
+Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø40.85, derived from the
+AMOLED COF bend + a 0.8 mm printable lip wall).
+Default params are **v0.16**: no adapter cup (centre bolt clamps the stack), screen carrier cartridge
+(pin + magnet/steel), Hall arm straight off the hub with a perimeter fan, 5 magnets / 5 TMAG5253 at 2.5 pitch,
+two tangential centring springs, top-loaded spring-ball detents at ±5° over a Ø1 ball track, magnet cushions at
+±5.5°, 716 feel motor in an open saddle at 102°, dial TMAG5273 reading a diametric ring in the knob
+(relative knob-vs-dial angle), toothless encoder disc, enlarged rod VBUS pad (no washer).
+54/54 gap checks PASS, 1 known clash (PCB / motor). Output: `cad/assemblies/knob-stack-v0.16/`
+(clean + opposite sections, plan view, check.json). Design notes: `docs/design-notes.md`.
 
 ## Branch model
 
@@ -41,11 +46,12 @@ cad/knob-param/
     common/           harness: model.py (scope/derive), cache.py (per-part cache, scope guard), util.py, checks.py
     assembly/         interface.py (INTERFACE params + derive), params.py (version, ...), build.py (merge order),
                       checks.py (cross-checks + clashes), render.py, report.py, hall_dyn.py
-    main_knob/        knob body + skirt, hub gear, cone race + balls, bottom ring
-    control_dial/     dial tube + lip, screen, carrier + FPC strap, hub magnet, Hall arm + magnets, thrust balls
-    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers, 716 feel motor + clip
-    under_pcb/        encoder wheel, EE-SX1131
-    electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, TMAG5273, connectors;
+    main_knob/        knob body + skirt, hub gear, cone race + balls, bottom ring, diametric ring magnet
+    control_dial/     dial tube + lip, screen, carrier cartridge + FPC strap, dial TMAG5273 board, Hall arm + fan + lever, thrust balls
+    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers, 716 feel motor + open saddle,
+                      mech (detents, ball track, cushion stops, centring springs)
+    under_pcb/        encoder disc (slotted rim, no teeth), EE-SX1131
+    electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, rod VBUS pad, connectors;
                       kicad/ = KiCad projects (knob-main-pcb, screen-adapter), footprints, footprint generators
 ```
 

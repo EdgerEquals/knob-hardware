@@ -23,8 +23,9 @@ P = dict(
     boss_bore_clear=0.15,   # [A] dial bore round the holder boss
     cup_clear=0.2,   # [A] dial round the holder cup
     dial_screen_gap=0.3,   # [A] dial below the holder plate
-    dial_mag=(3.0, 1.0),   # [A] Ø3×1 N52 under the TMAG5273
-    dial_mag_press=0.05,   # [A] Ø3×1 N52 under the TMAG5273
+    dial_mag_press=0.05,   # [A] press-fit oversize for magnet pockets
+    tm_board=(4.0, 6.0, 0.6),   # [A] dial sensor board: radial, tangential, thickness (TMAG5273 face-down on its underside)
+    tm_pocket_clear=0.6,   # [Ed/A] generous room round the sensor board for easy assembly (drops in from the top, carrier off)
     # ---- thrust bearing under the dial ----
     tb_ball_d=1.0,
     tb_pcd=6.8,
@@ -53,8 +54,20 @@ P = dict(
     # ---- v0.15: screen turns with the dial ----
     screen_on_dial=True,   # [Ed] panel bonded to a carrier bonded on the dial (False = v0.14 fixed holder + running gap)
     lip_bond_gap=0.0,   # [A] panel edge -> lip ID (bonded, no running gap; lip ID centred on the panel)
+    # ---- v0.16 screen carrier cartridge [Ed]: locating pin sets its angle, a small magnet in the dial pulls a steel disc in the
+    # carrier down; lift off with a suction cup for service (then undo the centre bolt and the whole stack comes apart) ----
+    carr_r=15.0,   # [A] pin + magnet radius on the dial shoulder (outside the fold window, far from the dial TMAG5273)
+    carr_mag_ang=90.0,   # [A] magnet angle (opposite side of the fold from the pin)
+    carr_pin_ang=270.0,   # [A] locating-pin angle
+    carr_mag=(2.0, 1.0),   # [A] Ø2×1 N52 axial in the dial shoulder, top flush
+    carr_steel=(2.0, 0.5),   # [A] Ø2×0.5 steel (430) disc in the carrier underside
+    carr_pin=(1.0, 1.5, 0.8),   # [A] Ø1 steel dowel: pressed depth in the dial, engagement in the carrier
+    carr_mag_gap=0.0,   # [A] carrier magnet top below the dial shoulder (0 = flush, touching the steel disc)
+    carr_pin_clear=0.05,   # [A] carrier hole over the pin
+    carr_stray_max=0.02,   # [A] carrier-magnet field at the dial TMAG5273 / range (dipole estimate)
+    lip_closed=True,   # [Ed] v0.16: lip is a full ring (COF bend in a blind pocket inside the lip, no through-slot)
     carrier_run=0.3,   # [A] rotating carrier plate above the fixed adapter cup
-    adapter_cup=True,   # [A] fixed adapter cup on the tube (False = none: adapter board sits on the brass tube end, clamped by the rod nut)
+    adapter_cup=False,   # [Ed] v0.16: brown cup removed - the centre bolt clamps the stack, the adapter board is the dial up-stop (was True) fixed adapter cup on the tube (False = none: adapter board sits on the brass tube end, clamped by the rod nut)
     b2b_flip=True,   # [A] B2B on the far side of the axis from J1 -> diametral FPC strap through the axis
     strap_t=0.12,   # [A] 2-layer PI flex, clear over the rod/nut, % dynamic limit
     strap_clear=0.3,   # [A] 2-layer PI flex, clear over the rod/nut, % dynamic limit
@@ -62,7 +75,7 @@ P = dict(
     strap_strain_max=0.3,   # [A] 2-layer PI flex, clear over the rod/nut, % dynamic limit
     dial_spring=0.4,   # [A] centring spring rate N*mm/deg (torque = k*theta)
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
-    hv_bar_top=5.9,   # [A] arm spoke top (= v0.14 arm top)
+    fan_on=True,   # [Ed] v0.16 fan arm + lever (False = v0.15 bar only)
     hv_spoke_w=3.0,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
     hv_spoke_clear=0.3,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
 )
@@ -85,7 +98,11 @@ def derive(D):
     D["r_cup"] = D["hold_od"] / 2 + D["cup_clear"]
     D["z_web1"] = D["hold_step"] - D["knob_run"]
     D["r_well"] = D["well_od"] / 2 + D["well_clear"]
-    D["z_well"] = D["z_cup0"] - D["knob_run"]
+    D["z_well"] = D["z_cup0"] - D["knob_run"]                              # web datum (unchanged from v0.15d: race + hub stay put)
+    # v0.16 no cup: the well floor rises to carrier_run under the adapter board, which is clamped by the rod nut -> the board is the
+    # dial (and, through the 45° race, the knob) up-stop; centre bolt clamps everything [Ed]
+    D["z_well_top"] = D["z_well"] if D["adapter_cup"] else D["z_floor"] - D["carrier_run"]
+    D["dial_lift"] = D["z_floor"] - D["z_well_top"]                        # free lift of the dial before it meets the board
     D["z_web0"] = D["z_well"] - D["web_in_t"]
     D["dial_bore_d"] = D["boss_d"] + 2 * D["boss_bore_clear"]
     D["dial_hub_od"] = D["dial_bore_d"] + 2 * D["dial_hub_wall"]
@@ -142,6 +159,8 @@ def derive(D):
     cand = [(S["r_edge"], S["ledge_w"] / 2)] + ([] if S["rigid"] else [(S["r_edge"] + S["bend"], D["cof_half"])])
     raw = max([0.0] + [math.sqrt(rho * rho - yh * yh) - math.sqrt(max(Rm * Rm - yh * yh, 0)) for rho, yh in cand])
     D["scr_off"] = 0.0 if raw == 0 else math.ceil(raw / D["offset_step"] - 1e-9) * D["offset_step"]
+    if D["screen_on_dial"] and D["lip_closed"]:   # v0.16 [Ed]: closed lip ring - offset balances far wall vs the wall outside the bend pocket
+        D["scr_off"] = D["scr_off_opt"]
     D["scr_reach"] = reach - D["scr_off"]                                  # outermost screen point from the dial axis (tail side)
     D["scr_far"] = D["scr_r"] + D["scr_off"]                               # panel edge, far side
     D["tail_ang"] = 180.0                                                  # [A] FPC exit toward -X (away from the motor)
@@ -151,6 +170,10 @@ def derive(D):
         D["lip_id"] = 2 * (D["scr_far"] + D["run_gap"]); D["lip_ctr_off"] = 0.0
     D["lip_wall"] = D["R"] - (D["lip_id"] / 2 + D["lip_ctr_off"])          # thinnest lip (far side)
     D["lip_wall_near"] = D["R"] - (D["lip_id"] / 2 - D["lip_ctr_off"])
+    # v0.16 wall outside the ledge + COF-bend pocket (same rule as interface.bend_reach; pocket = band + bend_clear)
+    pts = [(S["r_edge"], S["ledge_w"] / 2)] + ([] if S["rigid"] else [(S["r_edge"] + S["bend"], -D["cof_half"] + 2 * D["cof_half"] * i / 48) for i in range(49)])
+    D["bend_reach_ax"] = max(math.hypot(math.sqrt(max(r * r - y * y, 0)) - D["scr_off"], y) for r, y in pts)
+    D["lip_wall_bend"] = D["R"] - D["bend_reach_ax"] - D["bend_clear"]
     D["z_back"] = D["z_top"] - S["t"]
     D["z_fpc0"] = D["z_back"] - S["fold"][2]
     D["z_screen_cut"] = D["z_holder0"] - D["dial_screen_gap"]
@@ -168,9 +191,19 @@ def derive(D):
     ad = D["adapter_fps"][D["b2b_at"]]
     D["j1_xy"] = (ad[1], ad[2])
     D["b2b_xy"] = (-ad[1], -ad[2]) if (D["screen_on_dial"] and D["b2b_flip"]) else (ad[1], ad[2])
-    # ---- hub magnet under the TMAG5273 (U3 on the adapter board) ----
-    u3 = D["adapter_fps"]["U3"]; D["mag_xy"] = (u3[1], u3[2])
-    D["z_mag1"] = D["z_well"]; D["z_mag0"] = D["z_mag1"] - D["dial_mag"][1]
+    # ---- v0.16 dial sensor (TMAG5273 face-down on a small board in a pocket through the dial web) over the knob ring magnet ----
+    D["tm_z_floor"] = D["z_web0"] + D["tm_floor"]                          # package face rests on the pocket floor
+    D["tm_z_elem"] = D["tm_z_floor"] + D["tm_pkg"][3]
+    D["tm_z_board0"] = D["tm_z_floor"] + D["tm_pkg"][2]
+    D["tm_gap"] = D["tm_z_elem"] - (D["z_web0"] - D["knob_run"])           # element -> ring top (knob under-web face)
+    D["tm_gap_min"] = D["tm_gap"] - D["dial_lift"]
+    # ---- v0.16 carrier retention ----
+    pol = lambda r, a: (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
+    D["carr_mag_xy"] = pol(D["carr_r"], D["carr_mag_ang"]); D["carr_pin_xy"] = pol(D["carr_r"], D["carr_pin_ang"])
+    md_, mh_ = D["carr_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md_ / 2e3) ** 2 * (mh_ / 1e3)   # A·m²
+    d_u3 = math.dist(D["carr_mag_xy"], D["tm_xy"]) / 1e3                                   # to the dial TMAG5273 (co-rotating)
+    D["carr_stray_mt"] = 1e3 * 1e-7 * 2 * m_dip / d_u3 ** 3                                  # on-axis dipole (worst case)
+
     # ---- v0.15 diametral FPC strap (rotating B2B end <-> stationary J1 end) ----
     b2b_h = S["b2b"][2] if S["b2b"] else 0.0
     D["z_b2b0"] = D["z_fpc0"] - b2b_h

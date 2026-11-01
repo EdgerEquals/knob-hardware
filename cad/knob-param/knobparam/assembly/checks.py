@@ -56,7 +56,25 @@ def cross(D, parts):
     row("Hall arm vs pinions / motor collar (±travel)", hmin, T["hall_vs_pinions"], f"nearest: {hwho}")
     if D["hall_layout"] == "vernier":
         cr = parts["base cradle"]; sens = [parts[n] for n in parts if n.startswith("hall sensor")]
-        row("Hall arm vs cradle slot walls (±travel)", min(cd.arm(Dc, t).distance_to(cr) for t in TR), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
+        from ..common.util import sector
+        cr_far = cr - sector(0, D["sl_r"] + 3, 60, -1, 20, D["sl_ang"]) if D["fan_on"] else cr   # stop blocks checked separately
+        row("Hall arm / fan vs cradle, detent blocks, track (±travel)", min(cd.arm(Dc, t).distance_to(cr_far) for t in TR), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
+        if D["fan_on"]:
+            stops = cr - cr_far
+            lv = lambda t: cd.arm(Dc, t)
+            row("dial lever vs cushion stops at rest", lv(0).distance_to(stops), T["arm_vs_cradle"])
+            row("dial lever vs cushion stops when latched at ±det_deg", min(lv(t).distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02,
+                f"stop contact at ±{D['travel_deg']:g}° (overtravel {D['travel_deg'] - D['det_deg']:g}° onto the magnet cushions)")
+            row("dial lever meets the stop faces at ±travel (gap)", max(lv(t).distance_to(stops) for t in (-D["travel_deg"], D["travel_deg"])), 0.02, "flush contact = hard end stop", higher_ok=False)
+            # cushion magnets: dipole field at the nearest Hall-row sensor (worst case on-axis), vs the sensor range
+            md, mh = D["cu_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md / 2e3) ** 2 * (mh / 1e3)
+            cus = [parts[n] for n in parts if n.startswith("cushion magnet")]
+            dmin = min(c.distance_to(s_) for c in cus for s_ in sens) + md / 2
+            bst = 1e3 * 2e-7 * m_dip / (dmin / 1e3) ** 3 * len(cus)
+            row("cushion magnets: stray field at the nearest Hall-row sensor / range", bst / D["hv_sensor"]["range_mt"], D["cu_stray_max"],
+                f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT (all summed, on-axis worst case); static/slow -> calibrated", higher_ok=False)
+            fan_d = min(cd.arm(Dc, t).distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
+            row("fan vs detent springs / grubs (±travel)", fan_d, T["arm_vs_cradle"])
         row("Hall bar / magnets vs sensor tops (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in sens), D["hv_gap"] - 0.01, f"element gap {D['hv_elem_gap']:.2f}")
         row("Hall sensors vs cradle", min(s_.distance_to(cr) for s_ in sens), T["sensor_vs_cradle"])
         H = hall_dyn.analyse(D)
@@ -68,17 +86,45 @@ def cross(D, parts):
     row("idler 1 vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
     feel_names = [n for n in parts if n.startswith("feel motor")]
     feels = [parts[n] for n in feel_names]
-    clip, ring = parts["feel motor clip [A]"], parts["bottom internal ring"]
-    can = [parts[n] for n in feel_names if "shaft" not in n and "clip" not in n and "pinion" not in n][0]
+    ring = parts["bottom internal ring"]
+    clip = parts["feel motor saddle seat [A]"].fuse(parts["feel motor saddle strap [A]"])
+    can = [parts[n] for n in feel_names if "shaft" not in n and "saddle" not in n and "pinion" not in n][0]
     pin = [parts[n] for n in feel_names if "pinion" in n][0]
     knob = [parts[n] for n in parts if n.startswith("knob body")][0]
-    row("feel clip vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
+    row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
         f"can {can.distance_to(knob):.2f} inside the skirt; {D['z_feel']}T at {D['fm_ang']:.1f}°, knob Ø{D['knob_od']:.2f}")
-    row("feel can/clip vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
+    row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
     row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
     row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
     row("feel motor vs Hall arm (±travel)", min(p.distance_to(cd.arm(Dc, t)) for t in TR for p in feels), T["hall_vs_pinions"])
+    # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
+    B = ring_field(D)
+    row("dial TMAG5273: peak |B| from the knob ring / range (nominal gap)", B["peak"] / D["tm_range_mt"], 0.3,
+        f"ring Ø{D['tm_ring'][1]:g}/Ø{D['tm_ring'][0]:g}×{D['tm_ring'][2]:g} N52 diametric, element gap {D['tm_gap']:.2f}: |B| {B['peak']:.0f} mT, in-plane {B['bxy_min']:.0f}-{B['bxy_max']:.0f} mT")
+    row("dial TMAG5273: peak |B| / range with the dial lifted to the stop", B["peak_lift"] / D["tm_range_mt"], 0.9,
+        f"gap {D['tm_gap_min']:.2f}: {B['peak_lift']:.0f} mT", higher_ok=False)
     return r
+
+def ring_field(D):
+    """Field of the diametric ring (dipole sum, Br from hv_br) at the dial TMAG5273 element, over a full knob turn."""
+    import numpy as np
+    ri, ro, th = D["tm_ring"]; Br = D["hv_br"]; M = Br / (4e-7 * np.pi)
+    rr = np.linspace(ri / 2, ro / 2, 9)[:-1] + (ro - ri) / 32; ph = np.linspace(0, 2 * np.pi, 240, endpoint=False); zz = np.linspace(-th, 0, 5)[:-1] + th / 8
+    R_, P_, Z_ = np.meshgrid(rr, ph, zz, indexing="ij"); dV = (ro - ri) / 2 / 8 * (2 * np.pi / 240) * R_ * th / 4 * 1e-9
+    X, Y = R_ * np.cos(P_), R_ * np.sin(P_)
+    sx, sy = D["tm_xy"]
+    def field(gap):
+        out = []
+        for a in np.linspace(0, 2 * np.pi, 72, endpoint=False):
+            mx, my = np.cos(a) * M * dV, np.sin(a) * M * dV
+            rx, ry, rz = (sx - X) * 1e-3, (sy - Y) * 1e-3, (gap - Z_) * 1e-3
+            r2 = rx * rx + ry * ry + rz * rz; r5 = r2 ** 2.5; md = mx * rx + my * ry
+            b = 1e-7 * np.array([np.sum((3 * md * rx - mx * r2) / r5), np.sum((3 * md * ry - my * r2) / r5), np.sum(3 * md * rz / r5)]) * 1e3
+            out.append(b)
+        return np.array(out)
+    b = field(D["tm_gap"]); bl = field(D["tm_gap_min"])
+    nb = np.linalg.norm(b, axis=1); bxy = np.linalg.norm(b[:, :2], axis=1)
+    return dict(peak=float(nb.max()), peak_lift=float(np.linalg.norm(bl, axis=1).max()), bxy_min=float(bxy.min()), bxy_max=float(bxy.max()))
 
 def _bb(s):
     b = s.bounding_box(); return (b.min.X, b.min.Y, b.min.Z, b.max.X, b.max.Y, b.max.Z)

@@ -7,6 +7,7 @@ from build123d import *
 from ..common.cache import CACHE
 
 GROUPS = [  # (legend, colour, match)
+    ("rod VBUS pad, B.Cu (enlarged, no washer)", "#d4883a", lambda n: n.startswith("PCB rod pad")),
     ("main PCB (proxy; --full = KiCad STEP)", "#2e7d32", lambda n: n.startswith("PCB")),
     ("1220 motor", "#9e9e9e", lambda n: n == "motor"),
     ("motor pinion", "#ff7043", lambda n: n == "pinion"),
@@ -17,16 +18,19 @@ GROUPS = [  # (legend, colour, match)
     ("bottom internal ring", "#42a5f5", lambda n: n == "bottom internal ring"),
     ("knob balls (opposed 45° cones)", "#bdbdbd", lambda n: n.startswith("knob balls")),
     ("control dial (+ Hall arm)", "#ab47bc", lambda n: n == "control dial"),
-    ("magnets (dial Ø3×1 hub, Hall row N52)", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet"))),
+    ("magnets (Hall row, knob ring, cushions, carrier) N52", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet", "knob ring magnet", "cushion magnet", "screen carrier magnet"))),
+    ("dial TMAG5273 sensor board (turns with the dial)", "#2f6b2f", lambda n: n.startswith(("dial sensor board", "dial TMAG5273"))),
+    ("detent balls, track balls, steel pins + disc", "#cfd8dc", lambda n: (n.startswith("detent") and " ball" in n) or n.startswith(("track ball", "spring anchor pin", "screen carrier steel", "screen carrier locating"))),
+    ("detent springs, grub screws, centring springs (non-magnetic)", "#fdd835", lambda n: n.startswith(("detent", "centring spring"))),
     ("Hall sensors on the PCB front", "#212121", lambda n: n.startswith("hall sensor")),
     ("thrust carrier + balls", "#78909c", lambda n: n.startswith("thrust")),
     ("encoder bearings + shaft", "#607d8b", lambda n: n.startswith(("encoder bearing", "encoder shaft"))),
     ("encoder pinion", "#ffa726", lambda n: n == "encoder pinion"),
-    ("encoder big gear + slotted rim (trimmed)", "#26a69a", lambda n: n.startswith("encoder big gear")),
+    ("encoder disc + slotted rim (no teeth)", "#26a69a", lambda n: n.startswith("encoder disc")),
     ("encoder sensor EE-SX1131", "#37474f", lambda n: n.startswith("encoder sensor")),
     ("idler pinions + pin 2", "#ff8a65", lambda n: n.startswith("idler")),
-    ("feel motor + shaft [A]", "#00838f", lambda n: n.startswith("feel motor") and "clip" not in n),
-    ("feel motor clip [A]", "#80deea", lambda n: n == "feel motor clip [A]"),
+    ("feel motor + shaft [A]", "#00838f", lambda n: n.startswith("feel motor") and "saddle" not in n),
+    ("feel motor open saddle (seat + strap) [A]", "#80deea", lambda n: n.startswith("feel motor saddle")),
     ("screen holder (fixed, plate under the panel)", "#6d4c41", lambda n: n == "screen holder"),
     ("adapter cup (fixed, on the tube)", "#6d4c41", lambda n: n == "adapter cup (fixed)"),
     ("screen carrier (bonded on the dial, turns with it)", "#ce93d8", lambda n: n == "screen carrier (on dial)"),
@@ -353,9 +357,9 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
         feel_line = (f" Feel motor on the PCB top: {D['feel']['part']} axial at {D['fm_ang']:.0f}°, "
                      f"{D['z_feel']}T pinion into the {D['z_ring']}T ring (ratio {D['fm_ratio']:.2f}).")
     fig.text(0.012, 0.985, title, fontsize=26, weight="bold", va="top")
-    fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.1f}, 10HP module. " + (note or "Default parameters (no overrides).") + feel_line + " "
+    fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.2f}, 10HP module. " + (note or "Default parameters (no overrides).") + feel_line + " "
              "Cut faces are drawn in a lighter tint of the part colour." +
-             (f"\nIn the iso view, parts lying wholly inside the cut-away quarter ({', '.join(sorted({GROUPS[group_of(n)][0].split(' (')[0] for n in hidden}))}) are drawn whole, semi-transparent." if hidden else ""), fontsize=14, va="top", color="#333333", linespacing=1.4)
+             (f"\nIn the iso view, parts lying wholly inside the cut-away quarter ({', '.join(sorted({GROUPS[group_of(n)][0].split(' (')[0] for n in hidden}))}) are drawn whole, semi-transparent." if hidden else ""), fontsize=14, wrap=True, va="top", color="#333333", linespacing=1.4)
     y0, y1, gap, mx = 0.235, 0.865, 0.03, 0.012
     ra, ri = A.shape[1] / A.shape[0], I.shape[1] / I.shape[0]          # width/height
     h = y1 - y0; k = FH / FW
@@ -368,6 +372,6 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
         fig.text(x, y1 + 0.006, ttl, fontsize=17, weight="bold", va="bottom")
     shown = sorted({group_of(n) for n in parts})
     hand = [Patch(facecolor=GROUPS[i][1], edgecolor="#222222", label=GROUPS[i][0]) for i in shown]
-    fig.legend(handles=hand, loc="lower center", ncol=4, fontsize=13.5, frameon=True, bbox_to_anchor=(0.5, 0.008),
-               title="PART COLOURS", title_fontsize=16, handlelength=2.4, handleheight=1.4, columnspacing=2.5, labelspacing=0.55)
+    fig.legend(handles=hand, loc="lower center", ncol=4, fontsize=12, frameon=True, bbox_to_anchor=(0.5, 0.008),
+               title="PART COLOURS", title_fontsize=16, handlelength=2.2, handleheight=1.3, columnspacing=1.6, labelspacing=0.5)
     fig.savefig(out, dpi=fig.dpi)

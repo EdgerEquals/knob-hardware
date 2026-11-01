@@ -43,7 +43,8 @@ def derive(D):
     ex, ey = D["enc_xy"]
     r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
     D["z_big"] = int(math.floor(2 * r_avail / m + 1e-9)) - 2
-    D["d_big_tip"] = (D["z_big"] + 2) * m
+    D["disc_r"] = D["rim_r1"]                                            # v0.16: plain disc out to the slotted rim (no teeth)
+    D["d_big_tip"] = (D["z_big"] + 2) * m                                # board envelope for J2 (unchanged: pads stay where the KiCad has them)
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
     D["sens_xy"] = (ex, ey - D["sens_r"])

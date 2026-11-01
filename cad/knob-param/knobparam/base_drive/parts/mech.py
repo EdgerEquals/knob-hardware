@@ -1,0 +1,79 @@
+"""v0.16 dial mechanics on the cradle side [Ed]: top-loaded spring-ball detent blocks over the fan wings (ball, spring, grub
+screw in a threaded bore: the grub sets the feel), the Ø1 ball track under each detent, the centring-spring anchor posts and
+the magnet cushion stop blocks either side of the dial lever. Angles / radii come from the INTERFACE (_place_mech)."""
+import math
+from build123d import *
+from ...common.util import A, cyl, sector
+
+def _pol(r, a): return r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
+
+def _local(D, x0, x1, y0, y1, z0, z1, a):   # box in the lever frame (x radial along sl_ang, y tangential), rotated by a
+    return Rot(0, 0, a) * Pos((x0 + x1) / 2, (y0 + y1) / 2, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=A)
+
+def det_block(D, a):
+    """Leg on the plate inboard of the fan wing, bridge over the wing, boss with the plunger bore."""
+    x, y = _pol(D["det_r"], a); w = D["det_leg_w"]; z0, z1 = D["det_z0"], D["det_z1"]
+    leg = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_leg_r1"]) / 2, 0, D["plate_t"] - 0.01) * Box(D["det_leg_r1"] - D["det_leg_r0"], w, z1 - D["plate_t"] + 0.01, align=A)
+    bridge = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_r"]) / 2, 0, z0) * Box(D["det_r"] - D["det_leg_r0"], w, z1 - z0, align=A)
+    boss = cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
+    return leg + bridge + boss
+
+def det_bore(D, a):
+    x, y = _pol(D["det_r"], a)
+    return cyl(D["det_bore_d"] / 2, D["det_z0"] - 0.01, D["det_z_thread0"] - D["det_z0"] + 0.02, x, y) + \
+           cyl(D["det_thread_d"] / 2, D["det_z_thread0"], D["det_z1"] - D["det_z_thread0"] + 0.01, x, y)
+
+def track_grooves(D):
+    out = None
+    for a in D["det_angs"]:
+        for r in D["bt_rs"]:
+            g = (Pos(0, 0, D["bt_z"]) * Torus(r, D["bt_groove_r"])) & sector(r - 1.0, r + 1.0, D["bt_half"], D["bt_z"] - 1, 2, a)
+            out = g if out is None else out + g
+    return out
+
+def stop_blocks(D):
+    """Cushion stops: faces parallel to the lever sides at +-travel (flush contact at the end of travel), + spring anchor posts."""
+    a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]; L = D["stop_len"]
+    x0 = D["cu_mag_r"] - D["cu_mag"][0] / 2 - 0.6; x1 = D["sl_r"] + D["stop_over"]
+    z0, z1 = D["plate_t"] - 0.01, D["sl_top"]
+    s = _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
+    for (px, py) in D["sl_anchor_xy"]:
+        s += cyl(D["sl_post_d"] / 2, z0, z1 - z0, px, py)
+    md, mh = D["cu_mag"]
+    for sg, aa in ((1, a + T), (-1, a - T)):   # magnet pockets, faces flush with the stop faces
+        s -= Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01))
+    return s
+
+def cradle_add(D):
+    s = stop_blocks(D)
+    for a in D["det_angs"]: s += det_block(D, a)
+    return s
+
+def cradle_cut(D):
+    s = track_grooves(D)
+    for a in D["det_angs"]: s += det_bore(D, a)
+    for (px, py) in D["sl_anchor_xy"]:
+        s += cyl(D["sl_pin_d"] / 2, D["sl_top"] - 1.0, 1.01, px, py)        # anchor pin press hole
+    return s
+
+def build(D):
+    out = {}; md, mh = D["cu_mag"]; db = D["det_ball"]; so, sl, sw = D["det_spring"]
+    for i, a in enumerate(D["det_angs"], 1):
+        x, y = _pol(D["det_r"], a)
+        out[f"detent {i} ball Ø{db:g}"] = Pos(x, y, D["det_z_ball"]) * Sphere(db / 2)
+        out[f"detent {i} spring"] = cyl(so / 2, D["det_z_ball"] + db / 2, D["det_spring_inst"], x, y) - cyl(so / 2 - sw, D["det_z_ball"] + db / 2 - 0.01, D["det_spring_inst"] + 0.02, x, y)
+        out[f"detent {i} grub M{D['det_thread_d']:g}x{D['det_grub_len']:g}"] = cyl(D["det_thread_d"] / 2 - 0.01, D["det_z_grub0"], D["det_grub_len"], x, y)
+        for j, r in enumerate(D["bt_rs"], 1):
+            bx, by = _pol(r, a)
+            out[f"track ball {i}.{j} Ø{D['bt_ball']:g}"] = Pos(bx, by, D["bt_z"]) * Sphere(D["bt_ball"] / 2)
+    a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
+    for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
+        out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
+    od, L, wire = D["sl_spring"]; zc = D["sl_top"] + D["sl_spring_gap"] + od / 2
+    px, py = _pol(D["sl_pin_r"], a)
+    for k, (ax, ay) in enumerate(D["sl_anchor_xy"], 1):
+        ang = math.degrees(math.atan2(ay - py, ax - px)); Ls = math.hypot(ax - px, ay - py) - D["sl_pin_d"] - 0.1
+        coil = Pos((ax + px) / 2, (ay + py) / 2, zc) * Rot(0, 0, ang) * Rot(0, 90, 0) * (Cylinder(od / 2, Ls) - Cylinder(od / 2 - wire, Ls + 0.02))
+        out[f"centring spring {k} (non-magnetic)"] = coil
+        out[f"spring anchor pin {k}"] = cyl(D["sl_pin_d"] / 2, D["sl_top"] - 1.0, D["sl_pin_top"] - D["sl_top"] + 1.0, ax, ay)
+    return out

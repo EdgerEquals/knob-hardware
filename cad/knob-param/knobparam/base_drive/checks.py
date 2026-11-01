@@ -13,9 +13,15 @@ def checks(D, parts):
     note = (f"{D['z_feel']}T at {D['fm_ang']:.1f}° into the {D['z_ring']}T ring, ratio {D['fm_ratio']:.2f}, "
             f"knob Ø{D['knob_od']:.2f}; " + ", ".join(f"{k} {v:.2f}" for k, v in sorted(D["fm_clear"].items(), key=lambda kv: kv[1])))
     r.row("feel placement (worst plan clearance)", min(D["fm_clear"].values()), F["clear"], note)
-    r.row("feel clip wall", D["fm_wall"], F["clear"], f"collar grips {D['fm_grip']:.1f} of the Ø{F['can_d']:g}×{F['can_len']:g} can")
+    ro = F["can_d"] / 2 + D["motor_glue"] + D["fm_band_t"]
+    r.row("feel saddle strap vs skirt ID (radial)", D["skirt_id"] / 2 - D["fm_cd"] - ro, F["clear"],
+          f"open saddle: 2 bands × {D['fm_band_h']:g} over {D['fm_grip']:.1f} of the Ø{F['can_d']:g}×{F['can_len']:g} can, ears at ±{D['fm_split']:g}°")
+    r.row("detent ball guided in its bore when latched (centre above the boss underside)", D["det_z_ball"] - D["det_dimple"] - D["det_z0"], 0.1,
+          f"Ø{D['det_ball']:g} ball, spring {D['det_spring'][0]:g}×{D['det_spring'][1]:g} preload {D['det_preload']:g}, M{D['det_thread_d']:g}×{D['det_grub_len']:g} grub ±{D['det_grub_adj']:g}")
+    r.row("detent angle margin inside its window (min of both sides, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,
+          f"detents at ±{D['det_off']:.1f}° from the Hall arm, r {D['det_r']:.2f}; latch ±{D['det_deg']:g}°")
     r.row("feel mount rib (radial depth)", D["fm_rib_r1"] - D["fm_rib_r0"], F["clear"],
-          f"r {D['fm_rib_r0']:.2f}-{D['fm_rib_r1']:.2f}, under the clip foot")
+          f"r {D['fm_rib_r0']:.2f}-{D['fm_rib_r1']:.2f}, under the saddle seat")
     can = _one(parts, "feel motor " + F["part"])
     pin = _one(parts, "feel motor pinion")
     r.row("feel can vs 1220 motor", can.distance_to(parts["motor"]), F["clear"])

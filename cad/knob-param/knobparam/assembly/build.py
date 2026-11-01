@@ -6,7 +6,7 @@ from ..common import model
 
 ORDER = [("electronics", "pcb"), ("base_drive", "motor"), ("base_drive", "brass"), ("base_drive", "cradle"),
          ("control_dial", "thrust"), ("main_knob", "knob"), ("control_dial", "dial"), ("control_dial", "hall_arm"),
-         ("electronics", "hall_sensors"), ("under_pcb", "encoder"), ("base_drive", "idlers"), ("base_drive", "feel"),
+         ("electronics", "hall_sensors"), ("under_pcb", "encoder"), ("base_drive", "idlers"), ("base_drive", "feel"), ("base_drive", "mech"),
          ("control_dial", "screen"), ("control_dial", "holder"), ("electronics", "adapter")]
 PATHS = {}
 

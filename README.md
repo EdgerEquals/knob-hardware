@@ -7,4 +7,10 @@ This repo holds the hardware for Ed's motorised knob and its Eurorack module (10
 - Dimensions marked [A] are assumed and need checking with calipers.
 - `cad/knob-param/` (branch `param-dev`) is the sub-assembly-split parametric model of the whole knob stack, set up for parallel cloud-agent work. Start with `cad/knob-param/AGENTS.md`.
 
+## Docs
+
+- [Design notes](docs/design-notes.md): the current knob-module design (CAD v0.16), check status and open items.
+- [Top screen joystick](docs/top-screen-joystick.md): the sliding screen carrier on the Alps SKRHADE010 and the switch shortlist.
+- [Manufacturing (PCBWay)](docs/manufacturing-pcbway.md): the kit plan, what PCBWay builds, the cost target and reviewer questions.
+
 The software engine lives in EdgerEquals/dad-page.

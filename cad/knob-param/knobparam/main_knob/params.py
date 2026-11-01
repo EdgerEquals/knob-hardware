@@ -4,6 +4,7 @@ import math
 P = dict(
     # ---- knob [Ed/A] ----
     bot_face=3.0,   # [A] bottom internal ring face
+    tm_press=0.0,   # [A] ring-magnet pocket radial oversize (0 = line-to-line, glued)
 )
 
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside

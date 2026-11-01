@@ -1,0 +1,52 @@
+# Top screen joystick
+
+The top screen (1.14" 240×135 IPS, landscape) is also the main navigation control. It moves left, right,
+up and down, and presses in.
+- Press down: enter the dial's menu.
+- Press up: back to the top-screen menu. Up again escapes.
+
+## Mechanism
+- **Switch:** an Alps **SKRHADE010** 5-way SMD switch on a small daughterboard, raised on risers above the main
+  PCB.
+  - The SKRH directions are at 45° to the body, so the **footprint is rotated 45°** to line them up with the
+    screen axes.
+  - **Firmware diagonals:** two directions closed together read as a diagonal. That gives 8 directions plus
+    centre press.
+- **Base:** a printed base glued to the main PCB, located by **4 pins**. It carries **4 hemispherical ball
+  seats**.
+- **Carrier:** a printed carrier riding on 4 balls in those seats. It **slides in-plane and never tilts**.
+  - **4 extension springs** run through holes in the PCB to the back panel and hold the carrier down onto the
+    balls.
+  - The switch stem engages a cup on the back of the carrier and **centres it**. The springs supply only the
+    hold-down force, not the centring.
+- **Screen mount:** the screen sits on a **printed spider spring** inside the carrier, with about 0.3–0.5 mm of
+  press travel. The spider only gives travel. **The switch takes the full press force**: the press goes
+  through the stem, and the balls and spider never bottom out first.
+- **Cable:** a hole in the carrier and base for the screen FPC, with a service loop sized for the full
+  slide and press travel.
+
+## Design notes for the cup and stem
+- Use a Ø3.1–3.2 round cup over the Ø3 stem, with a lead-in chamfer and a light flat face on the stem top.
+  A tight square peg in the □1.95 keytop socket would bind.
+- Because the carrier slides rather than tilts, the cup moves the stem in its operating directions only.
+  Nothing loads the stem sideways at rest (the datasheet warns against side force).
+- The stem top is 5.0 mm above the daughterboard. Set the riser height to suit, or add a printed extender cap
+  in the keytop socket instead of making the risers longer.
+- The force tolerance is ±0.69 N. Buy a strip and sort them for a consistent feel.
+- The spring hold-down adds to the 2.35 N centre push. Keep it light.
+
+## Switch shortlist (researched 1 Nov 2026; recheck prices and stock before ordering)
+
+| # | Part | Size W×D, body / stem top | Tilt force | Centre force | Travel tilt / centre | Life | Notes |
+|---|---|---|---|---|---|---|---|
+| 1 | **Alps SKRHADE010** (chosen) | 7.45×7.5, 1.85 / 5.0 | 1.2 ±0.69 N | 2.35 ±0.69 N | 0.25 / 0.15 mm | 1M per direction, 100 mΩ | Tactile in all 5 actions. Guide bosses. Ø3 stem, □1.95 keytop socket. Directions at 45°. LCSC C202415 |
+| 2 | Alps SKRHACE010 | same | 1.2 N | 2.35 N | 0.25 / 0.15 | 1M | As #1 without the bosses |
+| 3 | Alps SKRHABE010 | 7.35×7.5, 1.8 / 5.0 | 1.23 ±0.69 N | 2.35 ±0.69 N | 0.25 / 0.15 | 200k, 500 mΩ | Fallback with deep stock. LCSC C139794 |
+| 4 | E-Switch JS1400BFQ | 7.4×7.7 | ~1.57 N | ~3.53 N | 5° / 0.25 | 100k | Second source. Land pattern looks near-identical to SKRH (verify) |
+| 5 | Korean Hroparts K1-1506SN-01 | 10×10 | ~1.57 N | ~2.94 N | n/s | 100k | LCSC C145910 |
+| 6 | C&K TPA511G | subminiature | 1.85 N | 4.0 N | 0.35 / 0.25 | 200k | Reported obsolete |
+
+- **Rejected:** Alps SKRV (NRND), SKQUCAA010 (snap-in, NRND), SKQUDBE010 (old), E-Switch JS5208 (12.4 mm
+  body), Swiclick KAN0741A (50k life).
+- **Sources:** Alps product page and SKRH catalogue (tech.alpsalpine.com), E-Switch JS1400 datasheet, and LCSC
+  product pages.

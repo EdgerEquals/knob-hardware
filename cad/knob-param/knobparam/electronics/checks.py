@@ -8,4 +8,8 @@ def checks(D, parts):
         sens = [parts[n] for n in parts if n.startswith("hall sensor")]
         sg = min(a.distance_to(b) for a, b in itertools.combinations(sens, 2))
         r.row("Hall sensor body spacing on the PCB", sg, T["sensor_gap"], f"{D['hv_n']} × {D['hv_sensor']['part']} at pitch {D['hv_pitch']:g}")
+    pad = [parts[n] for n in parts if n.startswith("PCB rod pad")]
+    if pad:
+        r.row("rod VBUS pad (B.Cu) vs back-side parts / pads", pad[0].distance_to(parts["PCB back parts (Hall decouplers, J2)"]), D["rod_pad_clear"] - 0.01,
+              f"pad Ø{2 * D['rod_pad_r']:.2f} (was the Ø4 washer footprint); nut clamps straight on it, no washer")
     return r

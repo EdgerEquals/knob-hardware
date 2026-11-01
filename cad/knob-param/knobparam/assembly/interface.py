@@ -42,9 +42,11 @@ P = dict(
     # ---- control dial [Ed/A] ----
     dial_tube_id=5.12,   # [Ed] dial tube Ø5.12/Ø8.12
     dial_tube_wall=1.5,   # [Ed] dial tube Ø5.12/Ø8.12
-    travel_deg=10.0,   # [A] dial ±10 deg
+    travel_deg=5.5,   # [Ed/A] v0.16: dial ±5.5° = detent latch det_deg + overtravel onto the magnet cushions (v0.15: ±10)
+    det_deg=5.0,   # [Ed] v0.16: dial latches ("cocked") at ±5° by the spring-ball detents
     # ---- brass tube, rod ----
     rod_d=1.6,   # [S]/[A]
+    rod_pad_t=0.035,   # [K] v0.16: B.Cu VBUS pad under the bottom rod nut (1 oz); no washer [Ed]
     nut_m=1.3,   # [S]/[A]
     # ---- base cradle [A] ----
     plate_t=3.5,
@@ -84,14 +86,53 @@ P = dict(
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     hall_layout="vernier",   # [Ed] 'vernier' (v0.15) or 'sector' (v0.14)
     hv_n=5,   # [Ed] magnets = sensors per row
-    hv_pitch=2.2,   # [A] radial pitch of both rows (X2SON 1.4 + 0.8 copper gap)
-    hv_cross_travel=10.0,   # [A] dial angle at which the crossing reaches the end pair (sets the arc curvature)
+    hv_pitch=2.5,   # [Ed/A] v0.16: radial pitch of both rows spread out (v0.15: 2.2 = X2SON 1.4 + 0.8 copper gap)
+    hv_cross_travel=None,   # [A] dial angle at which the crossing reaches the end pair (sets the arc curvature); None = travel_deg
     hv_mag=(1.5, 1.0),   # [A] Ø1.5 x 1.0 N52 axial, alternating poles
     hv_br=1.45,   # [S] N52 Br (T)
     hv_wall=0.4,   # [A] bar wall round each magnet pocket
     hv_gap=1.2,   # [A] sensor package top -> magnet face (air gap; 56 mT peak = 70% of BA3 range)
     hv_sensor=dict(part="TMAG5253BA3 (TI) X2SON-4", l=1.4, w=1.1, h=0.4, elem=0.13, bw_khz=15.0, s_mv_mt=15.0, range_mt=80.0, nd_nt=220.0, vcc=3.3),   # [S] datasheet; elem = Hall element below the package top [S]
     hv_ring_clear=0.5,   # [A] bar to the ring tips
+    # ---- v0.16 dial mechanics [Ed]: fan arm off the dial hub, top-loaded spring-ball detents latching at ±det_deg on the fan
+    # wings, a Ø1 ball track under each detent, two tangential extension springs centring the dial, tiny magnet end cushions ----
+    fan_top=5.9,   # [A] fan / arm top (= v0.15 arm top)
+    fan_r0_frac=0.78,   # [A] fan wing sector inner radius as a fraction of the cradle radius (wings at the perimeter)
+    fan_ring_clear=1.0,   # [A] fan outer edge to the ring tips
+    fan_clear=0.3,   # [A] fan wing (swept) to the pinion tips / detent legs
+    det_ball=1.5,   # [Ed/A] detent ball (a bit bigger than the Ø1 race balls)
+    det_dimple=0.25,   # [A] dimple depth in the wing top (spherical seat) at ±det_deg
+    det_gap=0.3,   # [A] detent block underside above the fan top
+    det_r_frac=0.5,   # [A] detent radius at this fraction across the wing (0 = inner edge, 1 = outer)
+    bt_ball=1.0,   # [Ed] Ø1 balls in the track under each detent
+    bt_up=0.3,   # [A] ball centre above the cradle plate (fan underside another bt_up above it)
+    bt_groove_r=0.55,   # [A] groove radius in the plate and in the wing underside
+    bt_rows=2,   # [A] concentric track rows under each detent (one ball per row)
+    bt_row_pitch=1.4,   # [A] radial pitch of the rows (groove 1.1 + 0.3 land)
+    sl_ang=276.0,   # [A] spring lever angle (clear of the Hall window, 1220 collar and encoder pocket)
+    sl_r=8.6,   # [A] lever end radius
+    sl_w=2.4,   # [A] lever width
+    sl_z0=4.0,   # [A] lever end-block bottom (the bar near the hub stays above the thrust cage)
+    sl_top=6.8,   # [A] lever + stop-block top; springs run above it
+    sl_pin_r=7.0,   # [A] spring hook pin on the lever top
+    sl_pin_d=0.8,   # [A]
+    sl_spring=(1.2, 4.5, 0.15),   # [A] extension spring OD, hook-to-hook length, wire (non-magnetic: phosphor bronze / 316)
+    sl_spring_gap=0.2,   # [A] spring coil above the lever / blocks
+    cu_mag=(1.5, 0.5),   # [Ed/A] tiny weak N52 cushion magnets (repelling), axis tangential
+    cu_mag_r=7.8,   # [A] cushion magnet radius on the lever end
+    cu_stray_max=0.03,   # [A] cushion stray field at the nearest Hall-row sensor / sensor range
+    # ---- v0.16 knob size [Ed]: the least OD that clears the AMOLED ledge + COF bend with a printable lip wall all round ----
+    nozzle=0.4,   # [A] printer nozzle (line width)
+    lip_wall_lines=2,   # [Ed] thinnest lip wall = 2 lines (0.8): far side AND outside the COF-bend pocket (lip is a closed ring)
+    bend_clear=0.1,   # [A] COF bend / ledge to the lip pocket wall
+    knob_od_step=0.01,   # [A] knob OD rounded up to this
+    # ---- v0.16 relative knob-vs-dial angle [Ed]: diametric ring magnet in the knob (blue), 3D TMAG5273 on a sensor board in the
+    # control dial (purple), so the sensor reads the knob angle relative to the dial (v0.15: Ø3×1 dial magnet under a fixed U3) ----
+    tm_ring=(19.0, 21.0, 0.5),   # [A] tiny N52 ring (0.24 g) ID, OD, thickness, magnetised DIAMETRICALLY (any 360° knob angle), top flush in the knob under-web
+    tm_ang=0.0,   # [A] sensor angle on the dial (+X: clear of the fold window, strap and carrier pin/magnet)
+    tm_floor=0.4,   # [A] dial floor under the sensor (one printed layer stack); air gap = floor + knob_run + element height
+    tm_pkg=(1.6, 2.9, 1.45, 0.8),   # [S] SOT-23-6 w, l, h, Hall element above the package face (sensor face-down on the board underside)
+    tm_range_mt=80.0,   # [S] TMAG5273A1 ±40 / ±80 mT: ±80 used
     # ---- check targets (minimum gaps) [A] ----
     tgt=dict(knob_od_vs_screen=0.0, tab_vs_rim=0.5, hall_vs_pinions=0.3, race_wall=1.0, lip_wall=0.4, back_panel_max=26.0, clash_mm3=1e-3, idler_motor=0.5, motor_dial_tube=0.5, arm_vs_cradle=0.3, arm_vs_ring=0.3, sensor_gap=0.2, sensor_vs_cradle=0.2, strap_vs_parts=0.2, seat_vs_knob=0.2, carrier_vs_cup=0.2, race_ball_tube=0.05, race_land=0.2),
 )
@@ -107,6 +148,26 @@ SCREENS = {
                          fold=(25.11, 14.0, 1.10), b2b=(5.0, 2.6, 0.9), rigid=False, iface="4-wire SPI (+MIPI 1-lane), VDDIO 1.8 V",
                          stack=(0.134, 0.20, 0.20, 0.13), d_pol=37.71, encap_flat=37.79, d_tape=37.61),
 }
+
+
+def bend_reach(S, off, n=48):
+    """Furthest point of the screen ledge + COF bend from the dial axis, panel centre offset `off` AWAY from the FPC exit.
+    Bend = band r_edge..r_edge+bend over |y| <= ledge_w/2 - 2 (cof_inset); ledge corners on the r_edge arc at |y| = ledge_w/2."""
+    pts = [(S["r_edge"], S["ledge_w"] / 2)]
+    if not S["rigid"]:
+        h = S["ledge_w"] / 2 - 2.0
+        pts += [(S["r_edge"] + S["bend"], -h + 2 * h * i / n) for i in range(n + 1)]
+    return max(math.hypot(math.sqrt(max(rho * rho - y * y, 0)) - off, y) for rho, y in pts)
+
+
+def _screen_knob(S, wall, clear, step=0.0005):
+    """Panel offset that balances the far-side lip wall against the wall outside the bend pocket, and the knob OD it needs."""
+    best = None
+    for i in range(int(3.0 / step)):
+        off = i * step
+        R = max(S["od"] / 2 + off, bend_reach(S, off) + clear) + wall
+        if best is None or R < best[1] - 1e-12: best = (off, R)
+    return best[0], 2 * best[1]
 
 
 def _hall_clear(D, x, y, rad):
@@ -197,6 +258,41 @@ def _place_feel(D):
     D["fm_pad_xy"] = [(xy[0] + tx * p, xy[1] + ty * p), (xy[0] - tx * p, xy[1] - ty * p)]
 
 
+def _place_mech(D):
+    """v0.16 fan wings + detents (angles from the Hall window and the pinions, so they follow any layout change)."""
+    R2D = math.degrees; T = D["travel_deg"]; c = D["fan_clear"]
+    D["cr_r_out"] = D["skirt_id"] / 2 - 0.5                                 # (= base_drive r_out with cr_clear 0.5)
+    D["fan_r1"] = D["skirt_id"] / 2 - D["fan_ring_clear"]
+    D["fan_r0"] = D["fan_r0_frac"] * D["cr_r_out"]
+    D["fan_z0"] = D["plate_t"] + 2 * D["bt_up"]
+    # Hall window edge at the wing radii (outer pads, swept +-travel, slot clear 0.5 [base_drive default])
+    win = 0.0
+    if D["hall_layout"] == "vernier":
+        for r, a in zip(D["hv_r"], D["hv_phi_m"]):
+            if r + D["hv_pad_r"] < D["fan_r0"] - 1e-6: continue
+            r0 = r - D["hv_pad_r"] - 0.5
+            win = max(win, abs(a - D["ha_ang0"]) + T + R2D(math.asin(min((D["hv_pad_r"] + 0.5) / r0, 1))))
+    # nearest bottom-ring pinion either side of the Hall arm
+    gap = min(min((a - D["ha_ang0"]) % 360, (D["ha_ang0"] - a) % 360) for a in (D["enc_ang"], *D["idler_angs"]))
+    rm = (D["fan_r0"] + D["fan_r1"]) / 2
+    pin_half = R2D(math.asin(min((D["d_pin_tip"] / 2 + c) / D["enc_cd"], 1)))
+    D["fan_w1"] = gap - pin_half - T                                        # fan sector edge (swept clear of the pinions)
+    D["fan_half"] = D["fan_w1"]
+    D["det_r"] = D["fan_r0"] + D["det_r_frac"] * (D["fan_r1"] - D["fan_r0"])
+    n = D["bt_rows"]; D["bt_rs"] = [D["det_r"] + (i - (n - 1) / 2) * D["bt_row_pitch"] for i in range(n)]
+    rmin = min(D["bt_rs"])
+    D["bt_half"] = T / 2 + R2D((D["bt_ball"] / 2 + 0.1) / rmin)             # groove half-span: the ball rolls travel/2
+    # detent angle: track groove (plate) clear of the Hall window by 0.5 wall, plunger + ball inside the fan at -travel
+    D["det_lo"] = win + R2D((0.5 + D["bt_groove_r"]) / rmin) + D["bt_half"]
+    D["det_hi"] = D["fan_half"] - T - R2D(D["det_ball"] / 2 / D["det_r"])
+    D["det_off"] = (D["det_lo"] + D["det_hi"]) / 2
+    D["det_angs"] = [D["ha_ang0"] - D["det_off"], D["ha_ang0"] + D["det_off"]]
+    D["hall_win_out"] = win
+    D["bt_z"] = D["plate_t"] + D["bt_up"]
+    D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4   # spring coil above the lever, pin a bit above
+    D["cu_z"] = (D["sl_z0"] + D["sl_top"]) / 2                                     # cushion magnet centre height (lever end block)
+
+
 def derive(D):
     """Interface-derived values (pure function of the interface params). Adds keys to D in place."""
     m = D["module"]; R2D = math.degrees
@@ -212,9 +308,17 @@ def derive(D):
         D["z_hub_gear"] = zsum - D["z_pinion"]
     D["offset"] = (D["z_hub_gear"] + D["z_pinion"]) * m / 2        # snapped to whole teeth
     need_id = 2 * (D["offset"] + D["can_r"] + D["skirt_clear"])
-    D["z_ring"] = int(math.ceil(need_id / m + 2 - 1e-9))                 # bottom internal ring: tip Ø = skirt ID
+    # v0.16: the screen sets the knob OD (closed lip ring, lip_wall_lines x nozzle outside the panel AND outside the COF bend)
+    D["lip_wall_min"] = D["lip_wall_lines"] * D["nozzle"]
+    D["tgt"] = dict(D["tgt"], lip_wall=D["lip_wall_min"])
+    D["scr_off_opt"], D["knob_od_min"] = _screen_knob(dict(SCREENS[D["screen"]], **({} if D["cof_bend"] is None else {"bend": D["cof_bend"]})),
+                                                      D["lip_wall_min"], D["bend_clear"])
+    z_scr = int(math.floor((D["knob_od_min"] - 2 * D["knob_wall"]) / m + 2 + 1e-9))   # biggest ring that keeps knob_wall
+    D["z_ring"] = max(int(math.ceil(need_id / m + 2 - 1e-9)), z_scr)    # bottom internal ring: tip Ø = skirt ID
     D["skirt_id"] = (D["z_ring"] - 2) * m
-    D["knob_od"] = D["skirt_id"] + 2 * D["knob_wall"]
+    st = D["knob_od_step"]
+    D["knob_od"] = max(D["skirt_id"] + 2 * D["knob_wall"], math.ceil(D["knob_od_min"] / st - 1e-9) * st)
+    D["skirt_wall"] = (D["knob_od"] - D["skirt_id"]) / 2
     D["R"] = D["knob_od"] / 2
     D["enc_cd"] = (D["z_ring"] - D["z_enc_pinion"]) * m / 2
     D["ratio_knob_motor"] = D["z_hub_gear"] / D["z_pinion"]
@@ -260,11 +364,16 @@ def derive(D):
         D["hv_r"] = [D["hv_r_out"] - (n - 1 - i) * p for i in range(n)]
         D["hv_r_mid"] = sum(D["hv_r"]) / n
         span = (n - 1) / 2 * p
-        D["hv_g"] = D["hv_cross_travel"] / (2 * span) if span else 0.0       # deg/mm: magnets +g, sensors -g (arcs cross)
+        D["hv_cross"] = D["travel_deg"] if D["hv_cross_travel"] is None else D["hv_cross_travel"]
+        D["hv_g"] = D["hv_cross"] / (2 * span) if span else 0.0       # deg/mm: magnets +g, sensors -g (arcs cross)
         D["hv_phi_m"] = [D["ha_ang0"] + D["hv_g"] * (r - D["hv_r_mid"]) for r in D["hv_r"]]
         D["hv_phi_s"] = [D["ha_ang0"] - D["hv_g"] * (r - D["hv_r_mid"]) for r in D["hv_r"]]
         D["hv_z_elem"] = sw["h"] - sw["elem"]
         D["hv_z_mag0"] = sw["h"] + D["hv_gap"]
         D["hv_elem_gap"] = D["hv_z_mag0"] - D["hv_z_elem"]
     _place_feel(D)
+    _place_mech(D)
+    # ---- v0.16 knob ring magnet / dial sensor ----
+    D["tm_r"] = (D["tm_ring"][0] + D["tm_ring"][1]) / 4                  # sensor element over the ring mid radius
+    D["tm_xy"] = (D["tm_r"] * math.cos(math.radians(D["tm_ang"])), D["tm_r"] * math.sin(math.radians(D["tm_ang"])))
     return D
