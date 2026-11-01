@@ -2,7 +2,7 @@
 into a catalogue pinion. v0.17 [Ed]: that pinion meshes the compound gear on the idler, not the knob ring."""
 import math
 from build123d import *
-from ...common.util import A, cyl, tube, ext_gear
+from ...common.util import A, cyl, ext_gear, fresnel_cap
 
 def build(D):
     F = D["feel"]; x, y = D["fm_xy"]; ang = D["fm_ang"]
@@ -10,12 +10,18 @@ def build(D):
     glue = D["motor_glue"]
     can = cyl(can_r, z0, F["can_len"], x, y) + cyl(F["end_boss_d"] / 2, z0 + F["can_len"], F["end_boss"], x, y)
     P = D["fg_pinion"]; face = D["fg_face"]; z1 = D["fg_z_top"]; zb = z1 - face
-    shaft = cyl(F["shaft_d"] / 2, zb, z0 - zb, x, y)   # can bottom down through the PCB into the pinion
-    bore = P["bore"]
+    shaft = cyl(F["shaft_d"] / 2, z1, z0 - z1, x, y)   # can bottom to the pinion face; the press-fit bore is the pinion's
     Dm = dict(D); Dm["module"] = D["fg_mod"]
-    pin = Pos(x, y, zb) * (ext_gear(Dm, D["fg_z_pin"], 0, face) - cyl(bore / 2, -0.01, face + 0.02))
-    # Ø2 catalogue bore on the Ø1 shaft
-    sleeve = tube(F["shaft_d"] / 2 + 0.04, bore / 2 - 0.04, zb, face, x, y)
+    half = D["brass_backlash"] / 2
+    tooth = ext_gear(Dm, D["fg_z_pin"], 0, face, dthick=-half, addendum=D["spur_addendum"], dedendum=D["spur_dedendum"])
+    bore_r = F["shaft_d"] / 2 + 0.02
+    pip_r = 1.15
+    tooth = tooth - cyl(bore_r, -0.01, face + 0.02) + cyl(pip_r, -0.55, 0.55) - cyl(bore_r, -0.6, 0.65)
+    pin = Pos(x, y, zb) * tooth
+    root_r = D["fg_z_pin"] * D["fg_mod"] / 2 - D["spur_dedendum"] * D["fg_mod"]
+    cap = Pos(x, y, zb - D["cap_seat_gap"]) * Rot(0, 180, 0) * fresnel_cap(
+        2 * (root_r - 0.20), 2 * pip_r + 2 * D["cap_fit_gap"], 0.0,
+        D["cap_t"], D["cap_rings"], D["cap_step_h"], D["cap_step_w"])
     # v0.16 [Ed]: OPEN saddle clamp instead of the full wrap-around clip - two narrow bands (light load), open between them for
     # airflow round the can. Inboard half = seat (bands + spine) on the cradle rib; outboard half = strap (two C-bands) that
     # screws to the seat through paired ears at the can sides (M1 self-tapping [A]).
@@ -23,7 +29,7 @@ def build(D):
     return {f"feel motor {F['part']} [A]": can,
             f"feel motor shaft Ø{F['shaft_d']:g} [A]": shaft,
             f"feel motor pinion {P['part']} {D['fg_z_pin']}T": pin,
-            f"feel pinion sleeve Ø{bore:g}/Ø{F['shaft_d']:g}": sleeve,
+            f"feel motor pinion cap": cap,
             "feel motor saddle seat [A]": seat,
             "feel motor saddle strap [A]": strap}
 

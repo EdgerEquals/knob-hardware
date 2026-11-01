@@ -1,7 +1,9 @@
 """Big knob: cap + skirt + hub with the external hub gear and the knob half of the 45 deg race (v0.15c: track in the top chamfer); bottom internal ring; balls."""
 import math
 from build123d import *
-from ...common.util import A, rev, cyl, ext_gear, int_cutter, ext_phase
+from ...common import util
+from ...common.util import A, rev, cyl, ext_gear, int_herringbone_half, ext_phase
+SRC_DEPS = [util]
 
 def profile(D):
     o = D["knob_run"] * math.sqrt(2)
@@ -31,7 +33,9 @@ def race_cut(D):
 
 def build(D):
     zh, fh = D["knob_hub_z0"], D["hub_gear_face"]
-    teeth = Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_pinion"])) * ext_gear(D, D["z_hub_gear"], zh, fh)
+    teeth = Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_pinion"])) * ext_gear(
+        D, D["z_hub_gear"], zh, fh, module=D["hub_mod"], dthick=-D["brass_backlash"] / 2,
+        addendum=D["spur_addendum"], dedendum=D["spur_dedendum"])
     teeth -= cyl(D["d_hg_root"] / 2 - 0.02, zh, fh)
     body = rev(profile(D)) + teeth
     if D["kb_race"] == "chamfer":   # ball track groove in the chamfer (torus, R kb_seat_r, centre on the 45° line)
@@ -45,10 +49,16 @@ def build(D):
         body -= cyl(ro_ / 2 + D["tm_press"], zt_ - th_, th_ + 0.01) - cyl(ri_ / 2 - D["tm_press"], zt_ - th_ - 0.01, th_ + 0.03)
         ring_mag = cyl(ro_ / 2, zt_ - th_, th_) - cyl(ri_ / 2, zt_ - th_ - 0.01, th_ + 0.02)
     h0, h = D["h_skirt0"], D["bot_face"]
-    ring = cyl(D["knob_od"] / 2, h0, h) - int_cutter(D, D["z_ring"], h0, h)
-    ring -= Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], D["ot_rg"])   # v0.17 flat thrust groove in the skirt underside
+    mid, gap = D["hb_mid"], D["hb_gap"]
+    def _half(z0, z1):
+        return cyl(D["knob_od"] / 2, z0, z1 - z0) - int_herringbone_half(D, D["z_ring"], z0, z1, mid)
+    lower = _half(h0, mid - gap / 2)
+    upper = _half(mid + gap / 2, h0 + h)
+    lower -= Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], D["ot_rg"])   # flat thrust groove in the skirt underside
     R = D["kb_ball_d"] / 2; n = D["kb_n"]
     balls = Compound(children=[Pos(D["kb_rc"] * math.cos(2 * math.pi * i / n), D["kb_rc"] * math.sin(2 * math.pi * i / n), D["kb_zc"]) * Sphere(R) for i in range(n)])
-    out = {"knob body (cap+skirt+hub gear)": body, "bottom internal ring": ring, f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
+    out = {"knob body (cap+skirt+hub gear)": body,
+           "bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper,
+           f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
     if D["rel_sensor"]: out[f"knob ring magnet Ø{ro_:g}/Ø{ri_:g}×{th_:g} diametric"] = ring_mag
     return out

@@ -1,0 +1,559 @@
+{
+ "rows": [
+  {
+   "name": "knob hub wall (hub-gear root over the bore)",
+   "value": 1.54,
+   "target": ">= 1",
+   "ok": true,
+   "note": "bore \u00d88.62 on the \u00d88.12 dial tube",
+   "owner": "main_knob"
+  },
+  {
+   "name": "knob ring wall (51T root to OD)",
+   "value": 1.136,
+   "target": ">= 1",
+   "ok": true,
+   "note": "MJF recommended wall 1.0; process floor 0.5; herringbone mn 0.67",
+   "owner": "main_knob"
+  },
+  {
+   "name": "printed hub-gear tooth tip vs MJF short-feature floor",
+   "value": 0.499,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "m0.6 22T stub 0.80, backlash 0.10; preferred tooth 0.50",
+   "owner": "main_knob"
+  },
+  {
+   "name": "cone balls chord play",
+   "value": 0.075,
+   "target": ">= 0.06",
+   "ok": true,
+   "note": "38 \u00d7 \u00d81 on PCD 13.01",
+   "owner": "main_knob"
+  },
+  {
+   "name": "knob OD vs screen (R - outermost screen point)",
+   "value": 1.204,
+   "target": ">= 0",
+   "ok": true,
+   "note": "knob \u00d841.65, screen offset 0.52 from the FPC exit",
+   "owner": "control_dial"
+  },
+  {
+   "name": "dial lip wall (far side, lip bonded round the panel)",
+   "value": 1.204,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "lip ID \u00d838.21 = panel \u00d838.21 + 2\u00d7bond 0.00, centred on the panel (offset 0.515); near side 2.24; 3 lines \u00d7 0.4",
+   "owner": "control_dial"
+  },
+  {
+   "name": "dial lip wall outside the COF-bend pocket (closed ring)",
+   "value": 1.205,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "bend reaches r 19.520 + clear 0.1; knob \u00d841.65 (min 41.641)",
+   "owner": "control_dial"
+  },
+  {
+   "name": "printed walls (lip far side and outside the bend pocket)",
+   "value": 1.204,
+   "target": ">= 1",
+   "ok": true,
+   "note": "v0.17 floor 1; designed lip 3\u00d70.4 mm = 1.20",
+   "owner": "control_dial"
+  },
+  {
+   "name": "dial up-stop: free lift to the adapter board (no cup)",
+   "value": 0.3,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "board clamped by the rod nut; 45\u00b0 race carries the knob up-load into the dial",
+   "owner": "control_dial"
+  },
+  {
+   "name": "dial up-stop: free lift (max)",
+   "value": 0.3,
+   "target": "<= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "control_dial"
+  },
+  {
+   "name": "FPC fold / COF bend vs dial",
+   "value": 0.1,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "fold corners inside the lip ID, bend in the lip slot (turn together)",
+   "owner": "control_dial"
+  },
+  {
+   "name": "panel vs dial lip (bond gap, turns with the dial)",
+   "value": 0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "no running gap [Ed]",
+   "owner": "control_dial"
+  },
+  {
+   "name": "FPC strap bend strain at \u00b1travel (%)",
+   "value": 0.152,
+   "target": "<= 0.3",
+   "ok": true,
+   "note": "L 7.4, R 39 mm, t 0.12, end moves 0.69",
+   "owner": "control_dial"
+  },
+  {
+   "name": "screen carrier magnet: stray field at the Hall-row TMAG5273 (H3) / range",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "0.016 mT on-axis dipole worst case; turns \u00b1travel over a fixed sensor -> tiny, calibrated",
+   "owner": "control_dial"
+  },
+  {
+   "name": "Hall bar vs ring tips (radial)",
+   "value": 0.5,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "outer magnet r 16.67",
+   "owner": "control_dial"
+  },
+  {
+   "name": "Hall spoke vs thrust balls / cage (\u00b1travel)",
+   "value": 0.381,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "",
+   "owner": "control_dial"
+  },
+  {
+   "name": "Hall arm rib tip deflection at the load radius (mm)",
+   "value": 0.061,
+   "target": "<= 0.07",
+   "ok": true,
+   "note": "PA12 E 1.7 GPa, 2 N in-plane at r 15.5; rib 3\u21925.2 wide, z 4.6 over the cage / 3.8 beyond r 4.95, top 6.8",
+   "owner": "control_dial"
+  },
+  {
+   "name": "seat: 45\u00b0 contact line kept (|angle - 45|, deg)",
+   "value": 0.0,
+   "target": "<= 0.01",
+   "ok": true,
+   "note": "groove R0.52 centred 0.02 past the ball centre on the 45\u00b0 line",
+   "owner": "control_dial"
+  },
+  {
+   "name": "seat: groove rim half-width - ball chord at the cone face",
+   "value": 0.014,
+   "target": ">= 0",
+   "ok": true,
+   "note": "depth 0.35: groove \u00b10.491, ball \u00b10.477",
+   "owner": "control_dial"
+  },
+  {
+   "name": "dial: material under the cup-boss bore (above the hub bottom)",
+   "value": 0.5,
+   "target": ">= 0.499999",
+   "ok": true,
+   "note": "no cup: plain tube ID",
+   "owner": "control_dial"
+  },
+  {
+   "name": "seat: groove land to the 45\u00b0 face ends (min)",
+   "value": 0.569,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "track at 0.5 of the 2.12 gusset face, both faces grooved",
+   "owner": "control_dial"
+  },
+  {
+   "name": "1220 can vs dial tube",
+   "value": 0.69,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "base_drive"
+  },
+  {
+   "name": "motor pinion tip vs skirt ID (radial)",
+   "value": 2.885,
+   "target": ">= 1",
+   "ok": true,
+   "note": "nylon 14T m0.6 (RW tooth form) / 22T hub, ratio 1.571, mesh 10.80 vs motor 10.75",
+   "owner": "base_drive"
+  },
+  {
+   "name": "hub mesh vs the KiCad motor axis (mm)",
+   "value": 0.05,
+   "target": "<= 0.15",
+   "ok": true,
+   "note": "negative err is a tight mesh; 0.05 mm is inside the 0.10 printed backlash",
+   "owner": "base_drive"
+  },
+  {
+   "name": "herringbone pinion teeth inside the ring",
+   "value": 12,
+   "target": ">= 12",
+   "ok": true,
+   "note": "25\u00b0 helix, virtual teeth 16.1 (classical 20\u00b0 undercut wants ~17); mn 0.67, ring 51T",
+   "owner": "base_drive"
+  },
+  {
+   "name": "herringbone pinion tip thickness vs MJF tooth floor",
+   "value": 0.626,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "stub addendum 0.80, backlash 0.10 shared",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel placement (worst plan clearance)",
+   "value": 3.234,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "nylon 0.5M-12T 12T \u00d7 44T on the 150\u00b0 idler, then 12T into the 51T herringbone, overall 15.58:1, can at 84.5\u00b0; knob \u00d841.65; skirt 3.23, dial_can 3.32, body_can 5.05, hall 7.66, gear 1000000000.00",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel saddle strap vs skirt ID (radial)",
+   "value": 3.234,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "open saddle: 2 bands \u00d7 1.2 over 8.0 of the \u00d87\u00d716 can, ears at \u00b1100\u00b0",
+   "owner": "base_drive"
+  },
+  {
+   "name": "detent ball guided in its bore when latched (centre above the boss underside)",
+   "value": 0.2,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "\u00d81.5 ball, spring 1.4\u00d73 preload 0.8, M2\u00d72 grub \u00b10.6",
+   "owner": "base_drive"
+  },
+  {
+   "name": "detent angle margin inside its window (min of both sides, deg)",
+   "value": 0.0,
+   "target": ">= 0",
+   "ok": true,
+   "note": "detents at \u00b148.9\u00b0 from the Hall arm, r 7.64; latch \u00b110\u00b0",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel mount rib (radial depth)",
+   "value": 5.171,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "r 4.56-9.73, under the saddle seat",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel can vs 1220 motor",
+   "value": 5.047,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel pinion vs idler 1",
+   "value": 4.9,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "base_drive"
+  },
+  {
+   "name": "feel pinion vs compound gear (centre-distance error, mm)",
+   "value": 0.0,
+   "target": "<= 0.12",
+   "ok": true,
+   "note": "CD 14.000, nominal 14.000 (nylon 0.5M-12T, PA-12 MJF, bore \u00d82.04); shaft stick-out 13.2 mm",
+   "owner": "base_drive"
+  },
+  {
+   "name": "cradle web left round a support after the bridge cut",
+   "value": 1.2,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "fillet R0.5 at the narrowest point of each top-idler breakout",
+   "owner": "base_drive"
+  },
+  {
+   "name": "big gear vs sensor (axial)",
+   "value": 0.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "",
+   "owner": "under_pcb"
+  },
+  {
+   "name": "back-panel depth vs module limit",
+   "value": 25.0,
+   "target": "<= 26",
+   "ok": true,
+   "note": "",
+   "owner": "under_pcb"
+  },
+  {
+   "name": "Hall sensor body spacing on the PCB",
+   "value": 0.502,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "5 sensors at pitch 2.5: H1 TMAG5253BA3, H2 TMAG5253BA3, H3 TMAG5273A2, H4 TMAG5253BA3, H5 TMAG5253BA3",
+   "owner": "electronics"
+  },
+  {
+   "name": "rod VBUS pad (B.Cu) vs back-side parts / pads",
+   "value": 0.609,
+   "target": ">= 0.29",
+   "ok": true,
+   "note": "pad \u00d811.61 (was the \u00d84 washer footprint); nut clamps straight on it, no washer",
+   "owner": "electronics"
+  },
+  {
+   "name": "FPC service strap vs U3 / nut / cup (\u00b1travel)",
+   "value": 0.45,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "nearest: rod + nut; strap z 52.35-54.14",
+   "owner": "assembly"
+  },
+  {
+   "name": "1220 tab + solder vs encoder rim (axial)",
+   "value": 5.4,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "tab at r 19.92 from H2, rim r 19.60-20.80",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall arm vs pinions / motor collar (\u00b1travel)",
+   "value": 0.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "nearest: idler 2",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall arm / fan vs cradle, detent blocks, track (\u00b1travel)",
+   "value": 0.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "slot r 5.02-18.82",
+   "owner": "assembly"
+  },
+  {
+   "name": "dial lever vs hard stops at rest",
+   "value": 0.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "dial lever vs hard stops when latched at \u00b1det_deg",
+   "value": 0.089,
+   "target": ">= 0.02",
+   "ok": true,
+   "note": "stop contact at \u00b110.75\u00b0 (past the \u00b110\u00b0 end detent by 0.75\u00b0, the ball's bore play)",
+   "owner": "assembly"
+  },
+  {
+   "name": "dial lever meets the stop faces at \u00b1travel (gap)",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "flush contact = hard end stop",
+   "owner": "assembly"
+  },
+  {
+   "name": "fan vs detent springs / grubs (\u00b1travel)",
+   "value": 1.25,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall bar / magnets vs TMAG5253 tops (air gap, \u00b1travel)",
+   "value": 1.35,
+   "target": ">= 1.19",
+   "ok": true,
+   "note": "element gap 1.48",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall bar / magnets vs TMAG5273 (H3) top (air gap, \u00b1travel)",
+   "value": 0.3,
+   "target": ">= 0.29",
+   "ok": true,
+   "note": "SOT-23-6 h 1.45; element gap 1.10; magnet faces z 1.75",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall sensors vs cradle",
+   "value": 0.286,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall peak |Bz| at the TMAG5253s vs range (mT)",
+   "value": 45.999,
+   "target": "<= 72",
+   "ok": true,
+   "note": "TMAG5253BA3 (TI) X2SON-4 \u00b180 mT; poles N/S/N/S/N",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall peak field at the TMAG5273 (H3), worst axis vs range (mT)",
+   "value": 83.91,
+   "target": "<= 119.7",
+   "ok": true,
+   "note": "TMAG5273A2 (TI) SOT-23-6 DBV \u00b1133 mT/axis: |Bz| \u2264 83.9, |Bx|,|By| \u2264 30.4; elem gap 1.10",
+   "owner": "assembly"
+  },
+  {
+   "name": "Hall angle noise, worst over \u00b1travel (deg rms)",
+   "value": 0.004,
+   "target": "<= 0.01",
+   "ok": true,
+   "note": "min |dB/d\u03b8| 4.9 mT/deg, noise 20 \u00b5T rms",
+   "owner": "assembly"
+  },
+  {
+   "name": "seat: dial vs knob (race region)",
+   "value": 0.25,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "idler 1 vs 1220 can",
+   "value": 0.911,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "feel saddle vs knob skirt",
+   "value": 3.234,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "can 3.93 inside the skirt; nylon 0.5M-12T at 84.5\u00b0, overall 15.58:1, knob \u00d841.65",
+   "owner": "assembly"
+  },
+  {
+   "name": "feel can/saddle vs bottom ring",
+   "value": 3.385,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "feel pinion vs encoder pinion",
+   "value": 17.757,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "feel motor vs dial tube",
+   "value": 0.5,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "feel motor vs Hall arm (\u00b1travel)",
+   "value": 3.219,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "",
+   "owner": "assembly"
+  },
+  {
+   "name": "centring springs vs motor / encoder / ring across \u00b1travel",
+   "value": 1.729,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "lever pin at 296\u00b0 + \u03b8; sampled -10.7, -10.0, +0.0, +10.0, +10.7",
+   "owner": "assembly"
+  },
+  {
+   "name": "track balls stay in the groove across \u00b1travel (deg of groove left)",
+   "value": 4.951,
+   "target": ">= 4.12553",
+   "ok": true,
+   "note": "ball rolls at \u03b8/2 between the plate groove and the ear; end detents at \u00b110.00\u00b0, hard stop \u00b110.75\u00b0",
+   "owner": "assembly"
+  },
+  {
+   "name": "track balls vs compound gear across \u00b1travel",
+   "value": 6.322,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "balls posed at \u03b8/2 for each sample",
+   "owner": "assembly"
+  },
+  {
+   "name": "printed spur stays on the feel side of the centre tube",
+   "value": 0.516,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "44T tip r 11.40 at the idler r 14.42; tube \u00d85",
+   "owner": "assembly"
+  },
+  {
+   "name": "printed spur tooth tip vs MJF short-feature floor",
+   "value": 0.384,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "thinnest nylon spur (hub, motor pinion, 44T, feel pinion); preferred 0.50",
+   "owner": "assembly"
+  },
+  {
+   "name": "compound gear vs encoder rim (axial)",
+   "value": 0.3,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "gear z -7.70 to -2.70; rim top -8.00; sensor dropped 4.60 onto the daughterboard",
+   "owner": "assembly"
+  },
+  {
+   "name": "resin caps vs everything they do not mount on",
+   "value": 0.427,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "nearest feel motor pinion cap / feel compound gear 44T; UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "owner": "assembly"
+  },
+  {
+   "name": "outer thrust balls vs bottom ring",
+   "value": 0.05,
+   "target": ">= 0",
+   "ok": true,
+   "note": "\u00d81.5 \u00d7 58 on r 19.57, land 0.48; keep-out 124\u2013137\u00b0",
+   "owner": "assembly"
+  },
+  {
+   "name": "outer thrust carrier top vs ring underside",
+   "value": 0.55,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "carrier is part of the cradle; floor under the seat 1.00",
+   "owner": "assembly"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "sub": null
+}

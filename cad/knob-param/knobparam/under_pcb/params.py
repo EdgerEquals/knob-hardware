@@ -28,12 +28,13 @@ P = dict(
     enc_standoff_d=2.5,   # [A] printed standoff OD
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"]}
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
+           "main_knob": ["hb_mid"]}
 EXPORTS = ["d_big_tip"]   # -> electronics (J2 pads below the wheel)
 
 
 def derive(D):
-    m = D["module"]; B = D["brg"]
+    B = D["brg"]
     D["h_brg_top"] = D["cr_floor"] + B["ft"]; D["h_brg_bot"] = D["h_brg_top"] - B["B"]
     sn = D["sens"]
     D["win_pitch"] = sn["ap_pitch"] / 0.75; D["sens_r"] = D["n_win"] * D["win_pitch"] / (2 * math.pi)
@@ -59,9 +60,9 @@ def derive(D):
     D["h_b2_top"] = D["h_panel"] + B["ft"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
     ex, ey = D["enc_xy"]
     r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
-    D["z_big"] = int(math.floor(2 * r_avail / m + 1e-9)) - 2
-    D["disc_r"] = D["rim_r1"]                                            # v0.16: plain disc out to the slotted rim (no teeth)
-    D["d_big_tip"] = (D["z_big"] + 2) * m                                # board envelope for J2 (unchanged: pads stay where the KiCad has them)
+    D["disc_r"] = D["rim_r1"]                                            # plain disc out to the slotted rim (no teeth)
+    D["z_big"] = 0
+    D["d_big_tip"] = 2 * D["disc_r"]                                     # the disc is the envelope; the old phantom tooth count followed the spur module
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
     D["sens_xy"] = (ex, ey - D["sens_r"])

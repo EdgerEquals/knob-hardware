@@ -100,11 +100,12 @@ def cross(D, parts):
     row("idler 1 vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
     feel_names = [n for n in parts if n.startswith("feel motor")]
     feels = [parts[n] for n in feel_names]
-    ring = parts["bottom internal ring"]
     clip = parts["feel motor saddle seat [A]"].fuse(parts["feel motor saddle strap [A]"])
     can = [parts[n] for n in feel_names if "shaft" not in n and "saddle" not in n and "pinion" not in n][0]
     pin = [parts[n] for n in feel_names if "pinion" in n][0]
     knob = [parts[n] for n in parts if n.startswith("knob body")][0]
+    rings = [parts[n] for n in parts if n.startswith("bottom internal ring")]
+    ring = rings[0] if len(rings) == 1 else rings[0].fuse(*rings[1:])
     row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
         f"can {can.distance_to(knob):.2f} inside the skirt; {D['fg_pinion']['part']} at {D['fm_ang']:.1f}°, overall {D['fm_ratio']:.2f}:1, knob Ø{D['knob_od']:.2f}")
     row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
@@ -114,7 +115,7 @@ def cross(D, parts):
     # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
     from ..base_drive.parts.mech import springs_at, track_balls_at
     # coils seat on the anchor posts, so the cradle distance is ~0 there; check they stay clear of the drive
-    obstacles = [parts["motor"], parts["encoder pinion"], parts["bottom internal ring"]]
+    obstacles = [parts["motor"], parts["encoder pinion"], *rings]
     spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
     row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
         f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
@@ -126,9 +127,40 @@ def cross(D, parts):
     tb_d = min(b.distance_to(gear) for th in TR for b in track_balls_at(D, th))
     row("track balls vs compound gear across ±travel", tb_d, D["feel"]["clear"],
         "balls posed at θ/2 for each sample")
+    row("printed spur stays on the feel side of the centre tube", D["enc_cd"] - D["fg_tip"] - 2.5, D["feel"]["clear"],
+        f"{D['fg_z_gear']}T tip r {D['fg_tip']:.2f} at the idler r {D['enc_cd']:.2f}; tube Ø5")
+    row("printed spur tooth tip vs MJF short-feature floor", D["spur_tip_th"], D["spur_tooth_min"],
+        f"thinnest nylon spur (hub, motor pinion, {D['fg_z_gear']}T, feel pinion); preferred {D['hb_tooth_min']:.2f}")
     row("compound gear vs encoder rim (axial)", D["fg_z_bot"] - D["rim_top"], D["fg_clear"],
         f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
     ot = [parts[n] for n in parts if n.startswith("outer thrust")][0]
+    caps = [n for n in parts if n.endswith(" cap")]
+
+    def _cap_mount(cap, other):
+        if cap == "pinion cap":
+            return other == "pinion"
+        if cap == "encoder pinion cap":
+            return other in ("encoder pinion", "encoder shaft")
+        if cap.startswith("idler pinion ") and cap.endswith(" cap"):
+            idx = cap.split()[2]
+            return other in (f"idler pinion {idx}", f"idler pin {idx}")
+        if cap == "feel motor pinion cap":
+            return other.startswith("feel motor pinion")
+        if cap == "hub gear cap":
+            return other.startswith("knob body")
+        return False
+
+    if caps:
+        cap_d, cap_who = 1e9, ""
+        for n in caps:
+            for m, s in parts.items():
+                if m == n or _cap_mount(n, m):
+                    continue
+                d = parts[n].distance_to(s)
+                if d < cap_d:
+                    cap_d, cap_who = d, f"{n} / {m}"
+        row("resin caps vs everything they do not mount on", cap_d, 0.3,
+            f"nearest {cap_who}; UTR-8100 stepped Fresnel, press modelled at {D['cap_fit_gap']:.2f}")
     row("outer thrust balls vs bottom ring", ot.distance_to(ring), 0.0,
         f"Ø{D['ot_ball_d']:g} × {D['ot_n']} on r {D['ot_r']:.2f}, land {D['ot_land']:.2f}; keep-out {D['ot_keep_ang'][0]:.0f}–{D['ot_keep_ang'][1]:.0f}°")
     row("outer thrust carrier top vs ring underside", D["h_skirt0"] - D["ot_z_top"], D["ot_axial_gap"],

@@ -13,16 +13,14 @@ def _local(D, x0, x1, y0, y1, z0, z1, a):   # box in the lever frame (x radial a
 def det_block(D, a):
     """Leg on the plate inboard of the fan wing, bridge over the wing, boss with the plunger bore."""
     x, y = _pol(D["det_r"], a); w = D["det_leg_w"]; z0, z1 = D["det_z0"], D["det_z1"]
-    # support column on the side of the detent away from the Hall arm, clear of the rib's ±travel sweep
-    away = 1 if a > D["ha_ang0"] else -1
-    # past the ear's swept leading edge (the ear is ±(travel + ball) and then swings another ±travel)
-    off = 2 * D["travel_deg"] + math.degrees((D["det_ball"] / 2) / D["det_r"]) + 10.0
-    cx, cy = _pol(D["det_r"] + D["det_leg_len"], a + away * off)   # outboard of the lever tip
+    # column site comes from the interface: clear of the arm sweep and the feel saddle
+    i = min(range(len(D["det_angs"])), key=lambda k: abs((D["det_angs"][k] - a + 180) % 360 - 180))
+    cx, cy = D["det_col_xy"][i]
     # the Hall rib tops out at sl_top and sweeps under this bridge, so the bridge starts above the rib
-    z_b = max(z0, D["sl_top"] + D["tgt"]["arm_vs_cradle"])
-    col = cyl(0.8, D["plate_t"] - 0.01, z_b - D["plate_t"] + 0.01, cx, cy)
+    z_b = max(z0, D["sl_pin_top"] + D["tgt"]["arm_vs_cradle"])   # above the spring pin; the link can cross the lever in plan
+    col = cyl(D["det_col_r"], D["plate_t"] - 0.01, z_b - D["plate_t"] + 0.01, cx, cy)
     bridge = Rot(0, 0, a) * Pos((D["det_leg_r0"] + D["det_r"]) / 2, 0, z_b) * Box(max(D["det_r"] - D["det_leg_r0"], 0.2), w, z1 - z_b, align=A)
-    link = Pos((x + cx) / 2, (y + cy) / 2, z_b) * Rot(0, 0, math.degrees(math.atan2(cy - y, cx - x))) * Box(math.hypot(cx - x, cy - y), w, z1 - z_b, align=A)
+    link = Pos((x + cx) / 2, (y + cy) / 2, z_b) * Rot(0, 0, math.degrees(math.atan2(cy - y, cx - x))) * Box(math.hypot(cx - x, cy - y), D["det_link_w"], z1 - z_b, align=A)
     boss = cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
     return col + bridge + link + boss
 
@@ -43,11 +41,12 @@ def stop_blocks(D):
     """Hard stops: faces parallel to the lever sides at ±travel (flush at the end of travel), plus the spring anchor posts.
     v0.17: no cushion-magnet pockets. The stop is as close past the end detent as the ball's bore play allows (travel_deg)."""
     a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]; L = D["stop_len"]
-    # stay inboard of the detent track so the ear (which has to cover the track) never meets the stop
-    x1 = min(D["sl_r"] + D["stop_over"], min(D["bt_rs"]) - D["bt_groove_r"] - D["fan_clear"] - 0.3)
-    x0 = x1 - 1.0
+    # the ear and its spoke fill the radii below the lever tip, so the face meets the lever and the block sits above the ear
+    x1 = D["sl_r"] + D["stop_over"]
+    x0 = max(D["sl_pin_r"] - 0.4, D["dial_tube_od"] / 2 + 0.6)
     T = T + D["stop_bias"]
-    z0, z1 = D["plate_t"] - 0.01, D["sl_top"] - 0.4   # below the lever top so the top corners are not the close pair
+    z0 = D["fan_top"] + D["tgt"]["arm_vs_cradle"]   # ear tops at fan_top; this keeps ≥ 0.3 mm under the block at every angle
+    z1 = D["sl_top"]
     s = _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
     # anchors stand above the lever; the ±travel sweep passes underneath
     z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap

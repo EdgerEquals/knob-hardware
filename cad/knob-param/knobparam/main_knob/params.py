@@ -10,14 +10,15 @@ P = dict(
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
                             "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # ball circle + 45° faces
                             "kb_seat_c_knob", "kb_groove_h"]}
-EXPORTS = ["h_bi1"]   # top of the bottom internal ring -> base_drive (feel-motor can sits above it)
+EXPORTS = ["h_bi1", "hb_mid"]   # ring top -> base_drive; herringbone apex -> the pinions
 
 
 def derive(D):
-    m = D["module"]
-    D["ring_root_d"] = (D["z_ring"] + 2.5) * m
+    D["hb_mid"] = D["h_skirt0"] + D["bot_face"] / 2          # apex the two ring halves and the pinions share
+    D["ring_root_d"] = 2 * D["hb_root_r"]
     D["ring_wall"] = (D["knob_od"] - D["ring_root_d"]) / 2
-    D["d_hg_root"] = (D["z_hub_gear"] - 2.5) * m; D["d_hg_tip"] = (D["z_hub_gear"] + 2) * m
+    D["d_hg_root"] = (D["z_hub_gear"] - 2 * D["spur_dedendum"]) * D["hub_mod"]
+    D["d_hg_tip"] = (D["z_hub_gear"] + 2 * D["spur_addendum"]) * D["hub_mod"]
     D["h_bi1"] = D["h_skirt0"] + D["bot_face"]
     D["knob_hub_top"] = D["z_hub0"] - D["knob_run"]
     D["r_bore_hi"] = D["dial_hub_od"] / 2 + D["knob_run"]

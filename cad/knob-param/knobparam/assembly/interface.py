@@ -7,6 +7,7 @@ Tags: [Ed] Ed's value, [K] KiCad, [S] datasheet/spec, [M] motor drawing, [A] ass
 Sub-assemblies may READ every key of derive_interface() but never write one. Changing a value here is an interface change:
 assembly agent only (see AGENTS.md)."""
 import math
+from ..common.util import tooth_tip
 
 P = dict(
     # ---- main PCB [K] ----
@@ -14,13 +15,41 @@ P = dict(
     axis_bx=25.25,   # [K] H1 = dial axis in board coords
     axis_by=52.9,   # [K] H1 = dial axis in board coords
     # ---- gears [Ed/A] ----
-    module=0.5,   # [Ed] m0.5 everywhere
-    pressure=20.0,   # [A]
-    backlash=0.1,   # [A] tooth thinning (pinions) / space widening (rings)
-    motor_offset=10.75,   # [Ed/K] dial axis to the 1220 motor axis; hub-gear teeth derived from it (snapped to whole teeth)
-    z_motor_pinion=12,   # [A] 12T on the motor shaft (used when hub_gear_min is False)
-    hub_gear_min=True,   # [Ed] v0.15d: smallest hub (sun) gear with tgt.race_wall over the knob bore; pinion = the rest of the centre distance
-    z_enc_pinion=14,   # [A] 14T encoder pinion and idlers in the bottom ring
+    # v0.18: printed ring + encoder/idler pinions are 25° herringbone (module derived, coarsest that fits).
+    # Only the two motor shafts carry bought straight pinions, meshing straight printed gears.
+    module=0.5,   # [A] legacy spur module; the herringbone normal module (hb_mn) and hub_mod replace it. Kept so a --set still parses.
+    pressure=20.0,   # [A] spur pressure angle (RW and Tempero catalogue pinions are 20°)
+    backlash=0.1,   # [A] leftover spur default; herringbone uses hb_backlash, nylon spur meshes use brass_backlash (name kept)
+    motor_offset=10.75,   # [Ed/K] dial axis to the 1220 motor axis (KiCad). The mesh centre distance is hub_cd.
+    z_motor_pinion=12,   # unused in v0.18 (the pinion is the RW catalogue tooth count hub_z_pin)
+    hub_gear_min=True,   # unused in v0.18; the hub tooth count is the one in hub_ratio closest to motor_offset
+    z_enc_pinion=14,   # overwritten: herringbone pinion tooth count (encoder, both idlers, the compound's small gear)
+    # ---- v0.18 printed herringbone [Ed] ----
+    hb_beta=25.0,   # [Ed] helix angle. The internal ring is split so the herringbone can be assembled.
+    hb_pressure=20.0,   # [A] normal pressure angle. 25° points a 12T tip under the MJF tooth floor; Ed's 12-tooth interference floor is hb_z_min.
+    hb_addendum=0.80,   # [A] stub addendum (both printed members) so the pinion tip stays above hb_tooth_min after backlash
+    hb_dedendum=1.25,   # [A] standard dedendum: root clearance for unsintered powder
+    hb_backlash=0.10,   # [A] total circumferential play of the printed pair (each member takes half)
+    hb_z_min=12,   # [Ed] minimum pinion teeth inside the ring (interference at 25° helix; classical spur undercut is ~17 virtual teeth)
+    hb_tooth_min=0.50,   # [A] MJF tooth-tip floor, mm (HP min wall 0.5; PCBWay general tolerance is ±0.25, which a gear tooth cannot absorb)
+    hb_wall_min=1.0,   # [A] ring wall outside the tooth root (recommended; the process floor is 0.5)
+    hb_gap=0.40,   # [A] axial split between the two ring halves (MJF parts that assemble want about this)
+    hb_ratio_target=15.6,   # [Ed] feel train, Tempero 12T × printed gear × (ring / pinion)
+    # ---- v0.18 bought pinions [Ed] ----
+    hub_mod=0.6,   # [Ed] RW pinion module. The printed hub gear matches it and is straight, not herringbone.
+    hub_z_pin=14,   # [Ed] RW0614, 3 mm bore. 15T (RW0615) is the other catalogue option; 14T is the one whose mesh sits on the KiCad motor.
+    hub_ratio=(1.4, 1.6),   # [Ed] hub gear / pinion
+    brass_backlash=0.10,   # [A] total pitch backlash of a nylon spur mesh, split half and half. Every gear is PA-12 [Ed].
+    spur_addendum=0.80,   # [A] stub addendum on printed spur gears (hub, feel wheel) so the tip is as thick as this module allows
+    spur_dedendum=1.25,   # [A] full dedendum; both members of a nylon spur mesh use the stub addendum
+    # ---- v0.18 clear-resin caps [Ed]: UTR-8100, separate from the nylon gear, only where a face is free ----
+    cap_t=0.40,   # [A] Fresnel disk thickness
+    cap_step_h=0.16,   # [A] ring step height (SLA fine, still a real feature)
+    cap_step_w=0.42,   # [A] ring step width
+    cap_rings=3,   # [A]
+    cap_fit_gap=0.04,   # [A] radial press clearance in the model (the real part is a press or a snap)
+    cap_seat_gap=0.02,   # [A] axial seat gap in the model so the cap is not a clash with its gear
+    spur_tooth_min=0.30,   # [A] short-feature floor for those catalogue-module teeth (MJF can form ~0.3 mm in XY; 0.5 is the preferred wall)
     enc_ang=270.0,   # [K] encoder pinion / H2 angle (90 deg from the motor)
     idler2_from_enc=-120.0,   # [A] idler 2 = encoder angle - 120 = 150 deg
     # ---- 1220 motor [M] ----
@@ -74,8 +103,9 @@ P = dict(
     # ---- feel motor on the PCB top, inside the cradle [A] ----
     # Axial 716, its own pinion meshing the bottom internal ring. Angle and tooth count are derived
     # (the bisector of the idler gap that clears the 1220, the Hall arm and the skirt by the most).
-    feel=dict(part="716 coreless", can_d=7.0, can_len=16.0, end_boss=1.0, end_boss_d=4.0, shaft_d=1.0,
-              can_gap=0.3, clear=0.5, clip_frac=0.5, pad=(1.8, 1.8), pad_pitch=5.2, pad_hole=1.0, pad_t=0.15),
+    feel=dict(part="coreless Ø2", can_d=7.0, can_len=16.0, end_boss=1.0, end_boss_d=4.0, shaft_d=2.0,
+              can_gap=0.3, clear=0.5, clip_frac=0.5, pad=(1.8, 1.8), pad_pitch=5.2, pad_hole=1.0, pad_t=0.15,
+              saddle_rad=0.7),   # [Ed] shaft Ø2 for the Tempero pinion. Can is the 716 envelope [A]. saddle_rad = glue + band so the strap stays inside the skirt.
     # ---- screen holder + adapter ----
     adapter_t=1.0,   # [K]/[A] (cord room over the nut [Ed])
     cord_clear=3.0,   # [K]/[A] (cord room over the nut [Ed])
@@ -116,8 +146,8 @@ P = dict(
     bt_groove_r=0.55,   # [A] groove radius in the plate and in the wing underside
     bt_rows=2,   # [A] concentric track rows under each detent (one ball per row)
     bt_row_pitch=1.4,   # [A] radial pitch of the rows (groove 1.1 + 0.3 land)
-    sl_ang=296.0,   # [Ed] v0.17: lever angle. The ±10° ear leads to ~275° and the 1220 collar owns angles past ~316°, so the lever sits between them.
-    sl_r=8.6,   # [A] lever end radius
+    sl_ang=296.0,   # [Ed] lever angle, between the detent ear and the 1220 collar at ±10.7°
+    sl_r=7.4,   # [A] lever end radius. Kept short of the 1220 collar.
     sl_w=1.6,   # [Ed] v0.17: lever width. 2.4 swung into the 1220 collar at ±10°; 1.6 stays 0.3 clear.
     sl_z0=4.0,   # [A] lever end-block bottom (the bar near the hub stays above the thrust cage)
     sl_top=6.8,   # [A] lever + stop-block top; springs run above it
@@ -144,15 +174,15 @@ P = dict(
     ot_web=0.45,   # [A] mm between balls along the race
     ot_keep_ang=(124.0, 137.0),   # [Ed] no balls / no carrier flange here (C20–C22 / U20 plan keep-out)
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
-    # ---- v0.17 feel second stage [Ed]: catalogue pinion into a compound idler, no extra shaft ----
-    fg_mod=0.5,   # [Ed] pinion module (catalogue, within 0.3–0.5)
-    fg_z_pin=15,   # [Ed] KHK DS0.5-15 tooth count (POM). Brass alternate BSS0.5-15A is bore Ø3
-    fg_pinion=dict(part="KHK DS0.5-15", vendor="KHK", material="POM (Duracon acetal M90-44)", bore=2.0, face=3.0, hub_d=4.5, hub_w=4.0,
-                   note="bore Ø2 on the Ø1 716 shaft needs a Ø2/Ø1 sleeve [A]; brass alternate KHK BSS0.5-15A bore Ø3"),
+    # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
+    fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
+    fg_z_pin=12,   # [Ed] 0.5 module 12T
+    fg_pinion=dict(part="nylon 0.5M-12T", vendor="printed PA-12", material="PA-12 MJF", bore=2.04, face=5.0, hub_d=0.0, hub_w=5.0, od=6.8,
+                   note="tooth form of the Tempero 0.5M-12T (was the brass reference). Stub addendum, press on the Ø2 shaft. Straight spur, 20°."),
     fg_back_h=0.8,   # [K] tallest PCB-back part the big gear can sit over (U20 / C22)
     fg_clear=0.30,   # [A] big gear below those parts, and the encoder rim below the gear
     fg_hole=1.8,   # [A] PCB NPTH for the compound idler pin (Ø1.5 pin + clearance). KiCad still to add
-    fm_shaft_hole=1.6,   # [A] PCB NPTH for the 716 shaft (Ø1 + clearance). KiCad still to add
+    fm_shaft_hole=2.4,   # [A] PCB NPTH for the Ø2 feel shaft. KiCad still to add
     # ---- v0.16 knob size [Ed]: the least OD that clears the AMOLED ledge + COF bend with a printable lip wall all round ----
     nozzle=0.4,   # [A] printer nozzle (line width)
     lip_wall_lines=3,   # [Ed] v0.17: lip wall 3 lines = 1.2 mm, thickened outward (v0.16 was 2 lines / 0.8)
@@ -237,59 +267,170 @@ def _hall_clear(D, x, y, rad):
     return worst
 
 
-def _feel_clearance(D, z, ang):
-    """Running clearances for an axial feel motor whose pinion (z teeth) meshes the bottom internal ring at angle ang.
-    All inputs are interface values. Returns (worst, parts, xy, centre distance, tip radius)."""
-    F = D["feel"]; m = D["module"]; can_r = F["can_d"] / 2
-    tip = (z + 2) * m / 2
-    cd = (D["z_ring"] - z) * m / 2
-    x, y = cd * math.cos(math.radians(ang)), cd * math.sin(math.radians(ang))
-    dial_r, skirt_r, body_r = D["dial_tube_od"] / 2, D["skirt_id"] / 2, D["can_r"]
-    d_body = math.hypot(x - D["offset"], y)
-    parts = {
-        "skirt": skirt_r - cd - can_r,
-        "dial_can": cd - can_r - dial_r,
-        "dial_pin": cd - tip - dial_r,
-        "body_can": d_body - body_r - can_r,
-        "body_pin": d_body - body_r - tip,
-    }
-    gear = 1e9
-    for a in (D["enc_ang"], *D["idler_angs"]):
-        px, py = D["enc_cd"] * math.cos(math.radians(a)), D["enc_cd"] * math.sin(math.radians(a))
-        gear = min(gear, math.hypot(x - px, y - py) - D["d_pin_tip"] / 2 - tip)
-    parts["gear"] = gear
-    parts["hall"] = _hall_clear(D, x, y, tip)
-    return min(parts.values()), parts, (x, y), cd, tip
+def _place_hub(D):
+    """RW m0.6 pinion, printed straight hub gear. Tooth count is the one inside hub_ratio whose mesh is closest to the KiCad motor."""
+    m, zp = D["hub_mod"], D["hub_z_pin"]
+    r_bore = D["dial_tube_id"] / 2 + D["dial_tube_wall"] + D["kb_clear"]
+    z_lo = int(math.ceil(2 * (r_bore + D["tgt"]["race_wall"]) / m + 2 * D["spur_dedendum"] - 1e-9))
+    lo, hi = D["hub_ratio"]
+    best = None
+    for z in range(max(z_lo, int(math.ceil(lo * zp - 1e-9))), int(math.floor(hi * zp + 1e-9)) + 1):
+        cd = (z + zp) * m / 2
+        key = (abs(cd - D["motor_offset"]), abs(z / zp - 0.5 * (lo + hi)))
+        if best is None or key < best[0]:
+            best = (key, z, cd)
+    _, z, cd = best
+    D["z_pinion"] = zp
+    D["z_hub_gear"] = z
+    D["hub_cd"] = cd
+    D["offset"] = D["motor_offset"]                 # the motor stays on the KiCad axis
+    D["hub_cd_err"] = D["offset"] - cd              # negative: mesh is tight of the KiCad axis
+    D["ratio_knob_motor"] = z / zp
+    D["hub_tip_th"] = tooth_tip(z, m, D["pressure"], D["brass_backlash"] / 2, D["spur_addendum"])
+    D["hub_pin_tip_r"] = zp * m / 2 + D["spur_addendum"] * m
+
+
+def _motor_room(enc, ang, cd, tip_r, D):
+    """Best radial clearance of the feel can placed `cd` from the idler at (enc, ang). Ignores the Hall arm (not laid out yet)."""
+    ix = enc * math.cos(math.radians(ang)); iy = enc * math.sin(math.radians(ang))
+    can_r = D["feel"]["can_d"] / 2
+    best = -1e9
+    for k in range(0, 360, 3):
+        x = ix + cd * math.cos(math.radians(k)); y = iy + cd * math.sin(math.radians(k))
+        r = math.hypot(x, y)
+        worst = min(tip_r - r - can_r, r - can_r - D["dial_tube_od"] / 2,
+                    math.hypot(x - D["motor_offset"], y) - D["can_r"] - can_r)
+        if worst > best: best = worst
+    return best
+
+
+def _place_herringbone(D, R):
+    """Coarsest normal module whose 25° herringbone still clears the 1220, leaves hb_wall_min, keeps a pinion of at least
+    hb_z_min, and whose feel train (Tempero 12T × printed spur × ring/pinion) can reach hb_ratio_target without the
+    printed spur crossing the centre tube. Stub addendum is already in the tip-thickness test."""
+    beta, pa = D["hb_beta"], D["hb_pressure"]
+    ha, ded = D["hb_addendum"], D["hb_dedendum"]
+    cosb = math.cos(math.radians(beta))
+    tip_min = D["motor_offset"] + D["can_r"] + D["skirt_clear"]
+    dial_r = D["dial_tube_od"] / 2
+    keep = 2.5 + D["feel"]["clear"]   # centre tube Ø5 [S] plus the feel running clearance; the spur must stay on the feel side of it
+    # the compound idler is the one farther from the 1220 (inputs, so this does not need the derived centres)
+    idler_ang = max((D["idler1_ang"], (D["enc_ang"] + D["idler2_from_enc"]) % 360),
+                    key=lambda a: min((a - 0.0) % 360.0, (0.0 - a) % 360.0))
+    cands = []
+    for mn_i in range(120, 49, -1):               # 1.20 mm down to 0.50, 0.01 mm
+        mn = mn_i / 100
+        mt = mn / cosb
+        pitch_max = R - D["hb_wall_min"] - ded * mn
+        pitch_min = tip_min + ha * mn
+        if pitch_max < pitch_min:
+            continue
+        for zp in range(D["hb_z_min"], D["hb_z_min"] + 8):
+            if tooth_tip(zp, mn, pa, D["hb_backlash"] / 2, ha, beta) < D["hb_tooth_min"]:
+                continue
+            zr_lo = int(math.ceil(2 * pitch_min / mt - 1e-9))
+            zr_hi = int(math.floor(2 * pitch_max / mt + 1e-9))
+            for zr in range(max(zr_lo, zp + 8), zr_hi + 1):
+                pr = zr * mt / 2
+                tip_r, root_r = pr - ha * mn, pr + ded * mn
+                wall = R - root_r
+                if tip_r < tip_min or wall < D["hb_wall_min"]:
+                    continue
+                pp = zp * mt / 2
+                enc = pr - pp
+                if enc - (pp + ha * mn) - dial_r < 0.4:
+                    continue
+                zmax = int(math.floor((enc - keep) / (D["fg_mod"] / 2) - 2 * D["spur_addendum"] + 1e-9))
+                if zmax < D["fg_z_pin"] + 8:
+                    continue
+                zbig = min(range(max(D["fg_z_pin"] + 4, zmax - 8), zmax + 1),
+                           key=lambda z: abs(z / D["fg_z_pin"] * zr / zp - D["hb_ratio_target"]))
+                total = (zbig / D["fg_z_pin"]) * (zr / zp)
+                cd = (zbig + D["fg_z_pin"]) * D["fg_mod"] / 2
+                if _motor_room(enc, idler_ang, cd, tip_r, D) < D["feel"]["clear"]:
+                    continue
+                cands.append((mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt))
+    near = [c for c in cands if abs(c[1] - D["hb_ratio_target"]) <= 0.5]
+    pool = near or cands
+    if not pool:
+        raise ValueError("no herringbone module fits the envelope and the feel ratio")
+    # coarsest module, then the ratio closest to the target
+    best = max(pool, key=lambda c: (c[0], -abs(c[1] - D["hb_ratio_target"])))
+    mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt = best
+    D["hb_mn"] = mn
+    D["hb_mt"] = mt
+    D["z_enc_pinion"] = zp
+    D["z_ring"] = zr
+    D["fg_z_gear"] = zbig
+    D["hb_wall"] = wall
+    D["hb_tip_r"] = tip_r
+    D["hb_root_r"] = root_r
+    D["hb_tip_th"] = tooth_tip(zp, mn, pa, D["hb_backlash"] / 2, ha, beta)
+    D["hb_virtual"] = zp / math.cos(math.radians(beta)) ** 3
+    D["skirt_id"] = 2 * tip_r
+    D["enc_cd"] = enc
+    D["d_pin_tip"] = 2 * (zp * mt / 2 + ha * mn)
+    D["fm_ratio"] = total
+    D["fg_ratio"] = total
+    D["module"] = mn
 
 
 def _place_feel(D):
-    """Axial 716 on the PCB-top side, pinion meshing the bottom ring (one mesh, torque into the knob).
-
-    The three bottom-ring pinions (two idlers + encoder) split the circle into three gaps. In a gap between two
-    equal pinions the clearance-balancing angle is the bisector. Pick the bisector whose best whole-tooth pinion
-    maximises the worst running clearance (skirt, dial tube, 1220 can, the other pinion tips, the Hall arm).
-    Ties break toward fewer pinion teeth (more reduction)."""
-    angs = sorted({D["enc_ang"], *D["idler_angs"]})
-    gaps = list(zip(angs, angs[1:] + [angs[0] + 360.0]))
+    """2 mm-shaft motor: its Tempero pinion meshes the printed spur on the compound idler (the one farther from the 1220).
+    The motor orbits that idler at the catalogue centre distance and sits where the can clears the skirt, the dial, the 1220 and the Hall arm."""
+    F = D["feel"]
+    angs = D["idler_angs"]
+    i = max(range(len(angs)), key=lambda k: min((angs[k] - 0.0) % 360.0, (0.0 - angs[k]) % 360.0))
+    ix, iy = D["idler_xy"][i]
+    cd = (D["fg_z_gear"] + D["fg_z_pin"]) * D["fg_mod"] / 2
+    can_r = F["can_d"] / 2
+    pin_tip = D["fg_z_pin"] * D["fg_mod"] / 2 + D["spur_addendum"] * D["fg_mod"]   # nylon stub addendum
     best = None
-    for a0, a1 in gaps:
-        ang = ((a0 + a1) / 2.0) % 360.0
-        for z in range(8, 42):
-            mn, parts, xy, cd, tip = _feel_clearance(D, z, ang)
-            key = (mn, -z)
-            if best is None or key > best[0]:
-                best = (key, ang, z, parts, xy, cd, tip)
-    _, ang, z, parts, xy, cd, tip = best
-    p = D["feel"]["pad_pitch"] / 2.0
+    for k in range(360):
+        x = ix + cd * math.cos(math.radians(k))
+        y = iy + cd * math.sin(math.radians(k))
+        r = math.hypot(x, y)
+        parts = {
+            "skirt": D["skirt_id"] / 2 - r - can_r - F["saddle_rad"],
+            "dial_can": r - can_r - D["dial_tube_od"] / 2,
+            "body_can": math.hypot(x - D["offset"], y) - D["can_r"] - can_r,
+        }
+        # the nylon pinion is under the PCB and the can is above the ring pinions, so a plan overlap is not a hit
+        parts["gear"] = 1e9
+        parts["hall"] = _hall_clear(D, x, y, can_r)
+        worst = min(parts.values())
+        if best is None or worst > best[0]:
+            best = (worst, x, y, r, parts)
+    _, x, y, r, parts = best
+    ang = math.degrees(math.atan2(y, x)) % 360.0
+    p = F["pad_pitch"] / 2
     tx, ty = -math.sin(math.radians(ang)), math.cos(math.radians(ang))
-    D["z_feel"] = z
+    D["fg_idler"] = i
+    D["fg_ang"] = angs[i]
+    D["fg_xy"] = (ix, iy)
+    D["fg_cd"] = cd
+    D["fg_cd_nom"] = cd
+    D["fg_cd_err"] = 0.0
+    D["fg_tip"] = D["fg_z_gear"] * D["fg_mod"] / 2 + D["spur_addendum"] * D["fg_mod"]
+    D["fg_pin_tip"] = pin_tip
+    D["z_feel"] = D["z_enc_pinion"]
     D["fm_ang"] = ang
-    D["fm_cd"] = cd
-    D["fm_xy"] = xy
-    D["fm_tip"] = tip
-    D["fm_ratio"] = D["z_ring"] / z
+    D["fm_cd"] = r
+    D["fm_xy"] = (x, y)
+    D["fm_tip"] = pin_tip
     D["fm_clear"] = parts
-    D["fm_pad_xy"] = [(xy[0] + tx * p, xy[1] + ty * p), (xy[0] - tx * p, xy[1] - ty * p)]
+    D["fm_pad_xy"] = [(x + tx * p, y + ty * p), (x - tx * p, y - ty * p)]
+    face = D["fg_pinion"]["face"]
+    hub_extra = max(0.0, D["fg_pinion"]["hub_w"] - face)
+    D["fg_z_top"] = D["z_pcb_back"] - D["fg_back_h"] - D["fg_clear"]
+    D["fg_z_bot"] = D["fg_z_top"] - face - hub_extra
+    D["fg_face"] = face
+    half = D["brass_backlash"] / 2
+    D["spur_tip_th"] = min(
+        tooth_tip(D["z_hub_gear"], D["hub_mod"], D["pressure"], half, D["spur_addendum"]),
+        tooth_tip(D["z_pinion"], D["hub_mod"], D["pressure"], half, D["spur_addendum"]),
+        tooth_tip(D["fg_z_gear"], D["fg_mod"], D["pressure"], half, D["spur_addendum"]),
+        tooth_tip(D["fg_z_pin"], D["fg_mod"], D["pressure"], half, D["spur_addendum"]))
 
 
 def _det_r_nom(D):
@@ -305,43 +446,6 @@ def _set_travel(D):
     """[Ed] hard stop just past ±det_deg, by the ball's bore play at the detent radius. Overwrites travel_deg."""
     D["det_r_nom"] = _det_r_nom(D)
     D["travel_deg"] = D["det_deg"] + math.degrees(D["det_stop_clear"] / D["det_r_nom"])
-
-
-def _place_compound(D):
-    """v0.17 feel drive [Ed]: the 716 stays on the idler bisector (shaft down). Its catalogue pinion, under the PCB,
-    meshes a big gear on the existing idler shaft that is farther from the 1220. The idler's small gear still meshes the ring."""
-    F = D["feel"]; m = D["fg_mod"]
-    angs = D["idler_angs"]
-    # motor seat: the same bisector _place_feel picked (102° between 54° and 150°). Radius stays the ring-mesh seat.
-    i = max(range(len(angs)), key=lambda k: min((angs[k] - 0.0) % 360.0, (0.0 - angs[k]) % 360.0))
-    ix, iy = D["idler_xy"][i]
-    fx, fy = D["fm_xy"]
-    cd = math.hypot(fx - ix, fy - iy)
-    z_pin = D["fg_z_pin"]
-    z_gear = int(round(2.0 * cd / m - z_pin))
-    cd_nom = (z_gear + z_pin) * m / 2
-    ratio = (z_gear / z_pin) * (D["z_ring"] / D["z_enc_pinion"])
-    tip = (z_gear + 2) * m / 2
-    pin_tip = (z_pin + 2) * m / 2
-    # big gear just under the tallest back-side parts; hub of the catalogue pinion hangs below the tooth face
-    z_top = D["z_pcb_back"] - D["fg_back_h"] - D["fg_clear"]
-    face = D["fg_pinion"]["face"]
-    hub_extra = max(0.0, D["fg_pinion"]["hub_w"] - face)   # catalogue hub longer than the tooth face, hung downward
-    z_bot = z_top - face - hub_extra
-    D["fg_idler"] = i
-    D["fg_ang"] = angs[i]
-    D["fg_xy"] = (ix, iy)
-    D["fg_cd"] = cd
-    D["fg_z_gear"] = z_gear
-    D["fg_cd_nom"] = cd_nom
-    D["fg_cd_err"] = cd - cd_nom          # + = loose (extra backlash); backlash radial relief is ~0.14 mm at m0.5
-    D["fg_ratio"] = ratio
-    D["fg_tip"] = tip
-    D["fg_pin_tip"] = pin_tip
-    D["fg_z_top"] = z_top
-    D["fg_z_bot"] = z_bot
-    D["fg_face"] = face
-    D["fm_ratio"] = ratio                 # overall feel ratio (compound); the 716 no longer meshes the ring
 
 
 def _place_outer_thrust(D):
@@ -381,6 +485,68 @@ def _place_outer_thrust(D):
     # keep the flange under the Hall bar (the outer pad reaches the cradle OD) as well as under the ring
     D["ot_z_top"] = min(face - D["ot_axial_gap"], D["hv_z_mag0"] - D["tgt"]["arm_vs_cradle"])
     D["ot_floor"] = z_ball - rg                               # material under the seat, from the PCB front
+
+
+def _place_det_columns(D):
+    """One support column per detent, the shortest link that clears the sweeping arm and the feel saddle."""
+    R2D = math.degrees
+    fm = D["fm_xy"]
+    can = D["feel"]["can_d"] / 2 + D["feel"]["saddle_rad"]
+    col_r, need, link_hw = 0.8, 0.5, 0.7
+    det_r = D["det_r"]
+    ear = D["travel_deg"] + R2D((D["det_ball"] / 2) / det_r)
+    T = D["travel_deg"]
+    pad0 = min(D["bt_rs"]) - D["bt_groove_r"] - D["fan_clear"]
+
+    def ad(a, b):
+        return min((a - b) % 360.0, (b - a) % 360.0)
+
+    def seg(x0, y0, x1, y1):
+        vx, vy = x1 - x0, y1 - y0
+        L2 = vx * vx + vy * vy
+        t = 0.0 if L2 < 1e-9 else max(0.0, min(1.0, ((fm[0] - x0) * vx + (fm[1] - y0) * vy) / L2))
+        return math.hypot(x0 + t * vx - fm[0], y0 + t * vy - fm[1]) - can - link_hw - need
+
+    pts = []
+    for a in D["det_angs"]:
+        dx = det_r * math.cos(math.radians(a)); dy = det_r * math.sin(math.radians(a))
+        best = None
+        for ir in range(22, 90):
+            r = ir / 5.0
+            for ang in range(0, 360, 2):
+                if ad(ang, a) < 8:
+                    continue
+                x = r * math.cos(math.radians(ang)); y = r * math.sin(math.radians(ang))
+                if math.hypot(x - fm[0], y - fm[1]) < can + col_r + need:
+                    continue
+                if r + col_r > D["skirt_id"] / 2 - 0.4 or r - col_r < D["dial_tube_od"] / 2 + 0.4:
+                    continue
+                if any(math.hypot(x - px, y - py) < D["d_pin_tip"] / 2 + col_r + 0.4
+                       for px, py in (D["enc_xy"], *D["idler_xy"], (D["offset"], 0.0))):
+                    continue
+                hit = False
+                for ea in D["det_angs"]:
+                    dd = ad(ang, ea)
+                    if (r + col_r > pad0 - need and r - col_r < 9.2 + need
+                            and dd < ear + T + R2D((col_r + need) / max(r, 1.0))):
+                        hit = True
+                    if r < pad0 + col_r + need and dd < T + R2D((0.8 + col_r + need) / max(r, 1.0)):
+                        hit = True
+                if hit or (ad(ang, D["ha_ang0"]) < T + R2D((2.6 + col_r + need) / max(r, 1.0)) and r < 17.5):
+                    continue
+                if r < D["sl_r"] + col_r + 1 and ad(ang, D["sl_ang"]) < T + R2D((0.8 + col_r + need) / max(r, 1.0)):
+                    continue
+                if seg(dx, dy, x, y) < 0:
+                    continue
+                L = math.hypot(x - dx, y - dy)
+                if best is None or L < best[0]:
+                    best = (L, x, y)
+        if best is None:
+            raise ValueError("no detent column clears the arm and the feel saddle")
+        pts.append((best[1], best[2]))
+    D["det_col_xy"] = pts
+    D["det_col_r"] = col_r
+    D["det_link_w"] = 2 * link_hw
 
 
 def _place_mech(D):
@@ -436,41 +602,29 @@ def _place_mech(D):
     D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
     D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
     D["ha_rib_z_top"] = D["sl_top"]                                         # up to the lever top
-    D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"]                           # 3.8, over the cradle window
+    D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"] + 0.05                  # just over the plate so the swept corner stays ≥ 0.3
     # ha_rib_z_cage (over the thrust cage) is hv_spoke_z0, set by control_dial once the cage is known
+    _place_det_columns(D)
 
 
 def derive(D):
     """Interface-derived values (pure function of the interface params). Adds keys to D in place."""
-    m = D["module"]; R2D = math.degrees
+    R2D = math.degrees
     # ---- motor + knob size chain ----
     M = D["motor"]; D["can_r"] = M["body_d"] / 2
-    zsum = int(round(2 * D["motor_offset"] / m))                        # hub + pinion teeth at this centre distance
-    if D["hub_gear_min"]:   # hub gear pushed in to the axle: root wall over the knob bore (dial tube + kb_clear) >= tgt.race_wall
-        r_bore = D["dial_tube_id"] / 2 + D["dial_tube_wall"] + D["kb_clear"]
-        D["z_hub_gear"] = int(math.ceil(2 * (r_bore + D["tgt"]["race_wall"]) / m + 2.5 - 1e-9))
-        D["z_pinion"] = zsum - D["z_hub_gear"]
-    else:
-        D["z_pinion"] = D["z_motor_pinion"]
-        D["z_hub_gear"] = zsum - D["z_pinion"]
-    D["offset"] = (D["z_hub_gear"] + D["z_pinion"]) * m / 2        # snapped to whole teeth
-    need_id = 2 * (D["offset"] + D["can_r"] + D["skirt_clear"])
+    D["dial_tube_od"] = D["dial_tube_id"] + 2 * D["dial_tube_wall"]
+    _place_hub(D)   # v0.18: RW m0.6 pinion, hub tooth count inside 1.4–1.6, motor stays at motor_offset
     # v0.16: the screen sets the knob OD (closed lip ring, lip_wall_lines x nozzle outside the panel AND outside the COF bend)
     D["lip_wall_min"] = D["lip_wall_lines"] * D["nozzle"]
     D["tgt"] = dict(D["tgt"], lip_wall=D["lip_wall_min"])
     D["scr_off_opt"], D["knob_od_min"] = _screen_knob(dict(SCREENS[D["screen"]], **({} if D["cof_bend"] is None else {"bend": D["cof_bend"]})),
                                                       D["lip_wall_min"], D["bend_clear"])
-    # v0.17 [Ed]: the lip growth is skirt wall, not more teeth. z_scr would walk the encoder off the existing
-    # H2 press (75T → enc_cd 15.25). The ring stays 75T; the motor only needs 73.
-    D["z_ring"] = max(int(math.ceil(need_id / m + 2 - 1e-9)), 75)
-    D["skirt_id"] = (D["z_ring"] - 2) * m
     st = D["knob_od_step"]
-    D["knob_od"] = max(D["skirt_id"] + 2 * D["knob_wall"], math.ceil(D["knob_od_min"] / st - 1e-9) * st)
+    screen_od = math.ceil(D["knob_od_min"] / st - 1e-9) * st
+    _place_herringbone(D, screen_od / 2)   # coarsest 25° herringbone; sets skirt_id, enc_cd, the feel tooth counts
+    D["knob_od"] = max(D["skirt_id"] + 2 * D["knob_wall"], screen_od)
     D["skirt_wall"] = (D["knob_od"] - D["skirt_id"]) / 2
     D["R"] = D["knob_od"] / 2
-    D["enc_cd"] = (D["z_ring"] - D["z_enc_pinion"]) * m / 2
-    D["ratio_knob_motor"] = D["z_hub_gear"] / D["z_pinion"]
-    D["d_pin_tip"] = (D["z_enc_pinion"] + 2) * m
     _set_travel(D)   # v0.17: ±det_deg latch, hard stop a ball-clearance past it (hall arc and the fan follow this)
     D["h_skirt0"] = D["skirt_gap"]
     D["h_band1"] = D["knob_hub_z0"] + D["hub_gear_face"]
@@ -490,7 +644,6 @@ def derive(D):
     D["z_pcb_back"] = -D["pcb_t"]
     D["h_pin0"] = D["h_skirt0"] + D["pin_above_skirt"]; D["h_pin1"] = D["h_pin0"] + D["pin_face"]   # pinion band in the bottom ring
     # ---- dial tube + 45 deg cone bearing (shared by main_knob and control_dial) ----
-    D["dial_tube_od"] = D["dial_tube_id"] + 2 * D["dial_tube_wall"]
     D["kb_rt"] = D["dial_tube_od"] / 2
     # the ball circle itself (kb_rc, kb_zc, kb_n, faces kb_c_dial / kb_c_knob, grooves) is derived by control_dial, which owns the
     # dial face the balls run on, and EXPORTED to main_knob (v0.15c: the 45° face is the dial gusset under the web)
@@ -528,7 +681,6 @@ def derive(D):
         D["hv_mid_elem_gap"] = (D["hv_z_mag0"] - mid["elem_z"]) if mid else None
     _place_feel(D)
     _place_mech(D)
-    _place_compound(D)
     _place_outer_thrust(D)
     # ---- v0.16 knob ring magnet / dial sensor ----
     D["tm_r"] = (D["tm_ring"][0] + D["tm_ring"][1]) / 4                  # sensor element over the ring mid radius

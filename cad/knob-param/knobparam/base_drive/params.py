@@ -47,7 +47,7 @@ P = dict(
     det_leg_w=3.0,   # [A] leg / bridge width
     det_leg_len=2.4,   # [A] leg radial length inboard of the fan
     # ---- v0.16 centring springs + cushions ----
-    stop_len=0.8,   # [A] v0.17: stop block tangential length. Short, so the block stops the lever without reaching the detent ear
+    stop_len=0.8,   # [A] stop face thickness. The block sits above the ear, so the thickness grows away from the lever.
     stop_bias=0.1,   # [A] deg. Parks the stop face a hair out so the at-rest gap stays ≥ 0.3 mm and contact is still at ±travel..
     stop_over=0.2,   # [A] stop block past the lever end
     sl_post_d=1.8,   # [A] spring anchor post
@@ -62,7 +62,7 @@ P = dict(
 )
 
 IMPORTS = {"control_dial": ["tb_pcd", "tb_groove_r", "tb_z_ball"],
-           "main_knob": ["h_bi1"]}   # feel-motor can sits above the bottom ring
+           "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
 
 

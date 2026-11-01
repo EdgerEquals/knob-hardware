@@ -7,6 +7,9 @@ def checks(D, parts):
         r.row("knob hub wall (hub-gear root over the bore)", D["race_wall"], T["race_wall"], f"bore Ø{2 * D['r_knob_bore']:.2f} on the Ø{2 * D['kb_rt']:.2f} dial tube")
     else:
         r.row("knob race wall (hub-gear root over the cone)", D["race_wall"], T["race_wall"])
-    r.row(f"knob ring wall ({D['z_ring']}T root to OD)", D["ring_wall"], 0.8, "flagged since v0.8")
+    r.row(f"knob ring wall ({D['z_ring']}T root to OD)", D["ring_wall"], D["hb_wall_min"],
+          f"MJF recommended wall {D['hb_wall_min']:.1f}; process floor 0.5; herringbone mn {D['hb_mn']:.2f}")
+    r.row("printed hub-gear tooth tip vs MJF short-feature floor", D["hub_tip_th"], D["spur_tooth_min"],
+          f"m{D['hub_mod']:.1f} {D['z_hub_gear']}T stub {D['spur_addendum']:.2f}, backlash {D['brass_backlash']:.2f}; preferred tooth {D['hb_tooth_min']:.2f}")
     r.row("cone balls chord play", D["kb_gap"], D["kb_play"], f"{D['kb_n']} × Ø{D['kb_ball_d']:g} on PCD {D['kb_pcd']:.2f}")
     return r

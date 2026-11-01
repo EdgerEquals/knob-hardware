@@ -2,12 +2,10 @@
 
 Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø41.65, derived from the
 AMOLED COF bend + a 1.2 mm printable lip wall).
-Default params are **v0.17**. v0.16b is kept in `cad/assemblies/knob-stack-v0.16b/` (v0.16 minus the knob-ring/dial
-TMAG5273; Hall row H3 = 3D TMAG5273A2, magnets N/S/N/S/N). v0.17: lip wall 1.2 mm (OD derived), dial ±10° with the
-hard stop a ball-play past it, cushion magnets removed, spring-ball detents at centre and both ends, tapered Hall-arm
-rib, skinny cradle bridges opened (not a big cut) and a smooth Hall window, flat Ø1.5 outer thrust race in the cradle,
-two Ø3×1 carrier magnets, 716 second stage through a compound idler (KHK DS0.5-15, overall 11.43:1), encoder
-photointerrupter on a daughterboard. Output: `cad/assemblies/knob-stack-v0.17/` (clean section + iso, plan, check.json).
+Default params are **v0.18**. v0.17 is kept in `cad/assemblies/knob-stack-v0.17/`. v0.18: 25° herringbone
+(module 0.67, 51T ring split in two halves, 12T pinions), every gear PA-12 (the motor pinions use the Tempero
+0.5M-12T and RW m0.6 14T tooth forms, printed), feel train 15.58:1, hub 1.571:1, and UTR-8100 Fresnel caps on the
+four gears with a free face. Output: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan, check.json).
 Design notes: `docs/design-notes.md`.
 
 ## Branch model
@@ -124,12 +122,12 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`): main_knob 3, control_dial 17, base_drive 11, under_pcb 2, electronics 2, plus 27 cross
-  rows (`assembly`) = **62 total**. These counts come from `cad/assemblies/knob-stack-v0.17/check.json` (`rows[].owner`);
+* **Local** (`<sub>/checks.py`): main_knob 4, control_dial 17, base_drive 14, under_pcb 2, electronics 2, plus 30 cross
+  rows (`assembly`) = **69 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
   re-count from that file whenever checks are added or removed, rather than editing numbers by hand.
-* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.17).
-* **v0.17: 62/62 gap checks PASS, 0 clashes** on the proxy and on `--full`. `--full` uses the committed STEP
-  with the two new NPTHs drilled in CAD (the KiCad board does not have them yet). v0.16b was 54/54 PASS, 0 clashes.
+* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.18).
+* **v0.18: 69/69 gap checks PASS, 0 clashes** on the proxy and on `--full`. `--full` drills the 716 shaft, the compound pin, and the
+  moved H2 into the committed STEP (the KiCad board does not have those holes yet). v0.17 was 62/62. v0.16b was 54/54.
   The old PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
 * History: v0.16 had 41/42 (dial lip wall far side 0.36 < 0.4, fixed by the closed 0.8 lip); v0.15d also failed
   "geared feel motor depth 25.8 > 25" (removed in v0.16: the 716 is no longer under the board).

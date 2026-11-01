@@ -51,10 +51,12 @@ def pcb_full(D):
     Needs NO KiCad: only build123d's STEP import. Regenerate the STEP with kicad-cli after editing the board (see AGENTS.md)."""
     s = import_step(STEP); zf = s.bounding_box().max.Z
     s = Pos(-D["axis_bx"], D["axis_by"], -zf) * s
-    # same two NPTHs the proxy drills; the KiCad board does not have them yet (see design notes)
+    # same NPTHs the proxy drills; the KiCad board does not have them yet (see design notes).
+    # v0.18 moved H2 with the herringbone centre distance, so the committed STEP hole is drilled out at the new axis too.
     t = D["pcb_t"]
     s -= cyl(D["fm_shaft_hole"] / 2, -t - 2, t + 4, *D["fm_xy"])
     s -= cyl(D["fg_hole"] / 2, -t - 2, t + 4, *D["fg_xy"])
+    s -= cyl(D["brg"]["D"] / 2, -t - 2, t + 4, *D["enc_xy"])
     return s
 
 def kicad_step_path():

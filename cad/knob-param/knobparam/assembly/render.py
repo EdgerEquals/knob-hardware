@@ -7,6 +7,7 @@ from build123d import *
 from ..common.cache import CACHE
 
 GROUPS = [  # (legend, colour, match)
+    ("clear resin cap (UTR-8100, Fresnel)", "#80deea", lambda n: n.endswith(" cap")),
     ("rod VBUS pad, B.Cu (enlarged, no washer)", "#d4883a", lambda n: n.startswith("PCB rod pad")),
     ("main PCB (proxy; --full = KiCad STEP)", "#2e7d32", lambda n: n.startswith("PCB")),
     ("1220 motor", "#9e9e9e", lambda n: n == "motor"),
@@ -15,7 +16,7 @@ GROUPS = [  # (legend, colour, match)
     ("M1.6 rod + sleeve, nuts, washer", "#5c6bc0", lambda n: n.startswith("rod")),
     ("base cradle", "#8d6e63", lambda n: n == "base cradle"),
     ("big knob body + hub gear", "#1e88e5", lambda n: n.startswith("knob body")),
-    ("bottom internal ring", "#42a5f5", lambda n: n == "bottom internal ring"),
+    ("bottom internal ring", "#42a5f5", lambda n: n.startswith("bottom internal ring")),
     ("knob balls (opposed 45° cones)", "#bdbdbd", lambda n: n.startswith("knob balls")),
     ("control dial (+ Hall arm)", "#ab47bc", lambda n: n == "control dial"),
     ("magnets (Hall row N/S/N/S/N, carrier pair) N52", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet", "knob ring magnet", "cushion magnet", "screen carrier magnet"))),

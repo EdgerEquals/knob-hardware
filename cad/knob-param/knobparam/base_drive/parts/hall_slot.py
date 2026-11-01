@@ -19,16 +19,18 @@ def _bar_samples(D, n=8):
     return pts
 
 def window(D):
-    """v0.17 [Ed]: one smooth slot, an even clearance off the arm's swept envelope (not the stepped per-pad zig-zag)."""
+    """v0.17 [Ed]: one smooth slot, an even clearance off the arm's swept envelope (not the stepped per-pad zig-zag).
+    v0.18: the sweep is an annular sector, not three disks. Disks at ±travel left the ±10° pose 0.2 mm closer to the web."""
     if not _vern(D): return sector(D["ha_win_r0"], D["ha_pad_r1"] + 3.0, D["ha_win_half"], -0.1, 10.0, D["ha_ang0"])
     pr, c, T = D["hv_pad_r"], D["hv_slot_clear"], D["travel_deg"]
     rad = pr + c
     w = None
     for r, a in _bar_samples(D):
-        for th in (-T, 0.0, T):
+        q = sector(max(r - rad, 0.2), r + rad, T, -0.1, D["plate_t"] + 0.3, a)
+        for th in (-T, T):   # round end caps; the sector's radial edge stops at the pad centre
             x = r * math.cos(math.radians(a + th)); y = r * math.sin(math.radians(a + th))
-            q = cyl(rad, -0.1, D["plate_t"] + 0.3, x, y)
-            w = q if w is None else w + q
+            q += cyl(rad, -0.1, D["plate_t"] + 0.3, x, y)
+        w = q if w is None else w + q
     # sensors are fixed; open the slot over each body too so the bar's sweep is not the only cut
     for i, (r, a) in enumerate(zip(D["hv_r"], D["hv_phi_s"])):
         sl = D["hv_dims"][i][1]

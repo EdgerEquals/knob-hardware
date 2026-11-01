@@ -1,10 +1,35 @@
-# Knob module: design notes (current: CAD v0.17, 1 Nov 2026)
+# Knob module: design notes (current: CAD v0.18, 1 Nov 2026)
 
 A short summary of the current design. The parametric model in `cad/knob-param/` is the source of truth for
 dimensions. Values marked [A] are assumptions that still need checking with calipers or on a prototype.
-Renders: `cad/assemblies/knob-stack-v0.17/` (clean section + iso, plan view, `check.json`); v0.16b kept in
-`cad/assemblies/knob-stack-v0.16b/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
+Renders: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan view, `check.json`); v0.17 kept in
+`cad/assemblies/knob-stack-v0.17/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
 `docs/top-screen-joystick.md`).
+
+## v0.18 gear train (Ed, 1 Nov 2026)
+
+PCBWay makes the parts: MJF PA-12 for every gear, SLA clear resin for the caps. The Kingtech 1.39" screen is unchanged in this pass, so the knob stays **Ø41.65**.
+
+- **All gears are nylon** (PA-12 MJF). The two motor pinions keep the Tempero 0.5M-12T and RW m0.6 14T tooth forms, printed rather than bought in brass. Spur backlash is 0.10 mm total, split half on each member. Herringbone backlash is 0.10 mm shared.
+- **25° herringbone**, normal module **0.67 mm** (the coarsest that still clears the 1220, keeps a 12-tooth pinion, and a ≥1.0 mm ring wall). Transverse module 0.739. Normal pressure angle 20°. Stub addendum 0.80 so the 12T tip stays above the MJF floor. Internal ring **51T**, split into two axial halves with a 0.40 mm gap at the apex (z 3.5); a herringbone cannot drop in axially. Pinion tip thickness **0.626 mm** (floor 0.50). Ring wall **1.14 mm**. Virtual teeth 16.1; the floor Ed set is 12, and 12 meets it. MJF ±0.25 mm is larger than the 0.10 backlash, so the mesh is tuned on the part.
+- **Centres.** Encoder / idler centre distance **14.42 mm** (was 15.25, the KiCad H2 press). Skirt ID Ø36.63. The committed STEP's H2 is drilled at the new axis in `--full` only; the KiCad board still has the old hole.
+- **Feel train.** Nylon 12T m0.5 × printed 44T m0.5 on the 150° idler, then 51/12. Overall **(44/12)×(51/12) = 15.58:1**. The 716 stays shaft-down; the pinion is under the PCB. Thinnest nylon spur tip **0.384 mm** (the 12T; floor 0.30).
+- **Hub.** Nylon 14T m0.6 × 22T, ratio **1.571**, centre distance 10.80 against the KiCad motor at 10.75 (0.05 mm tight, inside the 0.10 backlash). Tip Ø9.36 on the pinion, Ø14.16 on the hub gear.
+- **Axial load** stays on the flat outer thrust race. The pinions locate the knob radially.
+- **Clear resin caps** (PCBWay UTR-8100), separate prints, stepped Fresnel rings (disk 0.40 mm, up to 3 rings 0.16 mm high by 0.42 mm wide). They press or snap on a free face or hub. The model leaves 0.04 mm radial and 0.02 mm axial so the press is not a clash. Nearest cap-to-neighbour gap **0.43 mm** (feel-pinion cap vs the 44T).
+
+| Gear | Teeth | Tip Ø | Shaft / pin | Cap |
+| --- | --- | --- | --- | --- |
+| Hub gear | 22T m0.6 straight | 14.16 | dial tube, bore Ø8.62 | no — the top face is the knob web |
+| Motor pinion | 14T m0.6 straight, nylon | 9.36 | Ø3 with a flat (1220) | no — 0.50 mm under the web, less than a cap plus 0.30 clearance |
+| Internal ring | 51T 25° herringbone, two halves | 36.63 inner | — | no — the knob body sits on the top face |
+| Encoder pinion | 12T 25° herringbone | 9.94 | Ø2 shaft | yes, Ø6.70 on a Ø2.7 pip on the top face |
+| Idler 1 | 12T 25° herringbone | 9.94 | Ø1.5 pin, head Ø3.5×0.5 | yes, Ø6.70, bore clears the head |
+| Idler 2 (compound small gear) | 12T 25° herringbone | 9.94 | same pin | yes, Ø6.70 |
+| Compound spur | 44T m0.5 | 22.80 | Ø1.5 pin | no — 0.30 mm to the PCB parts above and to the encoder rim below |
+| Feel pinion | 12T m0.5 straight, nylon | 6.80 | Ø2 shaft | yes, Ø4.35 on the free underside |
+
+Eight toothed wheels. Four take a cap. The two Risley motors are not in this pass; their caps are the wedge prisms in the optics round.
 
 ## v0.17 changes (Ed, 1 Nov 2026)
 
@@ -125,6 +150,10 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
 - The board needs its signals carried over the screen service strap. The screen-adapter board no longer
   carries U3.
 
+## Check status (v0.18)
+- **69/69 gap checks PASS, 0 clashes** on the proxy and on `--full` (committed STEP, with H2 re-drilled at the new centre distance). Owner split: main_knob 4, control_dial 17, base_drive 14, under_pcb 2, electronics 2, assembly 30. The AGENTS.md tally is taken from `cad/assemblies/knob-stack-v0.18/check.json`.
+- Swept samples are −10.75°, −10°, 0, +10°, +10.75°.
+
 ## Check status (v0.17)
 - **62/62 gap checks PASS, 0 clashes** on the proxy and on `--full` (committed main-PCB STEP). Owner split: main_knob 3, control_dial 17, base_drive 11, under_pcb 2, electronics 2, assembly 27. The AGENTS.md tally is taken from `cad/assemblies/knob-stack-v0.17/check.json`.
 - Swept samples are −10.61°, −10°, 0, +10°, +10.61°. Centring springs follow the lever pin; track balls roll at half the dial angle.
@@ -138,11 +167,11 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   (`electronics/kicad/knob-main-pcb/pcb_proxy.json`). `build.py` and `build.py --full` both give 54/54 PASS.
 
 ## Open items
-- **Optics and materials round is locked, not started.** Ed has not said build. No laser bodies, mounts, coats, or beam paths are in the CAD yet.
+- **Optics and materials round is next** (gear round is in v0.18). No laser bodies, mounts, or coats are in the CAD yet. The Risley caps will be the printed wedges, each no wider than its motor.
   - **Lasers, two types only. No green lasers.**
     1. One Civillaser 405 nm violet 1 mW dot module, body **Φ8×31 mm**, 2.8–5.2 V, under 55 mA, no TTL pin. A second module is a bench spare and is not modelled. The G4 pulses the fitted module with one supply MOSFET. The Risley scanner is that one beam through two wedge prisms, each prism spun by its own small motor. The beam lands on Shimicoat green strontium aluminate (Bibra Lake, Perth): a light coat on the dial lid, a heavier coat on the enclosure walls.
     2. Twelve 665 nm red SMD VCSELs under the clear SLA bearing carrier (JNJOPTO JNJ-V-2835CW-665003-S-D1, LCSC C42375664), alternating with 12 addressable RGB LEDs (one chain, one data pin). One red VCSEL on at a time, shared hardware current limit, one low-side MOSFET each, driven directly by the G4. LCSC lists Vf 2.5–2.8 V, threshold 4 mA, 16% efficiency, and no optical-power curve, so the first articles have to be measured and the set current dropped if the output is over 1 mW.
-  - Knob shells stay see-through. The carrier is clear SLA, standard finish, not frosted and not polished. Every beam ends on a glow, fluorescent, or diffusing surface. Class 1/2 at ≤1 mW, default off, stall cut-off. When the round starts, the violet bodies and mounts are modelled at Φ8×31 mm.
+  - Knob shells stay see-through. The carrier is clear SLA, standard finish, not frosted and not polished. Every beam ends on a glow, fluorescent, or diffusing surface. Class 1/2 at ≤1 mW, default off, stall cut-off. When the round starts, the one fitted violet module and its mount are modelled at Φ8×31 mm. The spare is not.
   - **Race vs clear resin.** Seat floor under the Ø1.5 balls is 1.0 mm. Radial land is 0.48 mm a side, under a clear-resin wall. Thicken the land to at least 1.0 mm, or fit a hard insert that still lets light through to the balls, before that race is resin.
 - **MCU (decided, board not changed).** The module MCU is the shared STM32 G4 on the bottom board (FDCAN, spine clock, USB-C PD on UCPD). The CH32V003 on the screen adapter only bridges the one data-over-power line down the brass tube. No lighting MCU and no selector chip. One violet supply MOSFET, so the pin list is **62** including SWD. STM32G474 LQFP64 has 52 I/O and does not fit. **STM32G474VET6, LQFP100, 86 I/O** does (Quad-SPI, 3× FDCAN, USB, UCPD, 512 KB flash, 128 KB SRAM), with about 24 pins spare. The panels have their own GRAM, so the G4 is not short of RAM.
   - **Power, every load switchable and off by default** (motor currents still assumed). Idle, loads off: about **8 mA**. Typical, one screen modest, Hall and encoder on, one red VCSEL, LED chain dim, motors and the violet module off: about **110 mA**. Peak, both screens bright, main motor moving, feel and both Risley motors spinning, one red VCSEL, the one violet module on (under 55 mA), LEDs under a firmware cap: about **0.65 A**. The 1220 stall and a full-white LED chain (about 0.7 A by itself) are what the firmware and the motor driver have to keep down.

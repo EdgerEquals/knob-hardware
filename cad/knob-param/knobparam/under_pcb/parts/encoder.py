@@ -2,17 +2,21 @@
 Omron EE-SX1321 on the PCB back. All built in the encoder frame, moved to enc_xy."""
 import math
 from build123d import *
-from ...common.util import A, cyl, tube, ext_gear, ring_phase
+from ...common import util
+from ...common.util import A, cyl, tube, ext_herringbone, ring_phase, fresnel_cap
+SRC_DEPS = [util]   # ring_phase / herringbone live in util; the part hash has to follow them
 
 def bearing(D, z_top):
     B = D["brg"]; z0 = z_top - B["B"]
     return tube(B["d"] / 2, B["D"] / 2, z0, B["B"]) + tube(B["d"] / 2, B["fd"] / 2, z_top - B["ft"], B["ft"])
 
 def pinion(D):
-    g = ext_gear(D, D["z_enc_pinion"], D["h_pin0"], D["pin_face"])
+    g = ext_herringbone(D, D["z_enc_pinion"], D["h_pin0"], D["pin_face"], D["hb_mid"])
     hub = cyl(D["pinion_hub_d"] / 2, D["h_brg_top"], D["h_pin0"] - D["h_brg_top"])
     g = (g + hub) - cyl(D["enc_shaft_d"] / 2, D["h_brg_top"], D["h_pin1"] - D["h_brg_top"])
-    tip = (D["z_enc_pinion"] + 2) * D["module"] / 2
+    pip_r = 1.35   # ring boss on the top face for the resin cap; the shaft stops at the tooth face
+    g += cyl(pip_r, D["h_pin1"], 0.60) - cyl(D["enc_shaft_d"] / 2 + 0.02, D["h_pin1"] - 0.02, 0.70)
+    tip = D["d_pin_tip"] / 2
     g -= cyl(tip + 0.05, D["h_pin0"] - 0.02, 0.55) - cyl(tip - 0.9, D["h_pin0"] - 0.04, 0.6)
     return g
 
@@ -68,6 +72,10 @@ def build(D):
     board, header, stands = daughterboard(D)
     return {"encoder bearing 1 (cradle+PCB)": T * bearing(D, D["h_brg_top"]),
             "encoder pinion": T * Rot(0, 0, ring_phase(D, D["enc_ang"])) * pinion(D),
+            "encoder pinion cap": T * fresnel_cap(
+                2 * (D["z_enc_pinion"] * D["hb_mt"] / 2 - D["hb_dedendum"] * D["hb_mn"] - 0.25),
+                2 * 1.35 + 2 * D["cap_fit_gap"], D["h_pin1"] + D["cap_seat_gap"],
+                D["cap_t"], D["cap_rings"], D["cap_step_h"], D["cap_step_w"]),
             "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["h_b2_bot"], D["h_pin1"] - D["h_b2_bot"]),
             "encoder bearing 2 (back panel)": T * bearing(D, D["h_b2_top"]),
             "encoder disc + slotted rim": T * wheel(D),

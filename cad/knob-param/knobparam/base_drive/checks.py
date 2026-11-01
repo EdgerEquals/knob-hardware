@@ -7,12 +7,17 @@ def _one(parts, prefix):
 def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
-    m = D["module"]
-    r.row("motor pinion tip vs skirt ID (radial)", D["skirt_id"] / 2 - D["offset"] - (D["z_pinion"] + 2) * m / 2, 1.0,
-          f"{D['z_pinion']}T pinion / {D['z_hub_gear']}T hub gear, ratio {D['ratio_knob_motor']:.3f}")
+    r.row("motor pinion tip vs skirt ID (radial)", D["skirt_id"] / 2 - D["offset"] - D["hub_pin_tip_r"], 1.0,
+          f"nylon {D['z_pinion']}T m{D['hub_mod']:.1f} (RW tooth form) / {D['z_hub_gear']}T hub, ratio {D['ratio_knob_motor']:.3f}, mesh {D['hub_cd']:.2f} vs motor {D['offset']:.2f}")
+    r.row("hub mesh vs the KiCad motor axis (mm)", abs(D["hub_cd_err"]), 0.15,
+          "negative err is a tight mesh; 0.05 mm is inside the 0.10 printed backlash", higher_ok=False)
+    r.row("herringbone pinion teeth inside the ring", D["z_enc_pinion"], D["hb_z_min"],
+          f"25° helix, virtual teeth {D['hb_virtual']:.1f} (classical 20° undercut wants ~17); mn {D['hb_mn']:.2f}, ring {D['z_ring']}T")
+    r.row("herringbone pinion tip thickness vs MJF tooth floor", D["hb_tip_th"], D["hb_tooth_min"],
+          f"stub addendum {D['hb_addendum']:.2f}, backlash {D['hb_backlash']:.2f} shared")
     note = (f"{D['fg_pinion']['part']} {D['fg_z_pin']}T × {D['fg_z_gear']}T on the {D['fg_ang']:.0f}° idler, "
-            f"then {D['z_enc_pinion']}T into the {D['z_ring']}T ring, overall {D['fm_ratio']:.2f}:1, "
-            f"716 stays at {D['fm_ang']:.1f}°; knob Ø{D['knob_od']:.2f}; "
+            f"then {D['z_enc_pinion']}T into the {D['z_ring']}T herringbone, overall {D['fm_ratio']:.2f}:1, "
+            f"can at {D['fm_ang']:.1f}°; knob Ø{D['knob_od']:.2f}; "
             + ", ".join(f"{k} {v:.2f}" for k, v in sorted(D["fm_clear"].items(), key=lambda kv: kv[1])))
     r.row("feel placement (worst plan clearance)", min(D["fm_clear"].values()), F["clear"], note)
     ro = F["can_d"] / 2 + D["motor_glue"] + D["fm_band_t"]
