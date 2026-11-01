@@ -1,0 +1,173 @@
+{
+ "rows": [
+  {
+   "name": "stem vs cup bore, radial (rest)",
+   "value": 0.07499999999999941,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "cup \u00d83.15 over the \u00d83 stem, engaged 1.2"
+  },
+  {
+   "name": "cup engagement covers the 4.3 mm tilt reference height",
+   "value": 0.5,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "cup z 13.30-14.50, ref z 13.80, stem pivot z 9.99"
+  },
+  {
+   "name": "plunger tip to stem top (rest)",
+   "value": 0.05000000000000071,
+   "target": "0.02-0.10",
+   "ok": true,
+   "note": "screen + spider weight only; no preload on the switch"
+  },
+  {
+   "name": "spider free travel under the pad",
+   "value": 0.4,
+   "target": "0.30-0.50",
+   "ok": true,
+   "note": "Ed: ~0.3-0.5"
+  },
+  {
+   "name": "spider margin past the centre click (pad never bottoms)",
+   "value": 0.2,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "used 0.20 (gap 0.05 + push 0.15); the switch's own stop takes the full press"
+  },
+  {
+   "name": "spider force at the click / switch push force",
+   "value": 0.3160983546228414,
+   "target": "<= 0.4",
+   "ok": true,
+   "note": "k \u2248 3.71 N/mm (4 arms, t 0.6, PA12) -> +0.74 N on 2.35 N = 3.09 N press [estimate]"
+  },
+  {
+   "name": "slide to stop vs slide needed to actuate (cup clear + 0.25 tilt)",
+   "value": 0.07500000000000007,
+   "target": ">= 0",
+   "ok": true,
+   "note": "stop 0.4 per axis, needed 0.325 (0.075 + 0.25 at z 13.80)"
+  },
+  {
+   "name": "overtravel onto the stem past actuation (per axis)",
+   "value": 0.07500000000000007,
+   "target": "<= 0.15",
+   "ok": true,
+   "note": "diagonal stop is 0.57 radial: diagonals over-tilt the stem by 0.24 [flag]"
+  },
+  {
+   "name": "carrier vs base at rest (skirt stop gap)",
+   "value": 0.3999999999999968,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "= slide stop"
+  },
+  {
+   "name": "carrier vs base at full diagonal slide (-0.01)",
+   "value": 0.00999999999999801,
+   "target": "> 0",
+   "ok": true,
+   "note": "skirt reaches the base wall only at the stop"
+  },
+  {
+   "name": "FPC vs carrier slot walls",
+   "value": 0.5399999999999974,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "FPC 8 wide [A], slot 2 \u00d7 9.5"
+  },
+  {
+   "name": "FPC vs base notch / PCB slot (carrier at full slide)",
+   "value": 0.7400000000000023,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "hole x 13.0-16.2, \u00b15.35; FPC loop follows the carrier"
+  },
+  {
+   "name": "FPC vs daughterboard",
+   "value": 6.639999999999999,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "spring vs base bore / PCB hole at full diagonal slide",
+   "value": 0.13431457505076183,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "\u00d82 spring in \u00d83.4; 4 \u00d7 0.5 N hold-down, length \u2248 42 to the back panel [A]"
+  },
+  {
+   "name": "spring vs base (rest)",
+   "value": 0.6999999999999992,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "daughterboard vs base walls / spring pillars / window",
+   "value": 0.47099202643648763,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "board 16.6 \u00d7 12, window 17.4 \u00d7 12.8"
+  },
+  {
+   "name": "J1 header body vs carrier (cup / underside)",
+   "value": 3.696160169689619,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "trim the header's top pin tails flush with the plastic"
+  },
+  {
+   "name": "switch body vs J1 header body",
+   "value": 0.6743768106305574,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "balls touch the carrier underside",
+   "value": 0.0,
+   "target": "<= 0.01",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "carrier (slid toward the knob) vs knob OD",
+   "value": 0.6750000000000007,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "knob \u00d840.85 (knob-param), carrier edge at frame y 21.10"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "key": {
+  "riser_h": 8.5,
+  "stack_h": 20.2,
+  "z_db0": 8.5,
+  "z_db1": 9.5,
+  "z_stem_top": 14.5,
+  "z_c0": 15.849999999999998,
+  "z_ball": 14.849999999999998,
+  "z_scr0": 18.65,
+  "slide": 0.4,
+  "slide_need": 0.32499999999999996,
+  "sp_gap": 0.4,
+  "sp_k": 3.7141556668183866,
+  "press_f": 3.0928311333636773,
+  "base_w": 31.200000000000003,
+  "base_h": 18.200000000000003,
+  "db": [
+   16.6,
+   12.0,
+   1.0
+  ],
+  "car": [
+   33.6,
+   20.6
+  ],
+  "spr_len": 41.849999999999994
+ }
+}

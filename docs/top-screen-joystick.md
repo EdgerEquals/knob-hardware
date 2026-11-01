@@ -50,3 +50,44 @@ up and down, and presses in.
   body), Swiclick KAN0741A (50k life).
 - **Sources:** Alps product page and SKRH catalogue (tech.alpsalpine.com), E-Switch JS1400 datasheet, and LCSC
   product pages.
+
+## v0.1 build (1 Nov 2026)
+Model: `cad/joystick-param/` (run `build.py --render`). Image: `cad/assemblies/joystick-v0.1/joystick-v0.1.png`.
+**20/20 checks PASS, 0 clashes.** KiCad: `cad/knob-param/knobparam/electronics/kicad/joystick-daughterboard/`
+(ERC 0, DRC 0, parity 0).
+
+**Stack** (z measured from the main-PCB front face; the carrier centre is board (25.25, 21.1)):
+
+| Item | z (mm) | Notes |
+|---|---|---|
+| J2 2×3 2.54 female socket on the main PCB (the riser) | 0–8.5 | Male J1 on the daughterboard, plastic on top and pins down; trim the top pin tails |
+| Daughterboard | 8.5–9.5 | 16.6×12.0×1.0 FR4. Rests on a Ø4 printed post under the switch, which takes the press |
+| SKRHADE010 | body top 11.35, stem top 14.5 | x −2.9, footprint −45°; tilt reference height 13.8 |
+| Cup | 13.3–15.85 | Bore Ø3.15 (0.075 radial on the Ø3 stem), OD 5 |
+| Balls Ø2 at (±14, ±7) | centre 14.85 = base top | Hemisphere seats in the base |
+| Carrier | underside 15.85 | 33.6×20.6, 0.8 skirt |
+| Spider | 17.45–18.05 | t 0.6, 4 arms, pad 18×8, free travel 0.4, land 0.6 |
+| Screen | 18.65–20.2 | Screen top 20.2 [A] = panel front |
+
+- **Slide:** stop ±0.40 per axis. Actuation needs 0.325 (0.075 cup clearance + 0.25 tilt), which leaves 0.075
+  overtravel. The rectangular stop gives **0.57 radial on the diagonals**, so the stem over-tilts by about 0.24.
+  A round stop (Ø0.8) would fix that.
+- **Press path:** screen → spider pad → plunger (0.05 above the stem) → stem. The spider adds about **0.74 N**
+  (k ≈ 3.7 N/mm, PA12 estimate), for a total press of about **3.1 N**. The switch's own stop takes the full force.
+- **Hold-down:** 4 × Ø2 extension springs in Ø3.4 bores at (±10.8, ±6.6), 0.5 N each [A], about 42 mm long to the
+  back panel. Clearance at the full diagonal slide is 0.134.
+- **FPC:** 8 wide [A] at local x 15. The carrier slot is x 13.6–15.6 at ±4.75. The base notch and main-PCB slot are x 13.0–16.2 at ±5.35.
+
+**Main-PCB requirements** (not yet in the main KiCad project):
+- J2: a 2×3 2.54 female socket (8.5 tall) at local (5.6, 0).
+- 4 × Ø3.4 spring holes at (±10.8, ±6.6).
+- 4 × Ø1.3 base-pin holes at (±6, ±8.5).
+- An FPC slot 3.2×10.7 at local x 13.0–16.2.
+- A keep-out for the base footprint (31.2×18.2).
+
+**Daughterboard:**
+- SW1 SKRHADE010, J1 2×3 male.
+- Nets: UP, CENTER, RIGHT, LEFT, DOWN and GND, each routed individually; the common goes to GND.
+- J1 pinout: 1 UP, 2 CENTER, 3 RIGHT, 4 LEFT, 5 GND, 6 DOWN.
+- ESD and pull-ups go on the MCU (main-PCB) side.
+- The direction map (a→UP, b→RIGHT, c→LEFT, d→DOWN at −45°) needs **checking on the bench**.

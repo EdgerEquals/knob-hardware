@@ -120,3 +120,8 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
 - Spring sourcing: the detent springs and the extension springs must be non-magnetic (stainless 316 or
   phosphor bronze).
 - Motor depth and the final feel come from tests with the real motors.
+
+## Top-screen joystick v0.1 (1 Nov 2026)
+See `docs/top-screen-joystick.md` and `cad/joystick-param/`. The carrier centre is board (25.25, 21.1) and knob frame (0, 31.8).
+The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB still needs the J2 socket,
+the spring/pin holes and the FPC slot (listed in that doc).
