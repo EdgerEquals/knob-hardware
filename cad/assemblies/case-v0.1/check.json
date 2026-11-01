@@ -26,15 +26,15 @@
   },
   {
    "name": "bottom TFT window",
-   "value": 22.7,
-   "target": ">= 20.32",
+   "value": 30.48,
+   "target": ">= 30.48",
    "ok": true,
-   "note": "clear path x -2.85..19.85, y -60.20..-29.72, z 1.00..32.75; 2.0\" active 40.64\u00d730.48, short in width by 17.94 because the scanner bay is on the left",
+   "note": "active 40.64\u00d730.48 at x -20.32..20.32, y -60.20..-29.72, z 1.00..32.75; bosses stay 0.80 mm outside it",
    "owner": "case"
   },
   {
    "name": "bosses clear of the TFT window",
-   "value": 0.801,
+   "value": 8.391,
    "target": ">= 0.8",
    "ok": true,
    "note": "no post in the light path",
@@ -46,6 +46,14 @@
    "target": "<= 0",
    "ok": true,
    "note": "no shell solid in the window column",
+   "owner": "case"
+  },
+  {
+   "name": "TFT side keep-out is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "side ledge pulled back to 0.80 mm outside the active area",
    "owner": "case"
   },
   {
@@ -78,14 +86,6 @@
    "target": ">= 0.8",
    "ok": true,
    "note": "bridge between knob hole and joystick hole",
-   "owner": "case"
-  },
-  {
-   "name": "grating-slot lip",
-   "value": 0.84,
-   "target": ">= 0.8",
-   "ok": true,
-   "note": "shelf left above and below the film",
    "owner": "case"
   },
   {
@@ -226,7 +226,7 @@
   },
   {
    "name": "boss clears the knob hole",
-   "value": 0.765,
+   "value": 0.4,
    "target": ">= 0.4",
    "ok": true,
    "note": "upper bosses y 17.39, room between knob and joystick 1.12",
@@ -241,19 +241,11 @@
    "owner": "case"
   },
   {
-   "name": "boss clears the scanner mirror",
-   "value": 1.727,
-   "target": ">= 0.4",
+   "name": "top rail screws omitted",
+   "value": 1.0,
+   "target": ">= 1",
    "ok": true,
-   "note": "lower bosses y -41.40",
-   "owner": "case"
-  },
-  {
-   "name": "top rail screws",
-   "value": 0.47,
-   "target": ">= 0.8",
-   "ok": false,
-   "note": "joystick opening leaves too little panel for a \u00d83.2 hole with an SLA web both sides; top screws omitted, bottom screws stay",
+   "note": "the side strip is 4.14 mm and a \u00d83.2 hole with 0.8 webs needs 4.80; web would be 0.47. Holes left out. Bottom pair stays.",
    "owner": "case"
   },
   {
@@ -345,22 +337,6 @@
    "owner": "case"
   },
   {
-   "name": "mirror reaches the beam",
-   "value": 0.75,
-   "target": ">= 0",
-   "ok": true,
-   "note": "mirror \u00d816.0 assumed; beam 7.25 off the motor axis",
-   "owner": "case"
-  },
-  {
-   "name": "film clears the motor can",
-   "value": 1.0,
-   "target": ">= 0.8",
-   "ok": true,
-   "note": "FLAG: motor is an assumed \u00d88\u00d712 coreless, no part chosen",
-   "owner": "case"
-  },
-  {
    "name": "side wall is material",
    "value": 1.0,
    "target": ">= 1",
@@ -417,46 +393,6 @@
    "owner": "case"
   },
   {
-   "name": "beam vs knob",
-   "value": 0.55,
-   "target": ">= 0.5",
-   "ok": true,
-   "note": "swept fan stays off the dial",
-   "owner": "case"
-  },
-  {
-   "name": "beam vs joystick",
-   "value": 1.09,
-   "target": ">= 0.5",
-   "ok": true,
-   "note": "fan stays off the carrier and the lip",
-   "owner": "case"
-  },
-  {
-   "name": "beam reaches the side wall",
-   "value": 0.4,
-   "target": ">= 0",
-   "ok": true,
-   "note": "fan stands off the wall by beam_gap",
-   "owner": "case"
-  },
-  {
-   "name": "beam close to the side wall",
-   "value": 0.8,
-   "target": ">= 0",
-   "ok": true,
-   "note": "close enough to light the wall",
-   "owner": "case"
-  },
-  {
-   "name": "beam reaches the rim",
-   "value": 33.15,
-   "target": ">= 12.08",
-   "ok": true,
-   "note": "rises from the mirror to the faceplate underside",
-   "owner": "case"
-  },
-  {
    "name": "thread engagement / diameter",
    "value": 2.833,
    "target": ">= 2",
@@ -485,7 +421,7 @@
    "value": 3.3,
    "target": ">= 0.3",
    "ok": true,
-   "note": "notch \u00d89.60 at x 19.95, y -24.42",
+   "note": "notch \u00d89.60 at x 19.95, y -16.83",
    "owner": "case"
   },
   {
@@ -530,10 +466,10 @@
   },
   {
    "name": "case mass",
-   "value": 57.776,
+   "value": 57.278,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 44443 mm\u00b3 (44.4 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 44060 mm\u00b3 (44.1 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {

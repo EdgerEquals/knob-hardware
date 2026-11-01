@@ -166,6 +166,15 @@ def build(D):
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["x_in0"], -D["pcb_x1"] + lw, D["pcb_y0"], D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["pcb_x1"] - lw, D["x_in1"], D["pcb_y0"], D["pcb_y1"], z0, z1))
+    # Side ledges run the full board height and would sit inside the TFT keep-out
+    # (active area plus tft_gap). Pull only that ledge band back. Bosses are added
+    # after this, on the safe side of the same gap. The faceplate over the window stays.
+    eps = 0.02
+    ky0, ky1 = D["win_y0"] - D["tft_gap"], D["win_y1"] + D["tft_gap"]
+    case = _sub(case, _box(D["pcb_x1"] - lw - eps, min(D["x_in1"], D["win_x1"] + D["tft_gap"]),
+                           ky0, ky1, z0 - eps, z1 + eps))
+    case = _sub(case, _box(max(D["x_in0"], D["win_x0"] - D["tft_gap"]), -D["pcb_x1"] + lw + eps,
+                           ky0, ky1, z0 - eps, z1 + eps))
     # corner posts beside the PCB. The thread is the lower part; the post runs up into the plate.
     for x, y in D["corners"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_fp0"] + fu, x, y))
@@ -173,13 +182,14 @@ def build(D):
     case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_bolt0"], D["z_fp0"] + fu, x, y))
-    # fillet beads where the side walls meet the plate. The scanner corner is left square.
-    case = _add(case, _bead_y(D["x_in0"], D["z_fp0"], D["y_mot"] + D["mirror_r"], D["body_y1"], r))
+    # fillet beads where the side walls meet the plate. With the scanner on, its corner stays square.
+    y_bead = (D["y_mot"] + D["mirror_r"]) if D["scanner_enabled"] else D["body_y0"]
+    case = _add(case, _bead_y(D["x_in0"], D["z_fp0"], y_bead, D["body_y1"], r))
     case = _add(case, _bead_y(D["x_in1"], D["z_fp0"], D["body_y0"], D["body_y1"], r))
-    # grating shelf, and a cheek down onto the bottom ledge so the shelf is not a cantilever
-    shelf = _box(D["shelf_x0"], D["shelf_x1"], D["shelf_y0"] - fu, D["shelf_y1"], D["shelf_z0"], D["shelf_z1"])
-    cheek = _box(D["shelf_x0"], D["shelf_x1"], D["pcb_y0"], D["pcb_y0"] + lw, D["z_ledge1"] - fu, D["shelf_z1"])
-    case = _add(case, _add(shelf, cheek))
+    if D["scanner_enabled"]:
+        shelf = _box(D["shelf_x0"], D["shelf_x1"], D["shelf_y0"] - fu, D["shelf_y1"], D["shelf_z0"], D["shelf_z1"])
+        cheek = _box(D["shelf_x0"], D["shelf_x1"], D["pcb_y0"], D["pcb_y0"] + lw, D["z_ledge1"] - fu, D["shelf_z1"])
+        case = _add(case, _add(shelf, cheek))
     # ---- openings. The knob bore continues through the collar. ----
     case = _sub(case, _cyl_z(D["knob_hole_r"], D["z_collar0"] - sl, D["z_fp1"] + sl, D["ox"], D["oy"]))
     joy = _plate(D["joy_hole"][0], D["joy_hole"][1], D["hole_corner_r"], D["z_seat"] - sl, D["z_fp1"] + sl,
@@ -230,8 +240,8 @@ def build(D):
     case = _sub(case, _box(D["x_in1"] - sl, D["x_out1"] + D["cross_pin_d"] + sl,
                            D["place_y"] - D["pin_hole_r"], D["place_y"] + D["pin_hole_r"],
                            D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
-    # film slot, open toward the cavity
-    case = _sub(case, _box(D["slot_x0"], D["slot_x1"], D["slot_y0"], D["slot_y1"], D["slot_z0"], D["slot_z1"]))
+    if D["scanner_enabled"]:
+        case = _sub(case, _box(D["slot_x0"], D["slot_x1"], D["slot_y0"], D["slot_y1"], D["slot_z0"], D["slot_z1"]))
     case = _one(case)
 
     # ---- glow coat on the inside faces Ed brushes: the side walls, and the ledge lips ----
@@ -246,11 +256,13 @@ def build(D):
     glow = _add(glow, _box(gx0, gx1, D["pcb_y1"] - lw - g0 - gt, D["pcb_y1"] - lw - g0, D["z_ledge0"], D["z_ledge1"]))
     glow = _sub(glow, _plate(D["joy_hole"][0] + gt, D["joy_hole"][1] + gt, D["hole_corner_r"],
                              D["z_ledge0"] - sl, D["z_fp1"], D["ox"], D["place_y"]))
-    glow = _sub(glow, _box(D["shelf_x0"] - sl, D["shelf_x1"] + sl, D["shelf_y0"] - sl, D["shelf_y1"] + sl,
-                           D["shelf_z0"] - sl, D["shelf_z1"] + sl))
+    if D["scanner_enabled"]:
+        glow = _sub(glow, _box(D["shelf_x0"] - sl, D["shelf_x1"] + sl, D["shelf_y0"] - sl, D["shelf_y1"] + sl,
+                               D["shelf_z0"] - sl, D["shelf_z1"] + sl))
     for x, y in D["corners"]:
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_fp1"], x, y))
     glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
+    glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))
 
     # PETG cover. Outer skin is the same rectangle as the shell, so the side faces are one line.
     # The pocket is inside that skin. A tongue captures the PCB edge; the PCB never reaches the outside.
@@ -279,13 +291,15 @@ def build(D):
         pins[f"cross pin {i}"] = _box(x0, x1, D["place_y"] - D["cross_pin_d"] / 2.0, D["place_y"] + D["cross_pin_d"] / 2.0,
                                       D["pin_z"] - D["cross_pin_d"] / 2.0, D["pin_z"] + D["cross_pin_d"] / 2.0)
 
-    motor = _cyl_z(D["motor_r"], D["z_mot0"], D["z_mot1"], D["x_mot"], D["y_mot"])
-    mirror = _cyl_z(D["mirror_r"], D["z_mirror"] + fu, D["z_mirror"] + fu + D["mirror_t"], D["x_mot"], D["y_mot"])
-    film = _box(D["x_beam"] - D["film_w"] / 2, D["x_beam"] + D["film_w"] / 2,
-                D["y_beam"] - D["film_w"] / 2, D["y_beam"] + D["film_w"] / 2,
-                D["shelf_z"] - D["film_t"] / 2, D["shelf_z"] + D["film_t"] / 2)
-    vcsel = _box(D["x_vc"] - D["vcsel_l"] / 2, D["x_vc"] + D["vcsel_l"] / 2,
-                 D["y_vc"] - D["vcsel_w"] / 2, D["y_vc"] + D["vcsel_w"] / 2, D["z_vc0"], D["z_vc1"])
+    motor = mirror = film = vcsel = None
+    if D["scanner_enabled"]:
+        motor = _cyl_z(D["motor_r"], D["z_mot0"], D["z_mot1"], D["x_mot"], D["y_mot"])
+        mirror = _cyl_z(D["mirror_r"], D["z_mirror"] + fu, D["z_mirror"] + fu + D["mirror_t"], D["x_mot"], D["y_mot"])
+        film = _box(D["x_beam"] - D["film_w"] / 2, D["x_beam"] + D["film_w"] / 2,
+                    D["y_beam"] - D["film_w"] / 2, D["y_beam"] + D["film_w"] / 2,
+                    D["shelf_z"] - D["film_t"] / 2, D["shelf_z"] + D["film_t"] / 2)
+        vcsel = _box(D["x_vc"] - D["vcsel_l"] / 2, D["x_vc"] + D["vcsel_l"] / 2,
+                     D["y_vc"] - D["vcsel_w"] / 2, D["y_vc"] + D["vcsel_w"] / 2, D["z_vc0"], D["z_vc1"])
     pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
     for x, y in D["corners"]:
         pcb = _sub(pcb, _cyl_z(D["notch_r"], D["z_pcb_back"] - sl, sl, x, y))
@@ -297,9 +311,10 @@ def build(D):
             x - D["laser_w"] / 2.0, x + D["laser_w"] / 2.0,
             y - D["laser_d"] / 2.0, y + D["laser_d"] / 2.0, D["tft_air"], D["tft_air"] + D["laser_h"])
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
-           "PCB": pcb, "bottom TFT window": window,
-           "scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
-           "grating film": film, "VCSEL 665 nm": vcsel}
+           "PCB": pcb, "bottom TFT window": window}
+    if D["scanner_enabled"]:
+        out.update({"scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
+                    "grating film": film, "VCSEL 665 nm": vcsel})
     out.update(screws)
     out.update(pins)
     out.update(lasers)

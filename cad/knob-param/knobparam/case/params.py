@@ -79,7 +79,8 @@ P = dict(
     hole_corner_r=1.2,     # [A] rounded joystick opening (material left in the corners)
     fp_corner_r=2.0,       # [A] faceplate outer corner
     fillet_r=1.2,          # [A] bead on the wall-to-faceplate joint and the body corners
-    # ---- scanner (665 nm). No mirror motor has been chosen. ----
+    # ---- scanner (665 nm). Parked: nothing is built or checked while this is false. ----
+    scanner_enabled=False, # [Ed] off until there is room beside the bottom TFT
     scan_motor_d=8.0,      # [A] FLAG: assumed small coreless / coin-style can, no catalogue part
     scan_motor_len=12.0,   # [A] FLAG
     scan_motor_clear=0.80, # [A] air from the can to the nearest wall or shelf
@@ -443,19 +444,24 @@ def derive(D):
     D["beam_x"] = D["x_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_y"] = D["y_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_z1"] = D["z_fp0"] - D["beam_gap"]
-    # Bottom TFT window. 2.0" active area, as low as the ledge allows, and to the right of the
-    # scanner bay so the mirror and the grating shelf stay out of the light path.
+    # Bottom TFT window: the full 2.0" active area. tft_gap is the air bosses and ribs keep
+    # outside that rectangle. With the scanner parked, the window is centred.
     diag = D["tft_in"] * 25.4
     aspect = D["tft_px"][0] / D["tft_px"][1]
     D["tft_w"] = diag * aspect / math.hypot(aspect, 1.0)
     D["tft_h"] = D["tft_w"] / aspect
     gap = D["tft_gap"]
-    scan_x1 = max(D["shelf_x1"], D["x_mot"] + D["mirror_r"]) + gap
-    # stay inboard of the side ledge as well as the wall; the ledge is shell, not a window
-    D["win_x1"] = min(D["x_in1"], D["pcb_x1"] - D["ledge_w"]) - gap
-    D["win_x0"] = max(scan_x1, D["win_x1"] - D["tft_w"])
+    D["win_x0"] = -D["tft_w"] / 2.0
+    D["win_x1"] = D["tft_w"] / 2.0
     D["win_y0"] = D["pcb_y0"] + D["ledge_w"] + gap
-    D["win_y1"] = min(D["win_y0"] + D["tft_h"], -D["knob_hole_r"] - gap)
+    if D["scanner_enabled"]:
+        scan_x1 = max(D["shelf_x1"], D["x_mot"] + D["mirror_r"]) + gap
+        D["win_x1"] = min(D["x_in1"], D["pcb_x1"] - D["ledge_w"]) - gap
+        D["win_x0"] = max(scan_x1, D["win_x1"] - D["tft_w"])
+    D["win_y1"] = D["win_y0"] + D["tft_h"]
+    if D["win_y1"] > -D["knob_hole_r"] - gap:
+        D["win_y1"] = -D["knob_hole_r"] - gap
+        D["win_y0"] = D["win_y1"] - D["tft_h"]
     D["win_w"] = D["win_x1"] - D["win_x0"]
     D["win_h"] = D["win_y1"] - D["win_y0"]
     D["tft_z0"] = D["tft_air"]
@@ -476,37 +482,11 @@ def derive(D):
     D["lab_w"] = D["lab_pitch"] * D["lab_w_ratio"]
     D["lab_d"] = D["collar_wall"] * D["lab_d_ratio"]
     D["lab_z0"] = D["z_collar0"] + (D["collar_h"] - (D["lab_n"] - 1) * D["lab_pitch"]) / 2.0
-    # knob bolts: on the bolt circle outside the collar, on the underside of the plate,
-    # clear of the joystick opening and of the rail zone. The free arc is the bottom.
-    D["bolt_r"] = D["collar_r"] + D["seat_gap"] + D["screw_boss_r"]
-    limit_x = D["panel_w"] / 2.0 - D["screw_boss_r"] - D["web_min"]
-    bolts = []
-    steps = 36
-    for i in range(steps):
-        ang = math.pi * (1.0 + (i + 0.5) / steps)   # π .. 2π: the bottom half, away from the bezel at +Y
-        x = D["bolt_r"] * math.cos(ang)
-        y = D["bolt_r"] * math.sin(ang)
-        if abs(x) > limit_x or y - D["screw_boss_r"] < D["body_y0"] or y + D["screw_boss_r"] > D["body_y1"]:
-            continue
-        # keep the whole boss (and the head below it) inboard of the side walls
-        if abs(x) + D["screw_boss_r"] + D["seat_gap"] > D["x_in1"]:
-            continue
-        dx = max(abs(x) - D["hole_hw"], 0.0)
-        dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
-        if math.hypot(dx, dy) < D["screw_boss_r"] + D["seat_gap"]:
-            continue
-        if _clear_rect(x, y, D["screw_boss_r"], D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
-            continue
-        if any(math.hypot(x - px, y - py) < 2.0 * D["screw_boss_r"] + D["seat_gap"] for px, py in bolts):
-            continue
-        bolts.append((x, y))
-        if len(bolts) >= D["knob_bolt_n"]:
-            break
-    D["knob_bolts"] = tuple(bolts)
     D["z_bolt0"] = D["z_fp0"] - D["engage"]
     # Cover screws. The axis is inside the PCB outline; a notch in the board lets the
     # resin post occupy the corner and the wall. Upper pair sits in the gap between the
-    # knob and the joystick opening. Lower pair sits just above the scanner mirror.
+    # knob and the joystick opening. With the scanner parked, the lower pair moves up
+    # against the knob so two collar bolts still fit above the full TFT window.
     bx = D["boss_x"]
     gap = D["boss_gap"]
     dmin = D["knob_hole_r"] + br + gap
@@ -514,22 +494,65 @@ def derive(D):
     y_joy = D["joy_y_near"] - br - gap
     D["boss_y_room"] = y_joy - y_knob
     y_hi = (y_knob + y_joy) / 2.0 if y_joy >= y_knob else y_knob
+    y_above = D["win_y1"] + br + D["tft_gap"]
     y_scan = D["y_mot"] + D["mirror_r"] + br + gap
     y_floor = max(y_scan, D["pcb_y0"] + br + gap)
-    y_lo = y_floor if y_floor <= -y_knob else -y_knob
-    # a boss that would sit in the TFT light path moves above the window, still clear of the knob
-    y_above = D["win_y1"] + br + D["tft_gap"]
+    if not D["scanner_enabled"]:
+        y_lo = -y_knob if -y_knob >= y_above else y_above
+    else:
+        y_lo = y_above if y_above <= -y_knob else (y_floor if y_floor <= -y_knob else -y_knob)
 
     def _y_for(x):
         y = y_lo
         if _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
-            y = y_above if y_above <= -y_knob else y
+            if y_above <= -y_knob:
+                y = y_above
         return y
 
     D["corners"] = ((-bx, _y_for(-bx)), (bx, _y_for(bx)), (-bx, y_hi), (bx, y_hi))
-    D["knob_bolts"] = tuple(
-        (x, y) for x, y in D["knob_bolts"]
-        if all(math.hypot(x - cx, y - cy) >= 2.0 * br + gap for cx, cy in D["corners"]))
+    # Knob bolts: on the bolt circle outside the collar, lower arc only (the bezel
+    # occupies +Y). Placed after the corners so a bolt is not spent on a post it hits.
+    D["bolt_r"] = D["collar_r"] + D["seat_gap"] + br
+    limit_x = D["panel_w"] / 2.0 - br - D["web_min"]
+    sep = 2.0 * br + gap
+
+    def _bolt_ok(x, y, chosen):
+        if abs(x) > limit_x or y - br < D["body_y0"] or y + br > D["body_y1"]:
+            return False
+        if abs(x) + br + D["seat_gap"] > D["x_in1"]:
+            return False
+        dx = max(abs(x) - D["hole_hw"], 0.0)
+        dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
+        if math.hypot(dx, dy) < br + D["seat_gap"]:
+            return False
+        if _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"] - 1e-9:
+            return False
+        if any(math.hypot(x - cx, y - cy) < sep - 1e-6 for cx, cy in D["corners"]):
+            return False
+        if any(math.hypot(x - px, y - py) < sep - 1e-6 for px, py in chosen):
+            return False
+        return True
+
+    bolts = []
+    # The band just above the active area is the one place a Ø9 boss clears the window.
+    y_bolt = y_above
+    disc = D["bolt_r"] * D["bolt_r"] - y_bolt * y_bolt
+    if disc > 0.0:
+        x_bolt = math.sqrt(disc)
+        for x in (x_bolt, -x_bolt):
+            if _bolt_ok(x, y_bolt, bolts):
+                bolts.append((x, y_bolt))
+    if len(bolts) < D["knob_bolt_n"]:
+        steps = 180
+        for i in range(steps):
+            ang = math.pi * (1.0 + (i + 0.5) / steps)   # π .. 2π, away from the bezel
+            x = D["bolt_r"] * math.cos(ang)
+            y = D["bolt_r"] * math.sin(ang)
+            if _bolt_ok(x, y, bolts):
+                bolts.append((x, y))
+            if len(bolts) >= D["knob_bolt_n"]:
+                break
+    D["knob_bolts"] = tuple(bolts)
     D["notch_r"] = br + D["notch_gap"]
     D["boss_knob_clear"] = min(math.hypot(x, y) - D["knob_hole_r"] - br for x, y in D["corners"])
     D["boss_joy_clear"] = min(

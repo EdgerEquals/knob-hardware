@@ -138,6 +138,8 @@ def _annotate_mid(ax, D, bounds, fs):
     _tag(ax, fx(D["x_out0"] + 1.2), fz((D["z_fp0"] + D["z_rim"]) / 2.0), "shell", fs)
     _tag(ax, fx(D["x_out0"] + 1.2), fz(D["z_rim_seat"] - 4.0), "cover", fs)
     _tag(ax, fx(0.0), fz(D["z_pcb_back"] / 2.0), "PCB inside", fs)
+    _tag(ax, fx(D["win_x0"] + 8.0), fz((D["tft_z0"] + D["tft_z1"]) / 2.0),
+         f"TFT {D['win_w']:.2f}×{D['win_h']:.2f}", fs)
     _tag(ax, fx(D["pcb_x1"] - 2.0), fz(D["z_ledge1"] + 3.0), "ledge", fs)
     xd = fx(D["pcb_x1"] * 0.35)
     ax.annotate("", xy=(xd, fz(D["z_fp1"])), xytext=(xd, fz(0.0)),
@@ -248,6 +250,8 @@ def _annotate_plan(ax, D, fs):
     _tag(ax, fx(0.0), fy(D["place_y"]), f"bezel {D['bezel_w']:.1f}", fs)
     for x, y in D["corners"]:
         _tag(ax, fx(x + (7.5 if x > 0 else -7.5)), fy(y), "M3", fs)
+    _tag(ax, fx(0.0), fy((D["win_y0"] + D["win_y1"]) / 2.0),
+         f"TFT {D['win_w']:.2f}×{D['win_h']:.2f}", fs)
     _tag(ax, fx(0.0), fy(D["panel_y0"] + 8.0), f"PCB {D['nest_w']:.2f}   wall {D['wall']:.1f}", fs)
 
 
@@ -262,16 +266,16 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
     fig = plt.figure(figsize=(18.5, 18.0), dpi=dpi)
     fig.suptitle(f"Enclosure {D['case_rev']}  —  plain clear resin, front face polished    {D['panel_w']:.2f} mm    wall {D['wall']:.1f} mm",
                  fontsize=fs, fontweight="bold", x=0.01, ha="left")
-    ax = fig.add_axes((0.02, 0.40, 0.96, 0.52))
+    ax = fig.add_axes((0.02, 0.48, 0.96, 0.46))
     ax.imshow(plt.imread(section), aspect="equal")
     ax.set_axis_off()
     _annotate_mid(ax, D, bounds, fs)
-    ax2 = fig.add_axes((0.01, 0.03, 0.30, 0.35))
+    ax2 = fig.add_axes((0.01, 0.18, 0.30, 0.28))
     ax2.imshow(plt.imread(plan), aspect="equal")
     ax2.set_title("PLAN  (+Z, panel up = +Y)", loc="left", fontsize=fs, fontweight="bold")
     ax2.set_axis_off()
     _annotate_plan(ax2, D, fs - 2)
-    ax3 = fig.add_axes((0.32, 0.03, 0.30, 0.35))
+    ax3 = fig.add_axes((0.32, 0.18, 0.30, 0.28))
     ax3.imshow(plt.imread(iso), aspect="equal")
     ax3.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
     ax3.set_axis_off()
@@ -281,8 +285,8 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
                Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head"),
                Patch(facecolor=(0.25, 0.75, 0.95), label="bottom TFT window"),
                Patch(facecolor=(0.95, 0.25, 0.35), label="laser placeholder")]
-    fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.36))
-    fig.text(0.62, 0.05, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
+    fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.44))
+    fig.text(0.02, 0.005, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
     fig.savefig(out)
     plt.close(fig)
 
@@ -328,10 +332,12 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     zoom = 1.15
     case = parts["case"]
     glow = parts["glow coat (inside walls)"]
-    beam = beam_solid(D)
+    beam = beam_solid(D) if D["scanner_enabled"] else None
     show = [("case", case), ("glow", glow), ("back cover", parts["back cover (PETG)"]),
             ("PCB", parts["PCB"]), ("bottom TFT window", parts["bottom TFT window"]),
-            ("corner screw 1", parts["corner screw 1"]), ("beam", beam)]
+            ("corner screw 1", parts["corner screw 1"])]
+    if beam is not None:
+        show.append(("beam", beam))
     show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if not preview:
         show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (PETG)", "corner screw 1")]
@@ -398,14 +404,20 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     nc = len(clashes or {})
     behind = D["z_fp1"] - D["z_foot"]
     past_stack = behind - D["fp_to_pcb"] - D["pcb_t"] - D["rear_stack"]
-    footer = (f"{D['hp']} HP × 3U   {D['panel_w']:.2f} × {D['panel_h']:.1f} × {behind:.2f} mm"
+    bosses = "   ".join(f"({x:.2f}, {y:.2f})" for x, y in D["corners"])
+    footer = (f"{D['hp']} HP × 3U    {D['panel_w']:.2f} × {D['panel_h']:.1f} × {behind:.2f} mm"
               f"    behind the front face {behind:.2f} mm    skiff ~40 mm, over by {behind - 40:.2f}\n"
               f"knob top {D['knob_top_used']:.2f} − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
               f"    plate {D['wall']:.2f} + cavity {D['z_fp0']:.2f} + PCB {D['pcb_t']:.2f}"
               f" + rear {D['rear_stack']:.2f} + cover past stack {past_stack:.2f}\n"
+              f"TFT {D['win_w']:.2f} × {D['win_h']:.2f}    "
+              f"x {D['win_x0']:.2f}..{D['win_x1']:.2f}    "
+              f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}    "
+              f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}\n"
+              f"bosses {bosses}\n"
               f"PETG under the head {D['cover_skin']:.2f} mm    "
               f"PCB {D['pcb_max_w']:.2f} mm    wall {D['wall']:.2f}    "
-              f"bosses x ±{D['boss_x']:.2f}    checks {nt - nf}/{nt}  clashes {nc}")
+              f"scanner parked    checks {nt - nf}/{nt}    clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
     titles = [s[1] for s in shots]
     if preview and section_bounds is not None:
@@ -417,10 +429,12 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
         qshots = []
         qpngs = []
         for key, title, kind, view in (
-                ("q1", "QUARTER CUT  (−X −Y kept, scanner bay)", "quarter-scan", "iso"),
+                ("q1", "QUARTER CUT  (−X −Y kept)", "quarter-scan", "iso"),
                 ("q2", "QUARTER CUT  (+X −Y kept)", "quarter-front", "iso2")):
-            shapes = [("case", _cut(case, kind)), ("glow", _cut(glow, kind)), ("back cover", _cut(parts["back cover (PETG)"], kind)),
-                  ("beam", _cut(beam, kind))]
+            shapes = [("case", _cut(case, kind)), ("glow", _cut(glow, kind)),
+                      ("back cover", _cut(parts["back cover (PETG)"], kind))]
+            if beam is not None:
+                shapes.append(("beam", _cut(beam, kind)))
             items = _items(D, shapes, tol)
             p = os.path.join(tmp, key + ".png")
             _shot(items, p, view, size, zoom)

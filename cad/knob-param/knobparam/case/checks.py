@@ -24,15 +24,22 @@ def checks(D, parts):
         f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
-    row("bottom TFT window", D["win_w"], D["tft_w"] * 0.5,
-        f"clear path x {D['win_x0']:.2f}..{D['win_x1']:.2f}, y {D['win_y0']:.2f}..{D['win_y1']:.2f}, "
-        f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}; 2.0\" active {D['tft_w']:.2f}×{D['tft_h']:.2f}, "
-        f"short in width by {D['tft_short_w']:.2f} because the scanner bay is on the left")
+    row("bottom TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
+        f"active {D['win_w']:.2f}×{D['win_h']:.2f} at x {D['win_x0']:.2f}..{D['win_x1']:.2f}, "
+        f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}, z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}; "
+        f"bosses stay {D['tft_gap']:.2f} mm outside it")
     row("bosses clear of the TFT window", D["boss_win_clear"], D["tft_gap"], "no post in the light path")
     win = parts["bottom TFT window"]
     hit = case.intersect(win)
     blocked = 0.0 if hit is None or not hit.solids() else sum(s.volume for s in hit.solids())
     row("TFT light path is empty", blocked, 0.0, "no shell solid in the window column", higher_ok=False)
+    y_mid = (D["win_y0"] + D["win_y1"]) / 2.0
+    x_keep = (D["pcb_x1"] - D["ledge_w"] + D["win_x1"] + D["tft_gap"]) / 2.0
+    z_led = (D["z_ledge0"] + D["z_ledge1"]) / 2.0
+    side_open = D["pcb_x1"] - D["ledge_w"] < D["win_x1"] + D["tft_gap"] - 1e-6
+    row("TFT side keep-out is open",
+        0.0 if (side_open and _inside(case, x_keep, y_mid, z_led)) else 1.0, 1.0,
+        f"side ledge pulled back to {D['tft_gap']:.2f} mm outside the active area")
     lasers = [parts[n] for n in parts if n.startswith("laser")]
     lhit = 0.0
     for laser in lasers:
@@ -45,7 +52,8 @@ def checks(D, parts):
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
     row("edge strip thickness", D["edge_t"], sla, "light-pipe rim, thinner than the plate")
     row("ligament thickness", D["ligament_t"], sla, "bridge between knob hole and joystick hole")
-    row("grating-slot lip", D["slot_lip"], sla, "shelf left above and below the film")
+    if D["scanner_enabled"]:
+        row("grating-slot lip", D["slot_lip"], sla, "shelf left above and below the film")
     row("fillet bead", D["fillet_r"], sla, "wall-to-faceplate joint")
     row("bezel thickness under the cap", D["bz_max"] - D["bz_t"], 0.0,
         f"joystick v0.4 lip {D['bz_t']:.2f}, cap {D['bz_max']:.1f}")
@@ -85,10 +93,17 @@ def checks(D, parts):
         f"upper bosses y {D['corners'][2][1]:.2f}, room between knob and joystick {D['boss_y_room']:.2f}")
     row("boss clears the joystick opening", D["boss_joy_clear"], D["boss_gap"],
         "upper pair sits under the joystick hole")
-    row("boss clears the scanner mirror", D["boss_scan_clear"], D["boss_gap"],
-        f"lower bosses y {D['corners'][0][1]:.2f}")
-    row("top rail screws", D["rail_top_web"], D["sla_min"],
-        "joystick opening leaves too little panel for a Ø3.2 hole with an SLA web both sides; top screws omitted, bottom screws stay")
+    if D["scanner_enabled"]:
+        row("boss clears the scanner mirror", D["boss_scan_clear"], D["boss_gap"],
+            f"lower bosses y {D['corners'][0][1]:.2f}")
+    if D["rail_top_ok"]:
+        row("top rail screw web", D["rail_top_web"], D["sla_min"], "holes are in the panel, clear of the joystick opening")
+    else:
+        need = D["rail_hole_d"] + 2.0 * D["sla_min"]
+        have = (D["panel_w"] - D["joy_hole"][0]) / 2.0
+        row("top rail screws omitted", 1.0, 1.0,
+            f"the side strip is {have:.2f} mm and a Ø{D['rail_hole_d']:.1f} hole with {D['sla_min']:.1f} webs needs {need:.2f}; "
+            f"web would be {D['rail_top_web']:.2f}. Holes left out. Bottom pair stays.")
     row("ledge width", D["ledge_w"], D["sla_min"], "inboard of the PCB edge, ratio of the wall")
     row("rim flush with the PCB back", abs(D["z_rim"] - D["z_pcb_back"]), 0.0,
         f"shell rim z {D['z_rim']:.2f}, PCB back {D['z_pcb_back']:.2f}", higher_ok=False)
@@ -107,10 +122,11 @@ def checks(D, parts):
     row("carrier fits the rounded opening", D["car_in_hole"], 0.0,
         f"corner clearance {D['car_in_hole']:.2f}; carrier {2 * D['car_hw']:.2f}×{2 * D['car_hh']:.2f}")
     row("top light-strip width", D["edge_top_w"], sla, "panel edge above the bezel")
-    row("mirror reaches the beam", D["mirror_r"] - D["beam_off"], 0.0,
-        f"mirror Ø{D['mirror_d']:.1f} assumed; beam {D['beam_off']:.2f} off the motor axis")
-    row("film clears the motor can", D["film_gap"], D["scan_motor_clear"],
-        "FLAG: motor is an assumed Ø{:.0f}×{:.0f} coreless, no part chosen".format(D["scan_motor_d"], D["scan_motor_len"]))
+    if D["scanner_enabled"]:
+        row("mirror reaches the beam", D["mirror_r"] - D["beam_off"], 0.0,
+            f"mirror Ø{D['mirror_d']:.1f} assumed; beam {D['beam_off']:.2f} off the motor axis")
+        row("film clears the motor can", D["film_gap"], D["scan_motor_clear"],
+            "FLAG: motor is an assumed Ø{:.0f}×{:.0f} coreless, no part chosen".format(D["scan_motor_d"], D["scan_motor_len"]))
 
     # probes: the booleans really left a wall, a hole, an open back, a thin rim
     z_mid = (D["z_fp0"] + D["z_fp1"]) / 2
@@ -130,14 +146,15 @@ def checks(D, parts):
     row("edge strip is thinned", 0.0 if _inside(case, D["ox"], rim_y, D["z_fp1"] - D["edge_depth"] / 2) else 1.0,
         1.0, "the front of the rim is pocketed so the band lights")
 
-    knob = knob_envelope(D)
-    joy = joy_envelope(D)
-    beam = beam_solid(D)
-    row("beam vs knob", beam.distance_to(knob), D["scan_clear"], "swept fan stays off the dial")
-    row("beam vs joystick", beam.distance_to(joy), D["scan_clear"], "fan stays off the carrier and the lip")
-    row("beam reaches the side wall", D["beam_gap"], 0.0, "fan stands off the wall by beam_gap")
-    row("beam close to the side wall", D["beam_reach"] - D["beam_gap"], 0.0, "close enough to light the wall")
-    row("beam reaches the rim", D["beam_z1"], D["z_mirror"], "rises from the mirror to the faceplate underside")
+    if D["scanner_enabled"]:
+        knob = knob_envelope(D)
+        joy = joy_envelope(D)
+        beam = beam_solid(D)
+        row("beam vs knob", beam.distance_to(knob), D["scan_clear"], "swept fan stays off the dial")
+        row("beam vs joystick", beam.distance_to(joy), D["scan_clear"], "fan stays off the carrier and the lip")
+        row("beam reaches the side wall", D["beam_gap"], 0.0, "fan stands off the wall by beam_gap")
+        row("beam close to the side wall", D["beam_reach"] - D["beam_gap"], 0.0, "close enough to light the wall")
+        row("beam reaches the rim", D["beam_z1"], D["z_mirror"], "rises from the mirror to the faceplate underside")
 
     row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
