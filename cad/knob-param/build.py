@@ -59,6 +59,7 @@ def main():
     ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE", help="override a param (dotted for dict params)")
     ap.add_argument("--sub", default=None, help="build + check ONE sub-assembly: main_knob, control_dial, base_drive, under_pcb, electronics")
     ap.add_argument("--preview", action="store_true"); ap.add_argument("--render", action="store_true")
+    ap.add_argument("--opposite", action="store_true", help="with --clean: view from the other side (A-A from -Y, iso from -X-Y; the other half / quadrant cut away)")
     ap.add_argument("--clean", action="store_true", help="clean assembly view: A-A + iso quarter cut + colour legend only (no insets/tables/clash text)")
     ap.add_argument("--full", action="store_true", help="committed KiCad STEP board instead of the proxy (no KiCad needed)")
     ap.add_argument("--step", action="store_true"); ap.add_argument("--no-check", action="store_true"); ap.add_argument("--no-clash", action="store_true")
@@ -97,7 +98,7 @@ def main():
         png = a.out or os.path.join(OUT, f"knob-stack-{V}-clean.png")
         t = time.time()
         ov = [x for x in a.set if not x.startswith("version=")]
-        tm = render.render(D, parts, keys, png, clean=True, title=f"Knob stack {V} — assembly sections",
+        tm = render.render(D, parts, keys, png, clean=True, title=f"Knob stack {V} — assembly sections" + (" (OPPOSITE SIDE: A-A viewed from -Y, iso from -X-Y)" if a.opposite else ""), opposite=a.opposite,
                            note=(f"Overrides: {' '.join(ov)}." if ov else None))
         t_render = time.time() - t
         print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items())); tm = None
