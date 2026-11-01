@@ -4,8 +4,14 @@ Local frame: origin = carrier centre on the MAIN PCB FRONT (z = 0), +x right alo
 (toward the panel top), +z out of the panel. Placement in the knob-param frame (dial axis = 0,0): (0, place_y).
 Tags: [Ed] Ed's decision, [S] datasheet, [L] panel layout v5 (scope/knob-module-v1.md), [K] main-PCB KiCad, [A] assumed.
 Every derived value is computed in derive(); parts and checks read only P + derived values.
+
+The screen top is the faceplate front from the knob interface (z_glass - knob_proud). The J2 socket stays the
+8.5 mm part soldered on the main PCB. A printed extender fills from the socket top up to the daughterboard,
+and the riser grows so the stem keeps its air under the carrier.
 """
 import math
+import os
+import sys
 
 P = dict(
     version="v0.1",
@@ -14,7 +20,7 @@ P = dict(
     pcb_t=1.6,               # [K]
     # ---- screen (1.14" 240x135 IPS ST7789V, landscape) ----
     scr=dict(part='1.14" 240x135 IPS (ST7789V)', w=31.0, h=17.6, t=1.55, active=(24.9, 14.9)),  # [L] module w×h; t [A]
-    scr_top=20.2,            # [A] screen glass top above the PCB front = panel front (v4 depth stack: PCB front 20.2 behind it)
+    # screen top is derived: it is the knob faceplate front (interface z_glass - knob_proud)
     scr_clear=0.3,           # [A] screen to the carrier pocket wall
     fpc_w=8.0,               # [A] screen FPC width (placeholder until the module is chosen)
     fpc_t=0.12,              # [A]
@@ -51,7 +57,8 @@ P = dict(
     db=(16.6, 12.0, 1.0),    # [A] daughterboard w, h, t (PCBWay 1.0 FR4)
     hdr_x=5.6,               # [A] 2x3 2.54 header centre (J1 male on the daughterboard, plastic on TOP, pins down)
     hdr_body=(5.08, 7.62, 2.5),   # [S] 2x3 2.54 male header plastic
-    sock=(5.08, 7.62, 8.5),  # [S] 2x3 2.54 female socket on the main PCB = the riser height (standard 8.5)
+    sock=(5.08, 7.62, 8.5),  # [S] 2x3 2.54 female socket soldered on the main PCB (FG FG-PM2.54-2-03P-H8.5). Not the riser height.
+    stem_gap=1.35,           # [A] carrier underside above the stem top. The 8.5 mm socket left this when the screen was at z 20.2
     post_d=4.0,              # [A] printed riser post under the switch (part of the base)
     # ---- base (printed, glued to the main PCB, 4 locating pins) ----
     base_wall=1.2, base_floor=1.0, base_top_t=1.75,   # [A]
@@ -76,9 +83,22 @@ P = dict(
 )
 
 
+def _faceplate():
+    """Knob-frame faceplate front and thickness. Same subtraction as interface.derive."""
+    here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    kp = os.path.join(here, "knob-param")
+    if kp not in sys.path:
+        sys.path.insert(0, kp)
+    from knobparam.assembly.interface import P as IP
+    z = float(IP["z_glass"]) - float(IP["knob_proud"])
+    return z, float(IP["faceplate_t"])
+
+
 def derive(P_):
     D = dict(P_)
     sw, S = D["sw"], D["scr"]
+    D["faceplate_z"], D["faceplate_t"] = _faceplate()
+    D["scr_top"] = D["faceplate_z"]          # v0.1 glass is flush with the faceplate front
     D["z_scr0"] = D["scr_top"] - S["t"]
     D["z_sp1"] = D["z_scr0"] - D["sp_land"]          # spider plate top
     D["z_sp0"] = D["z_sp1"] - D["sp_t"]               # spider plate bottom = carrier ledge
@@ -89,7 +109,11 @@ def derive(P_):
     D["z_base_top0"] = D["z_base1"] - D["base_top_t"]
     D["z_skirt0"] = D["z_base1"] - D["skirt_overlap"]
     D["z_car1"] = D["scr_top"] - D["car_top_below"]
-    D["z_db0"] = D["sock"][2]; D["z_db1"] = D["z_db0"] + D["db"][2]
+    # Riser follows the faceplate. The socket stays 8.5 mm on the PCB; riser_ext is the printed spacer above it.
+    D["z_db0"] = D["z_c0"] - D["db"][2] - sw["stem_top"] - D["stem_gap"]
+    D["sock_h"] = D["sock"][2]
+    D["riser_ext"] = D["z_db0"] - D["sock_h"]
+    D["z_db1"] = D["z_db0"] + D["db"][2]
     D["z_sw1"] = D["z_db1"] + sw["h"]
     D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
     D["z_pivot"] = D["z_db1"] + sw["pivot"]

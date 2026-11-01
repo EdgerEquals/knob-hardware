@@ -4,7 +4,7 @@ board; this keeps it in step with the parametric model). Run with the knob-param
 Frame: dial axis origin, x toward the 1220 motor, y up (frame); make_board.py converts to board coords (bx = axis_bx + x,
 by = axis_by - y). Contents: the base-cradle footprint on the PCB front (section at z = 0.02, outer + openings), the Hall row
 (radius, angle, part per sensor, magnet polarity), the 716 lead holes, the rod-pad radius, encoder/motor axes, idlers, detents,
-spring anchors."""
+spring anchors, and the faceplate (front z and thickness in the knob frame, PCB front = 0) for sub/case-v01."""
 import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..", "..", "..")))   # cad/knob-param
@@ -41,6 +41,8 @@ def main():
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],
         d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"], pcb=(D["pcb_w"], D["pcb_above"], D["pcb_below"]),
+        knob_proud=D["knob_proud"], z_top=D["z_top"], z_knob_top=g("z_knob_top"),
+        faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

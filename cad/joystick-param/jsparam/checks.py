@@ -9,6 +9,10 @@ def run(D, P):
     spid, db, fpc, pcb = P["screen spider + plunger (printed)"], P["joystick daughterboard"], P["screen FPC [A]"], P["main PCB (proxy, local patch)"]
     sprs = [P[n] for n in P if n.startswith("hold-down spring")]
     # 1 stem / cup
+    row("screen top is the faceplate front", D["scr_top"] - D["faceplate_z"], "0", abs(D["scr_top"] - D["faceplate_z"]) < 1e-9,
+        f"faceplate front z {D['faceplate_z']:.2f} above the PCB front, plate {D['faceplate_t']:.2f} thick")
+    row("printed riser above the 8.5 mm socket", D["riser_ext"], "> 0", D["riser_ext"] > 0,
+        f"daughterboard at z {D['z_db0']:.2f}; socket stays {D['sock_h']:.1f} on the PCB; extender {D['riser_ext']:.2f}")
     g = stem.distance_to(car)
     row("stem vs cup bore, radial (rest)", g, f">= {T['stem_cup_min']}", g >= T["stem_cup_min"] - 1e-6, f"cup Ø{D['cup_bore']:g} over the Ø{sw['stem_d']:g} stem, engaged {D['cup_engage']:g}")
     row("cup engagement covers the 4.3 mm tilt reference height", D["z_ref"] - D["z_cup0"], ">= 0.2", D["z_cup0"] + 0.2 <= D["z_ref"] <= D["z_stem_top"],

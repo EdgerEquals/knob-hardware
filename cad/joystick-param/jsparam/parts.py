@@ -80,6 +80,9 @@ def build(D):
     out = {}
     out["main PCB (proxy, local patch)"] = pcb(D)
     out["J2 socket 2x3 2.54 female 8.5 (main PCB)"] = cbox(*D["sock"][:2], 0, D["sock"][2], D["hdr_x"], 0)
+    if D["riser_ext"] > 0.05:
+        # Printed spacer. The 8.5 mm socket is soldered to the PCB and no longer reaches the board.
+        out["joystick riser extender (printed)"] = cbox(*D["sock"][:2], D["sock"][2], D["z_db0"], D["hdr_x"], 0)
     dw, dh, dt = D["db"]
     db = cbox(dw, dh, D["z_db0"], D["z_db1"])
     out["joystick daughterboard"] = db

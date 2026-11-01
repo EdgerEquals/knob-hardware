@@ -6,6 +6,29 @@ Renders: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan 
 `cad/assemblies/knob-stack-v0.17/`. Top-screen joystick stack: `cad/assemblies/joystick-v0.1/` (see
 `docs/top-screen-joystick.md`).
 
+## Faceplate (Ed)
+
+`knob_proud = 18.0` mm is the height of the knob screen top above the faceplate front. The screen top is `z_glass`
+(56.8). The faceplate front is **38.8 mm** above the main-PCB front (z = 0). Thickness is **2.5 mm**, the case
+resin wall, so the back face is at 36.3. Both are in `cad_constraints.json` (`faceplate_z`, `faceplate_t`) for
+`sub/case-v01`. The knob shell top stays at 52.5, which is 13.7 mm above the plate.
+
+The old layout constant put the panel front at 20.2. This plate is 18.6 mm further from the PCB. On joystick
+v0.4 the plate was derived at 45.98 (bezel under a screen 5 mm below the knob shell). Measured to the screen
+top, that plate left the glass 10.82 mm proud. The new plate is **7.18 mm closer to the PCB** than that one.
+
+Joystick v0.1 in this tree follows the plate: screen top 38.8, daughterboard at 27.10 (was 8.5). The soldered
+J2 socket stays the 8.5 mm FG part. A printed extender of 18.6 mm fills up to the board, and the stem keeps
+its 1.35 mm of air under the carrier. Hold-down springs grow from about 42 mm to about **60 mm**.
+
+The 35 mm standoff does not fit the new plate. Joystick v0.4 raises the daughterboard on four **XHHD DTTZ3033**
+male-female standoffs, hex H3 × M2 × **35+4**, LCSC C50377642. The 35 mm body is the riser. Keeping the same
+1.28 mm of air under the carrier, the body has to be **27.82 mm**. The 35 mm part is 7.18 mm too long: the
+stem would stand 5.9 mm through the carrier. A 30 mm body is still about 2.2 mm long. The Samtec TSW-103-20-T-S
+mating pin (25.91 mm) enters the 11 mm H11 socket by 4.45 mm at a 35 mm riser, which is inside the 3.5–6.5 mm
+window, and by 11.63 mm at 27.82 mm, which is not. The 35 mm body and the -20 pin are a pair. No replacement
+catalogue number is assigned here. The main PCB was not edited.
+
 ## v0.18 gear train (Ed, 1 Nov 2026)
 
 PCBWay makes the parts: MJF PA-12 for every gear, SLA clear resin for the caps. The Kingtech 1.39" screen is unchanged in this pass, so the knob stays **Ø41.65**.
@@ -199,5 +222,5 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
 
 ## Top-screen joystick v0.1 (1 Nov 2026)
 See `docs/top-screen-joystick.md` and `cad/joystick-param/`. The carrier centre is board (25.25, 21.1) and knob frame (0, 31.8).
-The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB v0.11 carries the J2 socket (FG FG-PM2.54-2-03P-H8.5),
+The carrier slid toward the knob clears the live knob OD (Ø41.65) by 0.275, short of the 0.5 target. `place_y` is still the v0.1 figure that cleared Ø40.85 by 0.675, and it was not moved. The main PCB v0.11 carries the J2 socket (FG FG-PM2.54-2-03P-H8.5),
 the spring/pin holes, the FPC slot and the base keep-out (listed in that doc).

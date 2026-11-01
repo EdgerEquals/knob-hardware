@@ -4012,5 +4012,11 @@
   49.0,
   42.4,
   65.1
- ]
+ ],
+ "knob_proud": 18.0,
+ "z_top": 56.8,
+ "z_knob_top": 52.5,
+ "faceplate_z": 38.8,
+ "faceplate_t": 2.5,
+ "faceplate_z_back": 36.3
 }

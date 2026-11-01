@@ -111,7 +111,9 @@ P = dict(
     cord_clear=3.0,   # [K]/[A] (cord room over the nut [Ed])
     # ---- screen [S] (table below) ----
     screen="rm69330-1.39",
-    z_glass=56.8,   # [A] glass flush with the dial top (v0.12)
+    z_glass=56.8,   # [A] glass flush with the dial top (v0.12). This is the knob top the faceplate is measured from.
+    knob_proud=18.0,   # [Ed] knob screen top above the faceplate front face
+    faceplate_t=2.5,   # [Ed] faceplate thickness. Same resin wall as the one-piece case (sub/case-v01)
     z_holder0=54.9,   # [A] holder plate bottom (= v0.12 screen seat: cord room kept)
     cof_bend=None,   # [A] override the screen-table COF bend (radial), e.g. --set cof_bend=0.26
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
@@ -638,6 +640,10 @@ def derive(D):
     if D["cof_bend"] is not None: S["bend"] = D["cof_bend"]
     # ---- mating heights ----
     D["z_top"] = D["z_glass"]
+    # Faceplate front is the knob screen top, set back by knob_proud. PCB front is z = 0.
+    # sub/case-v01 reads faceplate_z and faceplate_t from cad_constraints.json.
+    D["faceplate_z"] = D["z_top"] - D["knob_proud"]
+    D["faceplate_z_back"] = D["faceplate_z"] - D["faceplate_t"]
     D["z_board_top"] = D["z_holder0"] - D["nut_m"] - D["cord_clear"]      # adapter board top (50.60)
     D["z_floor"] = D["z_board_top"] - D["adapter_t"]                       # 49.60 = brass tube top = adapter seat
     D["z_rod_top"] = D["z_board_top"] + D["nut_m"]
