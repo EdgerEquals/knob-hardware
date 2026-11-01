@@ -44,20 +44,27 @@ mm = pcbnew.FromMM
 def P(x, y): return pcbnew.VECTOR2I(mm(ORIGIN[0] + x), mm(ORIGIN[1] + y))
 FLIP = pcbnew.FLIP_DIRECTION_TOP_BOTTOM
 
-def ensure_screw_footprints():
-    """Drill footprints for cradle screws, created from the diameters in cad_constraints.json."""
+def ensure_locating_footprints():
+    """Round and slotted NPTH for the glued cradle, from the diameters in cad_constraints.json."""
     sys.path.insert(0, os.path.join(HERE, "..", ".."))
     import lighting_params
     import make_lighting_footprints as ml
-    for _x, _y, d, _key in lighting_params.cradle_screw_holes():
-        tag = f"{d:.2f}".replace(".", "p")
-        name = f"Hole_NPTH_{tag}"
-        if not os.path.exists(os.path.join(LIBDIR, name + ".kicad_mod")):
-            ml.npth(name, d)
-            print("wrote", name)
+    for h in lighting_params.cradle_locating_holes():
+        if h["slot"]:
+            tag = f"{h['d']:.2f}x{h['slot']:.2f}".replace(".", "p")
+            name = f"Slot_NPTH_{tag}"
+            if not os.path.exists(os.path.join(LIBDIR, name + ".kicad_mod")):
+                ml.npth_slot(name, h["d"], h["slot"])
+                print("wrote", name)
+        else:
+            tag = f"{h['d']:.2f}".replace(".", "p")
+            name = f"Hole_NPTH_{tag}"
+            if not os.path.exists(os.path.join(LIBDIR, name + ".kicad_mod")):
+                ml.npth(name, h["d"])
+                print("wrote", name)
 
 def build():
-    ensure_screw_footprints()
+    ensure_locating_footprints()
     comps = design.comps()
     sch = os.path.join(HERE, NAME + ".kicad_sch")
     sch_gen.write(sch, f"Knob main PCB {PCB_VERSION}", NAME, comps, rev=PCB_VERSION, paper="A0",

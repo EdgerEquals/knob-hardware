@@ -97,6 +97,17 @@ def mount_m2():
   (pad "1" thru_hole circle (at 0 0) (size 3.2 3.2) (drill 2.4) (layers "*.Cu" "*.Mask"))
 ''')
 
+def npth_slot(name, width, length):
+    """Oval NPTH. `length` is along local X (the radius, once the footprint is rotated)."""
+    hx, hy = length / 2 + 0.4, width / 2 + 0.4
+    write(name, f'''  (descr "NPTH slot {width:.2f} x {length:.2f} mm, long axis local X")
+  (attr exclude_from_pos_files exclude_from_bom)
+  (property "Reference" "H" (at 0 {-hy - 0.6:.2f} 0) (layer "F.Fab") (effects (font (size 0.4 0.4) (thickness 0.06))))
+  (property "Value" "{name}" (at 0 {hy + 0.6:.2f} 0) (layer "F.Fab") (effects (font (size 0.3 0.3) (thickness 0.05))))
+  (fp_rect (start {-hx:.2f} {-hy:.2f}) (end {hx:.2f} {hy:.2f}) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "" np_thru_hole oval (at 0 0) (size {length:.2f} {width:.2f}) (drill oval {length:.2f} {width:.2f}) (layers "*.Cu" "*.Mask"))
+''')
+
 def npth(name, d):
     write(name, f'''  (descr "NPTH {d} mm")
   (attr exclude_from_pos_files exclude_from_bom)

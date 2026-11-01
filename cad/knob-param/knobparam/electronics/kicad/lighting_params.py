@@ -39,36 +39,49 @@ AX, AY = CSTR["axis_b"]
 def board_of(frame_x, frame_y):
     return (AX + frame_x, AY - frame_y)
 
-def cradle_screw_holes(cstr=None):
-    """Three M1.6 cradle screws, once sub/assembly-v017 exports them.
+def cradle_locating_holes(cstr=None):
+    """Glued cradle: one round NPTH and one slot along the radius. Empty until the export lands.
 
-    Frame millimetres (motor at +x). Each entry is {xy:[x,y], d:diameter} or
-    {x,y,d} or [x,y,d]. Two of the three are the tight locating holes; the
-    diameter in the file is the one that gets drilled. Returns [] until the key exists.
+    Frame millimetres, motor at +x. Accepted exports:
+      peg_xy + peg_d, with peg_slot (length of the second hole) and peg_ang (degrees), or
+      cradle_pegs: a list of {xy, d, slot, ang}. The first hole is round. The second is the slot.
     """
     cstr = CSTR if cstr is None else cstr
-    raw, key = None, None
-    for k in ("cradle_screws", "pcb_screws", "cradle_fix_screws"):
-        if k in cstr:
-            key, raw = k, cstr[k]
-            break
-    if raw is None:
-        for k, v in cstr.items():
-            if "screw" in k and isinstance(v, list):
-                key, raw = k, v
-                break
-    holes = []
-    for item in raw or []:
-        if isinstance(item, dict):
+    if "cradle_pegs" in cstr:
+        holes = []
+        for i, item in enumerate(cstr["cradle_pegs"]):
             if "xy" in item:
                 x, y = item["xy"]
             else:
                 x, y = item["x"], item["y"]
-            d = item.get("d", item.get("dia", item.get("diameter")))
-        else:
-            x, y, d = item[0], item[1], item[2]
-        holes.append((float(x), float(y), float(d), key))
+            d = float(item.get("d", item.get("dia", item.get("diameter"))))
+            ang = item.get("ang", item.get("angle"))
+            field = item.get("slot", i == 1)
+            if isinstance(field, (int, float)) and not isinstance(field, bool):
+                holes.append(_locating_hole(i, float(x), float(y), d, True, ang, field))
+            else:
+                holes.append(_locating_hole(i, float(x), float(y), d, bool(field), ang, item.get("slot_len")))
+        return holes
+    if "peg_xy" not in cstr or "peg_d" not in cstr:
+        return []
+    d = float(cstr["peg_d"])
+    angs = list(cstr.get("peg_ang") or [])
+    slot = cstr.get("peg_slot")
+    holes = []
+    for i, (x, y) in enumerate(cstr["peg_xy"]):
+        ang = angs[i] if i < len(angs) else None
+        holes.append(_locating_hole(i, float(x), float(y), d, i == 1, ang, slot if i == 1 else None))
     return holes
+
+def _locating_hole(i, x, y, d, want_slot, ang, slot_len):
+    ang = None if ang is None else float(ang)
+    if not want_slot:
+        return {"i": i, "x": x, "y": y, "d": d, "slot": None, "ang": ang}
+    if isinstance(slot_len, (list, tuple)):
+        slot_len = slot_len[i]
+    if not isinstance(slot_len, (int, float)) or isinstance(slot_len, bool):
+        raise ValueError(f"cradle locating hole {i + 1} is the slot and needs a length (peg_slot)")
+    return {"i": i, "x": x, "y": y, "d": d, "slot": float(slot_len), "ang": ang}
 
 def js_board(local_x, local_y):
     """Carrier-local (x right, y up the panel) → board mm. Matches joystick-param board_xy."""
@@ -307,10 +320,18 @@ def write_reports(dirpath):
         f.write(f"\nBefore: **{b}**. This round: **{v}**. Spare: **{sp}**. I/O total: **{total}**.\n\n")
         f.write("## Open, re-check when the other rounds land\n\n")
         f.write("- `sub/case-v01` is not on the remote. The scanner VCSEL is at board (8, 110), the bottom end. Move it when the case scan position exists.\n")
-        f.write("- Assembly `fee6c60` (sub/assembly-v017, 1 Nov 2026) still exports `cad_constraints.json` as v0.16b. "
-                "It does not yet list the three M1.6 cradle screws (two of them tight locating holes) or the inward ring-gear move. "
-                "Those holes are read from `cradle_screws` when the key appears; until then the board does not invent them. "
-                "Cradle keep-out is still v0.16b. Knob OD used for the Fab circle is Ø41.65 from `00502746`.\n")
+        f.write("- The base cradle is glued to the PCB front. Locating features are two NPTH holes, one round and one slot along the radius, not screws. "
+                "Assembly `fee6c60` still exports `cad_constraints.json` as v0.16b and does not list `peg_xy` / `peg_d` / `peg_slot` yet, so the holes are not drilled. "
+                "They are read from that file when the keys appear. Cradle keep-out is still v0.16b. The Fab circle is Ø41.65 from `00502746`. "
+                "The ring gear moving inward will change both.\n")
+        f.write("- The cradle later grows into a glued stiffener over as much of the PCB front as it can. "
+                "New electronics are on the back. Tall front-side parts that a full-front plate cannot cover:\n")
+        f.write("  - J2 and J3, 11 mm joystick sockets, with the four M2 studs H10–H13, clustered at board y 12–21. They have to stay there to mate with the daughterboard.\n")
+        f.write("  - M1, the 1220, body in the cradle bore at (36.0, 52.9). H1, the brass tube, at the dial axis. H2, the F682ZZ flange, at (25.25, 68.15).\n")
+        f.write("  - The 24 ring emitters are only 0.8 mm tall, but they have to stay in the clear-carrier window. A solid plate over them blocks the beams.\n")
+        f.write("  - LD13, the scanner VCSEL, is 0.8 mm at (8, 110). A stiffener over that corner blocks the scan.\n")
+        f.write("  - Hall sensors U11–U15 are on the front and under 1.2 mm, already in the cradle Hall slot.\n")
+        f.write("  - J13 and J14 are flat pad rows on the front (y 28.2 and the right edge at y 46). They are not tall. A plate glued over them covers the solder joints. A connector body fitted later would stand proud.\n")
         f.write("- Joystick holes are from `bce854b` REPORT.md, not from a regenerated main-board file (that agent did not edit this PCB).\n")
         f.write("- Ring centres at the bottom (about y 70.5–70.9) cross the 2.0\" TFT outline (y 70.5) by about 2 mm. That is the inactive top border of the TFT in the panel notes. Confirm before the glass is ordered.\n")
         f.write("- No Risley or mirror motor is specified in the repo. Drivers are unidirectional AO3400A low-side PWM from +5 V. Reverse the leads if the prism must spin the other way. A geared 1220-class part will not fit; these assume a small coreless, stall under 300 mA.\n")

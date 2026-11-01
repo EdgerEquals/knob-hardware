@@ -114,7 +114,14 @@ Before: **62**. This round: **19**. Spare: **5**. I/O total: **86**.
 ## Open, re-check when the other rounds land
 
 - `sub/case-v01` is not on the remote. The scanner VCSEL is at board (8, 110), the bottom end. Move it when the case scan position exists.
-- Assembly `fee6c60` (sub/assembly-v017, 1 Nov 2026) still exports `cad_constraints.json` as v0.16b. It does not yet list the three M1.6 cradle screws (two of them tight locating holes) or the inward ring-gear move. Those holes are read from `cradle_screws` when the key appears; until then the board does not invent them. Cradle keep-out is still v0.16b. Knob OD used for the Fab circle is Ø41.65 from `00502746`.
+- The base cradle is glued to the PCB front. Locating features are two NPTH holes, one round and one slot along the radius, not screws. Assembly `fee6c60` still exports `cad_constraints.json` as v0.16b and does not list `peg_xy` / `peg_d` / `peg_slot` yet, so the holes are not drilled. They are read from that file when the keys appear. Cradle keep-out is still v0.16b. The Fab circle is Ø41.65 from `00502746`. The ring gear moving inward will change both.
+- The cradle later grows into a glued stiffener over as much of the PCB front as it can. New electronics are on the back. Tall front-side parts that a full-front plate cannot cover:
+  - J2 and J3, 11 mm joystick sockets, with the four M2 studs H10–H13, clustered at board y 12–21. They have to stay there to mate with the daughterboard.
+  - M1, the 1220, body in the cradle bore at (36.0, 52.9). H1, the brass tube, at the dial axis. H2, the F682ZZ flange, at (25.25, 68.15).
+  - The 24 ring emitters are only 0.8 mm tall, but they have to stay in the clear-carrier window. A solid plate over them blocks the beams.
+  - LD13, the scanner VCSEL, is 0.8 mm at (8, 110). A stiffener over that corner blocks the scan.
+  - Hall sensors U11–U15 are on the front and under 1.2 mm, already in the cradle Hall slot.
+  - J13 and J14 are flat pad rows on the front (y 28.2 and the right edge at y 46). They are not tall. A plate glued over them covers the solder joints. A connector body fitted later would stand proud.
 - Joystick holes are from `bce854b` REPORT.md, not from a regenerated main-board file (that agent did not edit this PCB).
 - Ring centres at the bottom (about y 70.5–70.9) cross the 2.0" TFT outline (y 70.5) by about 2 mm. That is the inactive top border of the TFT in the panel notes. Confirm before the glass is ordered.
 - No Risley or mirror motor is specified in the repo. Drivers are unidirectional AO3400A low-side PWM from +5 V. Reverse the leads if the prism must spin the other way. A geared 1220-class part will not fit; these assume a small coreless, stall under 300 mA.
