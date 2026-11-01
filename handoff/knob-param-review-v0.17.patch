@@ -1,0 +1,730 @@
+diff -ruN a/knob-param/build.py b/knob-param/build.py
+--- a/knob-param/build.py	2026-11-01 22:26:42.755534466 +0800
++++ b/knob-param/build.py	2026-11-01 22:26:42.768077793 +0800
+@@ -65,6 +65,7 @@
+     ap.add_argument("--step", action="store_true"); ap.add_argument("--no-check", action="store_true"); ap.add_argument("--no-clash", action="store_true")
+     ap.add_argument("--dump", action="store_true"); ap.add_argument("--clear-cache", action="store_true"); ap.add_argument("--contract", action="store_true")
+     ap.add_argument("--out", default=None, help="output PNG path")
++    ap.add_argument("--export", default="", help="comma list of step,stl,usdz -> out folder (whole stack, or the --sub)")
+     a = ap.parse_args()
+     if a.contract: return contract()
+     from knobparam.common import model, cache
+@@ -112,8 +113,16 @@
+     rows = []
+     if not a.no_check:
+         t = time.time()
+-        rows = check.local(D, parts, owner, [a.sub] if a.sub else None)
+-        if not a.sub: rows += check.cross(D, parts)
++        # Memo the whole row list: same part keys + same params + same check sources -> same rows (warm build ~0 s).
++        import importlib
++        cmods = [check] + [importlib.import_module(f"knobparam.{s}.checks") for s in model.ALL]
++        rk = cache._h(["rows", a.sub, sorted(keys.items()), {k: D[k] for k in sorted(D)}, [cache.src_hash(m) for m in cmods]])
++        rp = os.path.join(cache.CACHE, f"rows_{rk}.json")
++        if os.path.exists(rp): rows = json.load(open(rp))
++        else:
++            rows = check.local(D, parts, owner, [a.sub] if a.sub else None)
++            if not a.sub: rows += check.cross(D, parts)
++            os.makedirs(cache.CACHE, exist_ok=True); json.dump(rows, open(rp, "w"))
+         t_gaps = time.time() - t
+         w = max(len(r["name"]) for r in rows)
+         print(f"\n{'CHECK':{w}s}  {'value':>8s}  {'target':>8s}  result  {'owner':12s}  note"); print("-" * (w + 54))
+@@ -121,6 +130,10 @@
+         print(); print("\n".join(clash_lines))
+         nf = sum(not r["ok"] for r in rows); nc = sum(1 for k in cl if k not in check.KNOWN)
+         print(f"\nSUMMARY{' (' + a.sub + ', local only)' if a.sub else ''}: {len(rows) - nf}/{len(rows)} gap checks PASS, {nf} FAIL; {nc} unexpected clashes, {len(cl) - nc} known")
++        tight = sorted((r for r in rows if r.get("slack") is not None), key=lambda r: r["slack"])[:8]
++        print("TIGHTEST (slack above target): " + "; ".join(f"{r['name'][:40]} {r['slack']:+.3f}" for r in tight))
++        risky = [r for r in rows if r.get("tol_ok") is False]
++        if risky: print("UNDER PROCESS TOLERANCE: " + "; ".join(f"{r['name'][:40]} {r['value']:.3f} < {r['tol_need']:.3f}" for r in risky))
+         json.dump(dict(rows=rows, clashes=cl, set=a.set, sub=a.sub), open(os.path.join(OUT, "check.json"), "w"), indent=1)
+     if tm is not None:   # re-compose with the gap FAIL list now that gaps are known (matplotlib only, no OCC)
+         from knobparam.assembly import render
+@@ -130,6 +143,15 @@
+         ins = [] if prev else [f"{tmp}/{n}.png" for n in ("bb", "cc", "d", "ee") + (("hh",) if D["hall_layout"] == "vernier" else ())]
+         render.compose(D, parts, f"{tmp}/aa.png", f"{tmp}/iso.png", ins, png, prev, clash_lines, g, title)
+         print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items()))
++    if a.export:
++        from knobparam.assembly import export as ex
++        stem = os.path.join(OUT, f"{'knob-stack' if not a.sub else a.sub}-{V}"); os.makedirs(OUT, exist_ok=True)
++        for kind in a.export.split(","):
++            t = time.time()
++            if kind == "step": ex.step(parts, stem + ".step")
++            elif kind == "stl": ex.stl(parts, stem + "-stl")
++            elif kind == "usdz": print("usdz:", ex.usdz(parts, keys, stem + ".usdz"))
++            print(f"export {kind}: {time.time() - t:.1f} s")
+     if a.step:
+         from build123d import Compound, export_step
+         export_step(Compound(children=list(parts.values())), os.path.join(OUT, f"knob-stack-{V}.step"))
+diff -ruN a/knob-param/knobparam/assembly/build.py b/knob-param/knobparam/assembly/build.py
+--- a/knob-param/knobparam/assembly/build.py	2026-11-01 22:26:42.736459760 +0800
++++ b/knob-param/knobparam/assembly/build.py	2026-11-01 22:26:42.758287184 +0800
+@@ -4,7 +4,7 @@
+ from ..common.cache import build_module, CACHE
+ from ..common import model
+ 
+-ORDER = [("electronics", "pcb"), ("base_drive", "motor"), ("base_drive", "brass"), ("base_drive", "cradle"),
++ORDER = [("optics", "scanner"), ("optics", "ring_lights"), ("electronics", "pcb"), ("base_drive", "motor"), ("base_drive", "brass"), ("base_drive", "cradle"),
+          ("control_dial", "thrust"), ("main_knob", "knob"), ("control_dial", "dial"), ("control_dial", "hall_arm"),
+          ("electronics", "hall_sensors"), ("under_pcb", "encoder"), ("base_drive", "idlers"), ("base_drive", "feel"), ("base_drive", "mech"),
+          ("control_dial", "screen"), ("control_dial", "holder"), ("electronics", "adapter")]
+diff -ruN a/knob-param/knobparam/assembly/checks.py b/knob-param/knobparam/assembly/checks.py
+--- a/knob-param/knobparam/assembly/checks.py	2026-11-01 22:26:42.735619048 +0800
++++ b/knob-param/knobparam/assembly/checks.py	2026-11-01 22:26:42.757930239 +0800
+@@ -4,7 +4,7 @@
+ import hashlib, itertools, json, math, os, time
+ from build123d import *
+ from ..common.cache import CACHE
+-from ..common.checks import Rows
++from ..common.checks import Rows, min_dist
+ from ..common.util import cyl
+ from ..common import model
+ 
+@@ -24,6 +24,8 @@
+     Tdeg = D["travel_deg"]
+     TR = (-Tdeg, -D["det_deg"], 0.0, D["det_deg"], Tdeg); on = D["screen_on_dial"]
+     Dc = model.view(D, "control_dial")
++    _arm0 = cd.arm(Dc, 0.0)                       # build once; arm(D, t) == Rot(0, 0, t) * arm(D, 0)
++    ARM = {t: Rot(0, 0, t) * _arm0 for t in TR}
+     if on:
+         stat = {n: parts[n] for n in parts if n.startswith("adapter part") and not n.endswith(D["b2b_at"])}
+         stat["rod + nut"] = cyl(D["nut_s"] / math.sqrt(3), D["z_board_top"], D["nut_m"])
+@@ -50,7 +52,7 @@
+     tips["motor collar"] = cyl(D["motor_collar_od"] / 2, 0, 40, D["offset"])
+     hmin, hwho = 1e9, ""
+     for t in TR:
+-        arm = cd.arm(Dc, t)
++        arm = ARM[t]
+         for n, s in tips.items():
+             d = arm.distance_to(s)
+             if d < hmin: hmin, hwho = d, n
+@@ -59,10 +61,10 @@
+         cr = parts["base cradle"]; sens = [parts[n] for n in parts if n.startswith("hall sensor")]
+         from ..common.util import sector
+         cr_far = cr - sector(0, D["sl_r"] + 3, 60, -1, 20, D["sl_ang"]) if D["fan_on"] else cr   # stop blocks checked separately
+-        row("Hall arm / fan vs cradle, detent blocks, track (±travel)", min(cd.arm(Dc, t).distance_to(cr_far) for t in TR), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
++        row("Hall arm / fan vs cradle, detent blocks, track (±travel)", min_dist(list(ARM.values()), [cr_far]), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
+         if D["fan_on"]:
+             stops = cr - cr_far
+-            lv = lambda t: cd.arm(Dc, t)
++            lv = lambda t: ARM[t]
+             row("dial lever vs hard stops at rest", lv(0).distance_to(stops), T["arm_vs_cradle"])
+             row("dial lever vs hard stops when latched at ±det_deg", min(lv(t).distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02,
+                 f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, the ball's bore play)")
+@@ -74,16 +76,16 @@
+                 bst = 1e3 * 2e-7 * m_dip / (dmin / 1e3) ** 3 * len(cus)
+                 row("cushion magnets: stray field at the nearest Hall-row sensor / range", bst / D["hv_sensor"]["range_mt"], D["cu_stray_max"],
+                     f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT", higher_ok=False)
+-            fan_d = min(cd.arm(Dc, t).distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
++            fan_d = min(ARM[t].distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
+             row("fan vs detent springs / grubs (±travel)", fan_d, T["arm_vs_cradle"])
+         mi = D["hv_mid"]["idx"] if D["hv_mid"] else -1
+         s53 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" not in n]
+         s73 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" in n]
+-        row("Hall bar / magnets vs TMAG5253 tops (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in s53), D["hv_gap"] - 0.01, f"element gap {D['hv_elem_gap']:.2f}")
++        row("Hall bar / magnets vs TMAG5253 tops (air gap, ±travel)", min_dist(list(ARM.values()), s53), D["hv_gap"] - 0.01, f"element gap {D['hv_elem_gap']:.2f}")
+         if s73:
+-            row("Hall bar / magnets vs TMAG5273 (H3) top (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in s73), D["hv_gap_mid"] - 0.01,
++            row("Hall bar / magnets vs TMAG5273 (H3) top (air gap, ±travel)", min_dist(list(ARM.values()), s73), D["hv_gap_mid"] - 0.01,
+                 f"SOT-23-6 h {D['hv_mid']['h']:g}; element gap {D['hv_mid_elem_gap']:.2f}; magnet faces z {D['hv_z_mag0']:.2f}")
+-        row("Hall sensors vs cradle", min(s_.distance_to(cr) for s_ in sens), T["sensor_vs_cradle"])
++        row("Hall sensors vs cradle", min_dist(sens, [cr]), T["sensor_vs_cradle"])
+         H = hall_dyn.analyse(D)
+         pk53 = max(float(H["B_peak_j"][j]) for j in range(D["hv_n"]) if j != mi)
+         row("Hall peak |Bz| at the TMAG5253s vs range (mT)", pk53, 0.9 * D["hv_sensor"]["range_mt"], f"{D['hv_sensor']['part']} ±{D['hv_sensor']['range_mt']:g} mT; poles " + "/".join("N" if p > 0 else "S" for p in D["hv_pol"]), higher_ok=False)
+@@ -110,7 +112,7 @@
+     row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
+     row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
+     row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
+-    row("feel motor vs Hall arm (±travel)", min(p.distance_to(cd.arm(Dc, t)) for t in TR for p in feels), T["hall_vs_pinions"])
++    row("feel motor vs Hall arm (±travel)", min_dist(list(ARM.values()), feels), T["hall_vs_pinions"])
+     # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
+     from ..base_drive.parts.mech import springs_at, track_balls_at
+     # coils seat on the anchor posts, so the cradle distance is ~0 there; check they stay clear of the drive
+@@ -130,9 +132,9 @@
+         f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
+     ot = [parts[n] for n in parts if n.startswith("outer thrust")][0]
+     row("outer thrust balls vs bottom ring", ot.distance_to(ring), 0.0,
+-        f"Ø{D['ot_ball_d']:g} × {D['ot_n']} on r {D['ot_r']:.2f}, land {D['ot_land']:.2f}; keep-out {D['ot_keep_ang'][0]:.0f}–{D['ot_keep_ang'][1]:.0f}°")
++        f"Ø{D['ot_ball_d']:g} × {D['ot_n']} on r {D['ot_r']:.2f}, land {D['ot_land']:.2f}; keep-out {D['ot_keep_ang'][0]:.0f}–{D['ot_keep_ang'][1]:.0f}°", procs=("buy", "mjf"))
+     row("outer thrust carrier top vs ring underside", D["h_skirt0"] - D["ot_z_top"], D["ot_axial_gap"],
+-        f"carrier is part of the cradle; floor under the seat {D['ot_floor']:.2f}")
++        f"carrier is part of the cradle; floor under the seat {D['ot_floor']:.2f}", procs=("mjf", "mjf"))
+     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
+     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
+         B = ring_field(D)
+@@ -140,6 +142,10 @@
+             f"ring Ø{D['tm_ring'][1]:g}/Ø{D['tm_ring'][0]:g}×{D['tm_ring'][2]:g} N52 diametric, element gap {D['tm_gap']:.2f}: |B| {B['peak']:.0f} mT, in-plane {B['bxy_min']:.0f}-{B['bxy_max']:.0f} mT")
+         row("dial TMAG5273: peak |B| / range with the dial lifted to the stop", B["peak_lift"] / D["tm_range_mt"], 0.9,
+             f"gap {D['tm_gap_min']:.2f}: {B['peak_lift']:.0f} mT", higher_ok=False)
++    from ..common import gearcheck
++    gearcheck.rows(D, row)   # contact ratio, non-conjugate path, backlash band for all four meshes
++    from .. import optics
++    optics.beam_rows(D, parts, row)   # rule 5: beam lands on glow, clears every solid (no-op while optics_on is False)
+     return r
+ 
+ def ring_field(D):
+diff -ruN a/knob-param/knobparam/assembly/export.py b/knob-param/knobparam/assembly/export.py
+--- a/knob-param/knobparam/assembly/export.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/assembly/export.py	2026-11-01 22:26:42.757668934 +0800
+@@ -0,0 +1,81 @@
++"""Exports from one build: STEP (named + coloured assembly), STL (one per part, for PCBWay quotes), USDZ (iPhone AR Quick Look).
++Colours come from render.GROUPS so the AR model matches the section PNGs. Meshes are cached per part key, so a re-export after
++a one-part change only re-tessellates that part. USD needs `pip install usd-core` (Pixar, TOST/Apache-2.0-style licence)."""
++import os, re, hashlib, json
++import numpy as np
++from ..common.cache import CACHE
++
++CLEAR = ("knob body", "control dial", "thrust carrier", "Risley", "screen carrier")   # [Ed] clear-resin parts: see-through in AR
++OPACITY = 0.35                                                                           # [A]
++
++def _colour(name):
++    from .render import GROUPS
++    for _, hexc, match in GROUPS:
++        if match(name): return hexc
++    return "#b0bec5"
++
++def _rgb(hexc): return tuple(int(hexc[i:i + 2], 16) / 255 for i in (1, 3, 5))
++def _safe(name): return re.sub(r"[^A-Za-z0-9_]", "_", name).strip("_") or "part"
++
++def mesh(name, shape, key, tol=0.02, ang=0.2):
++    """(V[n,3] mm, F[m,3]) for one part, cached on its build key + tolerances."""
++    p = os.path.join(CACHE, "mesh_" + hashlib.sha1(f"{key}|{tol}|{ang}".encode()).hexdigest()[:16] + ".npz")
++    if os.path.exists(p):
++        z = np.load(p); return z["v"], z["f"]
++    v, f = shape.tessellate(tol, ang)
++    V = np.array([(q.X, q.Y, q.Z) for q in v], dtype=np.float32); F = np.array(f, dtype=np.int32).reshape(-1, 3)
++    os.makedirs(CACHE, exist_ok=True); np.savez(p, v=V, f=F); return V, F
++
++def step(parts, path):
++    from build123d import Compound, Color, export_step
++    kids = []
++    for n, s in parts.items():
++        c = s.moved(s.location) if hasattr(s, "moved") else s
++        c.label = n; c.color = Color(*_rgb(_colour(n)), OPACITY if any(k in n for k in CLEAR) else 1.0); kids.append(c)
++    export_step(Compound(children=kids, label=os.path.splitext(os.path.basename(path))[0]), path)
++
++def stl(parts, folder, tol=0.01, ang=0.1):
++    from build123d import export_stl
++    os.makedirs(folder, exist_ok=True)
++    for n, s in parts.items(): export_stl(s, os.path.join(folder, _safe(n) + ".stl"), tolerance=tol, angular_tolerance=ang)
++
++def usdz(parts, keys, path, tol=0.02, ang=0.2):
++    """Metres, Y-up (AR Quick Look convention), one Mesh + UsdPreviewSurface per part, then the ARKit packager + checker."""
++    from pxr import Usd, UsdGeom, UsdShade, Sdf, Gf, Vt, UsdUtils
++    usda = os.path.splitext(path)[0] + ".usdc"
++    st = Usd.Stage.CreateNew(usda)
++    UsdGeom.SetStageUpAxis(st, UsdGeom.Tokens.y); UsdGeom.SetStageMetersPerUnit(st, 1.0)
++    root = UsdGeom.Xform.Define(st, "/knob"); st.SetDefaultPrim(root.GetPrim())
++    mats = {}
++    for n, s in parts.items():
++        V, F = mesh(n, s, keys.get(n, n), tol, ang)
++        if not len(F): continue
++        Vy = np.stack([V[:, 0], V[:, 2], -V[:, 1]], 1) * 1e-3          # Z-up mm -> Y-up m
++        m = UsdGeom.Mesh.Define(st, f"/knob/{_safe(n)}")
++        m.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(Vy.astype(np.float32)))
++        m.CreateFaceVertexCountsAttr(Vt.IntArray.FromNumpy(np.full(len(F), 3, dtype=np.int32)))
++        m.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(F.ravel()))
++        m.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)              # flat CAD facets; no Catmull-Clark smoothing
++        lo, hi = Vy.min(0), Vy.max(0); m.CreateExtentAttr([Gf.Vec3f(*map(float, lo)), Gf.Vec3f(*map(float, hi))])
++        hexc = _colour(n); clear = any(k in n for k in CLEAR); mk = (hexc, clear)
++        if mk not in mats:
++            mp = f"/knob/Looks/m{len(mats)}"; mat = UsdShade.Material.Define(st, mp)
++            sh = UsdShade.Shader.Define(st, mp + "/s"); sh.CreateIdAttr("UsdPreviewSurface")
++            sh.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(Gf.Vec3f(*_rgb(hexc)))
++            sh.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.15 if clear else 0.5)
++            sh.CreateInput("opacity", Sdf.ValueTypeNames.Float).Set(OPACITY if clear else 1.0)
++            mat.CreateSurfaceOutput().ConnectToSource(sh.ConnectableAPI(), "surface"); mats[mk] = mat
++        UsdShade.MaterialBindingAPI.Apply(m.GetPrim()).Bind(mats[mk])
++    st.GetRootLayer().Save()
++    ok = UsdUtils.CreateNewARKitUsdzPackage(Sdf.AssetPath(usda), path)
++    return ok, verify_usdz(path)
++
++def verify_usdz(path):
++    """Self-check (usd-core 0.26 dropped UsdUtils.ComplianceChecker; `usdchecker --arkit` from a full USD build is stricter)."""
++    import zipfile
++    from pxr import Usd, UsdGeom
++    st = Usd.Stage.Open(path); bb = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default"]).ComputeWorldBound(st.GetDefaultPrim()).GetRange()
++    z = zipfile.ZipFile(path); names = z.namelist()
++    return dict(default_prim=str(st.GetDefaultPrim().GetPath()), up=UsdGeom.GetStageUpAxis(st), m_per_unit=UsdGeom.GetStageMetersPerUnit(st),
++                meshes=sum(1 for p in st.Traverse() if p.IsA(UsdGeom.Mesh)), size_mm=[round(x * 1e3, 1) for x in bb.GetSize()],
++                first_file=names[0], stored=all(i.compress_type == zipfile.ZIP_STORED for i in z.infolist()), mb=round(os.path.getsize(path) / 1e6, 1))
+diff -ruN a/knob-param/knobparam/base_drive/parts/feel.py b/knob-param/knobparam/base_drive/parts/feel.py
+--- a/knob-param/knobparam/base_drive/parts/feel.py	2026-11-01 22:26:42.739830722 +0800
++++ b/knob-param/knobparam/base_drive/parts/feel.py	2026-11-01 22:26:42.759073008 +0800
+@@ -2,7 +2,7 @@
+ into a catalogue pinion. v0.17 [Ed]: that pinion meshes the compound gear on the idler, not the knob ring."""
+ import math
+ from build123d import *
+-from ...common.util import A, cyl, tube, ext_gear
++from ...common.util import overlay, A, cyl, tube, ext_gear
+ 
+ def build(D):
+     F = D["feel"]; x, y = D["fm_xy"]; ang = D["fm_ang"]
+@@ -12,7 +12,7 @@
+     P = D["fg_pinion"]; face = D["fg_face"]; z1 = D["fg_z_top"]; zb = z1 - face
+     shaft = cyl(F["shaft_d"] / 2, zb, z0 - zb, x, y)   # can bottom down through the PCB into the pinion
+     bore = P["bore"]
+-    Dm = dict(D); Dm["module"] = D["fg_mod"]
++    Dm = overlay(D, module=D["fg_mod"])   # tracked view; dict(D) hid backlash/pressure from the cache
+     pin = Pos(x, y, zb) * (ext_gear(Dm, D["fg_z_pin"], 0, face) - cyl(bore / 2, -0.01, face + 0.02))
+     # Ø2 catalogue bore on the Ø1 shaft
+     sleeve = tube(F["shaft_d"] / 2 + 0.04, bore / 2 - 0.04, zb, face, x, y)
+diff -ruN a/knob-param/knobparam/base_drive/parts/idlers.py b/knob-param/knobparam/base_drive/parts/idlers.py
+--- a/knob-param/knobparam/base_drive/parts/idlers.py	2026-11-01 22:26:42.740744575 +0800
++++ b/knob-param/knobparam/base_drive/parts/idlers.py	2026-11-01 22:26:42.759056807 +0800
+@@ -3,7 +3,7 @@
+ on the same pin under the PCB is driven by the 716's catalogue pinion. No extra shaft."""
+ import math
+ from build123d import *
+-from ...common.util import A, cyl, ext_gear, ext_mesh_spin, ring_phase
++from ...common.util import overlay, A, cyl, ext_gear, ext_mesh_spin, ring_phase
+ 
+ def idler(D):
+     g = ext_gear(D, D["z_enc_pinion"], D["h_pin0"], D["pin_face"])
+@@ -17,7 +17,7 @@
+ def compound_gear(D):
+     """Printed big gear on the compound idler: toothed rim, a 0.8 web, a short hub. Bore clears the existing pin."""
+     z, m = D["fg_z_gear"], D["fg_mod"]
+-    Dm = dict(D); Dm["module"] = m
++    Dm = overlay(D, module=m)   # tracked view; dict(D) hid backlash/pressure from the cache
+     face, z1 = D["fg_face"], D["fg_z_top"]
+     zb = z1 - face
+     root_r = max((z - 2.5) * m / 2, D["pin_d"])
+diff -ruN a/knob-param/knobparam/common/cache.py b/knob-param/knobparam/common/cache.py
+--- a/knob-param/knobparam/common/cache.py	2026-11-01 22:26:42.742706882 +0800
++++ b/knob-param/knobparam/common/cache.py	2026-11-01 22:26:42.759946617 +0800
+@@ -3,7 +3,7 @@
+ import hashlib, json, os, pickle, time
+ from build123d import Compound, Shape, export_brep, import_brep
+ 
+-from .util import PKG
++from .util import PKG, overlay   # overlay lives in util so builders don't depend on cache.py
+ CACHE = os.environ.get("KNOBPARAM_CACHE", os.path.join(PKG, ".cache"))
+ 
+ class TrackingDict(dict):
+@@ -15,18 +15,53 @@
+         try: return super().__getitem__(k)
+         except KeyError: raise ScopeError(f"{k!r} is outside this sub-assembly's scope (interface + own + declared IMPORTS)") from None
+     def get(self, k, default=None): self.used.add(k); return super().get(k, default)
++    def __contains__(self, k): self.used.add(k); return super().__contains__(k)
++    # Anything that walks the whole dict (dict(D), {**D}, D.items(), for k in D) would read keys without recording them.
++    # Record everything instead: over-invalidates that one part, never goes stale. Prefer overlay(D, module=m) below.
++    def _all(self): self.used.update(super().keys())
++    def __iter__(self): self._all(); return super().__iter__()
++    def keys(self): self._all(); return super().keys()
++    def items(self): self._all(); return super().items()
++    def values(self): self._all(); return super().values()
++    def copy(self): self._all(); return dict(super().items())
+ 
+ class ScopeError(KeyError): pass
+ 
+ def _h(obj): return hashlib.sha1(json.dumps(obj, sort_keys=True, default=repr).encode()).hexdigest()[:16]
+ 
++def src_closure(name, seen=None):
++    """Every knobparam module that `name` imports, anywhere in its source (top level or inside a function), transitively.
++    AST-based, so it also sees `from .. import control_dial as cd` inside cross(). Package __init__ files count."""
++    import ast, importlib.util
++    seen = set() if seen is None else seen
++    if name in seen: return seen
++    try: spec = importlib.util.find_spec(name)
++    except Exception: return seen
++    if spec is None or not (spec.origin or "").endswith(".py"): return seen
++    seen.add(name)
++    pkg = name if spec.submodule_search_locations else name.rpartition(".")[0]
++    for n in ast.walk(ast.parse(open(spec.origin, encoding="utf-8").read())):
++        if isinstance(n, ast.Import): cands = [a.name for a in n.names]
++        elif isinstance(n, ast.ImportFrom):
++            base = importlib.util.resolve_name("." * n.level + (n.module or ""), pkg) if n.level else (n.module or "")
++            cands = [base] + [f"{base}.{a.name}" for a in n.names]   # `from pkg import submodule` too
++        else: continue
++        for c in cands:
++            if c.split(".")[0] == "knobparam": src_closure(c, seen)
++    return seen
++
++_SRC = {}
+ def src_hash(mod):
+-    import inspect
+-    srcs = [inspect.getsource(mod)]
+-    for dep in getattr(mod, "SRC_DEPS", []): srcs.append(inspect.getsource(dep))
+-    return _h(srcs)
++    import importlib.util
++    if mod.__name__ not in _SRC:
++        names = set(src_closure(mod.__name__))
++        for dep in getattr(mod, "SRC_DEPS", []): names |= src_closure(dep.__name__)
++        names = sorted(names)
++        _SRC[mod.__name__] = _h([[n, open(importlib.util.find_spec(n).origin, "rb").read().decode()] for n in names])
++    return _SRC[mod.__name__]
+ 
+-def part_hash(mod, D, used): return _h([src_hash(mod), {k: D[k] for k in sorted(used)}])
++_ABSENT = "<absent>"
++def part_hash(mod, D, used): return _h([src_hash(mod), {k: D.get(k, _ABSENT) for k in sorted(used)}])
+ 
+ def build_module(mod, D, stats):
+     """mod.build(D) -> {name: shape}. Returns (shapes, key)."""
+@@ -34,7 +69,7 @@
+     idx_path = os.path.join(CACHE, mod.__name__.split(".")[-1] + ".json")
+     if os.path.exists(idx_path):
+         idx = json.load(open(idx_path))
+-        if idx.get("src") == src_hash(mod) and all(k in D for k in idx["used"]):
++        if True:   # the key already hashes the source, so an old index is safe to try (reverting an edit is free)
+             key = part_hash(mod, D, idx["used"])
+             pk = os.path.join(CACHE, f"{key}.pkl")
+             if os.path.exists(pk):   # any earlier build with these values (switching back is free)
+diff -ruN a/knob-param/knobparam/common/checks.py b/knob-param/knobparam/common/checks.py
+--- a/knob-param/knobparam/common/checks.py	2026-11-01 22:26:42.742573206 +0800
++++ b/knob-param/knobparam/common/checks.py	2026-11-01 22:26:42.760149079 +0800
+@@ -3,9 +3,44 @@
+ 
+ class Rows(list):
+     def __init__(self, owner): super().__init__(); self.owner = owner
+-    def row(self, name, val, tgt, note="", higher_ok=True):
++    def row(self, name, val, tgt, note="", higher_ok=True, procs=None):
++        """procs=("mjf", "sla"): the two faces' processes. Adds tol_need (RSS of their tolerances) and flags rows whose slack
++        is under it, so a 0.05 mm gap between two printed parts shows up as a risk even though it PASSes nominally."""
+         ok = (val >= tgt - 1e-9) if higher_ok else (val <= tgt + 1e-9)
+-        self.append(dict(name=name, value=round(val, 3), target=(">= " if higher_ok else "<= ") + f"{tgt:g}", ok=ok, note=note, owner=self.owner))
++        slack = (val - tgt) if higher_ok else (tgt - val)
++        d = dict(name=name, value=round(val, 3), target=(">= " if higher_ok else "<= ") + f"{tgt:g}", ok=ok, note=note, owner=self.owner,
++                 slack=round(slack, 3))
++        if procs:
++            from .process import stack
++            d["tol_need"] = round(stack(*procs), 3); d["tol_ok"] = val >= d["tol_need"] - 1e-9 if higher_ok else True
++        self.append(d)
+ 
+ def maxr(shape):
+     return max(math.hypot(v.X, v.Y) for v in shape.vertices())
++
++
++def _bbox_gap(a, b):
++    """Lower bound on the distance between two shapes: the gap between their bounding boxes (0 if they overlap)."""
++    A, B = a.bounding_box(), b.bounding_box()
++    d = [max(B.min.X - A.max.X, A.min.X - B.max.X, 0), max(B.min.Y - A.max.Y, A.min.Y - B.max.Y, 0),
++         max(B.min.Z - A.max.Z, A.min.Z - B.max.Z, 0)]
++    return math.sqrt(sum(x * x for x in d))
++
++
++def min_dist(movers, obstacles):
++    """Exact min distance between any mover and any obstacle (BRepExtrema), branch-and-bound on bounding boxes.
++    Pairs are tried nearest-box first; once a box gap exceeds the best exact distance found, the rest are skipped.
++    Same answer as min(m.distance_to(o) for m in movers for o in obstacles), far fewer OCC calls."""
++    pairs = sorted(((_bbox_gap(m, o), i, j) for i, m in enumerate(movers) for j, o in enumerate(obstacles)))
++    best = math.inf
++    for lb, i, j in pairs:
++        if lb >= best: break
++        best = min(best, movers[i].distance_to(obstacles[j]))
++    return best
++
++
++def posed(build, poses):
++    """Build a part once and rotate it to each dial pose (z axis). Only valid when build(D, t) == Rot(0, 0, t) * build(D, 0)."""
++    from build123d import Rot
++    s0 = build(0.0)
++    return {t: Rot(0, 0, t) * s0 for t in poses}
+diff -ruN a/knob-param/knobparam/common/gearcheck.py b/knob-param/knobparam/common/gearcheck.py
+--- a/knob-param/knobparam/common/gearcheck.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/common/gearcheck.py	2026-11-01 22:26:42.759980635 +0800
+@@ -0,0 +1,58 @@
++"""knobparam/common/gearcheck.py — spur mesh quality for standard full-depth involute gears (ha = 1.0 m, hf = 1.25 m).
++Pure maths, no OCC. Pinions are external; `internal=True` means gear 2 is an internal ring.
++References: standard textbook relations (e.g. KHK "Gear Technical Reference", sections on contact ratio and undercut)."""
++import math
++
++HA, HF = 1.0, 1.25          # addendum / dedendum in modules. Use these everywhere instead of literal +2 / -2.5
++def tip_d(z, m, internal=False):  return (z - 2 * HA) * m if internal else (z + 2 * HA) * m
++def root_d(z, m, internal=False): return (z + 2 * HF) * m if internal else (z - 2 * HF) * m
++
++def mesh(z1, z2, m, alpha_deg=20.0, cd=None, internal=False, backlash_tooth=0.0):
++    """z1 = pinion (external). cd = actual centre distance (default nominal). backlash_tooth = total circular thinning
++    built into the pair (ext_gear thins the pinion by backlash/2, int_cutter widens the ring space by backlash/2 -> backlash).
++    Returns dict with contact ratio, operating pressure angle, interference margins and circular backlash."""
++    a0 = math.radians(alpha_deg)
++    r1, r2 = z1 * m / 2, z2 * m / 2
++    rb1, rb2 = r1 * math.cos(a0), r2 * math.cos(a0)
++    a_nom = (r2 - r1) if internal else (r1 + r2)
++    a = a_nom if cd is None else cd
++    aw = math.acos((rb2 - rb1) / a) if internal else math.acos((rb1 + rb2) / a)     # operating pressure angle
++    ra1 = tip_d(z1, m) / 2
++    ra2 = tip_d(z2, m, internal) / 2
++    pb = math.pi * m * math.cos(a0)                                                  # base pitch
++    s1 = math.sqrt(max(ra1**2 - rb1**2, 0))
++    s2 = math.sqrt(max(ra2**2 - rb2**2, 0))
++    L = a * math.sin(aw)                                                             # T1T2 (ext) or T2T1 (int)
++    eps = ((s1 - s2 + L) if internal else (s1 + s2 - L)) / pb
++    # involute interference: the mate's tip must not reach past the pinion's base-tangent point T1
++    intf1 = (s2 - L) if internal else (L - s2)       # >= 0 OK (mm along the line of action)
++    intf2 = None if internal else (L - s1)            # wheel side, external only
++    z_min = 2 * HA / math.sin(a0) ** 2                # no-undercut tooth count if generated (17.1 at 20°)
++    x_min = max(0.0, HA - z1 * math.sin(a0) ** 2 / 2) # profile shift that would avoid undercut on the pinion
++    # effective contact ratio: contact before the pinion's T1 is non-conjugate (the model's flank below the base circle is
++    # radial, so it clears rather than collides; verified by a rotation sweep at 14/75: >= 0.041 mm gap over a full pitch)
++    eps_eff = eps - max(0.0, -intf1) / pb - (max(0.0, -intf2) / pb if intf2 is not None else 0.0)
++    jt = backlash_tooth + 2 * (a - a_nom) * math.tan(a0) * (-1 if internal else 1)   # circular backlash at pitch circle
++    return dict(eps=eps, eps_eff=eps_eff, alpha_w=math.degrees(aw), intf_pinion=intf1, intf_wheel=intf2, undercut=z1 < z_min,
++                z_min=z_min, x_min=x_min, backlash=jt, cd=a, cd_nom=a_nom)
++
++def rows(D, row):
++    """Add gear-quality rows to a Rows object. Targets: eps >= 1.2 for printed/POM teeth (tips round over and
++    lose ~0.1-0.15), interference margin >= 0, circular backlash between 0.05 and 0.25 mm at m0.5."""
++    m, al, bl = D["module"], D["pressure"], D["backlash"]
++    pairs = [("1220 pinion / hub gear", D["z_pinion"], D["z_hub_gear"], m, D["offset"], False),
++             ("idler pinion / 75T ring", D["z_enc_pinion"], D["z_ring"], m, None, True),
++             ("encoder pinion / 75T ring", D["z_enc_pinion"], D["z_ring"], m, D["enc_cd"], True),
++             ("716 KHK pinion / compound gear", D["fg_z_pin"], D["fg_z_gear"], D["fg_mod"], D["fg_cd"], False)]
++    for name, z1, z2, mm, cd, internal in pairs:
++        g = mesh(z1, z2, mm, al, cd, internal, bl)
++        im = g["intf_pinion"] if g["intf_wheel"] is None else min(g["intf_pinion"], g["intf_wheel"])
++        row(f"{name}: effective contact ratio", g["eps_eff"], 1.2,
++            f"{z1}/{z2}T m{mm:g}, alpha_w {g['alpha_w']:.2f}°, geometric {g['eps']:.2f}; non-conjugate {max(0, -im):.2f} mm of the path"
++            + (f"; pinion under the {g['z_min']:.1f}T undercut limit (x_min {g['x_min']:.2f})" if g["undercut"] else ""))
++        row(f"{name}: circular backlash (mm)", g["backlash"], 0.05, f"cd {g['cd']:.3f} vs nominal {g['cd_nom']:.3f}")
++        row(f"{name}: circular backlash, upper (mm)", g["backlash"], 0.25, higher_ok=False)
++
++if __name__ == "__main__":
++    for args in [(19, 24, .5, 20, 10.75, False), (14, 75, .5, 20, 15.25, True), (15, 32, .5, 20, 11.7351, False)]:
++        g = mesh(*args, backlash_tooth=0.1); print(args[:2], {k: round(v, 3) if isinstance(v, float) else v for k, v in g.items()})
+diff -ruN a/knob-param/knobparam/common/model.py b/knob-param/knobparam/common/model.py
+--- a/knob-param/knobparam/common/model.py	2026-11-01 22:26:42.742511810 +0800
++++ b/knob-param/knobparam/common/model.py	2026-11-01 22:26:42.760129254 +0800
+@@ -7,8 +7,8 @@
+   * every IMPORT names a key that the source sub-assembly lists in its EXPORTS."""
+ import copy, importlib
+ 
+-SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb"]   # derive order (exports flow forward)
+-ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics"]     # build / report order
++SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb", "optics"]   # derive order (exports flow forward)
++ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics", "optics"]     # build / report order
+ 
+ def sub(name): return importlib.import_module(f"knobparam.{name}")
+ def sub_params(name): return importlib.import_module(f"knobparam.{name}.params")
+diff -ruN a/knob-param/knobparam/common/process.py b/knob-param/knobparam/common/process.py
+--- a/knob-param/knobparam/common/process.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/common/process.py	2026-11-01 22:26:42.759965041 +0800
+@@ -0,0 +1,13 @@
++"""One process table for every printed part (knob and joystick both read it). Numbers from the joystick v0.4 params, which
++already use PCBWay's stated tolerances. tol = +/- dimensional tolerance; wall = minimum wall; feature = minimum detail."""
++PROCESS = {
++    "sla":  dict(tol=0.20, wall=0.8, feature=0.5, note="PCBWay SLA, wide end of +/-0.1-0.2; clear resin is brittle"),
++    "mjf":  dict(tol=0.25, wall=1.0, feature=0.5, note="PCBWay MJF/SLS PA12"),
++    "fdm":  dict(tol=0.20, wall=1.2, feature=0.8, note="3 x 0.4 lines; only if a part is ever FDM"),
++    "cnc":  dict(tol=0.05, wall=0.5, feature=0.3, note="brass / aluminium turned parts"),
++    "buy":  dict(tol=0.02, wall=0.0, feature=0.0, note="catalogue part (bearings, KHK gears, balls)"),
++}
++
++def stack(*procs):
++    """Clearance needed so two toleranced faces never meet: root-sum-square of the two tolerances (worst case = plain sum)."""
++    return sum(PROCESS[p]["tol"] ** 2 for p in procs) ** 0.5
+diff -ruN a/knob-param/knobparam/common/util.py b/knob-param/knobparam/common/util.py
+--- a/knob-param/knobparam/common/util.py	2026-11-01 22:26:42.742307315 +0800
++++ b/knob-param/knobparam/common/util.py	2026-11-01 22:26:42.759926487 +0800
+@@ -62,3 +62,11 @@
+     """Torus groove for a ring of thrust balls (cut into BOTH the cradle plate and the dial tube end; numbers are the
+     control_dial exports tb_pcd / tb_groove_r / tb_z_ball)."""
+     return Pos(0, 0, z_ball) * Torus(pcd / 2, groove_r)
++
++
++class overlay(dict):
++    """Tracked view of D with a few keys replaced: ext_gear(overlay(D, module=m), ...) instead of Dm = dict(D); Dm[...] = m."""
++    def __init__(self, base, **kw): super().__init__(kw); self.base = base
++    def __getitem__(self, k): return super().__getitem__(k) if super().__contains__(k) else self.base[k]
++    def get(self, k, default=None): return super().__getitem__(k) if super().__contains__(k) else self.base.get(k, default)
++    def __contains__(self, k): return super().__contains__(k) or k in self.base
+diff -ruN a/knob-param/knobparam/control_dial/checks.py b/knob-param/knobparam/control_dial/checks.py
+--- a/knob-param/knobparam/control_dial/checks.py	2026-11-01 22:26:42.745652854 +0800
++++ b/knob-param/knobparam/control_dial/checks.py	2026-11-01 22:26:42.761496617 +0800
+@@ -1,7 +1,7 @@
+ """control_dial LOCAL checks (own parts + interface values only)."""
+ import math
+ from build123d import Rot
+-from ..common.checks import Rows, maxr
++from ..common.checks import Rows, min_dist, posed, maxr
+ from .parts import hall_arm as hall
+ 
+ def _rib_defl(D):
+@@ -63,7 +63,7 @@
+         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
+         tc = [parts[n] for n in parts if n.startswith("thrust")]
+         if tc:
+-            row("Hall spoke vs thrust balls / cage (±travel)", min(hall.arm(D, t).distance_to(q) for t in TR for q in tc), 0.3)
++            row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
+         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
+             f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
+             f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}",
+diff -ruN a/knob-param/knobparam/optics/__init__.py b/knob-param/knobparam/optics/__init__.py
+--- a/knob-param/knobparam/optics/__init__.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/__init__.py	2026-11-01 22:26:42.767173403 +0800
+@@ -0,0 +1,8 @@
++"""optics sub-assembly (v0.18 prep, OFF by default): 405 nm laser + Risley wedge pair, the 12 VCSEL + 12 RGB ring under the
++clear-resin race carrier, resin prism caps on gears, glow targets. Owner: optics agent.
++Public helpers for the assembly cross-checks: rays(D) and beam_rows(D, parts, row)."""
++from . import params
++from .parts import scanner, ring_lights
++PART_MODULES = [scanner, ring_lights]
++from .checks import checks
++from .beam import rays, beam_rows
+diff -ruN a/knob-param/knobparam/optics/beam.py b/knob-param/knobparam/optics/beam.py
+--- a/knob-param/knobparam/optics/beam.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/beam.py	2026-11-01 22:26:42.767302544 +0800
+@@ -0,0 +1,51 @@
++"""Exact Risley-pair ray trace (vector Snell at all four faces) + beam clearance against solids. Pure maths until the
++clearance step, which uses OCC edges and the bbox branch-and-bound in common.checks.min_dist."""
++import math
++
++def _norm(v): l = math.sqrt(sum(c * c for c in v)); return tuple(c / l for c in v)
++def _dot(a, b): return sum(x * y for x, y in zip(a, b))
++
++def refract(i, n, eta):
++    """i = unit incident direction, n = unit surface normal (either side), eta = n_from / n_to. None on total internal reflection."""
++    if _dot(n, i) > 0: n = tuple(-c for c in n)
++    ci = -_dot(n, i); k = 1 - eta * eta * (1 - ci * ci)
++    if k < 0: return None
++    return _norm(tuple(eta * a + (eta * ci - math.sqrt(k)) * b for a, b in zip(i, n)))
++
++def risley_dir(D, th1, th2):
++    """Beam direction after both wedges. Each wedge: flat entry face normal +z, exit face tilted alpha toward angle th."""
++    a, n = math.radians(D["rp_wedge_deg"]), D["rp_n"]; d = (0.0, 0.0, 1.0)
++    for th in (math.radians(th1), math.radians(th2)):
++        d = refract(d, (0.0, 0.0, 1.0), 1.0 / n)
++        if d is None: return None
++        d = refract(d, (math.sin(a) * math.cos(th), math.sin(a) * math.sin(th), math.cos(a)), n)
++        if d is None: return None
++    return d
++
++def rays(D):
++    """[(th1, th2, start xyz, end xyz on the glow plane, landing radius)] over the sample grid."""
++    x0, y0 = D["las_xy"]; z0 = D["rp_top"]; zt = D["glow_z"]; N = D["rp_samples"]; out = []
++    for i in range(N):
++        for j in range(N):
++            t1, t2 = 360.0 * i / N, 360.0 * j / N
++            d = risley_dir(D, t1, t2)
++            if d is None or d[2] <= 0: out.append((t1, t2, (x0, y0, z0), None, math.inf)); continue
++            s = (zt - z0) / d[2]; e = (x0 + s * d[0], y0 + s * d[1], zt)
++            out.append((t1, t2, (x0, y0, z0), e, math.hypot(e[0], e[1])))
++    return out
++
++def beam_rows(D, parts, row, skip=("Risley", "laser", "glow")):
++    """Rule 5 checks: every sampled ray lands on the glow target, and every beam segment clears every solid."""
++    if not D["optics_on"]: return
++    from build123d import Edge, Vector
++    from ..common.checks import min_dist
++    R = rays(D); r_max = max(r[4] for r in R)
++    row("laser: every ray lands inside the glow target (margin, mm)", D["glow_r"] - r_max, 0.0,
++        f"{len(R)} rays, max landing r {r_max:.2f} vs glow r {D['glow_r']:.2f}; cone {math.degrees(math.atan2(r_max, D['glow_z'] - D['rp_top'])):.1f}° half-angle")
++    # beam as a fat line: distance from the centre line must exceed beam radius (+ divergence over the path) + clearance
++    L = D["glow_z"] - D["rp_top"]; r_beam = D["beam_d"] / 2 + L * D["beam_div_mrad"] * 1e-3 / 2
++    segs = [Edge.make_line(Vector(*s), Vector(*e)) for _, _, s, e, _ in R[:: max(1, len(R) // 96)] if e is not None]
++    obst = [p for n, p in parts.items() if not any(k in n for k in skip)]
++    if obst:
++        row("laser: beam centre line vs any solid (mm)", min_dist(segs, obst) - r_beam, D["beam_clear"],
++            f"{len(segs)} sampled segments vs {len(obst)} parts; beam radius {r_beam:.2f} at the target")
+diff -ruN a/knob-param/knobparam/optics/checks.py b/knob-param/knobparam/optics/checks.py
+--- a/knob-param/knobparam/optics/checks.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/checks.py	2026-11-01 22:26:42.767318423 +0800
+@@ -0,0 +1,17 @@
++"""optics LOCAL checks (own parts + interface values only). Beam vs the whole stack is a CROSS check (assembly/checks.py
++calls optics.beam_rows(D, parts, row) with every part)."""
++import math
++from ..common.checks import Rows
++from .beam import risley_dir
++
++def checks(D, parts):
++    r = Rows("optics"); row = r.row
++    if not D["optics_on"]: return r
++    # no total internal reflection anywhere in the sweep (exact Snell)
++    bad = sum(risley_dir(D, 360 * i / 36, 360 * j / 36) is None for i in range(36) for j in range(36))
++    row("Risley: rays lost to total internal reflection", bad, 0, f"wedge {D['rp_wedge_deg']}°, n {D['rp_n']}", higher_ok=False)
++    row("Risley wedge thin edge vs SLA minimum (mm)", D["rp_t_min"], D["print_wall_min"] * 0.8, "SLA 0.8 per the joystick process table")
++    # alternating ring: emitter-to-emitter gap on the circle
++    V, G = D["vcsel"], D["rgb"]; chord = 2 * D["rl_r"] * math.sin(math.radians(D["rl_pitch_deg"]) / 2)
++    row("ring lights: gap between neighbouring VCSEL and RGB (mm)", chord - (V["y"] + G["y"]) / 2, 0.5, f"{2 * D['rl_n']} emitters on r {D['rl_r']:.2f}")
++    return r
+diff -ruN a/knob-param/knobparam/optics/params.py b/knob-param/knobparam/optics/params.py
+--- a/knob-param/knobparam/optics/params.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/params.py	2026-11-01 22:26:42.767284302 +0800
+@@ -0,0 +1,48 @@
++"""optics own params + derive. Every value tagged; [A] = assumed until the optics round fixes it.
++Everything is a ratio of interface values where one exists (knob OD, glass z), so a knob or screen change carries through."""
++import math
++
++P = dict(
++    optics_on=False,           # [Ed rule 5] every subsystem off by default; --set optics_on=True to build + check
++    # ---- 405 nm laser module (Civillaser 1 mW, Φ8 x 31) [S] ----
++    las_d=8.0, las_len=31.0,
++    las_r_frac=0.0,            # [A] laser axis radius as a fraction of the knob radius (0 = on the knob axis)
++    las_z_below_glass=24.0,    # [A] laser aperture this far below the glass
++    beam_d=1.0,                # [A] beam diameter at the aperture (collimated module ~1 mm)
++    beam_div_mrad=0.5,         # [A] full divergence
++    # ---- Risley pair: two identical resin wedges, flat face toward the laser [A] ----
++    rp_wedge_deg=8.0,          # wedge angle alpha
++    rp_n=1.53,                 # [A] clear SLA resin at 405 nm (measure: datasheets quote nD ~1.51-1.53)
++    rp_d=7.0, rp_t_min=0.8,    # disc diameter, thin edge (>= SLA print minimum)
++    rp_gap=0.8,                # air gap between the wedges
++    rp_samples=24,             # angle samples per prism for the sweep (24 x 24 = 576 rays)
++    # ---- glow targets ----
++    glow_below_glass=1.5,      # [A] glow coat plane under the glass (dial lid underside)
++    glow_r_frac=0.80,          # [A] usable glow radius as a fraction of the knob radius
++    beam_clear=0.3,            # [A] beam edge to any solid
++    # ---- ring lights under the clear race carrier [Ed] ----
++    rl_n=12,                   # VCSELs; the same number of RGB LEDs sits between them (alternating)
++    rl_r_frac=0.86,            # [A] emitter circle as a fraction of the skirt ID radius
++    rl_phase_deg=7.5,          # [A] first VCSEL angle (half the 15° pitch, so no emitter sits on 0°)
++    vcsel=dict(part="JNJ-V-2835CW-665003-S-D1", lcsc="C42375664", x=2.8, y=3.5, h=0.8, half_angle_deg=12.0),   # [S] 2835; beam half-angle [A]
++    rgb=dict(part="addressable 2020 [A]", x=2.0, y=2.0, h=0.9),
++)
++
++IMPORTS = {}       # v0.18: {"control_dial": ["lid_z0"], "main_knob": ["race_r", "race_z", "carrier_z0"]} once those exist
++EXPORTS = []
++
++
++def derive(D):
++    R = D["knob_od"] / 2
++    D["las_xy"] = (D["las_r_frac"] * R, 0.0)
++    D["las_z_ap"] = D["z_glass"] - D["las_z_below_glass"]                 # aperture (top of the module)
++    a = math.radians(D["rp_wedge_deg"]); d = D["rp_d"]
++    D["rp_t_max"] = D["rp_t_min"] + d * math.tan(a)                       # thick edge follows the wedge angle
++    D["rp1_z0"] = D["las_z_ap"] + 0.5
++    D["rp2_z0"] = D["rp1_z0"] + D["rp_t_max"] + D["rp_gap"]
++    D["rp_top"] = D["rp2_z0"] + D["rp_t_max"]
++    D["rp_dev_thin_deg"] = (D["rp_n"] - 1) * D["rp_wedge_deg"]            # thin-prism estimate per wedge (check uses exact Snell)
++    D["glow_z"] = D["z_glass"] - D["glow_below_glass"]
++    D["glow_r"] = D["glow_r_frac"] * R
++    D["rl_r"] = D["rl_r_frac"] * D["skirt_id"] / 2
++    D["rl_pitch_deg"] = 360.0 / (2 * D["rl_n"])                           # alternating VCSEL / RGB
+diff -ruN a/knob-param/knobparam/optics/parts/ring_lights.py b/knob-param/knobparam/optics/parts/ring_lights.py
+--- a/knob-param/knobparam/optics/parts/ring_lights.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/parts/ring_lights.py	2026-11-01 22:26:42.767110323 +0800
+@@ -0,0 +1,12 @@
++"""optics: 12 VCSELs alternating with 12 RGB LEDs on one circle under the clear race carrier (envelopes only)."""
++import math
++from build123d import *
++
++def build(D):
++    if not D["optics_on"]: return {}
++    out = {}; V, G = D["vcsel"], D["rgb"]; z0 = D["z_glass"] - 60   # [A] placeholder z until IMPORTS bring the carrier z
++    for i in range(2 * D["rl_n"]):
++        a = D["rl_phase_deg"] + i * D["rl_pitch_deg"]; p = V if i % 2 == 0 else G
++        x, y = D["rl_r"] * math.cos(math.radians(a)), D["rl_r"] * math.sin(math.radians(a))
++        out[f"{'VCSEL' if i % 2 == 0 else 'RGB'} {i // 2 + 1}"] = Pos(x, y, z0) * Rot(0, 0, a) * Box(p["x"], p["y"], p["h"], align=(Align.CENTER, Align.CENTER, Align.MIN))
++    return out
+diff -ruN a/knob-param/knobparam/optics/parts/scanner.py b/knob-param/knobparam/optics/parts/scanner.py
+--- a/knob-param/knobparam/optics/parts/scanner.py	1970-01-01 08:00:00.000000000 +0800
++++ b/knob-param/knobparam/optics/parts/scanner.py	2026-11-01 22:26:42.767061512 +0800
+@@ -0,0 +1,19 @@
++"""optics: 405 nm laser body + the two Risley wedges (posed at angle 0; the beam check rotates them mathematically)."""
++import math
++from build123d import *
++from ...common.util import cyl
++
++def wedge(D, z0, rot_deg):
++    """Disc of diameter rp_d, flat bottom at z0, top face tilted by the wedge angle about an axis at rot_deg."""
++    d, a = D["rp_d"], math.radians(D["rp_wedge_deg"])
++    blank = cyl(d / 2, z0, D["rp_t_max"] + 0.01)
++    # cut with a big box tilted by alpha, its bottom face through the thin edge height on one side
++    cut = Pos(0, 0, z0 + D["rp_t_min"] + d / 2 * math.tan(a)) * Rot(0, D["rp_wedge_deg"], 0) * Box(4 * d, 4 * d, 4 * d, align=(Align.CENTER, Align.CENTER, Align.MIN))
++    return Rot(0, 0, rot_deg) * (blank - cut)
++
++def build(D):
++    if not D["optics_on"]: return {}
++    x, y = D["las_xy"]
++    return {"laser 405 nm": Pos(x, y, 0) * cyl(D["las_d"] / 2, D["las_z_ap"] - D["las_len"], D["las_len"]),
++            "Risley wedge 1": Pos(x, y, 0) * wedge(D, D["rp1_z0"], 0.0),
++            "Risley wedge 2": Pos(x, y, 0) * wedge(D, D["rp2_z0"], 180.0)}
