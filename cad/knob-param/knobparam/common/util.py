@@ -37,9 +37,11 @@ def sector(r0, r1, a_half, z0, h, a_mid, n=24):
     pts = [(r1 * math.cos(math.radians(a_mid - a_half + 2 * a_half * i / n)), r1 * math.sin(math.radians(a_mid - a_half + 2 * a_half * i / n))) for i in range(n + 1)]
     pts += [(r0 * math.cos(math.radians(a_mid + a_half - 2 * a_half * i / n)), r0 * math.sin(math.radians(a_mid + a_half - 2 * a_half * i / n))) for i in range(n + 1)]
     return Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), h)
-def ring_phase(D, a):
-    """Spin (deg) of a z_enc_pinion pinion at dial angle a so it meshes the fixed z_ring internal ring (v0.13 rule, any ring parity)."""
-    zp, zr = D["z_enc_pinion"], D["z_ring"]; t = 360.0 / zp
+def ring_phase(D, a, zp=None):
+    """Spin (deg) of a zp-tooth pinion at dial angle a so it meshes the fixed z_ring internal ring (v0.13 rule, any ring parity).
+    zp defaults to the encoder / idler tooth count."""
+    zp = D["z_enc_pinion"] if zp is None else zp
+    zr = D["z_ring"]; t = 360.0 / zp
     off = 0.5 - ((zr * 270.0 / 360.0) % 1.0)
     return ((a - 270.0) * (1.0 - zr / zp) + off * t) % t
 def ext_phase(z_gear, z_pinion):

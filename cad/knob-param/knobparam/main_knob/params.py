@@ -9,7 +9,7 @@ P = dict(
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
                             "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # ball circle + 45° faces
                             "kb_seat_c_knob", "kb_groove_h"]}
-EXPORTS = []
+EXPORTS = ["h_bi1"]   # top of the bottom internal ring -> base_drive (feel-motor can sits above it)
 
 
 def derive(D):

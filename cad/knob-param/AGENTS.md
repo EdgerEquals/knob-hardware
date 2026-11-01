@@ -1,8 +1,9 @@
 # knob-param — agent guide (parallel work by sub-assembly)
 
 Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø39.5).
-Default params reproduce **v0.15** exactly: 32/34 gap checks PASS, 1 known clash (PCB / motor),
-`cad/assemblies/knob-stack-v0.15/` (sections PNG, check.json, report).
+Default params are **v0.16**: the 716 feel motor sits on the PCB top, inside the base cradle (axial, own pinion
+into the bottom ring). 41/42 gap checks PASS, 1 known clash (PCB / motor),
+`cad/assemblies/knob-stack-v0.16/` (clean sections PNG, check.json). v0.15d is the previous snapshot.
 
 ## Branch model
 
@@ -42,8 +43,8 @@ cad/knob-param/
                       checks.py (cross-checks + clashes), render.py, report.py, hall_dyn.py
     main_knob/        knob body + skirt, hub gear, cone race + balls, bottom ring
     control_dial/     dial tube + lip, screen, carrier + FPC strap, hub magnet, Hall arm + magnets, thrust balls
-    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers
-    under_pcb/        encoder wheel, EE-SX1131, feel motor + clip
+    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers, 716 feel motor + clip
+    under_pcb/        encoder wheel, EE-SX1131
     electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, TMAG5273, connectors;
                       kicad/ = KiCad projects (knob-main-pcb, screen-adapter), footprints, footprint generators
 ```
@@ -80,13 +81,13 @@ Current contract (`python build.py --contract`):
   enc_ang, idler2_from_enc, motor, skirt_clear, knob_wall, skirt_gap, knob_run, knob_hub_z0, hub_gear_face, kb_ball_d,
   kb_ball_tube, kb_clear, kb_zc, kb_play, dial_tube_id, dial_tube_wall, travel_deg, rod_d, nut_m, plate_t, cr_floor,
   pin_face, pinion_hub_d, pin_above_skirt, brg, ha_ang0, ha_ring_clear, ha_n, ha_mag, ha_mag_wall, ha_mag_edge,
-  ha_pitch, ha_sens_h, ha_gap, ha_arm, ha_win_clear, feel_ang, adapter_t, cord_clear, screen, z_glass, z_holder0,
+  ha_pitch, ha_sens_h, ha_gap, ha_arm, ha_win_clear, idler1_ang, feel, adapter_t, cord_clear, screen, z_glass, z_holder0,
   cof_bend, hall_layout, hv_n, hv_pitch, hv_cross_travel, hv_mag, hv_br, hv_wall, hv_gap, hv_sensor, hv_ring_clear, tgt`
 * electronics — EXPORTS `pcb_w, pcb_above, pcb_below, adapter_d, adapter_fps, adapter_env`; IMPORTS under_pcb `d_big_tip`
 * control_dial — EXPORTS `dial_hub_z0, z_lip0, z_web0, dial_hub_od, r_web, gusset, lip_fillet, tb_pcd, tb_groove_r, tb_z_ball`;
   IMPORTS electronics `adapter_d, adapter_fps, adapter_env`
-* main_knob — IMPORTS control_dial `dial_hub_z0, z_lip0, z_web0, dial_hub_od, r_web, gusset, lip_fillet`
-* base_drive — IMPORTS control_dial `tb_pcd, tb_groove_r, tb_z_ball`
+* main_knob — EXPORTS `h_bi1`; IMPORTS control_dial `dial_hub_z0, z_lip0, z_web0, dial_hub_od, r_web, gusset, lip_fillet`
+* base_drive — IMPORTS control_dial `tb_pcd, tb_groove_r, tb_z_ball`; main_knob `h_bi1`
 * under_pcb — EXPORTS `d_big_tip`; IMPORTS electronics `pcb_w, pcb_above, pcb_below`
 
 ## Running
@@ -117,11 +118,11 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`, 24 rows): main_knob 3, control_dial 12, base_drive 1, under_pcb 7, electronics 1.
-* **Cross** (`assembly/checks.py`, 10 rows) + all-pairs clashes; `KNOWN` lists accepted clashes (PCB / motor).
-* v0.15 baseline: 32/34 PASS. The two known FAILs are open design items, not harness bugs:
+* **Local** (`<sub>/checks.py`): main_knob 3, control_dial 13, base_drive 8, under_pcb 2, electronics 1, plus 15 cross rows (42 total).
+* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (PCB / motor).
+* v0.16: 41/42 PASS. The one known FAIL is an open design item, not a harness bug:
   * control_dial: dial lip wall far side 0.36 < 0.4 (`--set cof_bend=0.26` → 0.405 PASS)
-  * under_pcb: geared feel motor needs 25.8 mm, 25.0 available (−0.8)
+* v0.15d also failed "geared feel motor depth 25.8 > 25" behind the PCB. v0.16 removes that check: the 716 is no longer under the board.
 * A sub PR must not turn any other row red; the assembly agent re-runs everything before merging.
 
 ## KiCad

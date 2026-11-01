@@ -66,8 +66,13 @@ P = dict(
     ha_gap=1.2,
     ha_arm=(4.4, 1.5, 3.0, 3.0),
     ha_win_clear=0.5,
-    # ---- feel motor [A] ----
-    feel_ang=54.0,   # [A] idler 1 = feel motor (v0.13: 45.5 overlapped the Ø48 wheel)
+    # ---- idler 1 (v0.16: the 716 is no longer on this shaft) [A] ----
+    idler1_ang=54.0,   # [A] idler 1 stays at the v0.13 angle (45.5 overlapped the Ø48 wheel)
+    # ---- feel motor on the PCB top, inside the cradle [A] ----
+    # Axial 716, its own pinion meshing the bottom internal ring. Angle and tooth count are derived
+    # (the bisector of the idler gap that clears the 1220, the Hall arm and the skirt by the most).
+    feel=dict(part="716 coreless", can_d=7.0, can_len=16.0, end_boss=1.0, end_boss_d=4.0, shaft_d=1.0,
+              can_gap=0.3, clear=0.5, clip_frac=0.5, pad=(1.8, 1.8), pad_pitch=5.2, pad_hole=1.0, pad_t=0.15),
     # ---- screen holder + adapter ----
     adapter_t=1.0,   # [K]/[A] (cord room over the nut [Ed])
     cord_clear=3.0,   # [K]/[A] (cord room over the nut [Ed])
@@ -88,7 +93,7 @@ P = dict(
     hv_sensor=dict(part="TMAG5253BA3 (TI) X2SON-4", l=1.4, w=1.1, h=0.4, elem=0.13, bw_khz=15.0, s_mv_mt=15.0, range_mt=80.0, nd_nt=220.0, vcc=3.3),   # [S] datasheet; elem = Hall element below the package top [S]
     hv_ring_clear=0.5,   # [A] bar to the ring tips
     # ---- check targets (minimum gaps) [A] ----
-    tgt=dict(knob_od_vs_screen=0.0, feel_vs_wheel=0.3, tab_vs_rim=0.5, hall_vs_pinions=0.3, race_wall=1.0, lip_wall=0.4, back_panel_max=26.0, clash_mm3=1e-3, idler_motor=0.5, motor_dial_tube=0.5, arm_vs_cradle=0.3, arm_vs_ring=0.3, sensor_gap=0.2, sensor_vs_cradle=0.2, strap_vs_parts=0.2, seat_vs_knob=0.2, carrier_vs_cup=0.2, race_ball_tube=0.05, race_land=0.2),
+    tgt=dict(knob_od_vs_screen=0.0, tab_vs_rim=0.5, hall_vs_pinions=0.3, race_wall=1.0, lip_wall=0.4, back_panel_max=26.0, clash_mm3=1e-3, idler_motor=0.5, motor_dial_tube=0.5, arm_vs_cradle=0.3, arm_vs_ring=0.3, sensor_gap=0.2, sensor_vs_cradle=0.2, strap_vs_parts=0.2, seat_vs_knob=0.2, carrier_vs_cup=0.2, race_ball_tube=0.05, race_land=0.2),
 )
 
 # screens table (screen choice envelope; library SPECs): od = round outline, r_edge = ledge/chin edge from the panel centre,
@@ -102,6 +107,94 @@ SCREENS = {
                          fold=(25.11, 14.0, 1.10), b2b=(5.0, 2.6, 0.9), rigid=False, iface="4-wire SPI (+MIPI 1-lane), VDDIO 1.8 V",
                          stack=(0.134, 0.20, 0.20, 0.13), d_pol=37.71, encap_flat=37.79, d_tape=37.61),
 }
+
+
+def _hall_clear(D, x, y, rad):
+    """Plan clearance of a circle to the Hall arm swept over ±travel. The spoke width lives in control_dial, so the
+    spoke is padded by feel.clear on top of the pad radius (conservative versus the real 3 mm spoke)."""
+    worst = 1e9
+    T = D["travel_deg"]
+    def eat(px, py, rr):
+        nonlocal worst
+        worst = min(worst, math.hypot(x - px, y - py) - rr - rad)
+    if D["hall_layout"] == "vernier":
+        pr = D["hv_pad_r"]; spoke = pr + D["feel"]["clear"]
+        for th in (-T, 0.0, T):
+            pts = []
+            for r, a in zip(D["hv_r"], D["hv_phi_m"]):
+                px, py = r * math.cos(math.radians(a + th)), r * math.sin(math.radians(a + th))
+                pts.append((px, py)); eat(px, py, pr)
+            for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+                for i in range(1, 8):
+                    t = i / 8.0; eat(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, pr)
+            a0 = math.radians(D["hv_phi_m"][0] + th)
+            r_in, r_out = D["dial_tube_od"] / 2, D["hv_r"][0]
+            for i in range(9):
+                r = r_in + (r_out - r_in) * i / 8.0
+                eat(r * math.cos(a0), r * math.sin(a0), spoke)
+    else:
+        r0, r1, half = D["ha_pad_r0"], D["ha_pad_r1"], D["ha_pad_half"] + T
+        for i in range(7):
+            r = r0 + (r1 - r0) * i / 6.0
+            for j in range(9):
+                a = math.radians(D["ha_ang0"] - half + 2 * half * j / 8.0)
+                eat(r * math.cos(a), r * math.sin(a), D["feel"]["clear"])
+    return worst
+
+
+def _feel_clearance(D, z, ang):
+    """Running clearances for an axial feel motor whose pinion (z teeth) meshes the bottom internal ring at angle ang.
+    All inputs are interface values. Returns (worst, parts, xy, centre distance, tip radius)."""
+    F = D["feel"]; m = D["module"]; can_r = F["can_d"] / 2
+    tip = (z + 2) * m / 2
+    cd = (D["z_ring"] - z) * m / 2
+    x, y = cd * math.cos(math.radians(ang)), cd * math.sin(math.radians(ang))
+    dial_r, skirt_r, body_r = D["dial_tube_od"] / 2, D["skirt_id"] / 2, D["can_r"]
+    d_body = math.hypot(x - D["offset"], y)
+    parts = {
+        "skirt": skirt_r - cd - can_r,
+        "dial_can": cd - can_r - dial_r,
+        "dial_pin": cd - tip - dial_r,
+        "body_can": d_body - body_r - can_r,
+        "body_pin": d_body - body_r - tip,
+    }
+    gear = 1e9
+    for a in (D["enc_ang"], *D["idler_angs"]):
+        px, py = D["enc_cd"] * math.cos(math.radians(a)), D["enc_cd"] * math.sin(math.radians(a))
+        gear = min(gear, math.hypot(x - px, y - py) - D["d_pin_tip"] / 2 - tip)
+    parts["gear"] = gear
+    parts["hall"] = _hall_clear(D, x, y, tip)
+    return min(parts.values()), parts, (x, y), cd, tip
+
+
+def _place_feel(D):
+    """Axial 716 on the PCB-top side, pinion meshing the bottom ring (one mesh, torque into the knob).
+
+    The three bottom-ring pinions (two idlers + encoder) split the circle into three gaps. In a gap between two
+    equal pinions the clearance-balancing angle is the bisector. Pick the bisector whose best whole-tooth pinion
+    maximises the worst running clearance (skirt, dial tube, 1220 can, the other pinion tips, the Hall arm).
+    Ties break toward fewer pinion teeth (more reduction)."""
+    angs = sorted({D["enc_ang"], *D["idler_angs"]})
+    gaps = list(zip(angs, angs[1:] + [angs[0] + 360.0]))
+    best = None
+    for a0, a1 in gaps:
+        ang = ((a0 + a1) / 2.0) % 360.0
+        for z in range(8, 42):
+            mn, parts, xy, cd, tip = _feel_clearance(D, z, ang)
+            key = (mn, -z)
+            if best is None or key > best[0]:
+                best = (key, ang, z, parts, xy, cd, tip)
+    _, ang, z, parts, xy, cd, tip = best
+    p = D["feel"]["pad_pitch"] / 2.0
+    tx, ty = -math.sin(math.radians(ang)), math.cos(math.radians(ang))
+    D["z_feel"] = z
+    D["fm_ang"] = ang
+    D["fm_cd"] = cd
+    D["fm_xy"] = xy
+    D["fm_tip"] = tip
+    D["fm_ratio"] = D["z_ring"] / z
+    D["fm_clear"] = parts
+    D["fm_pad_xy"] = [(xy[0] + tx * p, xy[1] + ty * p), (xy[0] - tx * p, xy[1] - ty * p)]
 
 
 def derive(D):
@@ -129,11 +222,10 @@ def derive(D):
     D["h_skirt0"] = D["skirt_gap"]
     D["h_band1"] = D["knob_hub_z0"] + D["hub_gear_face"]
     # ---- angles / gear centres ----
-    D["idler_angs"] = [D["feel_ang"], (D["enc_ang"] + D["idler2_from_enc"]) % 360]
+    D["idler_angs"] = [D["idler1_ang"], (D["enc_ang"] + D["idler2_from_enc"]) % 360]
     xy = lambda a, r=None: ((D["enc_cd"] if r is None else r) * math.cos(math.radians(a)), (D["enc_cd"] if r is None else r) * math.sin(math.radians(a)))
     D["enc_xy"] = xy(D["enc_ang"]); D["idler_xy"] = [xy(a) for a in D["idler_angs"]]
     D["spacing"] = sorted([(D["idler_angs"][0] - D["enc_ang"]) % 360, (D["idler_angs"][1] - D["idler_angs"][0]) % 360, (D["enc_ang"] - D["idler_angs"][1]) % 360])
-    D["fm_xy"] = D["idler_xy"][0]                                          # feel motor on idler 1
     # ---- screen envelope ----
     S = dict(SCREENS[D["screen"]]); D["S"] = S
     if D["cof_bend"] is not None: S["bend"] = D["cof_bend"]
@@ -174,4 +266,5 @@ def derive(D):
         D["hv_z_elem"] = sw["h"] - sw["elem"]
         D["hv_z_mag0"] = sw["h"] + D["hv_gap"]
         D["hv_elem_gap"] = D["hv_z_mag0"] - D["hv_z_elem"]
+    _place_feel(D)
     return D

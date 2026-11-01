@@ -127,9 +127,10 @@ for i, (a, out) in enumerate(zip(HALL_ANGS, ("HALL_A", "HALL_B"))):
     for pad in cp.Pads(): pad.SetNet(NETS["VCC" if pad.GetNumber() == "1" else "GND"])
 j2 = load(J2_FP); j2.SetReference("J2"); j2.SetPosition(P(*J2_POS)); board.Add(j2); flip(j2)
 for pad in j2.Pads(): pad.SetNet(NETS[{"1": "VCC", "2": "GND", "3": "HALL_A", "4": "HALL_B"}[pad.GetNumber()]])
-# v0.12 (knob stack v0.13, feel motor [Ed]): M2 = FeelMotor_716_Shaft_Pads at idler 1 moved to 54 deg [A] (cradle frame; clears the
-# Ø48 encoder wheel tip by 0.56): NPTH 1.6 for the Ø1 shaft + 2 B.Cu pads (MOT_A / MOT_B) [A]; H-bridge not placed yet [A].
-FM_ANG, FM_R = 54.0, ENC_CD
+# v0.16: the 716 moved to the PCB top (base cradle). M2 is two lead holes + B.Cu pads at the derived motor axis
+# (default params: bisector of idler 1/2 = 102°, 22T pinion, centre distance 12.75). The parametric proxy in
+# electronics/parts/pcb.py is what build.py uses; keep these in step with interface fm_ang / fm_cd when regenerating.
+FM_ANG, FM_R = 102.0, 12.75
 FM_POS = (SHAFT_X + FM_R * math.cos(math.radians(FM_ANG)), SHAFT_Y - FM_R * math.sin(math.radians(FM_ANG)))
 for n in ("MOT_A", "MOT_B"):
     NETS[n] = pcbnew.NETINFO_ITEM(board, n); board.Add(NETS[n])

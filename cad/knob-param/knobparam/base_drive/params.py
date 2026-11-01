@@ -35,7 +35,8 @@ P = dict(
     hv_slot_clear=0.5,   # [A] bar to the cradle slot walls over travel
 )
 
-IMPORTS = {"control_dial": ["tb_pcd", "tb_groove_r", "tb_z_ball"]}
+IMPORTS = {"control_dial": ["tb_pcd", "tb_groove_r", "tb_z_ball"],
+           "main_knob": ["h_bi1"]}   # feel-motor can sits above the bottom ring
 EXPORTS = []
 
 
@@ -63,4 +64,17 @@ def derive(D):
         D["hv_slot_r1"] = D["skirt_id"] / 2 + 0.5
         dev = max(abs(a - D["ha_ang0"]) for a in D["hv_phi_m"] + D["hv_phi_s"])
         D["hv_slot_half"] = dev + D["travel_deg"] + R2D((D["hv_pad_r"] + D["hv_slot_clear"]) / D["hv_slot_r0"])
+    # ---- feel motor mount (axial, pinion in the bottom-ring band, can above the ring) ----
+    F = D["feel"]
+    D["fm_z_can0"] = max(D["h_pin1"] + F["can_gap"], D["h_bi1"] + F["clear"])
+    D["fm_z_can1"] = D["fm_z_can0"] + F["can_len"]
+    D["fm_grip"] = F["clip_frac"] * F["can_len"]   # [A] collar length = this fraction of the can, from the shaft end
+    # wall uses whatever skirt margin the placement left, capped at the 1220 collar wall
+    D["fm_wall"] = min(D["motor_collar_wall"], D["skirt_id"] / 2 - (D["fm_cd"] + F["can_d"] / 2 + D["motor_glue"]) - F["clear"])
+    D["fm_pocket_r"] = D["fm_tip"] + D["pocket_clear"]
+    D["fm_rib_r0"] = D["dial_tube_od"] / 2 + F["clear"]                 # outside the dial tube
+    D["fm_rib_r1"] = D["fm_cd"] - D["fm_pocket_r"] - D["motor_glue"]    # inside the pinion pocket
+    D["fm_rib_w"] = F["can_d"] / 2                                      # [A] tangential width, half the can
+    D["fm_z_rib1"] = D["fm_z_can0"] - D["motor_glue"]                    # glue gap under the clip foot
+    D["fm_lead_r"] = F["pad_hole"] / 2 + D["motor_glue"]
     return D

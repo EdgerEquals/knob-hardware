@@ -1,5 +1,5 @@
-"""under_pcb own params + derive (encoder pinion/shaft/bearings, big gear + slotted rim, EE-SX1131, feel motor + clip,
-back-panel depth). Reads: interface + own + IMPORTS (electronics board outline)."""
+"""under_pcb own params + derive (encoder pinion/shaft/bearings, big gear + slotted rim, EE-SX1131, back-panel depth).
+The 716 feel motor is a base_drive part as of v0.16. Reads: interface + own + IMPORTS (electronics board outline)."""
 import math
 
 P = dict(
@@ -19,9 +19,6 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] PCB back to the back panel inner face (bearing 2 seat)
-    panel_clear=1.0,   # [A] lowest part to the back panel
-    # ---- feel motor [A] ----
-    feel=dict(part="716 coreless", can_d=7.0, can_len=16.0, end_boss=1.0, shaft_d=1.0, can_gap=0.3, clip_od=9.0, clip_len=3.4, gearhead_len=7.5),
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"]}
@@ -50,12 +47,4 @@ def derive(D):
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
     D["sens_xy"] = (ex, ey - D["sens_r"])
-    # ---- feel motor ----
-    F = D["feel"]
-    D["fm_z_can_top"] = D["z_pcb_back"] - F["can_gap"]; D["fm_z_can_bot"] = D["fm_z_can_top"] - F["can_len"]
-    D["fm_z_end"] = D["fm_z_can_bot"] - F["end_boss"]
-    D["depth_direct"] = -D["fm_z_end"] + D["panel_clear"] + D["z_pcb_back"]
-    D["depth_geared"] = D["depth_direct"] + F["gearhead_len"]
-    D["depth_encoder"] = -(D["h_hub_bot"] - 0.5 - B["ft"]) - D["pcb_t"]
-    D["depth_min"] = max(D["depth_direct"], D["depth_encoder"])
     return D

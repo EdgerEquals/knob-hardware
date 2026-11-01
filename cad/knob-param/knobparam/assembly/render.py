@@ -52,17 +52,27 @@ def region_solid(spec):
         if spec.get("opp"): return Pos(x0, 0, z0) * Box(x1 - x0, y1, z1 - z0, align=(Align.MIN,) * 3)
         return Pos(x0, y0, z0) * Box(x1 - x0, -y0, z1 - z0, align=(Align.MIN,) * 3)
     if spec["kind"] == "quarter":
+        # wedge between A-A (angle a0, the 1220) and the feel-motor radial plane (a1), so the iso cuts the 716 on its axis
         x0, y0, z0, x1, y1, z1 = spec["bb"]
         allb = Pos(x0, y0, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=(Align.MIN,) * 3)
-        if spec.get("opp"): return allb - Pos(x0, y0, z0) * Box(-x0, -y0, z1 - z0, align=(Align.MIN,) * 3)
-        return allb - Pos(0, 0, z0) * Box(x1, y1, z1 - z0, align=(Align.MIN,) * 3)
+        a0, a1 = spec.get("a0", 0.0), spec.get("a1", 90.0)
+        if spec.get("opp"): a0, a1 = a0 + 180.0, a1 + 180.0
+        r = max(math.hypot(x, y) for x in (x0, x1) for y in (y0, y1)) + 2.0
+        n = 64
+        pts = [(r * math.cos(math.radians(a0 + (a1 - a0) * i / n)), r * math.sin(math.radians(a0 + (a1 - a0) * i / n))) for i in range(n + 1)]
+        pts.append((0.0, 0.0))
+        wedge = Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), z1 - z0)
+        return allb - wedge
     o, a, (u0, u1), depth, (z0, z1) = spec["o"], spec["a"], spec["u"], spec["depth"], spec["z"]
     return Pos(o[0], o[1], z0) * Rot(0, 0, a) * Pos(u0, -depth, 0) * Box(u1 - u0, depth, z1 - z0, align=(Align.MIN,) * 3)
 
 def cut_planes(spec):
     if spec["kind"] == "whole": return []
     if spec["kind"] == "half": return [((0, 0, 0), (0, 1, 0))]
-    if spec["kind"] == "quarter": return [((0, 0, 0), (0, 1, 0)), ((0, 0, 0), (1, 0, 0))]
+    if spec["kind"] == "quarter":
+        def _n(a):
+            a = math.radians(a); return (-math.sin(a), math.cos(a), 0.0)
+        return [((0, 0, 0), _n(spec.get("a0", 0.0))), ((0, 0, 0), _n(spec.get("a1", 90.0)))]
     a = math.radians(spec["a"]); return [((spec["o"][0], spec["o"][1], 0), (-math.sin(a), math.cos(a), 0))]
 
 def _solids(s):
@@ -186,7 +196,9 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
     rawA = ortho(MA, ((lo[0] + hi[0]) / 2, 0, (lo[2] + hi[2]) / 2), (0, -1, 0) if opposite else (0, 1, 0), (0, 0, 1), hi[0] - lo[0] + 2, hi[2] - lo[2] + 2,
                  9 if preview else (40 if clean else 30), f"{tmp}/aa.png", edges=not preview, aa=not preview)
     tm["A-A render"] = time.time() - t
-    t = time.time(); MQ = cut_meshes(parts, keys, dict(kind="quarter", bb=BB, **OPP), tol); tm["iso cut"] = time.time() - t
+    fang = float(D.get("fm_ang", 90.0)) % 360.0
+    a0, a1 = (0.0, fang) if fang <= 180.0 else (fang, 360.0)
+    t = time.time(); MQ = cut_meshes(parts, keys, dict(kind="quarter", bb=BB, a0=a0, a1=a1, **OPP), tol); tm["iso cut"] = time.time() - t
     hidden = []
     if clean:   # parts lying wholly in the cut-away quadrant (idler 1, feel motor + clip) are drawn whole in the iso view
         hidden = [n for n in parts if n not in MQ]
@@ -240,19 +252,15 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
                 ang = np.radians(np.linspace(100, 170, 40)); arc = np.c_[cr + rs * np.cos(ang), np.full(40, 0.4), cz + rs * np.sin(ang)]
                 pl.add_lines(np.repeat(arc, 2, axis=0)[1:-1], color="#00b0ff", width=7)
         rawD = ortho(MD, ((xd0 + xd1) / 2, 0, (zd0 + zd1) / 2), (0, 1, 0), (0, 0, 1), xd1 - xd0, zd1 - zd0, 260, f"{tmp}/d.png", extra=lines, lw=2.0)
-        # E: plane through the feel-motor axis and H2
-        mx, my = D["fm_xy"]; u = np.array([mx - ex, my - ey]); u /= np.linalg.norm(u); angE = math.degrees(math.atan2(u[1], u[0]))
-        ze0, ze1 = D["fm_z_end"] - 0.6, 5.6; s0, s1 = -6.0, 6.5
-        spE = dict(kind="box", o=(round(mx, 4), round(my, 4)), a=angE, u=(s0, s1), depth=10.0, z=(ze0, ze1))
+        # E: radial plane through the feel-motor axis (shaft down into its pinion)
+        angE = D["fm_ang"]; ze0, ze1 = -D["pcb_t"] - 0.4, D["fm_z_can1"] + D["feel"]["end_boss"] + 0.6
+        s0, s1 = round(-D["dial_tube_od"] / 2 - 1.0, 3), round(D["fm_cd"] + D["fm_tip"] + 1.5, 3)
+        spE = dict(kind="box", o=(0.0, 0.0), a=angE, u=(s0, s1), depth=8.0, z=(round(ze0, 3), round(ze1, 3)))
         ME = cut_meshes(parts, keys, spE, 0.01)
-        nE = (-math.sin(math.radians(spE["a"])), math.cos(math.radians(spE["a"])), 0)
-        cE = (mx + u[0] * (s0 + s1) / 2, my + u[1] * (s0 + s1) / 2, (ze0 + ze1) / 2)
-        def envE(pl, pv):
-            from ..under_pcb import gearhead
-            from ..common import model
-            vs, tr = gearhead(model.view(D, "under_pcb")).tessellate(0.05)
-            pl.add_mesh(_poly(pv, np.array([(v.X, v.Y, v.Z) for v in vs]), np.array(tr)), color="#00838f", opacity=0.25, style="wireframe", line_width=1.5)
-        rawE = ortho(ME, cE, nE, (0, 0, 1), s1 - s0, ze1 - ze0, 55, f"{tmp}/ee.png", extra=envE, lw=2.0)
+        nE = (-math.sin(math.radians(angE)), math.cos(math.radians(angE)), 0)
+        uc = (s0 + s1) / 2
+        cE = (uc * math.cos(math.radians(angE)), uc * math.sin(math.radians(angE)), (ze0 + ze1) / 2)
+        rawE = ortho(ME, cE, nE, (0, 0, 1), s1 - s0, ze1 - ze0, 40, f"{tmp}/ee.png", lw=2.0)
         insets = [rawB, rawC, rawD, rawE]
         if D["hall_layout"] == "vernier": insets.append(hall_plot(D, f"{tmp}/hh.png"))
         tm["insets"] = time.time() - t
@@ -319,13 +327,13 @@ def compose(D, parts, rawA, rawI, insets, out, preview, clash_lines, gap_lines, 
             put([0.162, y0, 0.20, hh], insets[1], f"C-C  Hall bar, radial at {D['ha_ang0']:g}° (~5x)", f"Arm down through the cradle slot; {D['hv_n']} × Ø{D['hv_mag'][0]:g}×{D['hv_mag'][1]:g} N52 (alt.)\nover {D['hv_n']} × {D['hv_sensor']['part'].split()[0]} X2SON, air gap {D['hv_gap']:g}\n(element {D['hv_elem_gap']:.2f}); pitch {D['hv_pitch']:g}, r {D['hv_r'][0]:.1f}-{D['hv_r'][-1]:.1f}.", frame=True, fs=8)
             put([0.372, y0, 0.15, hh], insets[2], "D  45° cone race + seat (~17x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° line.\nSeat groove R{D['kb_seat_r']:g} (blue) × {D['kb_seat_depth']:g} deep in the\nDIAL cone, ±{D['kb_seat_w']:.2f} wide, centre on the 45° line.\nASSEMBLY: dial lip-down, grease the groove,\ndrop the {D['kb_n']} balls in (they sit + stay),\nlower the knob on axially, flip, fit.", frame=True, fs=7.5)
             put([0.53, y0, 0.25, hh], insets[4], "H  Hall vernier: plan at ±travel + field", f"Magnet arc +{D['hv_g']:.3f}°/mm, sensor arc -{D['hv_g']:.3f}°/mm (cross at r{D['hv_r_mid']:.1f}, θ=0);\ncrossing moves {1 / (2 * D['hv_g']):.2f} mm/deg -> end pair at ±{D['hv_cross_travel']:g}°.", frame=True, fs=8)
-            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\non idler 1 at {D['feel_ang']:g}°; wireframe =\noptional gearhead (+{D['feel']['gearhead_len']:g}).", frame=True, fs=8)
+            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['z_feel']}T into the {D['z_ring']}T ring\n(ratio {D['fm_ratio']:.2f}).", frame=True, fs=8)
         else:
             put([0.005, y0, 0.20, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1131, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True)
             put([0.215, y0, 0.25, hh], insets[1], "C-C  Hall array (~6x)", f"{D['ha_n']} × Ø{D['ha_mag'][0]:g}×{D['ha_mag'][1]:g} N52 alternating over\n2 × DRV5055A3, gap {D['ha_gap']:.1f}.", frame=True)
         if D["hall_layout"] != "vernier":
           put([0.475, y0, 0.20, hh], insets[2], "D  top 45° cone race (~11x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° contact line\n(dial cone up-in, knob cone down-out).\nAssemble: dial lip-down, grease the ring in,\nlower the knob on axially, flip, fit.", frame=True)
-          put([0.69, y0, 0.14, hh], insets[3], "E  feel motor (~3x)", f"Plane through its axis + H2.\n{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A] on idler 1 at {D['feel_ang']:g}°;\nwireframe = optional gearhead\n(+{D['feel']['gearhead_len']:g}).", frame=True)
+          put([0.69, y0, 0.14, hh], insets[3], "E  feel motor (~3x)", f"Radial plane through its axis.\n{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['z_feel']}T into the {D['z_ring']}T ring\n(ratio {D['fm_ratio']:.2f}).", frame=True)
     shown = sorted({group_of(n) for n in parts})
     hand = [Patch(facecolor=GROUPS[i][1], edgecolor="#222222", label=GROUPS[i][0]) for i in shown]
     fig.legend(handles=hand, loc="lower left", ncol=3, fontsize=9.5 if not preview else 8, frameon=True, bbox_to_anchor=(0.005, 0.0), title="PARTS", title_fontsize=11)
@@ -340,8 +348,12 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
     A, I = _trim(plt.imread(rawA), 4), _trim(plt.imread(rawI), 4)
     FW, FH = 22.5, 16.0
     fig = plt.figure(figsize=(FW, FH), dpi=150)
+    feel_line = ""
+    if "z_feel" in D:
+        feel_line = (f" Feel motor on the PCB top: {D['feel']['part']} axial at {D['fm_ang']:.0f}°, "
+                     f"{D['z_feel']}T pinion into the {D['z_ring']}T ring (ratio {D['fm_ratio']:.2f}).")
     fig.text(0.012, 0.985, title, fontsize=26, weight="bold", va="top")
-    fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.1f}, 10HP module. " + (note or "Default parameters (no overrides).") + " "
+    fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.1f}, 10HP module. " + (note or "Default parameters (no overrides).") + feel_line + " "
              "Cut faces are drawn in a lighter tint of the part colour." +
              (f"\nIn the iso view, parts lying wholly inside the cut-away quarter ({', '.join(sorted({GROUPS[group_of(n)][0].split(' (')[0] for n in hidden}))}) are drawn whole, semi-transparent." if hidden else ""), fontsize=14, va="top", color="#333333", linespacing=1.4)
     y0, y1, gap, mx = 0.235, 0.865, 0.03, 0.012
@@ -350,7 +362,7 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
     if (ra + ri) * h * k + gap + 2 * mx > 1: h = (1 - gap - 2 * mx) / ((ra + ri) * k)
     wa, wi = ra * h * k, ri * h * k; x0 = (1 - wa - wi - gap) / 2
     for (x, w), img, ttl in [((x0, wa), A, "SECTION A-A, straight on" + (" from -Y" if opposite else "") + "\n(dial + motor axes; motor on the " + ("right)" if opposite else "left)")),
-                             ((x0 + wa + gap, wi), I, "ISOMETRIC QUARTER CUT-AWAY\n(A-A + the plane at 90° through the dial axis)")]:
+                             ((x0 + wa + gap, wi), I, "ISOMETRIC QUARTER CUT-AWAY\n(A-A + the plane through the feel-motor axis)")]:
         ax = fig.add_axes([x, y1 - h, w, h]); ax.imshow(img, interpolation="lanczos"); ax.set_xticks([]); ax.set_yticks([])
         for sp in ax.spines.values(): sp.set_visible(False)
         fig.text(x, y1 + 0.006, ttl, fontsize=17, weight="bold", va="bottom")
