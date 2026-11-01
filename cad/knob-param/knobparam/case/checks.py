@@ -23,7 +23,25 @@ def checks(D, parts):
     row("cover flush in Y", min(D["body_y1"] - cb.max.Y, cb.min.Y - D["body_y0"]), 0.0,
         f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
-    row("SLA wall", D["wall"], sla, "UTR-8100, nominal 2.5")
+    row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
+    row("bottom TFT window", D["win_w"], D["tft_w"] * 0.5,
+        f"clear path x {D['win_x0']:.2f}..{D['win_x1']:.2f}, y {D['win_y0']:.2f}..{D['win_y1']:.2f}, "
+        f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}; 2.0\" active {D['tft_w']:.2f}×{D['tft_h']:.2f}, "
+        f"short in width by {D['tft_short_w']:.2f} because the scanner bay is on the left")
+    row("bosses clear of the TFT window", D["boss_win_clear"], D["tft_gap"], "no post in the light path")
+    win = parts["bottom TFT window"]
+    hit = case.intersect(win)
+    blocked = 0.0 if hit is None or not hit.solids() else sum(s.volume for s in hit.solids())
+    row("TFT light path is empty", blocked, 0.0, "no shell solid in the window column", higher_ok=False)
+    lasers = [parts[n] for n in parts if n.startswith("laser")]
+    lhit = 0.0
+    for laser in lasers:
+        h = case.intersect(laser)
+        if h is not None and h.solids():
+            lhit += sum(s.volume for s in h.solids())
+    row("laser placeholder is open", lhit, 0.0,
+        f"{len(lasers)}× at " + ", ".join(f"({x:.1f},{y:.1f})" for x, y in D["lasers"]) + " under the joystick",
+        higher_ok=False)
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
     row("edge strip thickness", D["edge_t"], sla, "light-pipe rim, thinner than the plate")
     row("ligament thickness", D["ligament_t"], sla, "bridge between knob hole and joystick hole")
@@ -134,7 +152,8 @@ def checks(D, parts):
         f"tip z {D['z_tip']:.2f}, plate underside {D['z_fp0']:.2f}")
     row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
         f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
-    row("knob bolts present", float(len(D["knob_bolts"])), float(D["knob_bolt_n"]), "lower arc, clear of the bezel")
+    row("knob bolts present", float(len(D["knob_bolts"])), 2.0,
+        f"{len(D['knob_bolts'])} on the lower arc; the TFT window and the bosses leave room for fewer than {D['knob_bolt_n']}")
     # a point in the boss wall (outside the thread) is resin; the pin hole opens the side wall
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,

@@ -21,7 +21,39 @@
    "value": 2.5,
    "target": ">= 0.8",
    "ok": true,
-   "note": "UTR-8100, nominal 2.5",
+   "note": "UTR-8100 plain clear, no tint; front face polished, every other face as-printed",
+   "owner": "case"
+  },
+  {
+   "name": "bottom TFT window",
+   "value": 22.7,
+   "target": ">= 20.32",
+   "ok": true,
+   "note": "clear path x -2.85..19.85, y -60.20..-29.72, z 1.00..32.75; 2.0\" active 40.64\u00d730.48, short in width by 17.94 because the scanner bay is on the left",
+   "owner": "case"
+  },
+  {
+   "name": "bosses clear of the TFT window",
+   "value": 0.801,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "no post in the light path",
+   "owner": "case"
+  },
+  {
+   "name": "TFT light path is empty",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "no shell solid in the window column",
+   "owner": "case"
+  },
+  {
+   "name": "laser placeholder is open",
+   "value": 0.0,
+   "target": "<= 0",
+   "ok": true,
+   "note": "2\u00d7 at (-13.8,33.5), (13.8,33.5) under the joystick",
    "owner": "case"
   },
   {
@@ -453,7 +485,7 @@
    "value": 3.3,
    "target": ">= 0.3",
    "ok": true,
-   "note": "notch \u00d89.60 at x 19.95, y -41.40",
+   "note": "notch \u00d89.60 at x 19.95, y -24.42",
    "owner": "case"
   },
   {
@@ -469,15 +501,15 @@
    "value": 3.0,
    "target": ">= 2.5",
    "ok": true,
-   "note": "4 bolts up into the shell, tip z 33.05",
+   "note": "2 bolts up into the shell, tip z 33.05",
    "owner": "case"
   },
   {
    "name": "knob bolts present",
-   "value": 4.0,
-   "target": ">= 4",
+   "value": 2.0,
+   "target": ">= 2",
    "ok": true,
-   "note": "lower arc, clear of the bezel",
+   "note": "2 on the lower arc; the TFT window and the bosses leave room for fewer than 4",
    "owner": "case"
   },
   {
@@ -498,10 +530,10 @@
   },
   {
    "name": "case mass",
-   "value": 59.098,
+   "value": 57.776,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 45460 mm\u00b3 (45.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 44443 mm\u00b3 (44.4 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {

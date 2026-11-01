@@ -41,7 +41,8 @@ def _usda(P, T, rgb, opacity, rough):
     defaultPrim = "Root"
     metersPerUnit = 1
     upAxis = "Y"
-    documentation = "Ed knob-module case v0.1. UTR-8100 clear resin, varnished, dyed Pantone 2577 C. Units: metres."
+    documentation = ("Ed knob-module case v0.1. UTR-8100 plain clear resin, no tint. "
+                     "Finish: front face polished; all other faces as-printed. Units: metres.")
 )
 def Xform "Root" (
     kind = "component"
@@ -114,6 +115,6 @@ def export_case(case, D, directory):
     export_step(case, step)
     export_stl(case, stl, tolerance=D["stl_tol"], angular_tolerance=D["stl_ang"])
     P, T = mesh_of(case, D["usdz_tol"])
-    rgb = tuple(c / 255.0 for c in D["dye_rgb"])
-    _pack_usdz(usdz, f"case-{rev}.usda", _usda(P, T, rgb, D["dye_opacity"], D["dye_rough"]))
+    rgb = tuple(c / 255.0 for c in D["resin_rgb"])
+    _pack_usdz(usdz, f"case-{rev}.usda", _usda(P, T, rgb, D["resin_opacity"], D["resin_rough"]))
     return [step, stl, usdz]

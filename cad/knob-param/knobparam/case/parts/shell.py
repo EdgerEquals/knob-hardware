@@ -289,10 +289,18 @@ def build(D):
     pcb = _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y1"], D["z_pcb_back"], 0.0)
     for x, y in D["corners"]:
         pcb = _sub(pcb, _cyl_z(D["notch_r"], D["z_pcb_back"] - sl, sl, x, y))
+    # clear column over the bottom TFT: not a cutout, the resin here stays plain
+    window = _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"])
+    lasers = {}
+    for i, (x, y) in enumerate(D["lasers"]):
+        lasers[f"laser placeholder {i + 1}"] = _box(
+            x - D["laser_w"] / 2.0, x + D["laser_w"] / 2.0,
+            y - D["laser_d"] / 2.0, y + D["laser_d"] / 2.0, D["tft_air"], D["tft_air"] + D["laser_h"])
     out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow,
-           "PCB": pcb,
+           "PCB": pcb, "bottom TFT window": window,
            "scanner motor (assumed)": motor, "scanner mirror (assumed)": mirror,
            "grating film": film, "VCSEL 665 nm": vcsel}
     out.update(screws)
     out.update(pins)
+    out.update(lasers)
     return out

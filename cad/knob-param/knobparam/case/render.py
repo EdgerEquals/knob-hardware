@@ -1,7 +1,7 @@
 """Colour sheets for the case: section, isometric, plan, clean, and quarter cut-aways.
 
-PyVista off-screen, same stack the knob sheets use. The resin is drawn translucent
-Pantone 2577 C. The green skin is the Shimicoat glow coat on the inside walls.
+PyVista off-screen, same stack the knob sheets use. The resin is plain clear, no tint.
+The green skin is the Shimicoat glow coat on the inside walls.
 """
 import math
 import os
@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))   # cad/
 
 def _colour(D, name):
     if name == "case":
-        return tuple(c / 255.0 for c in D["dye_rgb"]), D["dye_opacity"]
+        return tuple(c / 255.0 for c in D["resin_rgb"]), D["resin_opacity"]
     if name.startswith("glow"):
         return tuple(c / 255.0 for c in D["glow_rgb"]), 0.9
     if name.startswith("scanner motor"):
@@ -38,6 +38,10 @@ def _colour(D, name):
         return (0.85, 0.75, 0.35), 1.0
     if name == "beam":
         return (0.85, 0.15, 0.12), 0.28
+    if name.startswith("bottom TFT"):
+        return (0.25, 0.75, 0.95), 0.35
+    if name.startswith("laser"):
+        return (0.95, 0.25, 0.35), 0.45
     return (0.6, 0.6, 0.6), 1.0
 
 
@@ -256,7 +260,7 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
     dpi = 120
     fs = 16   # 16 pt at 120 dpi = 27 px
     fig = plt.figure(figsize=(18.5, 18.0), dpi=dpi)
-    fig.suptitle(f"Enclosure {D['case_rev']}  —  10 HP section and plan    panel {D['panel_w']:.2f} mm    wall {D['wall']:.1f} mm",
+    fig.suptitle(f"Enclosure {D['case_rev']}  —  plain clear resin, front face polished    {D['panel_w']:.2f} mm    wall {D['wall']:.1f} mm",
                  fontsize=fs, fontweight="bold", x=0.01, ha="left")
     ax = fig.add_axes((0.02, 0.40, 0.96, 0.52))
     ax.imshow(plt.imread(section), aspect="equal")
@@ -271,10 +275,12 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
     ax3.imshow(plt.imread(iso), aspect="equal")
     ax3.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
     ax3.set_axis_off()
-    handles = [Patch(facecolor=tuple(c / 255 for c in D["dye_rgb"]), label="shell, translucent 2577 C"),
+    handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
-               Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head")]
+               Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head"),
+               Patch(facecolor=(0.25, 0.75, 0.95), label="bottom TFT window"),
+               Patch(facecolor=(0.95, 0.25, 0.35), label="laser placeholder")]
     fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.36))
     fig.text(0.62, 0.05, footer, fontsize=fs - 2, va="bottom", family="monospace", color="#222")
     fig.savefig(out)
@@ -290,7 +296,7 @@ def _compose(paths, titles, out, D, footer):
     cols = 2
     rows = (n + 1) // 2
     fig = plt.figure(figsize=(14.5, 6.4 * rows + 1.6), dpi=120)
-    fig.suptitle(f"Enclosure {D['case_rev']}  —  UTR-8100 clear resin, varnished, dyed Pantone 2577 C",
+    fig.suptitle(f"Enclosure {D['case_rev']}  —  UTR-8100 plain clear resin; front face polished, other faces as-printed",
                  fontsize=15, fontweight="bold", x=0.01, ha="left")
     for i, (p, t) in enumerate(zip(paths, titles)):
         ax = fig.add_subplot(rows, cols, i + 1)
@@ -300,7 +306,7 @@ def _compose(paths, titles, out, D, footer):
         ax.set_yticks([])
         for sp in ax.spines.values():
             sp.set_visible(False)
-    handles = [Patch(facecolor=tuple(c / 255 for c in D["dye_rgb"]), label="shell, translucent 2577 C"),
+    handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=tuple(c / 255 for c in D["glow_rgb"]), label="Shimicoat glow coat, inside walls"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 10642 screws, printed resin threads")]
@@ -324,16 +330,21 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     glow = parts["glow coat (inside walls)"]
     beam = beam_solid(D)
     show = [("case", case), ("glow", glow), ("back cover", parts["back cover (PETG)"]),
-            ("PCB", parts["PCB"]), ("corner screw 1", parts["corner screw 1"]), ("beam", beam)]
+            ("PCB", parts["PCB"]), ("bottom TFT window", parts["bottom TFT window"]),
+            ("corner screw 1", parts["corner screw 1"]), ("beam", beam)]
+    show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if not preview:
         show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (PETG)", "corner screw 1")]
     clean = [("case", case), ("back cover", parts["back cover (PETG)"]), ("glow", glow)]
     paths = []
     shots = []
     joint = [("case", case), ("back cover", parts["back cover (PETG)"]),
-             ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"])]
+             ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"]),
+             ("bottom TFT window", parts["bottom TFT window"])]
     plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
-                 ("PCB", parts["PCB"]), ("corner screw 1", parts["corner screw 1"])]
+                 ("PCB", parts["PCB"]), ("bottom TFT window", parts["bottom TFT window"]),
+                 ("corner screw 1", parts["corner screw 1"])]
+    plan_show += [(n, parts[n]) for n in parts if n.startswith("laser")]
     if preview:
         shots = [("mid", "SECTION through both side walls", joint, "xz"),
                  ("plan", "PLAN", plan_show, "plan"),

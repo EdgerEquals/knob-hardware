@@ -43,14 +43,16 @@ P = dict(
     rail_hole_d=3.2,       # [L] Ø3.2
     # ---- resin ----
     # UTR-8100: tensile 41.6 MPa, elongation 9%, density 1.3 g/cm³. SLA min wall 0.8.
-    # Dyed Pantone 2577 C after varnish. sRGB below is a screen approximation of the coated swatch
-    # (e-paint.co.uk measured 169, 124, 201; several fans publish 167, 123, 202).
+    # Plain clear resin, no tint [Ed]. Only the front face is polished; every other face is as-printed.
     wall=2.5,              # [Ed] nominal wall, about 2.5
     sla_min=0.8,           # [S] PCBWay SLA minimum wall
     case_rho=1.3e-3,       # [S] g/mm³ (1.3 g/cm³)
-    dye_rgb=(169, 124, 201),   # [A] Pantone 2577 C sRGB approximation
-    dye_opacity=0.42,      # [A] varnish + dye reads translucent; Quick Look opacity
-    dye_rough=0.18,        # [A] varnished, not frosted
+    resin_rgb=(236, 240, 242),  # [Ed] untinted clear; a faint cool grey so it reads on white
+    resin_opacity=0.20,   # [A] Quick Look / render opacity, no dye
+    resin_rough=0.55,     # [Ed] as-printed faces. The front face alone is polished (resin_face_rough).
+    resin_face_rough=0.08,# [Ed] polished front face only
+    finish_front="polished",     # [Ed]
+    finish_other="as-printed",   # [Ed]
     glow_rgb=(188, 240, 170),  # [A] Shimicoat strontium aluminate, green, drawn heavier than the real film
     glow_t=0.35,           # [A] drawn coat thickness so the brushed faces show; the real coat is a film
     glow_gap=0.30,         # [A] air between the drawn coat and the wall (keeps the solids apart)
@@ -159,6 +161,18 @@ P = dict(
     ligament_t=1.2,        # [A] bridge between the knob hole and the joystick hole
     web_min=0.80,          # [A] smallest plan web, = sla_min
     pad_extra=1.0,         # [A] full-thickness pad past the rail-hole radius
+    # ---- bottom TFT, on the PCB, shining out through the clear shell [L] design-notes ----
+    # 2.0" 320×240 (4:3). Active size from the diagonal; no datasheet part is named yet.
+    tft_in=2.0,            # [L] inch
+    tft_px=(320, 240),     # [L]
+    tft_air=1.0,           # [A] window starts this far above the PCB (the glass is not bonded)
+    tft_gap=0.80,          # [A] keep-out beyond the active area, and off walls / the scanner
+    # ---- laser light-show, PLACEHOLDER only. Knob agent is moving the feel motor to the bottom. ----
+    # Do not change the PCB. 2× in the top corners under the joystick; laser_n=1 is the centred alternative.
+    laser_n=2,             # [A] FLAG
+    laser_w=12.0,          # [A] FLAG module width
+    laser_d=8.0,           # [A] FLAG module depth along Y
+    laser_h=8.0,           # [A] FLAG height above the PCB
     mass_max=140.0,        # [A] g, resin shell only (the PETG cover is separate)
     stl_tol=0.08,          # [A] STL chord tolerance, mm
     stl_ang=0.3,           # [A] STL angular tolerance, rad
@@ -170,6 +184,13 @@ IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "under_pcb": ["d_big_tip"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb"]
+
+
+def _clear_rect(cx, cy, r, x0, y0, x1, y1):
+    """Air between a circle and an axis-aligned rectangle. Negative means they overlap."""
+    dx = max(x0 - cx, 0.0, cx - x1)
+    dy = max(y0 - cy, 0.0, cy - y1)
+    return math.hypot(dx, dy) - r
 
 
 def _place_for(x, y_edge, rc):
@@ -422,6 +443,31 @@ def derive(D):
     D["beam_x"] = D["x_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_y"] = D["y_in0"] + D["beam_gap"] + D["beam_t"] / 2
     D["beam_z1"] = D["z_fp0"] - D["beam_gap"]
+    # Bottom TFT window. 2.0" active area, as low as the ledge allows, and to the right of the
+    # scanner bay so the mirror and the grating shelf stay out of the light path.
+    diag = D["tft_in"] * 25.4
+    aspect = D["tft_px"][0] / D["tft_px"][1]
+    D["tft_w"] = diag * aspect / math.hypot(aspect, 1.0)
+    D["tft_h"] = D["tft_w"] / aspect
+    gap = D["tft_gap"]
+    scan_x1 = max(D["shelf_x1"], D["x_mot"] + D["mirror_r"]) + gap
+    # stay inboard of the side ledge as well as the wall; the ledge is shell, not a window
+    D["win_x1"] = min(D["x_in1"], D["pcb_x1"] - D["ledge_w"]) - gap
+    D["win_x0"] = max(scan_x1, D["win_x1"] - D["tft_w"])
+    D["win_y0"] = D["pcb_y0"] + D["ledge_w"] + gap
+    D["win_y1"] = min(D["win_y0"] + D["tft_h"], -D["knob_hole_r"] - gap)
+    D["win_w"] = D["win_x1"] - D["win_x0"]
+    D["win_h"] = D["win_y1"] - D["win_y0"]
+    D["tft_z0"] = D["tft_air"]
+    D["tft_z1"] = D["z_fp0"] - gap   # the plain faceplate over this rectangle is the window itself
+    D["tft_short_w"] = max(0.0, D["tft_w"] - D["win_w"])
+    # Laser placeholders, on the PCB under the joystick, not printed. Two top corners.
+    ly = D["pcb_y1"] - D["ledge_w"] - D["laser_d"] / 2.0 - gap
+    lx = D["pcb_x1"] - D["ledge_w"] - D["laser_w"] / 2.0 - gap
+    if D["laser_n"] == 1:
+        D["lasers"] = ((0.0, ly),)
+    else:
+        D["lasers"] = ((-lx, ly), (lx, ly))
     # collar under the knob opening, and the placeholder labyrinth
     D["collar_h"] = D["collar_h_mult"] * D["screw_d"]
     D["z_collar0"] = D["z_fp0"] - D["collar_h"]
@@ -449,15 +495,13 @@ def derive(D):
         dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
         if math.hypot(dx, dy) < D["screw_boss_r"] + D["seat_gap"]:
             continue
+        if _clear_rect(x, y, D["screw_boss_r"], D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
+            continue
+        if any(math.hypot(x - px, y - py) < 2.0 * D["screw_boss_r"] + D["seat_gap"] for px, py in bolts):
+            continue
         bolts.append((x, y))
-    if len(bolts) > D["knob_bolt_n"]:
-        pick = [bolts[int(round(i * (len(bolts) - 1) / (D["knob_bolt_n"] - 1)))] for i in range(D["knob_bolt_n"])]
-        # unique while preserving order
-        seen = []
-        for p in pick:
-            if p not in seen:
-                seen.append(p)
-        bolts = seen
+        if len(bolts) >= D["knob_bolt_n"]:
+            break
     D["knob_bolts"] = tuple(bolts)
     D["z_bolt0"] = D["z_fp0"] - D["engage"]
     # Cover screws. The axis is inside the PCB outline; a notch in the board lets the
@@ -473,13 +517,26 @@ def derive(D):
     y_scan = D["y_mot"] + D["mirror_r"] + br + gap
     y_floor = max(y_scan, D["pcb_y0"] + br + gap)
     y_lo = y_floor if y_floor <= -y_knob else -y_knob
-    D["corners"] = ((-bx, y_lo), (bx, y_lo), (-bx, y_hi), (bx, y_hi))
+    # a boss that would sit in the TFT light path moves above the window, still clear of the knob
+    y_above = D["win_y1"] + br + D["tft_gap"]
+
+    def _y_for(x):
+        y = y_lo
+        if _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) < D["tft_gap"]:
+            y = y_above if y_above <= -y_knob else y
+        return y
+
+    D["corners"] = ((-bx, _y_for(-bx)), (bx, _y_for(bx)), (-bx, y_hi), (bx, y_hi))
+    D["knob_bolts"] = tuple(
+        (x, y) for x, y in D["knob_bolts"]
+        if all(math.hypot(x - cx, y - cy) >= 2.0 * br + gap for cx, cy in D["corners"]))
     D["notch_r"] = br + D["notch_gap"]
-    D["boss_knob_clear"] = math.hypot(bx, y_hi) - D["knob_hole_r"] - br
-    dx = max(abs(bx) - D["hole_hw"], 0.0)
-    dy = max(abs(y_hi - D["place_y"]) - D["hole_hh"], 0.0)
-    D["boss_joy_clear"] = math.hypot(dx, dy) - br
-    D["boss_scan_clear"] = math.hypot(-bx - D["x_mot"], y_lo - D["y_mot"]) - D["mirror_r"] - br
+    D["boss_knob_clear"] = min(math.hypot(x, y) - D["knob_hole_r"] - br for x, y in D["corners"])
+    D["boss_joy_clear"] = min(
+        _clear_rect(x, y, br, -D["hole_hw"], D["joy_y_near"], D["hole_hw"], D["joy_y_far"]) for x, y in D["corners"])
+    D["boss_scan_clear"] = min(math.hypot(x - D["x_mot"], y - D["y_mot"]) - D["mirror_r"] - br for x, y in D["corners"])
+    D["boss_win_clear"] = min(
+        _clear_rect(x, y, br, D["win_x0"], D["win_y0"], D["win_x1"], D["win_y1"]) for x, y in D["corners"])
     D["z_thread0"] = D["z_rim"]
     D["tap_len"] = D["engage"] - D["screw_p"]
     D["z_thread1"] = D["z_thread0"] + D["tap_len"]
