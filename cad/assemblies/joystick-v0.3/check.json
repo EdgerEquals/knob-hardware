@@ -1,0 +1,448 @@
+{
+ "rows": [
+  {
+   "name": "stem vs cup bore, radial (rest)",
+   "value": 0.07499999999999996,
+   "target": ">= 0.05",
+   "ok": true,
+   "note": "cup \u00d83.15 over the \u00d83 stem, engaged 1.2"
+  },
+  {
+   "name": "cup covers the tilt reference height",
+   "value": 0.5,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "cup z 39.80-42.35, ref z 40.30, stem top 41.00"
+  },
+  {
+   "name": "plunger tip to stem top (rest)",
+   "value": 0.04999999999999716,
+   "target": "0.02-0.10",
+   "ok": true,
+   "note": "no preload on the switch"
+  },
+  {
+   "name": "spider free travel under the pad",
+   "value": 0.4,
+   "target": "0.30-0.50",
+   "ok": true,
+   "note": "Ed: ~0.3-0.5"
+  },
+  {
+   "name": "spider margin past the centre click",
+   "value": 0.2,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "used 0.20; the switch stop takes the full press"
+  },
+  {
+   "name": "spider extra force at the click",
+   "value": 0.7428311333636773,
+   "target": "0.65-0.85",
+   "ok": true,
+   "note": "k \u2248 3.71 N/mm, arm L 7.80 (unchanged flexure) \u2192 press 3.09 N"
+  },
+  {
+   "name": "round-stop radius vs travel needed to actuate",
+   "value": 0.07500000000000007,
+   "target": ">= 0",
+   "ok": true,
+   "note": "stop radius 0.4 (circle \u00d80.8), need 0.325 (0.075 cup + 0.25 tilt)"
+  },
+  {
+   "name": "overtravel past actuation, every direction",
+   "value": 0.07500000000000007,
+   "target": "<= 0.15",
+   "ok": true,
+   "note": "round stop: diagonals travel the same radius as the axes"
+  },
+  {
+   "name": "carrier vs plate at rest",
+   "value": 0.39999999999999875,
+   "target": "0.32-0.50",
+   "ok": true,
+   "note": "closest feature is the round stop (radial gap 0.4); rectangular skirt is 0.75"
+  },
+  {
+   "name": "carrier vs plate on the stop circle (4 directions, -0.02)",
+   "value": 0.01999999999999883,
+   "target": "0.005-0.08",
+   "ok": true,
+   "note": "the boss is the stop in every direction. gaps 0.020, 0.020, 0.020, 0.020"
+  },
+  {
+   "name": "3\u00b0 carrier rotation hits the rectangular skirt",
+   "value": 0.0,
+   "target": "< 0.05",
+   "ok": true,
+   "note": "the round boss does not stop rotation; the looser rectangular skirt does"
+  },
+  {
+   "name": "FPC vs carrier slot",
+   "value": 0.6999999999999993,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "FPC 8 wide [A], slot 2.30 \u00d7 10.1"
+  },
+  {
+   "name": "FPC bend room under the glass",
+   "value": 1.212296441824062,
+   "target": ">= 1.2",
+   "ok": true,
+   "note": "screen +x edge to the slot end; drop centre is 2.36 inboard. Exit side and pin-out are still open"
+  },
+  {
+   "name": "FPC vs PCB slot at full slide",
+   "value": 1.3000000000000012,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "hole x 16.6-20.2, \u00b15.70"
+  },
+  {
+   "name": "FPC vs daughterboard",
+   "value": 2.4499999999999993,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "FPC vs ball plate",
+   "value": 2.4499999999999993,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "spring vs bore at full stop-circle slide",
+   "value": 0.29999999999999993,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "\u00d82 in \u00d83.4; 4 \u00d7 0.5 N, length 66.0 (hook z 41.75 + PCB 1.6 + back panel 22.65 [A])"
+  },
+  {
+   "name": "spring vs plate (rest)",
+   "value": 3.572296441824058,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "hook boss is slotted so the eye can be swapped"
+  },
+  {
+   "name": "daughterboard vs plate (glued, faces touch)",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "board 31.88 \u00d7 17.52 \u00d7 1, centre (0.00, -1.83)"
+  },
+  {
+   "name": "switch opening in the plate",
+   "value": 0.6500000000000001,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "opening \u00d811.87 over the land extent 5.29"
+  },
+  {
+   "name": "header body vs carrier",
+   "value": 3.1420124540161924,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "headers are on the underside; trim the 2.79 mm tails flush"
+  },
+  {
+   "name": "switch body vs headers",
+   "value": 1.19270215497532,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "the switch is on top, the headers underneath"
+  },
+  {
+   "name": "standoff count",
+   "value": 4.0,
+   "target": "4",
+   "ok": true,
+   "note": "one in each quadrant, all GND"
+  },
+  {
+   "name": "standoffs meet the daughterboard",
+   "value": 0.020000000000003126,
+   "target": "0.01-0.05",
+   "ok": true,
+   "note": "and the main PCB, 0.02 short of each face"
+  },
+  {
+   "name": "standoff vs plate (screw through both)",
+   "value": 1.0200000000000031,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "the screw, not the standoff, passes through the plate"
+  },
+  {
+   "name": "standoff vs switch body",
+   "value": 7.982291968024761,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "standoff vs header",
+   "value": 1.118996891274091,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "header mates the H11 socket",
+   "value": 4.449999999999999,
+   "target": "3.5-6.5",
+   "ok": true,
+   "note": "Samtec TSW-103-20-T-S pin 25.91 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 21.46, riser 35 = XHHD STTZ2032 (C50377216)"
+  },
+  {
+   "name": "socket count matches the headers",
+   "value": 2.0,
+   "target": "2",
+   "ok": true,
+   "note": "1x3 each side of the switch, not one 2x3 beside it"
+  },
+  {
+   "name": "switch on the carrier axis",
+   "value": 0.0,
+   "target": "0",
+   "ok": true,
+   "note": "dead centre. v0.2 was (-3.0, -1.2)"
+  },
+  {
+   "name": "standoffs, headers, balls and springs symmetric",
+   "value": 1.0,
+   "target": "mirror",
+   "ok": true,
+   "note": "standoffs (\u00b114.04, \u00b14.08), headers x=\u00b19.75, balls (\u00b18.36, \u00b14.74)"
+  },
+  {
+   "name": "balls touch the carrier underside",
+   "value": 0.0,
+   "target": "<= 0.02",
+   "ok": true,
+   "note": "four \u00d82 stainless"
+  },
+  {
+   "name": "balls seated (clear of the plate)",
+   "value": 0.04999999999999565,
+   "target": ">= 0.03",
+   "ok": true,
+   "note": "seat radius +0.05"
+  },
+  {
+   "name": "carrier (full slide toward the knob) vs live knob-param",
+   "value": 1.0250000000000021,
+   "target": ">= 0.55",
+   "ok": true,
+   "note": "\u00d840.85, carrier near edge at frame y 21.45, centre place_y 36.42"
+  },
+  {
+   "name": "carrier (full slide toward the knob) vs design \u00d841.7",
+   "value": 0.6000000000000014,
+   "target": ">= 0.55",
+   "ok": true,
+   "note": "\u00d841.70, carrier near edge at frame y 21.45, centre place_y 36.42"
+  },
+  {
+   "name": "standoff, socket and spring holes on the main PCB",
+   "value": 1.0,
+   "target": "on",
+   "ok": true,
+   "note": "these are the holes the main PCB has to grow. No base-pin holes: the enclosure is gone"
+  },
+  {
+   "name": "carrier skirt above the rail",
+   "value": 25.25,
+   "target": ">= 0",
+   "ok": true,
+   "note": "overhang 8.59 mm in plan; skirt bottom z 35.25, rail z 10 [A]"
+  },
+  {
+   "name": "screen-well wall",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "PCBWay SLS/MJF minimum 1 (SLA resin is 0.8). v0.2 well was 0.80"
+  },
+  {
+   "name": "carrier floor (the slack above the riser)",
+   "value": 2.049999999999997,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "v0.2 floor was 26.05. Screen top 47.50 = knob top 52.50 \u2212 5; riser 35"
+  },
+  {
+   "name": "plate frame outside the switch opening",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "thinnest on the axis, where the land is widest"
+  },
+  {
+   "name": "skirt wall",
+   "value": 1.0,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "anti-rotation skirt, was 0.80"
+  },
+  {
+   "name": "screen-well wall is solid and the pocket is open",
+   "value": 1.0,
+   "target": "solid",
+   "ok": true,
+   "note": "wall mid x 21.51 at z 46.60; pocket probe x 20.91"
+  },
+  {
+   "name": "carrier volume",
+   "value": 4.408797939231143,
+   "target": "< 8",
+   "ok": true,
+   "note": "cm\u00b3. v0.2 carrier was 33.53 cm\u00b3 (the 26 mm floor)"
+  },
+  {
+   "name": "no printed base enclosure",
+   "value": 0.0,
+   "target": "0 parts",
+   "ok": true,
+   "note": "the plate on the daughterboard carries the seats"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "key": {
+  "version": "v0.3",
+  "riser_h": 35.0,
+  "stack_h": 47.5,
+  "scr_top": 47.5,
+  "z_knob_top": 52.5,
+  "z_db0": 35.0,
+  "z_db1": 36.0,
+  "z_stem_top": 41.0,
+  "z_c0": 42.35,
+  "z_ball": 41.35,
+  "z_scr0": 46.0,
+  "z_skirt0": 35.25,
+  "slide": 0.4,
+  "slide_need": 0.32499999999999996,
+  "sp_gap": 0.4,
+  "sp_k": 3.7141556668183866,
+  "sp_f_click": 0.7428311333636773,
+  "press_f": 3.0928311333636773,
+  "car": [
+   44.019999999999996,
+   29.139999999999997
+  ],
+  "car_floor": 2.049999999999997,
+  "well_wall": 1.0,
+  "db": [
+   31.87540711635188,
+   17.521305501214123,
+   1.0
+  ],
+  "db_xy": [
+   0.0,
+   -1.8250000000000002
+  ],
+  "place_y": 36.42,
+  "board_xy": [
+   25.25,
+   16.479999999999997
+  ],
+  "spr_len": 66.0,
+  "back_panel": 22.65,
+  "knob_od_live": 40.85,
+  "knob_od_design": 41.7,
+  "fpc_x": 18.447703558175938,
+  "slot_x": [
+   17.29770355817594,
+   19.597703558175937
+  ],
+  "hole_x0": 16.64770355817594,
+  "hole_x1": 20.247703558175935,
+  "hole_hy": 5.7,
+  "balls": [
+   [
+    8.360485619547411,
+    4.735652750607062
+   ],
+   [
+    8.360485619547411,
+    -4.735652750607062
+   ],
+   [
+    -8.360485619547411,
+    4.735652750607062
+   ],
+   [
+    -8.360485619547411,
+    -4.735652750607062
+   ]
+  ],
+  "springs": [
+   [
+    20.509999999999998,
+    3.979999999999997
+   ],
+   [
+    20.509999999999998,
+    -3.979999999999997
+   ],
+   [
+    -20.509999999999998,
+    3.979999999999997
+   ],
+   [
+    -20.509999999999998,
+    -3.979999999999997
+   ]
+  ],
+  "standoff_xy": [
+   [
+    14.03770355817594,
+    4.0799999999999965
+   ],
+   [
+    14.03770355817594,
+    -4.0799999999999965
+   ],
+   [
+    -14.03770355817594,
+    4.0799999999999965
+   ],
+   [
+    -14.03770355817594,
+    -4.0799999999999965
+   ]
+  ],
+  "stop_xy": [
+   0.0,
+   -8.085652750607062
+  ],
+  "sw_xy": [
+   0.0,
+   0.0
+  ],
+  "hdr_xy": [
+   [
+    9.745652750607062,
+    0.0
+   ],
+   [
+    -9.745652750607062,
+    0.0
+   ]
+  ],
+  "mate_in": 4.449999999999999,
+  "sx": 14.03770355817594,
+  "sy": 4.0799999999999965,
+  "hx": 9.745652750607062,
+  "bx": 8.360485619547411,
+  "by": 4.735652750607062,
+  "board_x0": -15.93770355817594,
+  "board_x1": 15.93770355817594,
+  "board_y0": -10.585652750607062,
+  "board_y1": 6.935652750607062
+ }
+}

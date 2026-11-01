@@ -1,57 +1,39 @@
 """Authoring script for the KiCad top-screen joystick daughterboard (KiCad is the single source of truth for the board).
 Run with the system python that has pcbnew:  /usr/bin/python3 make_project.py
-Writes the schematic, the board, the symbols and the lib tables, then ERC + DRC (schematic parity, all severities),
-the STEP, and the fab/ pack (Gerbers, drill, BOM, CPL, reports, README).
+Reads geom.json written by cad/joystick-param/build.py (the parameters). Writes the schematic, the board,
+ERC + DRC (schematic parity, all severities), the STEP, and the fab/ pack.
 
-v0.2 (2026-11-01, Ed): same SKRHADE010 at -45° (a/b/c/d → UP/RIGHT/LEFT/DOWN, confirmed at first-power calibration).
-Frame tabs (pads 7 and 8) are tied to GND. Two M2×11 brass standoffs (MH1, MH2) are PTH to GND; J1 pin 5 stays GND.
-J2 on the main PCB is the 11 mm socket (hanxia HX PM2.54-2x3P ZC H11), not the 8.5 mm part.
-Board 19.2 × 13.8 × 1.0, centred at CAD (0.2, -3.2). Numbers mirror cad/joystick-param (CAD y up = KiCad y down).
+v0.3: SKRHADE010 at -45° on the carrier axis. Two 1x3 long-pin headers on the underside, one each side.
+Four M2x35 brass standoffs, PTH to GND. No LEDs. The screen FPC is not on this board.
 """
-import os, json, uuid, subprocess, math, csv, shutil, tempfile, zipfile, datetime, re
+import os, json, uuid, subprocess, csv, shutil, tempfile, zipfile, datetime, re
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__)); NAME = "joystick-daughterboard"
-REV = "v0.2"
-ORIGIN = (100.0, 100.0)          # KiCad position of the carrier centre
-# geometry from jsparam v0.2 (carrier frame, y up)
-DB_W, DB_H, DB_T = 19.2, 13.8, 1.0
-DB_XY = (0.2, -3.2)
-CORNER_R = 0.5
-SW_XY, SW_ROT = (-3.0, -1.2), -45.0
-HDR_XY = (5.9, -1.0)
-STANDOFFS = ((-7.5, -8.0), (7.2, -7.6))
+REV = "v0.3"
+G = json.load(open(os.path.join(HERE, "geom.json")))
+ORIGIN = (100.0, 100.0)
+X0, Y0, X1, Y1 = G["board"]
 NETS = ["GND", "SW_UP", "SW_DOWN", "SW_LEFT", "SW_RIGHT", "SW_CENTER"]
 SW_PINS = {"1": "SW_UP", "2": "SW_CENTER", "3": "SW_LEFT", "4": "SW_RIGHT", "5": "GND", "6": "SW_DOWN", "7": "GND", "8": "GND"}
-J_PINS = {"1": "SW_UP", "2": "SW_CENTER", "3": "SW_RIGHT", "4": "SW_LEFT", "5": "GND", "6": "SW_DOWN"}
+# Board: nets in inner -> outer order (closest to the switch first), assigned by position.
+# Schematic: footprint pin 1, 2, 3 AFTER the underside flip. J1's flip swaps pin 1 with pin 3.
+BOARD_NETS = {"J1": ("SW_RIGHT", "SW_DOWN", "GND"), "J2": ("SW_LEFT", "SW_CENTER", "SW_UP")}
+SCH_NETS = {"J1": ("GND", "SW_DOWN", "SW_RIGHT"), "J2": ("SW_LEFT", "SW_CENTER", "SW_UP")}
 ROOT = "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c01"
 SW_UUID = "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c02"
-J_UUID = "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c03"
-MH_UUID = ["6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c04", "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c05"]
-# BOM identity. The socket is on the main PCB, not on this board.
+J_UUID = ["6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c03", "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c13"]
+MH_UUID = ["6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c04", "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c05",
+           "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c14", "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c15"]
 PARTS = {
     "SW1": ("Alps Alpine", "SKRHADE010", "C202415"),
-    "J1": ("LXWCONN", "254PZ-2x3P-V", "C53055678"),
-    "MH1": ("XHHD", "STTZ2008", "C50377192"),
-    "MH2": ("XHHD", "STTZ2008", "C50377192"),
+    "J1": ("Samtec", "TSW-103-20-T-S", ""),
+    "J2": ("Samtec", "TSW-103-20-T-S", ""),
+    "MH1": ("XHHD", "STTZ2032", "C50377216"),
+    "MH2": ("XHHD", "STTZ2032", "C50377216"),
+    "MH3": ("XHHD", "STTZ2032", "C50377216"),
+    "MH4": ("XHHD", "STTZ2032", "C50377216"),
 }
-
-def sym_skrh(name):
-    pins = [("1", "A", -12.7, 7.62, 0), ("2", "Center", -12.7, 2.54, 0), ("3", "C", -12.7, -2.54, 0),
-            ("7", "Frame", -12.7, -7.62, 0),
-            ("4", "B", 12.7, 7.62, 180), ("5", "Common", 12.7, 2.54, 180), ("6", "D", 12.7, -2.54, 180),
-            ("8", "Frame", 12.7, -7.62, 180)]
-    return _sym(name, "SW", "SKRHADE010", "footprints:Alps_SKRHADE010", "https://tech.alpsalpine.com/e/products/detail/SKRHADE010/",
-                "Alps SKRH 4-direction + centre push. Frame tabs to GND", 10.16, 10.16, pins)
-
-def sym_conn(name):
-    pins = [(str(i + 1), f"Pin_{i + 1}", -7.62 if i % 2 == 0 else 7.62, 2.54 - (i // 2) * 2.54, 0 if i % 2 == 0 else 180) for i in range(6)]
-    return _sym(name, "J", "254PZ-2x3P-V", "footprints:PinHeader_2x03_P2.54mm_Vertical", "",
-                "2x3 2.54 mm header, 6 mm mating pin, plastic on top", 5.08, 5.08, pins)
-
-def sym_mount(name):
-    return _sym(name, "MH", "STTZ2008", "footprints:Mount_M2x11_Standoff", "",
-                "M2x11 brass female-female standoff to GND", 5.08, 2.54, [("1", "GND", -7.62, 0, 0)])
 
 def _sym(name, ref, val, fp, ds, desc, hw, hh, pins):
     base = name.split(":")[-1]
@@ -71,8 +53,26 @@ def _sym(name, ref, val, fp, ds, desc, hw, hh, pins):
     P += ['    )', '  )']
     return "\n".join(P), {num: (x, y) for num, nm, x, y, a in pins}
 
+def sym_skrh(name):
+    pins = [("1", "A", -12.7, 7.62, 0), ("2", "Center", -12.7, 2.54, 0), ("3", "C", -12.7, -2.54, 0),
+            ("7", "Frame", -12.7, -7.62, 0),
+            ("4", "B", 12.7, 7.62, 180), ("5", "Common", 12.7, 2.54, 180), ("6", "D", 12.7, -2.54, 180),
+            ("8", "Frame", 12.7, -7.62, 180)]
+    return _sym(name, "SW", "SKRHADE010", "footprints:Alps_SKRHADE010", "https://tech.alpsalpine.com/e/products/detail/SKRHADE010/",
+                "Alps SKRH 4-direction + centre push. Frame tabs to GND", 10.16, 10.16, pins)
+
+def sym_conn(name):
+    pins = [("1", "Inner", -7.62, 2.54, 0), ("2", "Mid", -7.62, 0, 0), ("3", "Outer", -7.62, -2.54, 0)]
+    return _sym(name, "J", "TSW-103-20-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
+                "https://www.samtec.com/products/tsw-103-20-t-s",
+                "1x3 2.54 header, mating pin 25.91 mm, plastic on the underside", 5.08, 5.08, pins)
+
+def sym_mount(name):
+    return _sym(name, "MH", "STTZ2032", "footprints:Mount_M2x35_Standoff", "",
+                "M2x35 brass female-female standoff to GND", 5.08, 2.54, [("1", "GND", -7.62, 0, 0)])
+
 def write_symlib():
-    s1, _ = sym_skrh("SKRHADE010"); s2, _ = sym_conn("Conn_02x03"); s3, _ = sym_mount("Mount_M2")
+    s1, _ = sym_skrh("SKRHADE010"); s2, _ = sym_conn("Conn_01x03"); s3, _ = sym_mount("Mount_M2")
     open(os.path.join(HERE, "joystick.kicad_sym"), "w").write(
         '(kicad_symbol_lib (version 20241209) (generator "make_project.py")\n' + s1 + "\n" + s2 + "\n" + s3 + "\n)\n")
     open(os.path.join(HERE, "sym-lib-table"), "w").write(
@@ -81,7 +81,7 @@ def write_symlib():
         '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
 
 def write_sch():
-    sk, skp = sym_skrh("joystick:SKRHADE010"); cn, cnp = sym_conn("joystick:Conn_02x03"); mh, mhp = sym_mount("joystick:Mount_M2")
+    sk, skp = sym_skrh("joystick:SKRHADE010"); cn, cnp = sym_conn("joystick:Conn_01x03"); mh, mhp = sym_mount("joystick:Mount_M2")
     def inst(lib, ref, val, fp, x, y, uid, pins, mfr, mpn, lcsc, ds=""):
         L = [f'  (symbol (lib_id "{lib}") (at {x} {y} 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "{uid}")',
              f'    (property "Reference" "{ref}" (at {x} {y - 12.7} 0) (effects (font (size 1.27 1.27))))',
@@ -100,36 +100,42 @@ def write_sch():
         return f'  (label "{net}" (at {x:.2f} {y:.2f} {a}) (effects (font (size 1.27 1.27)) (justify {j} bottom)) (uuid "{uuid.uuid4()}"))'
     def wire(x0, y0, x1, y1):
         return f'  (wire (pts (xy {x0:.2f} {y0:.2f}) (xy {x1:.2f} {y1:.2f})) (stroke (width 0) (type default)) (uuid "{uuid.uuid4()}"))'
-    sx, sy, jx, jy = 55.88, 60.96, 132.08, 60.96
+    sx, sy = 55.88, 71.12          # 1.27 mm grid, so the pin ends are on the connection grid
     L = [f'(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0") (uuid "{ROOT}") (paper "A4")',
          f'  (title_block (title "Top-screen joystick daughterboard") (date "2026-11-01") (rev "{REV}") (company "Ed / Edger_Equals - knob module")',
-         '    (comment 1 "SW1 Alps SKRHADE010 at -45 deg: a/b/c/d -> UP/RIGHT/LEFT/DOWN, confirmed at first-power calibration")',
-         '    (comment 2 "Frame tabs 7 and 8, and MH1/MH2 M2x11 standoffs, are GND. J1 pin 5 is GND too")',
-         '    (comment 3 "J1 2x3 male (plastic on top) into J2 hanxia 11 mm socket on the main PCB. Pull-ups and ESD on the MCU"))',
+         '    (comment 1 "SW1 Alps SKRHADE010 at -45 deg, on the carrier axis. a/b/c/d -> UP/RIGHT/LEFT/DOWN, confirmed at first power")',
+         '    (comment 2 "J1 pin 1 GND, pin 2 DOWN, pin 3 RIGHT. J2 pin 1 LEFT, pin 2 CENTER, pin 3 UP. Inner pin faces the switch")',
+         '    (comment 3 "Four M2x35 standoffs and the frame tabs are GND. No LEDs. Headers are consigned Samtec parts"))',
          '  (lib_symbols', sk, cn, mh, '  )']
     L += inst("joystick:SKRHADE010", "SW1", "SKRHADE010", "footprints:Alps_SKRHADE010", sx, sy, SW_UUID, list(skp), *PARTS["SW1"],
               "https://tech.alpsalpine.com/e/products/detail/SKRHADE010/")
-    L += inst("joystick:Conn_02x03", "J1", "254PZ-2x3P-V", "footprints:PinHeader_2x03_P2.54mm_Vertical", jx, jy, J_UUID, list(cnp), *PARTS["J1"])
+    for i, ref in enumerate(("J1", "J2")):
+        jx, jy = 139.70, 50.80 + i * 40.64
+        nets = {str(k + 1): SCH_NETS[ref][k] for k in range(3)}
+        L += inst("joystick:Conn_01x03", ref, "TSW-103-20-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
+                  jx, jy, J_UUID[i], list(cnp), *PARTS[ref], "https://www.samtec.com/products/tsw-103-20-t-s")
+        for num, (px, py) in cnp.items():
+            X, Y = jx + px, jy - py
+            L.append(wire(X, Y, X - 5.08, Y)); L.append(label(nets[num], X - 5.08, Y, True))
+    for num, (px, py) in skp.items():
+        X, Y = sx + px, sy - py; left = px < 0; e = X - 5.08 if left else X + 5.08
+        L.append(wire(X, Y, e, Y)); L.append(label(SW_PINS[num], e, Y, left))
     for i, uid in enumerate(MH_UUID):
-        L += inst("joystick:Mount_M2", f"MH{i + 1}", "STTZ2008", "footprints:Mount_M2x11_Standoff", 40.64, 104.14 + i * 15.24, uid, list(mhp), *PARTS[f"MH{i + 1}"])
-    for pins, x0, y0, net in ((skp, sx, sy, SW_PINS), (cnp, jx, jy, J_PINS)):
-        for num, (px, py) in pins.items():
-            X, Y = x0 + px, y0 - py; left = px < 0; e = X - 5.08 if left else X + 5.08
-            L.append(wire(X, Y, e, Y)); L.append(label(net[num], e, Y, left))
-    for i in range(2):
-        X, Y = 40.64 + mhp["1"][0], (104.14 + i * 15.24) - mhp["1"][1]
+        my = 129.54 + (i % 2) * 12.70
+        mx = 40.64 + (i // 2) * 30.48
+        L += inst("joystick:Mount_M2", f"MH{i + 1}", "STTZ2032", "footprints:Mount_M2x35_Standoff", mx, my, uid, list(mhp), *PARTS[f"MH{i + 1}"])
+        X, Y = mx + mhp["1"][0], my - mhp["1"][1]
         L.append(wire(X, Y, X - 5.08, Y)); L.append(label("GND", X - 5.08, Y, True))
-    L.append(f'  (text "v0.2. Directions at -45 deg: A(1)=UP, B(4)=RIGHT, C(3)=LEFT, D(6)=DOWN, 2=CENTRE, 5=COMMON.\\nFrame tabs 7 and 8 and the two M2x11 standoffs are GND. Diagonals = two contacts, read at first-power calibration.\\nNo ESD or pull-ups on this board." (exclude_from_sim no) (at 25.4 140 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
+    L.append(f'  (text "v0.3. Switch on the carrier axis. Two 1x3 headers, plastic on the underside, long pin down into the H11 sockets on the main PCB.\\nFour M2x35 standoffs and frame tabs 7 and 8 are GND. No LEDs. No ESD or pull-ups on this board.\\nJ1 and J2 are Samtec TSW-103-20-T-S, consigned (same -20 lead as LCSC C3345998, which is the 2-row part)." (exclude_from_sim no) (at 20 165 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
     L += ['  (sheet_instances (path "/" (page "1")))', ')']
     open(os.path.join(HERE, NAME + ".kicad_sch"), "w").write("\n".join(L) + "\n")
 
 mm = pcbnew.FromMM
 def P(x, y): return pcbnew.VECTOR2I(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
-def K(x, y): return pcbnew.VECTOR2I(mm(ORIGIN[0] + x), mm(ORIGIN[1] + y))
 
 def build_board():
-    b = pcbnew.BOARD(); ds = b.GetDesignSettings(); ds.SetBoardThickness(mm(DB_T)); ds.SetCopperLayerCount(2)
-    ds.m_CopperEdgeClearance = mm(0.3); ds.m_TrackMinWidth = mm(0.2); ds.m_MinClearance = mm(0.15)
+    b = pcbnew.BOARD(); ds = b.GetDesignSettings(); ds.SetBoardThickness(mm(G["db_t"])); ds.SetCopperLayerCount(2)
+    ds.m_CopperEdgeClearance = mm(0.25); ds.m_TrackMinWidth = mm(0.2); ds.m_MinClearance = mm(0.15)
     ds.m_ViasMinSize = mm(0.5); ds.m_MinThroughDrill = mm(0.25); ds.m_HoleClearance = mm(0.25)
     nets = {}
     for n in NETS:
@@ -142,91 +148,100 @@ def build_board():
     def text(t, x, y, layer, size=0.7):
         tx = pcbnew.PCB_TEXT(b); tx.SetText(t); tx.SetPosition(P(x, y)); tx.SetLayer(layer)
         tx.SetTextSize(pcbnew.VECTOR2I(mm(size), mm(size))); tx.SetTextThickness(mm(size * 0.15)); b.Add(tx)
-    dx, dy = DB_XY; w2, h2, r = DB_W / 2, DB_H / 2, CORNER_R
-    x0, x1, y0, y1 = dx - w2, dx + w2, dy - h2, dy + h2
-    seg(P(x0 + r, y1), P(x1 - r, y1)); seg(P(x1, y1 - r), P(x1, y0 + r))
-    seg(P(x1 - r, y0), P(x0 + r, y0)); seg(P(x0, y0 + r), P(x0, y1 - r))
-    arc(P(x1 - r, y1 - r), P(x1 - r, y1)); arc(P(x1 - r, y0 + r), P(x1, y0 + r))
-    arc(P(x0 + r, y0 + r), P(x0 + r, y0)); arc(P(x0 + r, y1 - r), P(x0, y1 - r))
+    r = 0.8
+    seg(P(X0 + r, Y1), P(X1 - r, Y1)); seg(P(X1, Y1 - r), P(X1, Y0 + r))
+    seg(P(X1 - r, Y0), P(X0 + r, Y0)); seg(P(X0, Y0 + r), P(X0, Y1 - r))
+    arc(P(X1 - r, Y1 - r), P(X1 - r, Y1)); arc(P(X1 - r, Y0 + r), P(X1, Y0 + r))
+    arc(P(X0 + r, Y0 + r), P(X0 + r, Y0)); arc(P(X0 + r, Y1 - r), P(X0, Y1 - r))
     lib = os.path.normpath(os.path.join(HERE, "..", "footprints.pretty"))
     sw = pcbnew.FootprintLoad(lib, "Alps_SKRHADE010"); sw.SetReference("SW1"); sw.SetValue("SKRHADE010")
-    sw.SetFPID(pcbnew.LIB_ID("footprints", "Alps_SKRHADE010")); sw.SetPosition(P(*SW_XY)); sw.SetOrientationDegrees(SW_ROT); b.Add(sw)
+    sw.SetFPID(pcbnew.LIB_ID("footprints", "Alps_SKRHADE010")); sw.SetPosition(P(0, 0)); sw.SetOrientationDegrees(G["sw_rot"]); b.Add(sw)
     sw.SetPath(pcbnew.KIID_PATH(f"/{SW_UUID}"))
-    j = pcbnew.FootprintLoad(lib, "PinHeader_2x03_P2.54mm_Vertical"); j.SetReference("J1"); j.SetValue("254PZ-2x3P-V")
-    hx, hy = HDR_XY
-    j.SetFPID(pcbnew.LIB_ID("footprints", "PinHeader_2x03_P2.54mm_Vertical"))
-    j.SetPosition(K(hx - 1.27, -hy - 2.54)); b.Add(j); j.SetPath(pcbnew.KIID_PATH(f"/{J_UUID}"))
+    headers = []
+    for i, (x, y) in enumerate(G["headers"]):
+        j = pcbnew.FootprintLoad(lib, "PinHeader_1x03_P2.54mm_Vertical_Long")
+        ref = f"J{i + 1}"; j.SetReference(ref); j.SetValue("TSW-103-20-T-S")
+        j.SetFPID(pcbnew.LIB_ID("footprints", "PinHeader_1x03_P2.54mm_Vertical_Long"))
+        j.SetPosition(P(x, y)); b.Add(j)
+        j.Flip(j.GetPosition(), False)   # plastic on the underside
+        j.SetPath(pcbnew.KIID_PATH(f"/{J_UUID[i]}")); headers.append(j)
     mhs = []
-    for i, (x, y) in enumerate(STANDOFFS):
-        m = pcbnew.FootprintLoad(lib, "Mount_M2x11_Standoff"); m.SetReference(f"MH{i + 1}"); m.SetValue("STTZ2008")
-        m.SetFPID(pcbnew.LIB_ID("footprints", "Mount_M2x11_Standoff")); m.SetPosition(P(x, y)); b.Add(m)
+    for i, (x, y) in enumerate(G["standoffs"]):
+        m = pcbnew.FootprintLoad(lib, "Mount_M2x35_Standoff"); m.SetReference(f"MH{i + 1}"); m.SetValue("STTZ2032")
+        m.SetFPID(pcbnew.LIB_ID("footprints", "Mount_M2x35_Standoff")); m.SetPosition(P(x, y)); b.Add(m)
         m.SetPath(pcbnew.KIID_PATH(f"/{MH_UUID[i]}")); mhs.append(m)
-    for fp, mp in ((sw, SW_PINS), (j, J_PINS)):
+    def cad(pad):
+        return (pcbnew.ToMM(pad.GetPosition().x) - ORIGIN[0], ORIGIN[1] - pcbnew.ToMM(pad.GetPosition().y))
+    # nets: header pins ordered inner -> outer (closest to the switch first)
+    for fp, mp in ((sw, SW_PINS),):
         for pad in fp.Pads():
             n = pad.GetNumber()
             if n in mp: pad.SetNet(nets[mp[n]])
     for m in mhs:
         for pad in m.Pads():
             if pad.GetNumber() == "1": pad.SetNet(nets["GND"])
-    def cad(pad):
-        return (pcbnew.ToMM(pad.GetPosition().x) - ORIGIN[0], ORIGIN[1] - pcbnew.ToMM(pad.GetPosition().y))
-    pads = {f"SW{p.GetNumber()}": cad(p) for p in sw.Pads() if p.GetNumber()}
-    pads.update({f"J{p.GetNumber()}": cad(p) for p in j.Pads()})
-    pads.update({m.GetReference(): cad(next(p for p in m.Pads() if p.GetNumber() == "1")) for m in mhs})
-    print("pads CAD y-up:", {k: (round(x, 2), round(y, 2)) for k, (x, y) in sorted(pads.items())})
-    TW = 0.25
+    hdr_pts = {}
+    for j in headers:
+        pads = sorted(j.Pads(), key=lambda p: abs(cad(p)[0]))
+        nets_for = BOARD_NETS[j.GetReference()]
+        for pad, net in zip(pads, nets_for):
+            pad.SetNet(nets[net]); hdr_pts[(j.GetReference(), net)] = cad(pad)
+    sw_pts = {f"SW{p.GetNumber()}": cad(p) for p in sw.Pads() if p.GetNumber()}
+    mh_pts = {m.GetReference(): cad(next(p for p in m.Pads() if p.GetNumber() == "1")) for m in mhs}
+    print("SW", {k: (round(x, 3), round(y, 3)) for k, (x, y) in sw_pts.items()})
+    print("HDR", {k: (round(x, 3), round(y, 3)) for k, (x, y) in hdr_pts.items()})
+    TW = 0.2
+    def via(x, y, net):
+        v = pcbnew.PCB_VIA(b); v.SetPosition(P(x, y)); v.SetViaType(pcbnew.VIATYPE_THROUGH)
+        v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        ps = v.Padstack(); ps.SetSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)), pcbnew.F_Cu); v.SetPadstack(ps)
+        v.SetDrill(mm(0.3)); v.SetNet(nets[net]); b.Add(v)
     def track(pts, net, layer=pcbnew.F_Cu):
         for a, c in zip(pts[:-1], pts[1:]):
+            if abs(a[0] - c[0]) < 1e-6 and abs(a[1] - c[1]) < 1e-6: continue
             t = pcbnew.PCB_TRACK(b); t.SetStart(P(*a)); t.SetEnd(P(*c)); t.SetWidth(mm(TW)); t.SetLayer(layer); t.SetNet(nets[net]); b.Add(t)
-    def via(x, y, net):
-        v = pcbnew.PCB_VIA(b); v.SetPosition(P(x, y)); v.SetViaType(pcbnew.VIATYPE_THROUGH); v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
-        ps = v.Padstack(); ps.SetSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)), pcbnew.F_Cu); v.SetPadstack(ps); v.SetDrill(mm(0.3)); v.SetNet(nets[net]); b.Add(v)
-    # Routes in CAD y-up, from the placed pads. F.Cu and B.Cu are split so a track crosses the other layer's lane.
-    R = pads
-    # UP on B.Cu. The via sits 0.65 below the top edge (via radius 0.3 + 0.3 clearance).
-    via(-3.9, 3.05, "SW_UP")
-    track([R["SW1"], (-4.52, 3.05), (-3.9, 3.05)], "SW_UP")
-    track([(-3.9, 3.05), (4.63, 3.05), R["J1"]], "SW_UP", pcbnew.B_Cu)
-    # CENTER on B.Cu, ducked under UP's drop so the two B.Cu nets do not cross
-    via(-6.9, 2.05, "SW_CENTER")
-    track([R["SW2"], (-5.53, 2.05), (-6.9, 2.05)], "SW_CENTER")
-    track([(-6.9, 2.05), (-6.9, 2.40), (2.2, 2.40), (2.2, 0.30), (8.4, 0.30), (8.4, 1.54), R["J2"]], "SW_CENTER", pcbnew.B_Cu)
-    # RIGHT on F.Cu into J3
-    track([R["SW4"], (0.54, -1.0), R["J3"]], "SW_RIGHT")
-    # DOWN on F.Cu
-    track([R["SW6"], (-1.48, -5.35), (6.35, -5.35), (6.35, -3.54), R["J6"]], "SW_DOWN")
-    # LEFT on B.Cu, above the standoff pads, up between J3 and J4
-    via(-8.15, 0.32, "SW_LEFT")
-    track([R["SW3"], (-8.15, 0.32)], "SW_LEFT")
-    track([(-8.15, 0.32), (-8.15, -4.9), (5.90, -4.9), (5.90, -1.0), R["J4"]], "SW_LEFT", pcbnew.B_Cu)
-    # GND. Common pin dipped under the RIGHT pad; both frame tabs and both standoffs on F.Cu
-    track([R["SW5"], (-0.47, -4.5), (3.3, -4.5), (3.3, -3.73), R["J5"]], "GND")
-    track([R["MH1"], (-7.5, -6.15), (-3.3, -6.15), (-3.3, -3.2), (-0.47, -3.2), R["SW5"]], "GND")
-    track([R["SW8"], (-8.55, -4.06), (-8.55, -8.0), R["MH1"]], "GND")
-    track([R["SW7"], (-0.14, 2.85), (8.85, 2.85)], "GND")
-    track([R["MH2"], (8.85, -7.6), (8.85, 2.85)], "GND")
-    track([(8.85, -2.27), (5.2, -2.27), (5.2, -3.54), R["J5"]], "GND")
-    text("JOY v0.2", 0.3, -8.7, pcbnew.F_Fab, 0.8)
+    # signal routes, F.Cu, kept off the standoff pads (centres near x=±14, y=±4.1)
+    S, H = sw_pts, hdr_pts
+    track([S["SW3"], (-5.8, S["SW3"][1]), (-5.8, 0.0), H[("J2", "SW_LEFT")]], "SW_LEFT")
+    # SW_CENTER: the orthogonal exits clip the neighbouring 45° pads, so the stub leaves along the clear diagonal and the run is on B.Cu
+    via(-4.0, 4.0, "SW_CENTER")
+    track([S["SW2"], (-3.2, 3.2), (-4.0, 4.0)], "SW_CENTER")
+    track([(-4.0, 4.0), (-4.0, 4.9), (H[("J2", "SW_CENTER")][0], 4.9), H[("J2", "SW_CENTER")]], "SW_CENTER", pcbnew.B_Cu)
+    track([S["SW1"], (S["SW1"][0], 5.7), (-11.2, 5.7), (-11.2, 1.9), (H[("J2", "SW_UP")][0], 1.9), H[("J2", "SW_UP")]], "SW_UP")
+    track([S["SW4"], (5.8, S["SW4"][1]), (5.8, 0.0), H[("J1", "SW_RIGHT")]], "SW_RIGHT")
+    # SW_DOWN crosses the GND spine, so the long run is on B.Cu. The header pin is through-hole.
+    via(S["SW6"][0], -4.7, "SW_DOWN")
+    track([S["SW6"], (S["SW6"][0], -4.7)], "SW_DOWN")
+    track([(S["SW6"][0], -4.7), (H[("J1", "SW_DOWN")][0], -4.7), H[("J1", "SW_DOWN")]], "SW_DOWN", pcbnew.B_Cu)
+    # GND: common, both frame tabs, J1 outer pin, four standoffs. Spine at x=11.5, off SW_DOWN.
+    gnd = H[("J1", "GND")]
+    # diagonal stub misses the rotated SW_RIGHT pad; SW_DOWN's long run is on B.Cu so this spine may cross it
+    track([S["SW5"], (3.2, -3.2), (4.0, -4.2), (4.0, -7.4), (11.5, -7.4), (11.5, -2.1), (gnd[0], -2.1), gnd], "GND")
+    track([S["SW8"], (S["SW8"][0], -8.6), (11.5, -8.6), (11.5, -7.4)], "GND")
+    track([S["SW7"], (4.4, S["SW7"][1]), (4.4, 6.2), (11.5, 6.2), (11.5, 2.1), (gnd[0], 2.1), gnd], "GND")
+    track([mh_pts["MH1"], (mh_pts["MH1"][0], 6.2), (4.4, 6.2)], "GND")
+    track([mh_pts["MH2"], (mh_pts["MH2"][0], -6.4), (11.5, -6.4)], "GND")
+    track([mh_pts["MH3"], (mh_pts["MH3"][0], 6.2), (4.4, 6.2)], "GND")
+    track([mh_pts["MH4"], (mh_pts["MH4"][0], -8.6), (S["SW8"][0], -8.6)], "GND")
+    text("JOY v0.3", 0.0, -9.2, pcbnew.F_Fab, 0.8)
     pcbnew.SaveBoard(os.path.join(HERE, NAME + ".kicad_pcb"), b)
-    return pads
+    return sw_pts
 
 def write_pro():
     pro = {"meta": {"filename": NAME + ".kicad_pro", "version": 3},
-           "board": {"design_settings": {"rules": {"min_copper_edge_clearance": 0.3, "min_clearance": 0.15, "min_track_width": 0.2,
+           "board": {"design_settings": {"rules": {"min_copper_edge_clearance": 0.25, "min_clearance": 0.15, "min_track_width": 0.2,
                                                    "min_via_diameter": 0.5, "min_through_hole_diameter": 0.25, "min_hole_clearance": 0.25}}},
            "libraries": {"pinned_footprint_libs": [], "pinned_symbol_libs": []}, "sheets": [[ROOT, "Root"]], "text_variables": {}}
     json.dump(pro, open(os.path.join(HERE, NAME + ".kicad_pro"), "w"), indent=2)
 
 def export_fab():
-    """PCBWay-style pack in fab/: Gerbers+drill zip, BOM (MPN+LCSC), CPL, ERC/DRC reports, README."""
     pcb = os.path.join(HERE, NAME + ".kicad_pcb"); sch = os.path.join(HERE, NAME + ".kicad_sch")
     fab = os.path.join(HERE, "fab"); rep = os.path.join(fab, "reports")
     if os.path.isdir(fab): shutil.rmtree(fab)
     os.makedirs(rep)
     base = f"{NAME}-{REV}"
     def run(*a):
-        r = subprocess.run(["kicad-cli", *a], capture_output=True, text=True)
-        return r
+        return subprocess.run(["kicad-cli", *a], capture_output=True, text=True)
     with tempfile.TemporaryDirectory() as t:
         g = os.path.join(t, "gerbers"); os.makedirs(g)
         layers = "F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts"
@@ -259,21 +274,31 @@ def export_fab():
     erc = open(os.path.join(rep, "erc.rpt")).read(); drc = open(os.path.join(rep, "drc.rpt")).read()
     def cnt(pat, txt):
         m = re.search(pat, txt); return int(m.group(1)) if m else -1
+    missing = [row["Designator"] for row in rows if not row["LCSC"]]
+    missing_refs = set()
+    for item in missing:
+        missing_refs.update(x.strip() for x in item.split(",") if x.strip())
+    consigned = sorted(missing_refs & {"J1", "J2"})
     status = dict(board=NAME, rev=REV, erc_messages=cnt(r"\*\* ERC messages: (\d+)", erc), erc_errors=cnt(r"Errors (\d+)", erc),
                   erc_warnings=cnt(r"Warnings (\d+)", erc), drc_violations=cnt(r"Found (\d+) DRC violations", drc),
                   drc_unconnected=cnt(r"Found (\d+) unconnected pads", drc), drc_parity=cnt(r"Found (\d+) Footprint errors", drc),
                   bom_rows=len(rows), cpl_parts=len(pos), gerber_files=nfiles,
-                  bom_rows_without_lcsc=[row["Designator"] for row in rows if not row["LCSC"]])
-    ready = status["drc_violations"] == 0 and status["drc_unconnected"] == 0 and status["drc_parity"] == 0 and status["erc_errors"] == 0 and not status["bom_rows_without_lcsc"]
+                  bom_rows_without_lcsc=missing, consigned_samtec=consigned)
+    ready = (status["drc_violations"] == 0 and status["drc_unconnected"] == 0 and status["drc_parity"] == 0
+             and status["erc_errors"] == 0 and missing_refs <= {"J1", "J2"})
     with open(os.path.join(fab, "README.txt"), "w") as f:
         f.write(f"{NAME} {REV} PCBWay pack, generated {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} by make_project.py\n")
         f.write(("READY TO QUOTE" if ready else "NOT READY TO ORDER (see below)") + "\n\n")
         f.write(json.dumps(status, indent=2) + "\n\n")
-        f.write("Board: 2 layers, 1.0 mm FR-4; HASL or ENIG; green mask, white silk [A].\n")
-        f.write("J2 (the 11 mm socket) is on the MAIN PCB, not this board. Screws are hand-fit: four M2x4 pan-head, one in each end of MH1/MH2.\n")
-        f.write("Screen FPC pin-out is not on this board (open until the DO0164FMST05 drawing is confirmed). Pull-ups and ESD are on the main PCB.\n")
+        f.write("Board: 2 layers, 1.0 mm FR-4; HASL or ENIG; green mask, white silk [A]. No LEDs.\n")
+        f.write("J1 and J2 are Samtec TSW-103-20-T-S (1x3, mating pin 25.91 mm). Plastic on the BOTTOM. Trim the 2.79 mm tails flush on the top before the seat plate is glued on.\n")
+        f.write("LCSC lists the same -20 lead as TSW-103-20-T-D (C3345998, two rows) and TSW-125-20-T-S (C3334257, 25 pins). The 1x3 is ordered from Samtec and consigned. Do not fit the 2-row part.\n")
+        f.write("The two mating sockets are on the MAIN PCB: hanxia HX PM2.54-1x3P ZC H11, LCSC C41427518, one each side of the switch.\n")
+        f.write("MH1-MH4 are XHHD STTZ2032, M2x35 hex female-female, LCSC C50377216, all GND. Screws are hand-fit: four M2x6 through the seat plate and this board, four M2x6 through the main PCB.\n")
+        f.write("Screen FPC pin-out is not on this board (still open). Pull-ups and ESD are on the main PCB.\n")
         f.write("Direction map is confirmed at first-power calibration, not by a fixed legend.\n")
-    print(json.dumps(status))
+    print(json.dumps(status, indent=2))
+    print(drc[-1500:] if not ready else "DRC clean")
     return status
 
 if __name__ == "__main__":
@@ -284,5 +309,5 @@ if __name__ == "__main__":
                 ["kicad-cli", "pcb", "export", "step", "--subst-models", "-f", "-o", NAME + ".step", NAME + ".kicad_pcb"]):
         r = subprocess.run(cmd, capture_output=True, text=True)
         tail = (r.stdout + r.stderr).strip().splitlines()
-        print(" ".join(cmd[:4]), "->", r.returncode, tail[-4:])
+        print(" ".join(cmd[:4]), "->", r.returncode, tail[-6:])
     export_fab()

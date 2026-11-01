@@ -67,5 +67,25 @@ def header():
         L.append(f'  (pad "{i + 1}" thru_hole {shape} (at {x:.2f} {y:.2f}) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))')
     L.append(")"); open(os.path.join(OUT, n + ".kicad_mod"), "w").write("\n".join(L) + "\n"); print("wrote", n)
 
+def header_1x3():
+    n = "PinHeader_1x03_P2.54mm_Vertical_Long"
+    L = head(n, "1x3 2.54 mm pin header, THT, long mating pin. Samtec TSW-103-20-T-S: insulator 2.54, mating pin 25.91, tail 2.79. Plastic on the UNDERSIDE of the joystick daughterboard, pin 1 toward the switch.", "J", "through_hole")
+    L += prop("J", n, -2.2, 2.6)
+    L += [rect(-3.81, -1.27, 3.81, 1.27, "F.Fab", 0.1), rect(-4.06, -1.52, 4.06, 1.52, "F.CrtYd", 0.05),
+          line(-3.81, -1.55, -3.81, 1.55, "F.SilkS", 0.12)]
+    for i, x in enumerate((-2.54, 0.0, 2.54)):
+        shape = "rect" if i == 0 else "circle"
+        L.append(f'  (pad "{i + 1}" thru_hole {shape} (at {x:.2f} 0) (size 1.7 1.7) (drill 1.0) (layers "*.Cu" "*.Mask"))')
+    L.append(")"); open(os.path.join(OUT, n + ".kicad_mod"), "w").write("\n".join(L) + "\n"); print("wrote", n)
+
+def standoff_35():
+    n = "Mount_M2x35_Standoff"
+    L = head(n, "M2 female-female brass standoff, 35 mm hex H3 (XHHD STTZ2032, LCSC C50377216). PTH to GND. Drill 2.4, pad 3.2.", "MH", "through_hole")
+    L += prop("MH", n, -3.2, 3.4)
+    L += ['  (fp_circle (center 0 0) (end 1.75 0) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))',
+          '  (fp_circle (center 0 0) (end 2.05 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))']
+    L.append('  (pad "1" thru_hole circle (at 0 0) (size 3.2 3.2) (drill 2.4) (layers "*.Cu" "*.Mask"))')
+    L.append(")"); open(os.path.join(OUT, n + ".kicad_mod"), "w").write("\n".join(L) + "\n"); print("wrote", n)
+
 if __name__ == "__main__":
-    skrh(); header(); standoff()
+    skrh(); header(); standoff(); header_1x3(); standoff_35()

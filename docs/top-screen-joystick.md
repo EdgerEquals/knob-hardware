@@ -139,3 +139,29 @@ Coordinates are main-PCB millimetres (origin at the panel top-left, y down). Car
 - Back-panel depth. Springs are 42 mm [A] until it is known.
 - Rail front height. The 8.14 mm carrier overhang is only safe if the rail stays below z 10.
 - Knob v0.17 is not in this tree yet (live OD is still Ø40.85). The plan is sized to Ø41.7. If the knob grows past that, `place_y` has to move again.
+
+## v0.3 build (1 Nov 2026)
+Model: `cad/joystick-param/` (`build.py`, `build.py --preview`, `build.py --render`).
+Images: `cad/assemblies/joystick-v0.3/joystick-v0.3.png`, `-plan.png`, `-clean.png`, `-preview.png`, and `views/`.
+Report: `cad/assemblies/joystick-v0.3/REPORT.md`.
+**44/44 checks PASS, 0 clashes.** Daughterboard KiCad: ERC 0, DRC 0, schematic parity 0, 0 unconnected. Fab pack READY TO QUOTE.
+The main PCB KiCad project was **not** edited.
+
+The 26 mm carrier floor is gone. The daughterboard is raised on a 35 mm riser so the switch stem sits 1.35 mm under the carrier. The printed base enclosure is gone. A flat plate glued on the daughterboard carries the four ball seats and the round stop, and the standoff screws pass through the plate and the board together. The switch is on the carrier axis. Two 1×3 headers sit on the underside, one each side. Four standoffs, all GND. No LEDs. The screen-well wall is 1.00 mm (v0.2 was 0.80), which meets PCBWay's SLS/MJF minimum; SLA resin allows 0.8.
+
+**Stack** (z from the main-PCB front; carrier centre is board **(25.25, 16.48)**, knob-frame y **36.42**):
+
+| Item | z (mm) | Notes |
+|---|---|---|
+| Two 1×3 sockets, insulation 11 mm | 0–11 | hanxia HX PM2.54-1x3P ZC H11, LCSC C41427518, one each side of the axis |
+| Four M2×35 brass standoffs | 0–35 | XHHD STTZ2032, hex H3, LCSC C50377216, all GND |
+| Header mating pins | tip at 6.55 | Samtec TSW-103-20-T-S, mating pin 25.91. They enter the sockets 4.45 mm |
+| Daughterboard | 35–36 | 31.88 × 17.52 × 1.0, switch at the carrier origin |
+| Seat plate | 36–37 | 1.0 thick, glued. Seat bosses and the round stop stand on it |
+| SKRHADE010 | stem top 41.00 | on the axis, footprint −45° |
+| Carrier underside | 42.35 | floor is **2.05** (v0.2 was 26.05) |
+| Screen | 46.0–47.5 | top unchanged: knob top 52.5 − 5 |
+
+Carrier outline **44.02 × 29.14** (the screen plus a 1.20 mm wall, of which 0.20 is air, so the solid well wall is 1.00). Knob clearance at full slide is **0.60 mm** against the design Ø41.7 and **1.03 mm** against the live Ø40.85. v0.2 was 0.55 mm against Ø41.7.
+
+The +y standoffs are at local y = ±4.08, not on the outline's top edge. The main PCB only reaches local y 5.98, and a Ø3.2 pad has to stay 0.30 inside that edge. The board itself is taller than that (it has to clear the switch land and carry the stop toward the knob), so the four screws are the outermost symmetric holes the main PCB can take, one per quadrant.

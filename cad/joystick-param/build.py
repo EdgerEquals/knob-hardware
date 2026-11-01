@@ -1,4 +1,4 @@
-"""Top-screen joystick stack (v0.2): build, checks, clash, render.
+"""Top-screen joystick stack (v0.3): build, checks, clash, render.
   python build.py                 parts + checks + clashes -> ../assemblies/joystick-<version>/check.json
   python build.py --render        + joystick-<version>.png (A-A section + iso cut-away + plan) and -plan.png
   python build.py --preview       plan PNG only (fast), before the colour render
@@ -38,16 +38,21 @@ def main():
     for k, v in cl.items(): print(f"  {'KNOWN' if k in KNOWN else 'CLASH'} {k}: {v:.3f} mm³")
     nf = sum(not r["ok"] for r in rows)
     print(f"\nSUMMARY: {len(rows) - nf}/{len(rows)} checks PASS, {nf} FAIL; {len(cl)} clashes")
-    keyd = {k: D[k] for k in ("version", "riser_h", "stack_h", "scr_top", "z_knob_top", "z_db0", "z_db1", "z_stem_top", "z_c0", "z_ball", "z_scr0", "z_skirt0", "slide", "slide_need", "sp_gap", "sp_k", "sp_f_click", "press_f", "base_w", "base_h", "base_x0", "base_x1", "base_y0", "base_y1", "car", "car_floor", "db", "db_xy", "place_y", "board_xy", "spr_len", "back_panel", "knob_od_live", "knob_od_design", "fpc_x", "slot_x", "hole_x0", "hole_x1", "hole_hy", "balls", "springs", "pins", "standoff_xy", "stop_xy", "sw_xy", "hdr_xy")}
+    keyd = {k: D[k] for k in ("version", "riser_h", "stack_h", "scr_top", "z_knob_top", "z_db0", "z_db1", "z_stem_top", "z_c0", "z_ball", "z_scr0", "z_skirt0", "slide", "slide_need", "sp_gap", "sp_k", "sp_f_click", "press_f", "car", "car_floor", "well_wall", "db", "db_xy", "place_y", "board_xy", "spr_len", "back_panel", "knob_od_live", "knob_od_design", "fpc_x", "slot_x", "hole_x0", "hole_x1", "hole_hy", "balls", "springs", "standoff_xy", "stop_xy", "sw_xy", "hdr_xy", "mate_in", "sx", "sy", "hx", "bx", "by", "board_x0", "board_x1", "board_y0", "board_y1")}
     json.dump(dict(rows=rows, clashes=cl, set=a.set, key=keyd), open(os.path.join(OUT, "check.json"), "w"), indent=1, default=str)
+    geom = dict(rev=V, pitch=D["pitch"], db_t=D["db_t"], corner_r=D["cu_edge"] + D["part_gap"],
+                board=[D["board_x0"], D["board_y0"], D["board_x1"], D["board_y1"]],
+                sw_xy=list(D["sw_xy"]), sw_rot=D["sw_rot"],
+                headers=[list(p) for p in D["hdr_xy"]], standoffs=[list(p) for p in D["standoff_xy"]],
+                drill_m2=D["drill_m2"], pad_m2=D["pad_m2"],
+                hdr=D["hdr"], sock=D["sock"], standoff=D["standoff"])
+    gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
+    json.dump(geom, open(gpath, "w"), indent=1)
+    print("geom:", gpath)
     if a.preview and not a.render:
         from jsparam import render
-        import matplotlib; matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
         prev = os.path.join(OUT, f"joystick-{V}-preview.png")
-        f2, ax2 = plt.subplots(figsize=(12, 10), dpi=80); render.plan(ax2, D)
-        ax2.set_title(f"Top-screen joystick {V} — preview plan", fontsize=14, weight="bold", loc="left")
-        f2.tight_layout(); f2.savefig(prev); print("preview:", prev)
+        render.preview(D, P, prev); print("preview:", prev)
     if a.render:
         from jsparam import render
         png = os.path.join(OUT, f"joystick-{V}.png"); render.render(D, P, rows, png); print("PNG:", png)
