@@ -1,6 +1,7 @@
 """v0.15 Hall vernier: field model + resolution / dynamics estimate (pure numpy, all inputs from D).
 Field: each axially magnetised cylinder = two uniformly charged discs (exact for an ideal magnet, better than a dipole at
-gap ~ size); Bz at each Hall element (element height hv_z_elem). Alternating poles. Dipole kept for comparison."""
+gap ~ size); Bz at each Hall element (per-sensor element height hv_z_elems). Polarity per magnet from hv_pol (v0.16b [Ed]:
+N/S/N/S/N). Dipole kept for comparison. v0.16b: the middle sensor is a 3D TMAG5273 -> full B vector there (field_vec)."""
 import math
 import numpy as np
 
@@ -29,12 +30,33 @@ def bz_dipole(px, py, pz, cx, cy, zc, d, h, br):
 
 def layout(D):
     n = D["hv_n"]; r = np.array(D["hv_r"]); pm = np.radians(D["hv_phi_m"]); ps = np.radians(D["hv_phi_s"])
-    return r, pm, ps, np.array([(-1) ** i for i in range(n)], float)
+    pol = D["hv_pol"]
+    return r, pm, ps, np.array(pol, float)
+
+def b_cyl(px, py, pz, cx, cy, z0, d, h, br, grid=None):
+    """Full B (T) vector (bx, by, bz) at points from an axial cylinder magnet (charged-disc model, M along +z)."""
+    gx, gy, dA = grid if grid is not None else _disc_grid(d / 2)
+    out = np.zeros(3)
+    for zf, sgn in ((z0 + h, 1.0), (z0, -1.0)):
+        dx = px - (cx + gx); dy = py - (cy + gy); dz = pz - zf
+        r3 = (dx * dx + dy * dy + dz * dz) ** 1.5
+        out = out + sgn * np.array([(dx / r3 * dA).sum(), (dy / r3 * dA).sum(), (dz / r3 * dA).sum()])
+    return br / (4 * math.pi) * out
+
+def field_vec(D, j, thetas):
+    """B vector (mT, [k, 3]) at sensor j's element for dial angles thetas (deg), all magnets with polarity."""
+    r, pm, ps, pol = layout(D); md, mh = D["hv_mag"]; br = D["hv_br"]; grid = _disc_grid(md / 2)
+    sx, sy, sz = r[j] * math.cos(ps[j]), r[j] * math.sin(ps[j]), D["hv_z_elems"][j]
+    out = []
+    for t in np.radians(np.asarray(thetas, float)):
+        b = sum(pol[i] * b_cyl(sx, sy, sz, r[i] * math.cos(pm[i] + t), r[i] * math.sin(pm[i] + t), D["hv_z_mag0"], md, mh, br, grid) for i in range(len(r)))
+        out.append(b)
+    return np.array(out) * 1e3
 
 def field(D, thetas, model="disc"):
     """B[k, j] (mT) at sensor j for dial angle thetas[k] (deg)."""
     r, pm, ps, pol = layout(D); md, mh = D["hv_mag"]; br = D["hv_br"]
-    sx, sy = r * np.cos(ps), r * np.sin(ps); sz = np.full_like(sx, D["hv_z_elem"])
+    sx, sy = r * np.cos(ps), r * np.sin(ps); sz = np.array(D["hv_z_elems"], float)
     th = np.radians(np.asarray(thetas, float))
     B = np.zeros((len(th), len(r))); grid = _disc_grid(md / 2)
     for i in range(len(r)):
@@ -71,7 +93,7 @@ def analyse(D, step=0.02, model="disc"):
     s_v = s_th_w * math.sqrt(12 / N ** 3) * fs                         # deg/s rms, LSQ slope over N samples
     k = D["dial_spring"]
     out = dict(theta=th, B=B, dB=dB, S=S, s_theta=s_th, best=best,
-               B_peak=float(np.abs(B[inr]).max()), B_min_peak=float(np.abs(B[inr]).max(0).min()),
+               B_peak=float(np.abs(B[inr]).max()), B_peak_j=np.abs(B[inr]).max(0), B_min_peak=float(np.abs(B[inr]).max(0).min()),
                slope_min=float(S[inr].min()), slope_max=float(S[inr].max()),
                s_theta_worst=s_th_w, s_theta_best=float(s_th[inr].min()),
                noise_mT=sig, noise_sensor_mT=b_rms, noise_adc_mT=q_rms, lsb_mV=lsb,

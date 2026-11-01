@@ -2,12 +2,13 @@
 
 Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø40.85, derived from the
 AMOLED COF bend + a 0.8 mm printable lip wall).
-Default params are **v0.16**: no adapter cup (centre bolt clamps the stack), screen carrier cartridge
+Default params are **v0.16b** (v0.16 minus the knob-ring/dial TMAG5273 relative sensor; Hall row H3 = 3D TMAG5273A2,
+magnets N/S/N/S/N). v0.16 was: no adapter cup (centre bolt clamps the stack), screen carrier cartridge
 (pin + magnet/steel), Hall arm straight off the hub with a perimeter fan, 5 magnets / 5 TMAG5253 at 2.5 pitch,
 two tangential centring springs, top-loaded spring-ball detents at ±5° over a Ø1 ball track, magnet cushions at
 ±5.5°, 716 feel motor in an open saddle at 102°, dial TMAG5273 reading a diametric ring in the knob
 (relative knob-vs-dial angle), toothless encoder disc, enlarged rod VBUS pad (no washer).
-54/54 gap checks PASS, 1 known clash (PCB / motor). Output: `cad/assemblies/knob-stack-v0.16/`
+54/54 gap checks PASS, 1 known clash (PCB / motor). Output: `cad/assemblies/knob-stack-v0.16b/`
 (clean + opposite sections, plan view, check.json). Design notes: `docs/design-notes.md`.
 
 ## Branch model

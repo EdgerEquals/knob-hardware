@@ -75,10 +75,23 @@ def cross(D, parts):
                 f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT (all summed, on-axis worst case); static/slow -> calibrated", higher_ok=False)
             fan_d = min(cd.arm(Dc, t).distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
             row("fan vs detent springs / grubs (±travel)", fan_d, T["arm_vs_cradle"])
-        row("Hall bar / magnets vs sensor tops (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in sens), D["hv_gap"] - 0.01, f"element gap {D['hv_elem_gap']:.2f}")
+        mi = D["hv_mid"]["idx"] if D["hv_mid"] else -1
+        s53 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" not in n]
+        s73 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" in n]
+        row("Hall bar / magnets vs TMAG5253 tops (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in s53), D["hv_gap"] - 0.01, f"element gap {D['hv_elem_gap']:.2f}")
+        if s73:
+            row("Hall bar / magnets vs TMAG5273 (H3) top (air gap, ±travel)", min(cd.arm(Dc, t).distance_to(s_) for t in TR for s_ in s73), D["hv_gap_mid"] - 0.01,
+                f"SOT-23-6 h {D['hv_mid']['h']:g}; element gap {D['hv_mid_elem_gap']:.2f}; magnet faces z {D['hv_z_mag0']:.2f}")
         row("Hall sensors vs cradle", min(s_.distance_to(cr) for s_ in sens), T["sensor_vs_cradle"])
         H = hall_dyn.analyse(D)
-        row("Hall peak field vs sensor range (mT)", H["B_peak"], 0.9 * D["hv_sensor"]["range_mt"], f"{D['hv_sensor']['part']} ±{D['hv_sensor']['range_mt']:g} mT", higher_ok=False)
+        pk53 = max(float(H["B_peak_j"][j]) for j in range(D["hv_n"]) if j != mi)
+        row("Hall peak |Bz| at the TMAG5253s vs range (mT)", pk53, 0.9 * D["hv_sensor"]["range_mt"], f"{D['hv_sensor']['part']} ±{D['hv_sensor']['range_mt']:g} mT; poles " + "/".join("N" if p > 0 else "S" for p in D["hv_pol"]), higher_ok=False)
+        if mi >= 0:
+            import numpy as _np
+            bv = hall_dyn.field_vec(D, mi, _np.linspace(-D["travel_deg"], D["travel_deg"], 23))
+            pax = float(_np.abs(bv).max()); pxy = float(_np.abs(bv[:, :2]).max()); pz = float(_np.abs(bv[:, 2]).max())
+            row("Hall peak field at the TMAG5273 (H3), worst axis vs range (mT)", pax, 0.9 * D["hv_mid"]["range_mt"],
+                f"{D['hv_mid']['part']} ±{D['hv_mid']['range_mt']:g} mT/axis: |Bz| ≤ {pz:.1f}, |Bx|,|By| ≤ {pxy:.1f}; elem gap {D['hv_mid_elem_gap']:.2f}", higher_ok=False)
         row("Hall angle noise, worst over ±travel (deg rms)", H["s_theta_worst"], 0.01, f"min |dB/dθ| {H['slope_min']:.1f} mT/deg, noise {H['noise_mT'] * 1e3:.0f} µT rms", higher_ok=False)
     if D["kb_groove_h"] > 0:
         kb = [parts[n] for n in parts if n.startswith("knob") and "ball" not in n]
@@ -98,11 +111,12 @@ def cross(D, parts):
     row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
     row("feel motor vs Hall arm (±travel)", min(p.distance_to(cd.arm(Dc, t)) for t in TR for p in feels), T["hall_vs_pinions"])
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
-    B = ring_field(D)
-    row("dial TMAG5273: peak |B| from the knob ring / range (nominal gap)", B["peak"] / D["tm_range_mt"], 0.3,
-        f"ring Ø{D['tm_ring'][1]:g}/Ø{D['tm_ring'][0]:g}×{D['tm_ring'][2]:g} N52 diametric, element gap {D['tm_gap']:.2f}: |B| {B['peak']:.0f} mT, in-plane {B['bxy_min']:.0f}-{B['bxy_max']:.0f} mT")
-    row("dial TMAG5273: peak |B| / range with the dial lifted to the stop", B["peak_lift"] / D["tm_range_mt"], 0.9,
-        f"gap {D['tm_gap_min']:.2f}: {B['peak_lift']:.0f} mT", higher_ok=False)
+    if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
+        B = ring_field(D)
+        row("dial TMAG5273: peak |B| from the knob ring / range (nominal gap)", B["peak"] / D["tm_range_mt"], 0.3,
+            f"ring Ø{D['tm_ring'][1]:g}/Ø{D['tm_ring'][0]:g}×{D['tm_ring'][2]:g} N52 diametric, element gap {D['tm_gap']:.2f}: |B| {B['peak']:.0f} mT, in-plane {B['bxy_min']:.0f}-{B['bxy_max']:.0f} mT")
+        row("dial TMAG5273: peak |B| / range with the dial lifted to the stop", B["peak_lift"] / D["tm_range_mt"], 0.9,
+            f"gap {D['tm_gap_min']:.2f}: {B['peak_lift']:.0f} mT", higher_ok=False)
     return r
 
 def ring_field(D):

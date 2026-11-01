@@ -201,7 +201,13 @@ def derive(D):
     pol = lambda r, a: (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
     D["carr_mag_xy"] = pol(D["carr_r"], D["carr_mag_ang"]); D["carr_pin_xy"] = pol(D["carr_r"], D["carr_pin_ang"])
     md_, mh_ = D["carr_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md_ / 2e3) ** 2 * (mh_ / 1e3)   # A·m²
-    d_u3 = math.dist(D["carr_mag_xy"], D["tm_xy"]) / 1e3                                   # to the dial TMAG5273 (co-rotating)
+    if D["rel_sensor"]:
+        d_u3 = math.dist(D["carr_mag_xy"], D["tm_xy"]) / 1e3                               # to the dial TMAG5273 (co-rotating)
+        D["carr_stray_to"], D["carr_stray_rng"] = "dial TMAG5273", D["tm_range_mt"]
+    else:   # v0.16b: nearest 3D sensor is the Hall-row TMAG5273 on the PCB (fixed); carrier magnet z ~ holder base
+        k = D["hv_mid"]["idx"]; r, a = D["hv_r"][k], math.radians(D["hv_phi_s"][k])
+        d_u3 = math.dist((*D["carr_mag_xy"], D["z_holder0"] - D["carr_mag"][1] / 2), (r * math.cos(a), r * math.sin(a), D["hv_mid"]["elem_z"])) / 1e3
+        D["carr_stray_to"], D["carr_stray_rng"] = "Hall-row TMAG5273 (H3)", D["hv_mid"]["range_mt"]
     D["carr_stray_mt"] = 1e3 * 1e-7 * 2 * m_dip / d_u3 ** 3                                  # on-axis dipole (worst case)
 
     # ---- v0.15 diametral FPC strap (rotating B2B end <-> stationary J1 end) ----

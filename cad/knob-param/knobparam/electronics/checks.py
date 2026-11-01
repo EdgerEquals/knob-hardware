@@ -7,7 +7,7 @@ def checks(D, parts):
     if D["hall_layout"] == "vernier":
         sens = [parts[n] for n in parts if n.startswith("hall sensor")]
         sg = min(a.distance_to(b) for a, b in itertools.combinations(sens, 2))
-        r.row("Hall sensor body spacing on the PCB", sg, T["sensor_gap"], f"{D['hv_n']} × {D['hv_sensor']['part']} at pitch {D['hv_pitch']:g}")
+        r.row("Hall sensor body spacing on the PCB", sg, T["sensor_gap"], f"{D['hv_n']} sensors at pitch {D['hv_pitch']:g}: " + ", ".join(f"H{i + 1} {p.split()[0]}" for i, p in enumerate(D['hv_parts'])))
     pad = [parts[n] for n in parts if n.startswith("PCB rod pad")]
     if pad:
         r.row("rod VBUS pad (B.Cu) vs back-side parts / pads", pad[0].distance_to(parts["PCB back parts (Hall decouplers, J2)"]), D["rod_pad_clear"] - 0.01,

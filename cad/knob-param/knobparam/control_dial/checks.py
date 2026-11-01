@@ -36,8 +36,8 @@ def checks(D, parts):
           row("screen carrier vs fixed adapter cup", parts["screen carrier (on dial)"].distance_to(parts["adapter cup (fixed)"]), T["carrier_vs_cup"], f"carrier_run {D['carrier_run']:g}")
     else:
         row("panel vs dial lip (running gap)", parts[pn].distance_to(dial), D["run_gap"] - 0.01)
-    row("screen carrier magnet: stray field at the dial TMAG5273 / range", D["carr_stray_mt"] / D["tm_range_mt"], D["carr_stray_max"],
-        f"{D['carr_stray_mt']:.2f} mT on-axis dipole worst case; co-rotates with the sensor -> fixed offset, calibrated out", higher_ok=False)
+    row(f"screen carrier magnet: stray field at the {D['carr_stray_to']} / range", D["carr_stray_mt"] / D["carr_stray_rng"], D["carr_stray_max"],
+        f"{D['carr_stray_mt']:.3f} mT on-axis dipole worst case" + ("; co-rotates with the sensor -> fixed offset, calibrated out" if D["rel_sensor"] else "; turns ±travel over a fixed sensor -> tiny, calibrated"), higher_ok=False)
     if D["hall_layout"] == "vernier":
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]

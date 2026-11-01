@@ -88,12 +88,18 @@ P = dict(
     hv_n=5,   # [Ed] magnets = sensors per row
     hv_pitch=2.5,   # [Ed/A] v0.16: radial pitch of both rows spread out (v0.15: 2.2 = X2SON 1.4 + 0.8 copper gap)
     hv_cross_travel=None,   # [A] dial angle at which the crossing reaches the end pair (sets the arc curvature); None = travel_deg
-    hv_mag=(1.5, 1.0),   # [A] Ø1.5 x 1.0 N52 axial, alternating poles
+    hv_mag=(1.5, 1.0),   # [A] Ø1.5 x 1.0 N52 axial, alternating poles (see hv_pol)
+    hv_pol=(1, -1, 1, -1, 1),   # [Ed] v0.16b: magnet polarity, inner -> outer: +1 = N face down (toward the sensors), -1 = S: N/S/N/S/N
     hv_br=1.45,   # [S] N52 Br (T)
     hv_wall=0.4,   # [A] bar wall round each magnet pocket
     hv_gap=1.2,   # [A] sensor package top -> magnet face (air gap; 56 mT peak = 70% of BA3 range)
     hv_sensor=dict(part="TMAG5253BA3 (TI) X2SON-4", l=1.4, w=1.1, h=0.4, elem=0.13, bw_khz=15.0, s_mv_mt=15.0, range_mt=80.0, nd_nt=220.0, vcc=3.3),   # [S] datasheet; elem = Hall element below the package top [S]
     hv_ring_clear=0.5,   # [A] bar to the ring tips
+    # v0.16b [Ed]: the MIDDLE row sensor is a 3D TMAG5273 (I2C; reads Bx/By/Bz of the middle magnet -> dial angle cross-check
+    # in 3D); the other four stay TMAG5253 linear. Keep the 2.5 pitch. SOT-23-6 (DBV) is much taller than the X2SON, so the
+    # magnet bar sits at max(5253 top + hv_gap, 5273 top + hv_gap_mid).
+    hv_mid=dict(idx=2, part="TMAG5273A2 (TI) SOT-23-6 DBV", l=2.9, w=1.6, lead_w=2.8, h=1.45, elem_z=0.65, range_mt=133.0),   # [S] body l×w, lead span, max height; elem_z = Hall element above the PCB [A]; A2 ±133/±266 mT (A1 ±40/±80 would saturate: Bz 84 mT at 1.10)
+    hv_gap_mid=0.3,   # [A] TMAG5273 package top -> magnet face (min air gap; dial lift is stopped at 0.3 by the adapter board)
     # ---- v0.16 dial mechanics [Ed]: fan arm off the dial hub, top-loaded spring-ball detents latching at ±det_deg on the fan
     # wings, a Ø1 ball track under each detent, two tangential extension springs centring the dial, tiny magnet end cushions ----
     fan_top=5.9,   # [A] fan / arm top (= v0.15 arm top)
@@ -126,7 +132,8 @@ P = dict(
     lip_wall_lines=2,   # [Ed] thinnest lip wall = 2 lines (0.8): far side AND outside the COF-bend pocket (lip is a closed ring)
     bend_clear=0.1,   # [A] COF bend / ledge to the lip pocket wall
     knob_od_step=0.01,   # [A] knob OD rounded up to this
-    # ---- v0.16 relative knob-vs-dial angle [Ed]: diametric ring magnet in the knob (blue), 3D TMAG5273 on a sensor board in the
+    rel_sensor=False,   # [Ed] v0.16b: knob ring magnet + dial TMAG5273 REMOVED (duplicate of the encoder + Hall row). True = v0.16
+    # ---- v0.16 relative knob-vs-dial angle [Ed] (only when rel_sensor): diametric ring magnet in the knob (blue), 3D TMAG5273 on a sensor board in the
     # control dial (purple), so the sensor reads the knob angle relative to the dial (v0.15: Ø3×1 dial magnet under a fixed U3) ----
     tm_ring=(19.0, 21.0, 0.5),   # [A] tiny N52 ring (0.24 g) ID, OD, thickness, magnetised DIAMETRICALLY (any 360° knob angle), top flush in the knob under-web
     tm_ang=0.0,   # [A] sensor angle on the dial (+X: clear of the fold window, strap and carrier pin/magnet)
@@ -369,8 +376,14 @@ def derive(D):
         D["hv_phi_m"] = [D["ha_ang0"] + D["hv_g"] * (r - D["hv_r_mid"]) for r in D["hv_r"]]
         D["hv_phi_s"] = [D["ha_ang0"] - D["hv_g"] * (r - D["hv_r_mid"]) for r in D["hv_r"]]
         D["hv_z_elem"] = sw["h"] - sw["elem"]
-        D["hv_z_mag0"] = sw["h"] + D["hv_gap"]
+        mid = D["hv_mid"] if (D["hv_mid"] and 0 <= D["hv_mid"]["idx"] < n) else None
+        D["hv_z_mag0"] = max(sw["h"] + D["hv_gap"], (mid["h"] + D["hv_gap_mid"]) if mid else 0.0)
         D["hv_elem_gap"] = D["hv_z_mag0"] - D["hv_z_elem"]
+        # per-sensor package + element height (v0.16b: one TMAG5273 in the row)
+        D["hv_dims"] = [(mid["lead_w"], mid["l"], mid["h"]) if (mid and i == mid["idx"]) else (sw["w"], sw["l"], sw["h"]) for i in range(n)]   # radial, tangential, height
+        D["hv_z_elems"] = [mid["elem_z"] if (mid and i == mid["idx"]) else D["hv_z_elem"] for i in range(n)]
+        D["hv_parts"] = [mid["part"] if (mid and i == mid["idx"]) else sw["part"] for i in range(n)]
+        D["hv_mid_elem_gap"] = (D["hv_z_mag0"] - mid["elem_z"]) if mid else None
     _place_feel(D)
     _place_mech(D)
     # ---- v0.16 knob ring magnet / dial sensor ----

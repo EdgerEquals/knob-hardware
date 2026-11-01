@@ -62,8 +62,8 @@ def bend_pocket(D):   # v0.16 closed lip: blind pocket in the lip ID for the led
     return Pos(-o * math.cos(a), -o * math.sin(a), 0) * Rot(0, 0, D["tail_ang"]) * led
 
 def build(D):
-    pocket = tm_pocket(D)
-    d = rev(profile(D)) - thrust.groove(D) - pocket
+    d = rev(profile(D)) - thrust.groove(D)
+    if D["rel_sensor"]: d -= tm_pocket(D)   # v0.16b [Ed]: relative sensor removed -> no pocket
     if D["kb_race"] != "chamfer": d += race_add(D)
     if D["kb_groove_h"] > 0: d -= seat_groove(D)
     d += hall.arm(D)
@@ -73,4 +73,4 @@ def build(D):
         d -= cyl(md / 2 + D["dial_mag_press"] / 2, zh - D["carr_mag_gap"] - mh, mh + D["carr_mag_gap"] + 0.01, *D["carr_mag_xy"])
         d -= cyl(D["carr_pin"][0] / 2, zh - D["carr_pin"][1], D["carr_pin"][1] + 0.01, *D["carr_pin_xy"])
     d -= bend_pocket(D) if (D["screen_on_dial"] and D["lip_closed"]) else lip_slot(D)
-    return {"control dial": d} | tm_sensor(D)
+    return {"control dial": d} | (tm_sensor(D) if D["rel_sensor"] else {})

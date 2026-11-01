@@ -76,7 +76,8 @@ def magnets(D, travel=0.0):
     return out
 
 def build(D):
-    out = {f"hall magnet {i + 1}": m for i, m in enumerate(magnets(D))}
+    pol = D["hv_pol"] if _vern(D) else [1] * len(magnets(D))
+    out = {f"hall magnet {i + 1} {'N' if pol[i] > 0 else 'S'}-down": m for i, m in enumerate(magnets(D))}   # v0.16b [Ed]: N/S/N/S/N
     if _vern(D) and D["fan_on"]:
         out[f"cushion magnet lever {D['cu_mag'][0]:g}x{D['cu_mag'][1]:g}"] = lever_magnet(D)
     return out
