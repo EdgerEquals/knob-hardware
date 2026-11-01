@@ -16,7 +16,7 @@ GROUPS = [  # (legend, colour, match)
     ("M1.6 rod + sleeve, nuts, washer", "#5c6bc0", lambda n: n.startswith("rod")),
     ("base cradle", "#8d6e63", lambda n: n == "base cradle"),
     ("borosilicate sleeve (3.3)", "#e1f5fe", lambda n: n.startswith("knob glass")),
-    ("knob upper cap (race, screen lip)", "#1e88e5", lambda n: n.startswith("knob upper-cap")),
+    ("knob upper cap (inside the bore)", "#1e88e5", lambda n: n.startswith("knob upper-cap")),
     ("knob lower cap, clear land", "#b2dfdb", lambda n: n.startswith("knob lower-cap")),
     ("bottom internal ring", "#42a5f5", lambda n: n.startswith("bottom internal ring")),
     ("knob balls (opposed 45° cones)", "#bdbdbd", lambda n: n.startswith("knob balls")),
@@ -162,6 +162,23 @@ def _shot(pl, path, aa=True):
 def _bbox(meshes):
     P = np.vstack([p for m in meshes.values() for (p, _) in m.values()]); return P.min(0), P.max(0)
 
+def _rim_light(D):
+    """Ray up the glass wall and out of the exposed top rim into the dial. Section plane is XZ; y is toward the camera."""
+    if "sleeve_z1" not in D or "ot_r" not in D:
+        return None
+    rm = (D["sleeve_id"] / 2 + D["knob_od"] / 2) / 2
+    y = 0.45
+    z_top = D.get("z_lip0", D["sleeve_z1"] + 6.0)
+    pts = [(D["ot_r"], y, D["ot_z"]), (rm, y, D["sleeve_z0"] + D["sleeve_chamfer"]),
+           (rm, y, D["sleeve_z1"]), (rm, y, z_top + 1.2)]
+    def extra(pl, pv):
+        pairs = []
+        for a, b in zip(pts, pts[1:]):
+            pairs += [a, b]
+        pl.add_lines(np.array(pairs), color="#ff6f00", width=8)
+        pl.add_mesh(pv.Sphere(radius=0.35, center=pts[-1]), color="#ff6f00")
+    return extra
+
 def ortho(meshes, centre, cam_dir, up, w_mm, h_mm, ppm, path, extra=None, lw=1.4, edges=True, aa=True):
     pv = _pv(); W, H = max(int(w_mm * ppm), 50), max(int(h_mm * ppm), 50)
     pl = pv.Plotter(off_screen=True, window_size=(W, H)); pl.set_background("white")
@@ -201,7 +218,7 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
     lo, hi = _bbox(MA)
     t = time.time()
     rawA = ortho(MA, ((lo[0] + hi[0]) / 2, 0, (lo[2] + hi[2]) / 2), (0, -1, 0) if opposite else (0, 1, 0), (0, 0, 1), hi[0] - lo[0] + 2, hi[2] - lo[2] + 2,
-                 9 if preview else (40 if clean else 30), f"{tmp}/aa.png", edges=not preview, aa=not preview)
+                 9 if preview else (40 if clean else 30), f"{tmp}/aa.png", extra=_rim_light(D) if preview else None, edges=not preview, aa=not preview)
     tm["A-A render"] = time.time() - t
     fang = float(D.get("fm_ang", 90.0)) % 360.0
     a0, a1 = (0.0, fang) if fang <= 180.0 else (fang, 360.0)

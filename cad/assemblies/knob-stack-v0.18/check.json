@@ -792,6 +792,15 @@
    "slack": 0.04
   },
   {
+   "name": "printed parts clear the glass top rim",
+   "value": 0.508,
+   "target": ">= 0.258",
+   "ok": true,
+   "note": "nearest knob upper-cap; end face r 19.11\u201320.74 at z 44.00 stays open into the dial",
+   "owner": "assembly",
+   "slack": 0.25
+  },
+  {
    "name": "1220 pinion / hub gear: effective contact ratio",
    "value": 1.263,
    "target": ">= 1.2",

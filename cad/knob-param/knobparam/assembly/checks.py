@@ -179,6 +179,17 @@ def cross(D, parts):
     row("spacer gap stays positive at the small end", D["ot_gap_min"], D["ot_play"])
     row("light path between a load ball and a spacer", D["ot_light_gap"], D["ot_play"],
         f"axial window beside a {D['ot_spacer_max']:g} spacer {D['ot_track_clear_max']:.3f}")
+    # The glass top end face stays bare so the wall can shine up into the dial. A wafer of that annulus must miss every printed part.
+    zi, ch = D["sleeve_z1"], D["sleeve_chamfer"]
+    ri, ro = D["sleeve_id"] / 2 + ch, D["knob_od"] / 2 - ch
+    rim = cyl(ro, zi, 0.2) - cyl(ri, zi - 0.05, 0.3)
+    rb = rim.bounding_box()
+    def _hits(bb):
+        return not (bb.max.X < rb.min.X or bb.min.X > rb.max.X or bb.max.Y < rb.min.Y or bb.min.Y > rb.max.Y or bb.max.Z < rb.min.Z or bb.min.Z > rb.max.Z)
+    near = [(n, s) for n, s in parts.items() if not n.startswith("knob glass") and _hits(s.bounding_box())]
+    rim_d, rim_who = min(((s.distance_to(rim), n) for n, s in near), default=(1e9, ""))
+    row("printed parts clear the glass top rim", rim_d, ch,
+        f"nearest {rim_who}; end face r {ri:.2f}–{ro:.2f} at z {zi:.2f} stays open into the dial")
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
         B = ring_field(D)

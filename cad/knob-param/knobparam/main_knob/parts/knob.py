@@ -9,7 +9,7 @@ def profile(D):
     """Upper cap only. The see-through wall is the glass sleeve; this cap plugs the top of the bore."""
     o = D["knob_run"] * math.sqrt(2)
     rh, rD, rb = D["d_hg_root"] / 2, D["kb_rt"] - 0.06, D["r_bore_hi"]
-    ro, sp, spi = D["cap_r"], D["sleeve_spigot_r"], D["sleeve_lip_r"]
+    sp, spi = D["sleeve_spigot_r"], D["sleeve_lip_r"]
     z_ins = D["h_band1"] - D["sleeve_insert"]
     rh_d, g, rw, f, run = D["dial_hub_od"] / 2, D["gusset"], D["r_web"], D["lip_fillet"], D["knob_run"]
     zg = D["z_web0"] - g
@@ -20,14 +20,13 @@ def profile(D):
     z_l = zl - o + (r_s - rw)
     r_l = rw + f + o - (D["z_lip0"] - D["z_knob_top"])
     z0, zt = D["knob_hub_z0"], D["knob_hub_top"]
-    plug = [(rh, D["h_band1"]), (spi, D["h_band1"]), (spi, z_ins), (sp, z_ins), (sp, D["h_band1"]),
-            (ro, D["h_band1"]), (ro, D["z_knob_top"])]
+    # The plug stops on the bore. Nothing printed lies on the glass top face, so the rim stays open into the dial.
+    plug = [(rh, D["h_band1"]), (spi, D["h_band1"]), (spi, z_ins), (sp, z_ins), (sp, D["h_band1"])]
+    lip = [(min(r, sp), z) for r, z in ((r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]), (r_w, D["z_under_web"]))]
     if D["kb_race"] == "chamfer":   # v0.15c: plain bore up to the 45° top chamfer (the ball track face)
         rk = D["r_knob_bore"]   # v0.15d: hub filled in to the dial tube; flat top 0.3 under the dial hub, then the 45° chamfer
-        return [(rk, z0), (rh, z0)] + plug + [(r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]),
-                (r_w, D["z_under_web"]), (D["r_chamfer0"], zt), (rk, zt)]
-    return [(rD, z0), (rh, z0)] + plug + [(r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]),
-            (r_w, D["z_under_web"]), (rb, z_b), (rb, zt), (rD, zt)]
+        return [(rk, z0), (rh, z0)] + plug + lip + [(D["r_chamfer0"], zt), (rk, zt)]
+    return [(rD, z0), (rh, z0)] + plug + lip + [(rb, z_b), (rb, zt), (rD, zt)]
 
 def glass_sleeve(D):
     """Bought borosilicate 3.3 tube. Ends chamfered for the fire polish. Caps locate on the bore, not on this OD."""
