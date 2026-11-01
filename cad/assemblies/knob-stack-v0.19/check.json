@@ -357,21 +357,21 @@
   },
   {
    "name": "feel placement (worst plan clearance)",
-   "value": 0.202,
+   "value": 1.599,
    "target": ">= 0.5",
-   "ok": false,
-   "note": "nylon 0.5M-12T 12T \u00d7 40T on the 60\u00b0 idler, then 12T into the 54T herringbone, overall 15.00:1, can at 118.0\u00b0; knob \u00d842.00; det_ear 0.20, skirt 0.33, dial_can 5.30, hall 9.36, body_can 10.76, gear 1000000000.00",
+   "ok": true,
+   "note": "nylon 0.5M-12T 12T \u00d7 40T on the 60\u00b0 idler, then 12T into the 54T herringbone, overall 15.00:1, can at 120.9\u00b0; knob \u00d842.00; det_ear 1.60, skirt 1.80, dial_can 3.84, hall 7.78, body_can 9.77, gear 1000000000.00",
    "owner": "base_drive",
-   "slack": -0.298
+   "slack": 1.099
   },
   {
    "name": "feel saddle strap vs skirt ID (radial)",
-   "value": 0.333,
+   "value": 1.796,
    "target": ">= 0.5",
-   "ok": false,
+   "ok": true,
    "note": "open saddle: 2 bands \u00d7 1.2 over 8.0 of the \u00d87\u00d716 can, ears at \u00b1100\u00b0",
    "owner": "base_drive",
-   "slack": -0.167
+   "slack": 1.296
   },
   {
    "name": "detent ball guided in its bore when latched (centre above the boss underside)",
@@ -393,21 +393,21 @@
   },
   {
    "name": "feel mount rib (radial depth)",
-   "value": 7.151,
+   "value": 5.689,
    "target": ">= 0.5",
    "ok": true,
-   "note": "r 4.56-11.71, under the saddle seat",
+   "note": "r 4.56-10.25, under the saddle seat",
    "owner": "base_drive",
-   "slack": 6.651
+   "slack": 5.189
   },
   {
    "name": "feel can vs 1220 motor",
-   "value": 10.764,
+   "value": 9.769,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": 10.264
+   "slack": 9.269
   },
   {
    "name": "feel pinion vs compound gear (centre-distance error, mm)",
@@ -420,12 +420,12 @@
   },
   {
    "name": "feel pinion vs idler 2",
-   "value": 19.693,
+   "value": 18.296,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": 19.193
+   "slack": 17.796
   },
   {
    "name": "cradle web left round a support after the bridge cut",
@@ -1203,30 +1203,30 @@
   },
   {
    "name": "feel saddle vs knob skirt",
-   "value": 1.789,
+   "value": 3.251,
    "target": ">= 0.5",
    "ok": true,
-   "note": "can 2.49 inside the skirt; nylon 0.5M-12T at 118.0\u00b0, overall 15.00:1, knob \u00d842.00",
+   "note": "can 3.95 inside the skirt; nylon 0.5M-12T at 120.9\u00b0, overall 15.00:1, knob \u00d842.00",
    "owner": "assembly",
-   "slack": 1.289
+   "slack": 2.751
   },
   {
    "name": "feel can/saddle vs bottom ring",
-   "value": 0.189,
-   "target": ">= 0.5",
-   "ok": false,
-   "note": "",
-   "owner": "assembly",
-   "slack": -0.311
-  },
-  {
-   "name": "feel pinion vs encoder pinion",
-   "value": 8.144,
+   "value": 1.651,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 7.644
+   "slack": 1.151
+  },
+  {
+   "name": "feel pinion vs encoder pinion",
+   "value": 7.393,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "",
+   "owner": "assembly",
+   "slack": 6.893
   },
   {
    "name": "feel motor vs dial tube",
@@ -1239,12 +1239,12 @@
   },
   {
    "name": "feel motor vs Hall arm (\u00b1travel)",
-   "value": 2.894,
+   "value": 1.176,
    "target": ">= 0.3",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 2.594
+   "slack": 0.876
   },
   {
    "name": "centring springs vs motor / encoder / ring across \u00b1travel",
@@ -1266,12 +1266,12 @@
   },
   {
    "name": "track balls vs compound gear across \u00b1travel",
-   "value": 10.147,
+   "value": 10.148,
    "target": ">= 0.5",
    "ok": true,
    "note": "balls posed at \u03b8/2 for each sample",
    "owner": "assembly",
-   "slack": 9.647
+   "slack": 9.648
   },
   {
    "name": "printed spur stays on the feel side of the centre tube",
@@ -1513,7 +1513,7 @@
   }
  ],
  "clashes": {
-  "feel compound gear 40T / back cover (PETG)": 0.009014026160167214
+  "feel compound gear 40T / back cover (PETG)": 0.009020887339047278
  },
  "set": [],
  "sub": null

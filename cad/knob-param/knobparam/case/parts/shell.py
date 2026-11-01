@@ -271,6 +271,10 @@ def build(D):
     tongue = _sub(tongue, _box(-D["pcb_x1"] + ovt, D["pcb_x1"] - ovt, D["pcb_y0"] + ovt, D["pcb_y1"] - ovt,
                                D["z_flange_out"] - sl, D["z_rim_seat"] + sl))
     cover = _add(cover, tongue)
+    # v0.19: the feel compound gear under the PCB reaches 0.3 past the board edge; relieve the tongue round it
+    a = math.radians(D["mech_rot"]); fx, fy = D["fg_xy"]
+    gx, gy = math.cos(a) * fx - math.sin(a) * fy, math.sin(a) * fx + math.cos(a) * fy
+    cover = _sub(cover, _cyl_z(D["fg_tip"] + 0.3, D["z_cover_in"] + 0.5, D["z_rim_seat"] + sl, gx, gy))
     if tubes:
         # PETG corner tubes from the cover floor up to the PCB back; each bears on the board round its corner notch
         for x, y in D["corners"]:
