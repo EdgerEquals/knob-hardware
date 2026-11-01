@@ -39,17 +39,11 @@ AX, AY = CSTR["axis_b"]
 def board_of(frame_x, frame_y):
     return (AX + frame_x, AY - frame_y)
 
-def cradle_locating_holes(cstr=None):
-    """Glued cradle: one round NPTH and one slot along the radius. Empty until the export lands.
-
-    Frame millimetres, motor at +x. Accepted exports:
-      peg_xy + peg_d, with peg_slot (length of the second hole) and peg_ang (degrees), or
-      cradle_pegs: a list of {xy, d, slot, ang}. The first hole is round. The second is the slot.
-    """
-    cstr = CSTR if cstr is None else cstr
-    if "cradle_pegs" in cstr:
+def _holes_from_export(cstr, list_key, xy_key, d_key, slot_key, ang_key):
+    """One round hole and one radial slot. Empty when the keys are absent."""
+    if list_key and list_key in cstr:
         holes = []
-        for i, item in enumerate(cstr["cradle_pegs"]):
+        for i, item in enumerate(cstr[list_key]):
             if "xy" in item:
                 x, y = item["xy"]
             else:
@@ -62,16 +56,45 @@ def cradle_locating_holes(cstr=None):
             else:
                 holes.append(_locating_hole(i, float(x), float(y), d, bool(field), ang, item.get("slot_len")))
         return holes
-    if "peg_xy" not in cstr or "peg_d" not in cstr:
+    if xy_key not in cstr or d_key not in cstr:
         return []
-    d = float(cstr["peg_d"])
-    angs = list(cstr.get("peg_ang") or [])
-    slot = cstr.get("peg_slot")
+    d = float(cstr[d_key])
+    angs = list(cstr.get(ang_key) or [])
+    slot = cstr.get(slot_key)
     holes = []
-    for i, (x, y) in enumerate(cstr["peg_xy"]):
+    for i, (x, y) in enumerate(cstr[xy_key]):
         ang = angs[i] if i < len(angs) else None
         holes.append(_locating_hole(i, float(x), float(y), d, i == 1, ang, slot if i == 1 else None))
     return holes
+
+def cradle_locating_holes(cstr=None):
+    """Glued cradle: one round NPTH and one slot along the radius. Empty until the export lands.
+
+    Frame millimetres, motor at +x. Accepted exports:
+      peg_xy + peg_d, with peg_slot (length of the second hole) and peg_ang (degrees), or
+      cradle_pegs: a list of {xy, d, slot, ang}. The first hole is round. The second is the slot.
+    """
+    cstr = CSTR if cstr is None else cstr
+    return _holes_from_export(cstr, "cradle_pegs", "peg_xy", "peg_d", "peg_slot", "peg_ang")
+
+def thrust_locating_holes(cstr=None):
+    """Clear bottom thrust-race ring: one round NPTH and one slot. Empty until the knob agent exports them.
+
+    Same frame and shapes as the cradle pins. Accepted exports: thrust_pegs / thrust_race_pegs /
+    bottom_thrust_pegs / race_pegs, or thrust_xy + thrust_d + thrust_slot + thrust_ang (and the
+    thrust_race_ / bottom_thrust_ / race_ prefixes).
+    """
+    cstr = CSTR if cstr is None else cstr
+    for spec in (
+        ("thrust_pegs", "thrust_xy", "thrust_d", "thrust_slot", "thrust_ang"),
+        ("thrust_race_pegs", "thrust_race_xy", "thrust_race_d", "thrust_race_slot", "thrust_race_ang"),
+        ("bottom_thrust_pegs", "bottom_thrust_xy", "bottom_thrust_d", "bottom_thrust_slot", "bottom_thrust_ang"),
+        ("race_pegs", "race_xy", "race_d", "race_slot", "race_ang"),
+    ):
+        holes = _holes_from_export(cstr, *spec)
+        if holes:
+            return holes
+    return []
 
 def _locating_hole(i, x, y, d, want_slot, ang, slot_len):
     ang = None if ang is None else float(ang)
@@ -110,6 +133,10 @@ def ring_positions(r=RING_R, n=N_VCSEL + N_RGB, part_r=PART_R):
     for i, h in enumerate(CSTR["hall"]):
         a = math.radians(h["ang"])
         obs.append((h["r"] * math.cos(a), h["r"] * math.sin(a), 3.4, f"H{i+1}"))
+    for label, holes in (("cradle", cradle_locating_holes()), ("thrust", thrust_locating_holes())):
+        for h in holes:
+            reach = max(h["d"], h["slot"] or 0) / 2 + 0.8
+            obs.append((h["x"], h["y"], reach, label))
     free = []
     for k in range(3600):
         a = k / 10.0
@@ -324,6 +351,9 @@ def write_reports(dirpath):
                 "Assembly `fee6c60` still exports `cad_constraints.json` as v0.16b and does not list `peg_xy` / `peg_d` / `peg_slot` yet, so the holes are not drilled. "
                 "They are read from that file when the keys appear. Cradle keep-out is still v0.16b. The Fab circle is Ø41.65 from `00502746`. "
                 "The ring gear moving inward will change both.\n")
+        f.write("- The clear bottom thrust race gets its own locating pins: one round NPTH and one slot, drilled beside the cradle pins. "
+                "Assembly `fee6c60` does not export them yet (`thrust_pegs` or `thrust_xy` / `thrust_d` / `thrust_slot`). "
+                "When it does, the ring placer treats them as obstacles and each hole gets a 0.8 mm keep-out with no tracks, vias, pads, or parts. Re-run DRC after that export.\n")
         f.write("- The cradle later grows into a glued stiffener over as much of the PCB front as it can. "
                 "New electronics are on the back. Tall front-side parts that a full-front plate cannot cover:\n")
         f.write("  - J2 and J3, 11 mm joystick sockets, with the four M2 studs H10–H13, clustered at board y 12–21. They have to stay there to mate with the daughterboard.\n")

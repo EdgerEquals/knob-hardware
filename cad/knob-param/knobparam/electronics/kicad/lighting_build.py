@@ -267,17 +267,18 @@ def build():
                ("S1", "Slot_FPC_v04", (LP.js_board(18.25, 0)[0], LP.js_board(18.25, 0)[1], 0), "F")]
     for i, (lx, ly) in enumerate(((22.50, 4.03), (22.50, -4.03), (-22.50, 4.03), (-22.50, -4.03))):
         b.mech.append((f"HS{i+1}", "Hole_NPTH_3.4", (*LP.js_board(lx, ly), 0), "F"))
-    # Glued cradle: one round locating hole and one radial slot. Empty until the export lands.
-    for h in LP.cradle_locating_holes():
-        bx, by = LP.board_of(h["x"], h["y"])
-        if h["slot"]:
-            tag = f"{h['d']:.2f}x{h['slot']:.2f}".replace(".", "p")
-            # local +X of the oval is the radius. Board y is down, so the frame angle flips.
-            rot = 0.0 if h["ang"] is None else -h["ang"]
-            b.mech.append((f"HP{h['i']+1}", f"Slot_NPTH_{tag}", (bx, by, rot), "F"))
-        else:
-            tag = f"{h['d']:.2f}".replace(".", "p")
-            b.mech.append((f"HP{h['i']+1}", f"Hole_NPTH_{tag}", (bx, by, 0), "F"))
+    # Glued cradle, then the clear bottom thrust race. Each is one round NPTH and one radial slot.
+    for ref, holes in (("HP", LP.cradle_locating_holes()), ("HT", LP.thrust_locating_holes())):
+        for h in holes:
+            bx, by = LP.board_of(h["x"], h["y"])
+            if h["slot"]:
+                tag = f"{h['d']:.2f}x{h['slot']:.2f}".replace(".", "p")
+                # local +X of the oval is the radius. Board y is down, so the frame angle flips.
+                rot = 0.0 if h["ang"] is None else -h["ang"]
+                b.mech.append((f"{ref}{h['i']+1}", f"Slot_NPTH_{tag}", (bx, by, rot), "F"))
+            else:
+                tag = f"{h['d']:.2f}".replace(".", "p")
+                b.mech.append((f"{ref}{h['i']+1}", f"Hole_NPTH_{tag}", (bx, by, 0), "F"))
     return b
 
 def attach_pins(comps, PINS):

@@ -49,7 +49,7 @@ def ensure_locating_footprints():
     sys.path.insert(0, os.path.join(HERE, "..", ".."))
     import lighting_params
     import make_lighting_footprints as ml
-    for h in lighting_params.cradle_locating_holes():
+    for h in lighting_params.cradle_locating_holes() + lighting_params.thrust_locating_holes():
         if h["slot"]:
             tag = f"{h['d']:.2f}x{h['slot']:.2f}".replace(".", "p")
             name = f"Slot_NPTH_{tag}"
@@ -191,6 +191,41 @@ def build():
     def txt(t, x, y, layer, size=0.8, mirror=False):
         g = pcbnew.PCB_TEXT(board); g.SetText(t); g.SetPosition(P(x, y)); g.SetLayer(layer); g.SetTextSize(pcbnew.VECTOR2I(mm(size), mm(size)))
         g.SetTextThickness(mm(size * 0.15)); g.SetMirrored(mirror); board.Add(g)
+    # Locating pins: no copper and no parts within 0.8 mm of the drill. Empty until the exports land.
+    def keepout_outline(h):
+        bx, by = design.B(h["x"], h["y"])
+        margin = 0.8
+        ps = pcbnew.SHAPE_POLY_SET(); ps.NewOutline()
+        if not h["slot"]:
+            r = h["d"] / 2 + margin
+            for i in range(32):
+                t = 2 * math.pi * i / 32
+                ps.Append(mm(ORIGIN[0] + bx + r * math.cos(t)), mm(ORIGIN[1] + by + r * math.sin(t)))
+            return ps
+        a = math.radians(h["ang"] or 0.0)
+        ux, uy = math.cos(a), -math.sin(a)
+        px, py = -uy, ux
+        length, width = h["slot"] + 2 * margin, h["d"] + 2 * margin
+        half = max(length / 2 - width / 2, 0.0)
+        rad = width / 2
+        for sign, a0 in ((1, -math.pi / 2), (-1, math.pi / 2)):
+            cx, cy = bx + sign * half * ux, by + sign * half * uy
+            for i in range(12):
+                t = a0 + math.pi * i / 12
+                # t is around the cap in the (u, p) frame
+                ps.Append(mm(ORIGIN[0] + cx + rad * math.cos(t) * ux + rad * math.sin(t) * px),
+                          mm(ORIGIN[1] + cy + rad * math.cos(t) * uy + rad * math.sin(t) * py))
+        return ps
+    for label, holes in (("cradle pin", __import__("lighting_params").cradle_locating_holes()),
+                         ("thrust race pin", __import__("lighting_params").thrust_locating_holes())):
+        for h in holes:
+            for layer in (pcbnew.F_Cu, pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu):
+                outline = keepout_outline(h)
+                z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(layer)
+                z.SetZoneName(f"{label} {h['i']+1}: no copper or parts")
+                z.SetDoNotAllowFootprints(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(True)
+                z.SetDoNotAllowPads(True); z.SetDoNotAllowCopperPour(True)
+                outline.thisown = False; z.SetOutline(outline); board.Add(z)
     txt(f"KNOB MAIN {PCB_VERSION}", 25.25, 117.15, pcbnew.B_SilkS, 0.6, True)
     txt("ONE LASER AT A TIME  /  RAILS OFF UNTIL ENABLED", 25.25, 21.6, pcbnew.F_SilkS, 0.6, False)
     ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))

@@ -115,6 +115,7 @@ Before: **62**. This round: **19**. Spare: **5**. I/O total: **86**.
 
 - `sub/case-v01` is not on the remote. The scanner VCSEL is at board (8, 110), the bottom end. Move it when the case scan position exists.
 - The base cradle is glued to the PCB front. Locating features are two NPTH holes, one round and one slot along the radius, not screws. Assembly `fee6c60` still exports `cad_constraints.json` as v0.16b and does not list `peg_xy` / `peg_d` / `peg_slot` yet, so the holes are not drilled. They are read from that file when the keys appear. Cradle keep-out is still v0.16b. The Fab circle is Ø41.65 from `00502746`. The ring gear moving inward will change both.
+- The clear bottom thrust race gets its own locating pins: one round NPTH and one slot, drilled beside the cradle pins. Assembly `fee6c60` does not export them yet (`thrust_pegs` or `thrust_xy` / `thrust_d` / `thrust_slot`). When it does, the ring placer treats them as obstacles and each hole gets a 0.8 mm keep-out with no tracks, vias, pads, or parts. Re-run DRC after that export.
 - The cradle later grows into a glued stiffener over as much of the PCB front as it can. New electronics are on the back. Tall front-side parts that a full-front plate cannot cover:
   - J2 and J3, 11 mm joystick sockets, with the four M2 studs H10–H13, clustered at board y 12–21. They have to stay there to mate with the daughterboard.
   - M1, the 1220, body in the cradle bore at (36.0, 52.9). H1, the brass tube, at the dial axis. H2, the F682ZZ flange, at (25.25, 68.15).
