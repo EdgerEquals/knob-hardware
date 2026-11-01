@@ -2,6 +2,7 @@
 (gear_pts / gear_solid, identical maths) so the package has no path dependency on the rest of the repo."""
 import math, os
 from build123d import *
+from .gearcheck import HA, HF
 PKG = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # cad/knob-param
 LIB = os.path.dirname(PKG)                                                            # cad/  (outputs -> cad/assemblies/)
 A = (Align.CENTER, Align.CENTER, Align.MIN)
@@ -25,7 +26,7 @@ def gear_pts(z, m, add, ded, dthick, alpha_deg=20.0, n=7):
 def gear_solid(pts, z0, h):
     f = Face(Wire.make_polygon([Vector(x, y, z0) for x, y in pts], close=True))
     return extrude(f, h)
-def tooth_tip(z, mn, alpha_deg, backlash=0.0, addendum=1.0, beta_deg=0.0):
+def tooth_tip(z, mn, alpha_deg, backlash=0.0, addendum=HA, beta_deg=0.0):
     """Transverse tip thickness (mm). `mn` is the normal module (the spur module when beta is 0).
     `backlash` is removed from this tooth's pitch thickness only."""
     b = math.radians(beta_deg); an = math.radians(alpha_deg)
@@ -51,8 +52,8 @@ def _helix(pts, z0, z1, pitch_r, beta_deg, mid, n=4):
     faces = [_face_at(pts, z0 + (z1 - z0) * i / n, abs((z0 + (z1 - z0) * i / n) - mid) * rate) for i in range(n + 1)]
     return loft(faces, ruled=True)
 def int_cutter(D, z, z0, h):  # spur tooth-space cutter (kept for a straight ring; v0.18 uses int_herringbone_half)
-    m = D["module"]; return gear_solid(gear_pts(z, m, 1.25 * m, 1.0 * m, +D["backlash"] / 2, D["pressure"]), z0, h)
-def ext_gear(D, z, z0, h, module=None, pressure=None, dthick=None, addendum=1.0, dedendum=1.25):
+    m = D["module"]; return gear_solid(gear_pts(z, m, HF * m, HA * m, +D["backlash"] / 2, D["pressure"]), z0, h)
+def ext_gear(D, z, z0, h, module=None, pressure=None, dthick=None, addendum=HA, dedendum=HF):
     """External spur. dthick is the pitch-thickness change (negative thins the tooth)."""
     m = D["module"] if module is None else module
     pa = D["pressure"] if pressure is None else pressure
@@ -119,3 +120,11 @@ def thrust_groove(pcd, groove_r, z_ball):
     """Torus groove for a ring of thrust balls (cut into BOTH the cradle plate and the dial tube end; numbers are the
     control_dial exports tb_pcd / tb_groove_r / tb_z_ball)."""
     return Pos(0, 0, z_ball) * Torus(pcd / 2, groove_r)
+
+
+class overlay(dict):
+    """Tracked view of D with a few keys replaced. ext_gear(overlay(D, module=m), ...) keeps backlash and pressure in the cache key."""
+    def __init__(self, base, **kw): super().__init__(kw); self.base = base
+    def __getitem__(self, k): return super().__getitem__(k) if super().__contains__(k) else self.base[k]
+    def get(self, k, default=None): return super().__getitem__(k) if super().__contains__(k) else self.base.get(k, default)
+    def __contains__(self, k): return super().__contains__(k) or k in self.base

@@ -3,7 +3,7 @@ module source + the values of exactly those keys, so a param change only rebuild
 import hashlib, json, os, pickle, time
 from build123d import Compound, Shape, export_brep, import_brep
 
-from .util import PKG
+from .util import PKG, overlay   # overlay lives in util so builders don't depend on cache.py
 CACHE = os.environ.get("KNOBPARAM_CACHE", os.path.join(PKG, ".cache"))
 
 class TrackingDict(dict):
@@ -15,18 +15,52 @@ class TrackingDict(dict):
         try: return super().__getitem__(k)
         except KeyError: raise ScopeError(f"{k!r} is outside this sub-assembly's scope (interface + own + declared IMPORTS)") from None
     def get(self, k, default=None): self.used.add(k); return super().get(k, default)
+    def __contains__(self, k): self.used.add(k); return super().__contains__(k)
+    # Anything that walks the whole dict (dict(D), {**D}, D.items()) would read keys without recording them.
+    # Record everything instead: that one part over-invalidates, and it never goes stale. Prefer overlay(D, module=m).
+    def _all(self): self.used.update(super().keys())
+    def __iter__(self): self._all(); return super().__iter__()
+    def keys(self): self._all(); return super().keys()
+    def items(self): self._all(); return super().items()
+    def values(self): self._all(); return super().values()
+    def copy(self): self._all(); return dict(super().items())
 
 class ScopeError(KeyError): pass
 
 def _h(obj): return hashlib.sha1(json.dumps(obj, sort_keys=True, default=repr).encode()).hexdigest()[:16]
 
-def src_hash(mod):
-    import inspect
-    srcs = [inspect.getsource(mod)]
-    for dep in getattr(mod, "SRC_DEPS", []): srcs.append(inspect.getsource(dep))
-    return _h(srcs)
+def src_closure(name, seen=None):
+    """Every knobparam module that `name` imports, anywhere in its source, transitively. AST, so it also sees imports inside a function."""
+    import ast, importlib.util
+    seen = set() if seen is None else seen
+    if name in seen: return seen
+    try: spec = importlib.util.find_spec(name)
+    except Exception: return seen
+    if spec is None or not (spec.origin or "").endswith(".py"): return seen
+    seen.add(name)
+    pkg = name if spec.submodule_search_locations else name.rpartition(".")[0]
+    for n in ast.walk(ast.parse(open(spec.origin, encoding="utf-8").read())):
+        if isinstance(n, ast.Import): cands = [a.name for a in n.names]
+        elif isinstance(n, ast.ImportFrom):
+            base = importlib.util.resolve_name("." * n.level + (n.module or ""), pkg) if n.level else (n.module or "")
+            cands = [base] + [f"{base}.{a.name}" for a in n.names]
+        else: continue
+        for c in cands:
+            if c.split(".")[0] == "knobparam": src_closure(c, seen)
+    return seen
 
-def part_hash(mod, D, used): return _h([src_hash(mod), {k: D[k] for k in sorted(used)}])
+_SRC = {}
+def src_hash(mod):
+    import importlib.util
+    if mod.__name__ not in _SRC:
+        names = set(src_closure(mod.__name__))
+        for dep in getattr(mod, "SRC_DEPS", []): names |= src_closure(dep.__name__)
+        names = sorted(names)
+        _SRC[mod.__name__] = _h([[n, open(importlib.util.find_spec(n).origin, "rb").read().decode()] for n in names])
+    return _SRC[mod.__name__]
+
+_ABSENT = "<absent>"
+def part_hash(mod, D, used): return _h([src_hash(mod), {k: D.get(k, _ABSENT) for k in sorted(used)}])
 
 def build_module(mod, D, stats):
     """mod.build(D) -> {name: shape}. Returns (shapes, key)."""
@@ -34,7 +68,7 @@ def build_module(mod, D, stats):
     idx_path = os.path.join(CACHE, mod.__name__.split(".")[-1] + ".json")
     if os.path.exists(idx_path):
         idx = json.load(open(idx_path))
-        if idx.get("src") == src_hash(mod) and all(k in D for k in idx["used"]):
+        if True:   # the key already hashes the source, so an old index is safe to try (reverting an edit is free)
             key = part_hash(mod, D, idx["used"])
             pk = os.path.join(CACHE, f"{key}.pkl")
             if os.path.exists(pk):   # any earlier build with these values (switching back is free)

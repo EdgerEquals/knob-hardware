@@ -2,7 +2,7 @@
 into a catalogue pinion. v0.17 [Ed]: that pinion meshes the compound gear on the idler, not the knob ring."""
 import math
 from build123d import *
-from ...common.util import A, cyl, ext_gear, fresnel_cap
+from ...common.util import overlay, A, cyl, ext_gear, fresnel_cap
 from ...common.saddle import clamp
 
 def build(D):
@@ -12,7 +12,7 @@ def build(D):
     can = cyl(can_r, z0, F["can_len"], x, y) + cyl(F["end_boss_d"] / 2, z0 + F["can_len"], F["end_boss"], x, y)
     P = D["fg_pinion"]; face = D["fg_face"]; z1 = D["fg_z_top"]; zb = z1 - face
     shaft = cyl(F["shaft_d"] / 2, z1, z0 - z1, x, y)   # can bottom to the pinion face; the press-fit bore is the pinion's
-    Dm = dict(D); Dm["module"] = D["fg_mod"]
+    Dm = overlay(D, module=D["fg_mod"])   # tracked view; dict(D) hid backlash and pressure from the cache
     half = D["brass_backlash"] / 2
     tooth = ext_gear(Dm, D["fg_z_pin"], 0, face, dthick=-half, addendum=D["spur_addendum"], dedendum=D["spur_dedendum"])
     bore_r = F["shaft_d"] / 2 + 0.02

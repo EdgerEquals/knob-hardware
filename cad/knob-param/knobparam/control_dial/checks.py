@@ -1,7 +1,7 @@
 """control_dial LOCAL checks (own parts + interface values only)."""
 import math
 from build123d import Rot
-from ..common.checks import Rows, maxr
+from ..common.checks import Rows, min_dist, posed, maxr
 from .parts import hall_arm as hall
 
 def _rib_defl(D):
@@ -63,7 +63,7 @@ def checks(D, parts):
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]
         if tc:
-            row("Hall spoke vs thrust balls / cage (±travel)", min(hall.arm(D, t).distance_to(q) for t in TR for q in tc), 0.3)
+            row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
             f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
             f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}",
