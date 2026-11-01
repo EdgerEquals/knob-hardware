@@ -325,7 +325,10 @@ def build(D):
         window = _box(D["win_x0"] + D["nest_gap"], D["win_x1"] - D["nest_gap"],
                       D["win_y0"] + D["nest_gap"], D["win_y1"] - D["nest_gap"], D["back_z0"], D["back_z1"])
         module = _box(D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"], D["tft_z0"], D["tft_z1"])
-    # [Ed] 2 Nov: four PJ366ST jacks and the USB-C on its own board behind the plate
+    # [Ed] 2 Nov: four PJ366ST jacks and the USB-C on its own board behind the plate (no glow coat behind them)
+    for x, y in D["jack_xy"]:
+        glow = _sub(glow, _box(x - D["jack_w"] / 2 - 0.5, x + D["jack_w"] / 2 + 0.5, y - D["jack_h"] / 2 - 0.5, y + D["jack_h"] / 2 + 0.5,
+                               D["jack_depth_z0"] - D["jack_pin_len"] - 1, D["z_fp1"] + 1))
     for x, y in D["jack_xy"]:
         case = _sub(case, _cyl_z(D["jack_hole"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, y))
     ux, uy = D["usb_xy"]; uw, uh, ud = D["usb_rcpt"]
@@ -343,7 +346,7 @@ def build(D):
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
-    out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow, "PCB": pcb}
+    out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow, "PCB": pcb}   # glow trimmed above
     if window is not None:
         out["back TFT window"] = window
     out.update(amo)

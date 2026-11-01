@@ -24,6 +24,10 @@ def checks(D, parts):
         f"cover y {cb.min.Y:.2f}..{cb.max.Y:.2f}, box {D['body_y0']:.2f}..{D['body_y1']:.2f}")
     sla = D["sla_min"]
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
+    if D["top_corners"]:
+        row("top posts stop under the joystick board", D["joy_board_z"] - D["z_post_top"], 1.0,
+            f"post top z {D['z_post_top']:.2f}; joystick daughterboard about z {D['joy_board_z']:.1f} [A]")
+    row("resin wall round the insert", D["insert_wall"], 1.2, f"M3 insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
     if D["back_screens"] == "amoled2":
         x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]
         row("back AMOLEDs overlap behind the knob", D["amo_overlap"], 15.0,
@@ -91,8 +95,9 @@ def checks(D, parts):
         f"boss x ±{D['boss_x']:.2f}, PCB edge ±{D['pcb_x1']:.2f}, notch Ø{2 * D['notch_r']:.2f}")
     row("boss clears the knob hole", D["boss_knob_clear"], D["boss_gap"],
         f"upper bosses y {D['corners'][2][1]:.2f}, room between knob and joystick {D['boss_y_room']:.2f}")
-    row("boss clears the joystick opening", D["boss_joy_clear"], D["boss_gap"],
-        "upper pair sits under the joystick hole")
+    if not D["top_corners"]:
+        row("boss clears the joystick opening", D["boss_joy_clear"], D["boss_gap"],
+            "upper pair sits under the joystick hole")
     if D["scanner_enabled"]:
         row("boss clears the scanner mirror", D["boss_scan_clear"], D["boss_gap"],
             f"lower bosses y {D['corners'][0][1]:.2f}")
@@ -107,8 +112,9 @@ def checks(D, parts):
     row("ledge width", D["ledge_w"], D["sla_min"], "inboard of the PCB edge, ratio of the wall")
     row("rim flush with the PCB back", abs(D["z_rim"] - D["z_pcb_back"]), 0.0,
         f"shell rim z {D['z_rim']:.2f}, PCB back {D['z_pcb_back']:.2f}", higher_ok=False)
-    row("clamp clears B-side parts", D["bside_clear"] - D["clamp_overlap"], D["sla_min"],
-        f"overlap {D['clamp_overlap']:.2f}, nearest {D['bside_ref'] or 'edge'} is {D['bside_clear']:.2f} from the outline")
+    if D["cover_clamp"] != "tubes":
+        row("clamp clears B-side parts", D["bside_clear"] - D["clamp_overlap"], D["sla_min"],
+            f"overlap {D['clamp_overlap']:.2f}, nearest {D['bside_ref'] or 'edge'} is {D['bside_clear']:.2f} from the outline")
     row("preload before the rim seats", D["preload_gap"], D["seat_gap"],
         f"PCB land at {D['z_pcb_land']:.2f}, shell seat at {D['z_rim_seat']:.2f}; tongue {D['clamp_t']:.2f} closes the step")
     if D["back_screens"] != "amoled2":   # v0.19: the screen rule sets the depth; clearances are measured in the assembly
@@ -117,9 +123,10 @@ def checks(D, parts):
     row("body clears the rails", D["rail_clear"], sla, "outer 10 mm of the panel, behind the face only")
     row("panel height", D["panel_h"], 128.5, "3U")
     row("panel height cap", D["panel_h"], 128.5, "3U, not taller", higher_ok=False)
-    row("cover depth past the rear stack", D["cover_depth"] - D["rear_stack"], D["rear_stack"] * D["cover_clear_ratio"],
-        f"placeholder rear stack {D['rear_stack']:.2f} (bearing 2); cover cavity {D['cover_depth']:.2f}; "
-        f"retainer plate on {D['knob_commit'][:7]} has not reported a depth yet")
+    if D["back_screens"] != "amoled2":
+        row("cover depth past the rear stack", D["cover_depth"] - D["rear_stack"], D["rear_stack"] * D["cover_clear_ratio"],
+            f"placeholder rear stack {D['rear_stack']:.2f} (bearing 2); cover cavity {D['cover_depth']:.2f}; "
+            f"retainer plate on {D['knob_commit'][:7]} has not reported a depth yet")
     row("carrier fits the rounded opening", D["car_in_hole"], 0.0,
         f"corner clearance {D['car_in_hole']:.2f}; carrier {2 * D['car_hw']:.2f}×{2 * D['car_hh']:.2f}")
     row("top light-strip width", D["edge_top_w"], sla, "panel edge above the bezel")
@@ -166,8 +173,9 @@ def checks(D, parts):
 
     row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
-    row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
-        f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
+    if False  # v0.19: brass insert; see "resin wall round the insert":
+        row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
+            f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
     row("PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
         f"ISO 4762 head Ø{D['screw_dk']:.1f}×{D['head_k']:.2f}, hex {D['screw_hex']:.1f}; "
         f"counterbore {D['cbore_depth']:.2f} (head {D['head_below']:.2f} below the face); "
@@ -188,8 +196,9 @@ def checks(D, parts):
         f"tip z {D['z_tip']:.2f}, plate underside {D['z_fp0']:.2f}")
     row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
         f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
-    row("knob bolts present", float(len(D["knob_bolts"])), 2.0,
-        f"{len(D['knob_bolts'])} on the lower arc; the TFT window and the bosses leave room for fewer than {D['knob_bolt_n']}")
+    if D["knob_bolt_n"] > 0:
+        row("knob bolts present", float(len(D["knob_bolts"])), 2.0,
+            f"{len(D['knob_bolts'])} on the lower arc; the TFT window and the bosses leave room for fewer than {D['knob_bolt_n']}")
     # a point in the boss wall (outside the thread) is resin
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,

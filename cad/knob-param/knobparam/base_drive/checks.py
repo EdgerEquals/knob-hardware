@@ -25,7 +25,7 @@ def checks(D, parts):
           f"open saddle: 2 bands × {D['fm_band_h']:g} over {D['fm_grip']:.1f} of the Ø{F['can_d']:g}×{F['can_len']:g} can, ears at ±{D['fm_split']:g}°")
     r.row("detent ball guided in its bore when latched (centre above the boss underside)", D["det_z_ball"] - D["det_dimple"] - D["det_z0"], 0.1,
           f"Ø{D['det_ball']:g} ball, spring {D['det_spring'][0]:g}×{D['det_spring'][1]:g} preload {D['det_preload']:g}, M{D['det_thread_d']:g}×{D['det_grub_len']:g} grub ±{D['det_grub_adj']:g}")
-    r.row("detent angle margin inside its window (min of both sides, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,
+    r.row("detent angle margin inside its window (min of both sides, deg)" if D["det_n"] != 1 else "detent angle margin inside its window (one detent, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,
           f"detents at ±{D['det_off']:.1f}° from the Hall arm, r {D['det_r']:.2f}; latch ±{D['det_deg']:g}°")
     r.row("feel mount rib (radial depth)", D["fm_rib_r1"] - D["fm_rib_r0"], F["clear"],
           f"r {D['fm_rib_r0']:.2f}-{D['fm_rib_r1']:.2f}, under the saddle seat")

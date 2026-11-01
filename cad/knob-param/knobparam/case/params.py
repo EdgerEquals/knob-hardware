@@ -153,6 +153,7 @@ P = dict(
     amo_lower_y_up=23.5,   # [Ed] lower screen bottom edge above the panel bottom (frame y -52.1 with the v0.2 knob at 0)
     amo_upper_top_up=105.0,   # [Ed] upper screen top edge above the panel bottom (frame y 29.4 with the v0.2 knob at 0)
     screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
+    joy_board_z=27.1,      # [A] joystick daughterboard underside (v0.18 design notes); the top posts must stop under it
     cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
     tube_press=1.0,        # [A] width of the tube ring that bears on the PCB round the corner notch
     jack_w=10.0,           # [S] PJ366ST body width (x) — clacktronics/AudioJacks STEP, MIT, credit Barwise; untested vs a real part
@@ -428,7 +429,10 @@ def derive(D):
     # Outer skin matches the shell. On X the rear envelope sets how thick that skin can be;
     # it stays at least the SLA minimum and never outside the shell line.
     ex, ey = D["enc_xy"]
-    D["cover_side"] = min(D["wall"], max(D["sla_min"], D["x_out1"] - (abs(ex) + D["d_big_tip"] / 2.0 + D["cover_pocket"])))
+    if D["back_screens"] == "amoled2":
+        D["cover_side"] = D["wall"]   # v0.19: the encoder is no longer a box-sized envelope; the screen rule is checked in 3D
+    else:
+        D["cover_side"] = min(D["wall"], max(D["sla_min"], D["x_out1"] - (abs(ex) + D["d_big_tip"] / 2.0 + D["cover_pocket"])))
     D["void_x1"] = D["x_out1"] - D["cover_side"]
     D["void_x0"] = -D["void_x1"]
     D["void_y0"] = D["y_in0"]

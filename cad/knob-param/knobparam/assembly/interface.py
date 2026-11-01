@@ -57,7 +57,7 @@ P = dict(
     mech_rot=-90.0,   # [Ed] degrees, panel angle = mechanism angle + mech_rot
     mech_rot_r=24.0,   # [A] KiCad holes / back parts within this radius of the axis belong to the mechanism and turn with it
     enc_ang=180.0,   # [Ed] 2 Nov: encoder at the TOP of the panel (mechanism 180 + mech_rot -90 = panel 90). v0.18: 270
-    idler2_from_enc=-120.0,   # [A] idler 2 = encoder angle - 120 = 150 deg
+    idler2_from_enc=120.0,   # [A] v0.19: idler 2 = encoder + 120 = 300 deg (v0.18: -120 -> 150)
     # ---- 1220 motor [M] ----
     motor=dict(title="Motor 1220 coreless planetary", body_d=12.0, motor_len=20.0, gearbox_len=17.0, boss_d=4.0, boss_len=1.0, shaft_d=3.0, shaft_flat=2.5, shaft_len=5.5, flat_len=4.5, seam_groove=0.3, endcap_len=1.5, endcap_d=11.0, rear_boss_d=3.0, rear_boss_len=0.6, term_w=1.2, term_t=0.3, term_len=2.5, term_pitch=6.0, mount_holes=None, ratio="1:144 (3-stage)", version="v0.1"),
     # ---- knob [Ed/A] ----
@@ -117,7 +117,7 @@ P = dict(
     ha_arm=(4.4, 1.5, 3.0, 3.0),
     ha_win_clear=0.5,
     # ---- idler 1 (v0.16: the 716 is no longer on this shaft) [A] ----
-    idler1_ang=300.0,   # [A] v0.19: idlers sit 120 deg either side of the encoder (300 / 60). v0.18: 54.
+    idler1_ang=60.0,   # [A] v0.19: idlers sit 120 deg either side of the encoder (60 / 300); the feel compound goes on idler 1 (60). v0.18: 54.
     # (v0.18 note on idler 1: it stayed at the v0.13 angle 54 because 45.5 overlapped the Ø48 wheel)
     # ---- feel motor on the PCB top, inside the cradle [A] ----
     # Axial 716, its own pinion meshing the bottom internal ring. Angle and tooth count are derived
@@ -811,13 +811,14 @@ def _place_mech(D):
     # ears must not meet each other or the centring lever
     D["det_lo"] = win + R2D((clr + D["bt_groove_r"]) / rmin) + D["bt_half"]
     D["det_hi"] = min(hi, 90.0 - ear, lever_off - ear - c)
+    if D["det_n"] == 1:
+        D["det_hi"] = min(hi, 90.0 - ear)   # the one detent goes on the side away from the lever (below)
     D["det_off"] = D["det_lo"] if D["det_lo"] <= D["det_hi"] else (D["det_lo"] + D["det_hi"]) / 2
     D["det_angs"] = [D["ha_ang0"] - D["det_off"], D["ha_ang0"] + D["det_off"]]
     if D["det_n"] == 1:
-        # [Ed] 2 Nov: one detent (three dimples). Keep the side with the most room to the pinions, the 1220, the 716 and the lever.
-        others = [D["enc_ang"], *D["idler_angs"], 0.0, D.get("fm_ang", 0.0), D["sl_ang"]]
-        ad = lambda a, b: abs((a - b + 180.0) % 360.0 - 180.0)
-        D["det_angs"] = [max(D["det_angs"], key=lambda a: min(ad(a, o) for o in others))]
+        # [Ed] 2 Nov: one detent (three dimples), on the side of the Hall arm away from the centring lever.
+        lever_plus = ((D["sl_ang"] - D["ha_ang0"]) % 360.0) < 180.0
+        D["det_angs"] = [D["ha_ang0"] - D["det_off"]] if lever_plus else [D["ha_ang0"] + D["det_off"]]
     D["hall_win_out"] = win
     D["bt_z"] = D["plate_t"] + D["bt_up"]
     D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4

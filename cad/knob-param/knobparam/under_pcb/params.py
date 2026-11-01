@@ -19,6 +19,7 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] v0.18 only: PCB back to the back panel inner face (bearing 2 seat)
+    sens_dir=180.0,   # [A] v0.19: sensor direction from the wheel centre, mechanism frame (180 + mech_rot -90 = panel up, under the joystick). v0.18: 270
     brg2_on_pcb=True,   # [Ed] 2 Nov: the back screens sit behind the wheel, so bearing 2 moves up to a printed seat on the PCB back
     brg2_seat_wall=1.2,   # [A] printed seat wall round bearing 2 (glued to the PCB back round H2)
     brg2_seat_floor=0.6,   # [A] seat floor under bearing 2
@@ -82,5 +83,5 @@ def derive(D):
     D["d_big_tip"] = 2 * D["disc_r"]                                     # the disc is the envelope; the old phantom tooth count followed the spur module
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
-    D["sens_xy"] = (ex, ey - D["sens_r"])
+    D["sens_xy"] = (ex + D["sens_r"] * math.cos(math.radians(D["sens_dir"])), ey + D["sens_r"] * math.sin(math.radians(D["sens_dir"])))
     return D

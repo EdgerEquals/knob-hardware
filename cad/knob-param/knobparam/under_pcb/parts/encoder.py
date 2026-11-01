@@ -69,6 +69,7 @@ def daughterboard(D):
 
 def build(D):
     T = Pos(*D["enc_xy"], 0)
+    S = Rot(0, 0, D["sens_dir"] - 270.0)   # v0.19: sensor round the wheel (built at -Y, i.e. 270)
     board, header, stands = daughterboard(D)
     return {"encoder bearing 1 (cradle+PCB)": T * bearing(D, D["h_brg_top"]),
             "encoder pinion": T * Rot(0, 0, ring_phase(D, D["enc_ang"])) * pinion(D),
@@ -79,10 +80,10 @@ def build(D):
             "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["enc_shaft_bot"], D["h_pin1"] - D["enc_shaft_bot"]),
             "encoder bearing 2" + (" (seat on the PCB back)" if D["brg2_on_pcb"] else " (back panel)"):
                 T * (Rot(180, 0, 0) * Pos(0, 0, -D["h_b2_bot"] - D["h_b2_top"]) * bearing(D, D["h_b2_top"]) if D["brg2_on_pcb"] else bearing(D, D["h_b2_top"])),
-            **({"encoder bearing 2 seat (printed, glued)": T * (tube(D["brg"]["D"] / 2 + 0.02, D["brg"]["D"] / 2 + D["brg2_seat_wall"], D["brg2_seat_z0"], D["z_pcb_back"] - D["brg2_seat_z0"] - 0.02)
+            **({"encoder bearing 2 seat (printed, glued)": T * (tube(D["brg"]["fd"] / 2 + 0.05, D["brg"]["fd"] / 2 + D["brg2_seat_wall"], D["brg2_seat_z0"], D["z_pcb_back"] - D["brg2_seat_z0"] - 0.02)
                                                              - cyl(D["brg"]["d"] / 2 + 0.6, D["brg2_seat_z0"] - 0.1, 1.0))} if D["brg2_on_pcb"] else {}),
             "encoder disc + slotted rim": T * wheel(D),
-            "encoder sensor EE-SX1321": T * sensor(D),
-            "encoder daughterboard": T * board,
-            "encoder header": T * header,
-            "encoder standoff": T * stands}
+            "encoder sensor EE-SX1321": T * S * sensor(D),
+            "encoder daughterboard": T * S * board,
+            "encoder header": T * S * header,
+            "encoder standoff": T * S * stands}
