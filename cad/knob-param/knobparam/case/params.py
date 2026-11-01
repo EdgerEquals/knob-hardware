@@ -1,0 +1,362 @@
+"""Enclosure (case) v0.1 — own params + derive.
+
+One-piece SLA shell in PCBWay UTR-8100 clear resin. The faceplate is the Eurorack panel
+(integrated; no separate plate, no acrylic). Knob frame: dial axis = Z, Z above the main-PCB
+front, +X = motor, +Y = panel top.
+
+Geometry that belongs to the other two open branches is snapshotted here, not imported
+(those trees are not on param-dev, and this sub cannot edit them):
+
+* Joystick v0.4 bezel / faceplate contract — commit bce854b54acdef8a2a4c86b35ff4460e1a8e460a
+  (origin/sub/joystick-v04). Screen DWO DO0164FMST05, 1.2 mm lip, 0.90 mm overlap,
+  place_y from the same clearance rule as jsparam.derive.
+* Knob v0.17 OD — commit 00502746fa2fb2aaef44580e1b9edbcc907f73e7 (origin/sub/assembly-v017).
+  Design notes: minimum Ø41.641, drawn Ø41.65. The joystick sizes the plan to Ø41.70.
+  z_knob_top is 52.5 on both that branch and param-dev (z_glass 56.8 − lip 4.0 − knob_run 0.3).
+
+The live interface knob_od (v0.16b Ø40.85 on param-dev) is read as well; the opening uses
+whichever is larger, so a later merge cannot make the hole smaller than the knob.
+
+Tags: [Ed] Ed's decision, [L] module scope (knob-module-v1 panel layout), [S] datasheet / PCBWay,
+[K] KiCad, [A] assumed, [J] joystick v0.4 snapshot, [N] knob v0.17 snapshot.
+"""
+import math
+
+P = dict(
+    case_rev="v0.1",
+    joystick_commit="bce854b54acdef8a2a4c86b35ff4460e1a8e460a",   # [J] sub/joystick-v04
+    knob_commit="00502746fa2fb2aaef44580e1b9edbcc907f73e7",       # [N] sub/assembly-v017
+    # ---- Eurorack panel, from the module scope unless a wall will not fit ----
+    # 10HP actual width in the scope is 50.50 = 10 × 5.08 − 0.30 (Doepfer table, layout v2+).
+    # 3U height 128.5. Rail zones are the outer 10 mm behind the panel (sdiy.info).
+    hp_scope=10,            # [L] locked module width, kept as the preference
+    hp_pitch=5.08,          # [L] mm per HP
+    hp_gap=0.30,            # [L] Doepfer panel is n × pitch − this (10 HP → 50.50)
+    panel_h=128.5,         # [L] 3U
+    rail_clear=10.0,       # [L] keep the body out of the rail strips
+    rail_inset=7.5,        # [L] screw station, 7.5 from the panel edge (layout v5)
+    rail_edge=3.0,         # [L] screw centre from the panel top / bottom
+    rail_hole_d=3.2,       # [L] Ø3.2
+    # ---- resin ----
+    # UTR-8100: tensile 41.6 MPa, elongation 9%, density 1.3 g/cm³. SLA min wall 0.8.
+    # Dyed Pantone 2577 C after varnish. sRGB below is a screen approximation of the coated swatch
+    # (e-paint.co.uk measured 169, 124, 201; several fans publish 167, 123, 202).
+    wall=2.5,              # [Ed] nominal wall, about 2.5
+    sla_min=0.8,           # [S] PCBWay SLA minimum wall
+    case_rho=1.3e-3,       # [S] g/mm³ (1.3 g/cm³)
+    dye_rgb=(169, 124, 201),   # [A] Pantone 2577 C sRGB approximation
+    dye_opacity=0.42,      # [A] varnish + dye reads translucent; Quick Look opacity
+    dye_rough=0.18,        # [A] varnished, not frosted
+    glow_rgb=(188, 240, 170),  # [A] Shimicoat strontium aluminate, green, drawn heavier than the real film
+    glow_t=0.35,           # [A] drawn coat thickness so the brushed faces show; the real coat is a film
+    glow_gap=0.30,         # [A] air between the drawn coat and the wall (keeps the solids apart)
+    # ---- knob opening (v0.17 / joystick plan) ----
+    knob_od_design=41.70,  # [N]/[J] joystick v0.4 sizes to this; v0.17 derives Ø41.65
+    z_knob_snap=52.5,      # [N] z_knob_top on v0.16b and v0.17 (not exported by main_knob)
+    knob_rad_clear=0.20,   # [A] = one SLA tolerance, radial, dial and knob share this hole
+    # ---- joystick bezel (v0.4 snapshot; formulas match jsparam.derive) ----
+    scr_w=41.62,           # [J] DO0164FMST05 landscape width
+    scr_h=26.74,           # [J]
+    scr_t=1.5,             # [J]
+    scr_below_knob=5.0,    # [J][Ed] screen top 5 mm under the knob top, before the 0.30 pad
+    bz_lip=1.2,            # [J][Ed] lip, max 1.5
+    bz_t=1.2,              # [J][Ed] bezel thickness
+    bz_max=1.5,            # [Ed] lip and bezel thickness must not exceed this
+    fp_overlap=0.90,       # [J] lip covers the faceplate at rest
+    up_gap=0.02,           # [J] bezel sits this far above the plate so the faces do not fuse
+    roof_pad=0.30,         # [J] glass sits on the spring pads; raises the glass 0.30
+    sw_tilt=0.25,          # [J][S] SKRHADE010 tilt travel
+    sw_push=0.15,          # [J][S] centre press
+    tol_sla=0.20,          # [J][S] SLA, wide end of PCBWay ±0.1–0.2
+    tol_mjf=0.25,          # [J][S] carrier and knob are MJF; joystick's knob clearance is 2 × this
+    hole_corner_r=1.2,     # [A] rounded joystick opening (material left in the corners)
+    fp_corner_r=2.0,       # [A] faceplate outer corner
+    fillet_r=1.2,          # [A] bead on the wall-to-faceplate joint and the body corners
+    # ---- scanner (665 nm). No mirror motor has been chosen. ----
+    scan_motor_d=8.0,      # [A] FLAG: assumed small coreless / coin-style can, no catalogue part
+    scan_motor_len=12.0,   # [A] FLAG
+    scan_motor_clear=0.80, # [A] air from the can to the nearest wall or shelf
+    mirror_d=16.0,         # [A] FLAG: disc on the motor shaft, large enough to catch the beam
+    mirror_t=0.40,         # [A]
+    mirror_tilt=45.0,      # [A] degrees, sends the +Z beam out across the walls
+    vcsel_l=3.5,           # [S] 2835 body, JNJ-V-2835CW-665003-S-D1 (the 665 nm part named on v0.17)
+    vcsel_w=2.8,           # [S]
+    vcsel_h=0.80,          # [S]
+    film_w=4.5,            # [A] grating film square
+    film_t=0.12,           # [A]
+    slot_clear=0.20,       # [A] film to the slot, each side
+    shelf_t=2.2,           # [A] grating ledge; lips above and below the slot stay ≥ sla_min
+    shelf_z=4.5,           # [A] ledge centre height above the PCB front
+    film_gap=1.0,          # [A] film edge to the motor can
+    beam_t=0.80,           # [A] thickness of the check volume for the swept fan
+    beam_gap=0.40,         # [A] fan stops this far short of the wall and the faceplate
+    beam_reach=1.2,        # [A] the fan must come at least this close (it is the light)
+    # ---- printed metric thread + ISO 10642 countersunk hex socket (M3 coarse default) ----
+    # The resin bosses are tapped by the print. No inserts. Engagement and the boss wall are
+    # multiples of the diameter, not a fixed millimetre.
+    screw_d=3.0,           # [Ed] M3, sized up from the joystick's M2
+    screw_p=0.5,           # [S] ISO coarse pitch for M3
+    screw_dk=6.72,         # [S] ISO 10642 head diameter
+    screw_hex=2.0,         # [S] hex socket across flats
+    screw_socket=1.1,      # [S] hex socket depth
+    thread_int_k=1.082532, # [S] internal minor D1 = d − this × pitch
+    thread_ext_k=1.226869, # [S] external minor d3 = d − this × pitch
+    thread_crest=0.125,    # [S] crest flat, fraction of pitch (P/8)
+    thread_root=0.25,      # [S] root flat, fraction of pitch (P/4)
+    thread_fit=0.22,       # [A] radial air so the screw and the printed thread do not occupy the same solid
+    engage_min=2.0,        # [Ed] engagement / diameter, minimum
+    engage_mult=3.0,       # [Ed] used when there is room past the minimum
+    boss_wall_mult=1.0,    # [Ed] resin around the thread, in diameters
+    screw_hole_ratio=0.08, # [A] clearance hole over the screw, as a fraction of the diameter
+    tip_clear_ratio=0.5,   # [A] screw tip stays this many diameters off the PCB and off rear parts
+    # ---- back cover: transparent smoky-grey PETG, as shallow as the countersink allows ----
+    # Depth behind the PCB is a placeholder until sub/assembly-v017 reports the bearing-retainer
+    # plate. Today the tallest back-side part is encoder bearing 2, seated on under_pcb's back panel.
+    rear_panel_snap=25.0,  # [A] under_pcb back_panel (not exported). Bearing 2 sits here.
+    cover_clear_ratio=0.08,# [A] extra depth past that stack, as a fraction of the stack
+    cover_web_ratio=0.15,  # [A] cover thicker than the countersink by this fraction of the countersink
+    cover_rho=1.27e-3,     # [A] PETG, g/mm³
+    cover_rgb=(132, 136, 142),  # [A] smoky grey, still see-through
+    cover_opacity=0.34,    # [A]
+    # ---- knob collar, labyrinth placeholder, bolts up into the shell ----
+    collar_h_mult=3.0,     # [A] collar length / screw diameter
+    collar_wall=2.5,       # [A] radial wall; the labyrinth is cut into it
+    lab_n=3,               # [A] placeholder groove count
+    lab_w_ratio=0.4,       # [A] groove width / pitch, the pitch itself is a fraction of the collar
+    lab_pitch_ratio=0.35,  # [A] groove pitch / collar length
+    lab_d_ratio=0.25,      # [A] groove depth / collar wall
+    knob_bolt_n=4,         # [Ed] bolts the knob module up into the shell
+    # ---- joystick spring cross pins: side access. v0.4 has no exported pin axis yet. ----
+    cross_pin_d=1.6,       # [A] cross pin diameter
+    pin_clear_ratio=0.2,   # [A] hole over the pin, as a fraction of the pin
+    pin_below_ratio=0.15,  # [A] pin centre below the faceplate underside, as a fraction of the plate height above the PCB
+    seat_gap=0.08,         # [A] air so the cover and the shell do not fuse
+    pcb_clear=0.60,        # [A] air, PCB edge to the inner side wall
+    rear_clear=0.80,       # [A] air, d_big_tip envelope to the inner side wall
+    fuse=0.02,             # [A] overlap so adjacent walls fuse into one solid
+    cut_slop=0.50,         # [A] cutters run this far past the face they open
+    edge_w=2.2,            # [A] light-pipe band at the faceplate rim
+    edge_t=1.2,            # [A] thinned rim (≥ sla_min, thinner than the 2.5 plate so it lights)
+    ligament_t=1.2,        # [A] bridge between the knob hole and the joystick hole
+    web_min=0.80,          # [A] smallest plan web, = sla_min
+    pad_extra=1.0,         # [A] full-thickness pad past the rail-hole radius
+    mass_max=140.0,        # [A] g, resin shell only (the PETG cover is separate)
+    stl_tol=0.08,          # [A] STL chord tolerance, mm
+    stl_ang=0.3,           # [A] STL angular tolerance, rad
+    usdz_tol=0.15,         # [A] Quick Look mesh chord, mm
+    scan_clear=0.50,       # [A] swept beam to the knob and to the joystick envelope
+)
+
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
+           "under_pcb": ["d_big_tip"]}
+EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
+           "joy_hole", "mounts_frame", "mounts_board", "z_fp0", "z_fp1", "z_foot"]
+
+
+def _place_for(x, y_edge, rc):
+    """place_y that puts (x, y_edge) on a circle of radius rc about the knob. Joystick v0.4 rule."""
+    if abs(x) >= rc - 1e-9:
+        return -y_edge
+    return -y_edge + math.sqrt(rc * rc - x * x)
+
+
+def derive(D):
+    sla = D["sla_min"]
+    # opening uses the larger of the live knob and the v0.17 / joystick design size
+    D["knob_od_used"] = max(D["knob_od"], D["knob_od_design"])
+    D["knob_r"] = D["knob_od_used"] / 2
+    D["half_w"] = D["scr_w"] / 2 + D["bz_lip"]
+    D["half_h"] = D["scr_h"] / 2 + D["bz_lip"]
+    D["slide"] = D["tol_sla"] + D["sw_tilt"]
+    D["knob_rc"] = D["knob_r"] + 2 * D["tol_mjf"] + D["slide"]
+    D["place_y"] = max(_place_for(0.0, -D["half_h"], D["knob_rc"]),
+                       _place_for(D["half_w"], -D["half_h"], D["knob_rc"]))
+    D["hole_hw"] = D["half_w"] - D["fp_overlap"]
+    D["hole_hh"] = D["half_h"] - D["fp_overlap"]
+    D["car_hw"] = D["hole_hw"] - D["slide"] - D["tol_sla"]
+    D["car_hh"] = D["hole_hh"] - D["slide"] - D["tol_sla"]
+    D["joy_hole"] = (2 * D["hole_hw"], 2 * D["hole_hh"])
+    # press rebate, same stack as the joystick proxy
+    D["press_travel"] = D["tol_sla"] + D["sw_push"]
+    D["fp_rebate"] = D["press_travel"] + D["tol_sla"]
+    # faceplate height from the knob top, matching joystick z_bz0 / z_fp
+    scr_top_nom = D["z_knob_snap"] - D["scr_below_knob"]
+    D["z_bz0"] = scr_top_nom - D["scr_t"]
+    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
+    D["z_fp1"] = D["z_bz0"] - D["up_gap"]
+    D["z_fp0"] = D["z_fp1"] - D["wall"]
+    D["fp_t"] = D["wall"]
+    # smallest HP whose panel can hold the PCB, the rear envelope and the walls
+    need = max(D["pcb_w"] + 2 * (D["pcb_clear"] + D["wall"]),
+               D["d_big_tip"] + 2 * (D["rear_clear"] + D["wall"]),
+               2 * D["half_w"] + 2 * D["wall"])
+    D["hp_need_w"] = need
+    D["hp"] = int(math.ceil((need + D["hp_gap"]) / D["hp_pitch"] - 1e-9))
+    D["panel_w"] = D["hp"] * D["hp_pitch"] - D["hp_gap"]
+    D["panel_w_scope"] = D["hp_scope"] * D["hp_pitch"] - D["hp_gap"]
+    # panel centred on the dial axis. Top at y = axis_by (board y = 0).
+    D["panel_x0"] = -D["panel_w"] / 2
+    D["panel_x1"] = D["panel_w"] / 2
+    D["panel_y1"] = D["axis_by"]
+    D["panel_y0"] = D["axis_by"] - D["panel_h"]
+    D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2
+    D["body_y1"] = D["panel_y1"] - D["rail_clear"]
+    D["body_y0"] = D["panel_y0"] + D["rail_clear"]
+    D["body_yc"] = (D["body_y0"] + D["body_y1"]) / 2
+    D["x_in0"] = D["panel_x0"] + D["wall"]
+    D["x_in1"] = D["panel_x1"] - D["wall"]
+    D["y_in0"] = D["body_y0"] + D["wall"]
+    D["y_in1"] = D["body_y1"] - D["wall"]
+    D["z_seat"] = D["seat_gap"]
+    # Placeholder rear stack: bearing 2 bottom behind the PCB back. Same arithmetic as under_pcb
+    # (back panel seat + flange − bearing width). The retainer plate on sub/assembly-v017 replaces
+    # rear_panel_snap when it reports a depth; the cover then moves with it.
+    B = D["brg"]
+    D["rear_stack"] = D["rear_panel_snap"] - B["ft"] + B["B"]
+    D["z_bearing_bot"] = D["z_pcb_back"] - D["rear_stack"]
+    D["cover_depth"] = D["rear_stack"] * (1.0 + D["cover_clear_ratio"])
+    D["z_cover_in"] = D["z_pcb_back"] - D["cover_depth"]
+    D["csink_depth"] = (D["screw_dk"] - D["screw_d"]) / 2.0
+    D["cover_t"] = D["csink_depth"] * (1.0 + D["cover_web_ratio"])
+    D["z_cover_out"] = D["z_cover_in"] - D["cover_t"]
+    D["z_foot"] = D["z_cover_out"]
+    D["z_wall0"] = D["z_cover_in"] + D["seat_gap"]
+    avail = (D["z_pcb_back"] - D["tip_clear_ratio"] * D["screw_d"]) - D["z_cover_in"]
+    D["engage"] = min(D["engage_mult"] * D["screw_d"], avail)
+    D["screw_boss_r"] = D["screw_d"] * (0.5 + D["boss_wall_mult"])
+    D["hole_r"] = D["screw_d"] * (0.5 + D["screw_hole_ratio"])
+    D["tip_clear"] = D["tip_clear_ratio"] * D["screw_d"]
+    D["knob_hole_r"] = D["knob_r"] + D["knob_rad_clear"]
+    # bridge between the two openings, along +Y
+    D["joy_y_near"] = D["place_y"] - D["hole_hh"]
+    D["joy_y_far"] = D["place_y"] + D["hole_hh"]
+    D["bezel_y_near"] = D["place_y"] - D["half_h"]
+    D["bezel_y_far"] = D["place_y"] + D["half_h"]
+    D["web_knob_joy"] = D["joy_y_near"] - D["knob_hole_r"]
+    D["edge_top_w"] = D["panel_y1"] - D["bezel_y_far"]
+    # carrier corner vs the rounded opening (local to the joystick centre)
+    r = D["hole_corner_r"]
+    cx, cy = D["hole_hw"] - r, D["hole_hh"] - r
+    D["car_corner_dist"] = math.hypot(D["car_hw"] - cx, D["car_hh"] - cy)
+    D["car_in_hole"] = D["hole_corner_r"] - D["car_corner_dist"]
+    # side clearances the HP choice is supposed to buy
+    D["side_air"] = (D["x_in1"] - D["x_in0"] - D["pcb_w"]) / 2
+    D["rear_air"] = (D["x_in1"] - D["x_in0"]) / 2 - D["d_big_tip"] / 2
+    D["pcb_y0"] = -D["pcb_below"]
+    D["pcb_y1"] = D["pcb_above"]
+    # rail screws. Bottom stations stay on the Doepfer 7.5 mm grid.
+    # Top stations move outboard of the joystick opening: the bezel crosses the usual columns,
+    # and a Eurorack rail takes the nut anywhere along its slot.
+    x_std0 = D["panel_x0"] + D["rail_inset"]
+    x_std1 = D["panel_x0"] + D["rail_inset"] + (D["hp"] - 3) * D["hp_pitch"]
+    D["rail_x_std"] = (x_std0, x_std1)
+    push = D["hole_hw"] + D["rail_hole_d"] / 2 + D["web_min"]
+    limit = D["panel_w"] / 2 - D["rail_hole_d"] / 2 - D["web_min"]
+
+    def _station(x):
+        if abs(x) >= push:
+            return x
+        out = math.copysign(push, x if x else 1.0)
+        return out if abs(out) <= limit else x
+
+    D["rail_x_top"] = (_station(x_std0), _station(x_std1))
+    D["rail_y_top"] = D["panel_y1"] - D["rail_edge"]
+    D["rail_y_bot"] = D["panel_y0"] + D["rail_edge"]
+    D["rail_pad_r"] = D["rail_hole_d"] / 2 + D["pad_extra"]
+    # scanner, bottom-left inner corner (−X, −Y). Motor axis inset so the fillet bead is clear.
+    mr = D["scan_motor_d"] / 2
+    D["motor_r"] = mr
+    D["mirror_r"] = D["mirror_d"] / 2
+    # far enough in that the mirror disc clears both walls; the can is smaller than the disc
+    D["x_mot"] = D["x_in0"] + D["mirror_r"] + D["scan_motor_clear"]
+    D["y_mot"] = D["y_in0"] + D["mirror_r"] + D["scan_motor_clear"]
+    D["z_mot0"] = D["z_seat"]
+    D["z_mot1"] = D["z_mot0"] + D["scan_motor_len"]
+    D["z_mirror"] = D["z_mot1"]
+    # film just outside the can, on the +X side, still under the mirror disc
+    D["x_beam"] = D["x_mot"] + mr + D["film_gap"] + D["film_w"] / 2
+    D["y_beam"] = D["y_mot"]
+    D["beam_off"] = D["x_beam"] - D["x_mot"]
+    # shelf tied to the bottom wall, clear of the can
+    lip = D["sla_min"]
+    D["shelf_x0"] = D["x_mot"] + mr + D["scan_motor_clear"]
+    D["shelf_x1"] = D["x_beam"] + D["film_w"] / 2 + lip
+    D["shelf_y0"] = D["y_in0"]
+    D["shelf_y1"] = D["y_beam"] + D["film_w"] / 2 + lip
+    D["shelf_z0"] = D["shelf_z"] - D["shelf_t"] / 2
+    D["shelf_z1"] = D["shelf_z"] + D["shelf_t"] / 2
+    # groove, open toward +Y (into the cavity) so the film slides in before the PCB
+    sc = D["slot_clear"]
+    D["slot_x0"] = D["x_beam"] - D["film_w"] / 2 - sc
+    D["slot_x1"] = D["x_beam"] + D["film_w"] / 2 + sc
+    D["slot_y0"] = D["y_beam"] - D["film_w"] / 2 - sc
+    D["slot_y1"] = D["shelf_y1"] + D["cut_slop"]
+    D["slot_z0"] = D["shelf_z"] - D["film_t"] / 2 - sc
+    D["slot_z1"] = D["shelf_z"] + D["film_t"] / 2 + sc
+    D["slot_lip"] = (D["shelf_t"] - (D["slot_z1"] - D["slot_z0"])) / 2
+    # VCSEL on the PCB, under the film, emitting +Z
+    D["x_vc"] = D["x_beam"]
+    D["y_vc"] = D["y_beam"]
+    D["z_vc0"] = 0.0
+    D["z_vc1"] = D["vcsel_h"]
+    # swept fan: along the inner left wall and the inner bottom wall, then up to the rim
+    D["beam_x"] = D["x_in0"] + D["beam_gap"] + D["beam_t"] / 2
+    D["beam_y"] = D["y_in0"] + D["beam_gap"] + D["beam_t"] / 2
+    D["beam_z1"] = D["z_fp0"] - D["beam_gap"]
+    # collar under the knob opening, and the placeholder labyrinth
+    D["collar_h"] = D["collar_h_mult"] * D["screw_d"]
+    D["z_collar0"] = D["z_fp0"] - D["collar_h"]
+    D["collar_r"] = D["knob_hole_r"] + D["collar_wall"]
+    D["lab_pitch"] = D["collar_h"] * D["lab_pitch_ratio"]
+    D["lab_w"] = D["lab_pitch"] * D["lab_w_ratio"]
+    D["lab_d"] = D["collar_wall"] * D["lab_d_ratio"]
+    D["lab_z0"] = D["z_collar0"] + (D["collar_h"] - (D["lab_n"] - 1) * D["lab_pitch"]) / 2.0
+    # knob bolts: on the bolt circle outside the collar, only where the boss stays inside the shell
+    # and clear of the joystick opening. The free arc is the bottom (away from the bezel).
+    D["bolt_r"] = D["collar_r"] + D["seat_gap"] + D["screw_boss_r"]
+    limit_x = abs(D["x_in0"]) - D["screw_boss_r"] - D["seat_gap"]
+    bolts = []
+    # walk the lower semicircle; keep the first knob_bolt_n that fit
+    steps = 36
+    for i in range(steps):
+        ang = math.pi * (1.0 + (i + 0.5) / steps)   # π .. 2π: the bottom half, away from the bezel at +Y
+        x = D["bolt_r"] * math.cos(ang)
+        y = D["bolt_r"] * math.sin(ang)
+        if abs(x) > limit_x or y - D["screw_boss_r"] < D["y_in0"]:
+            continue
+        dx = max(abs(x) - D["hole_hw"], 0.0)
+        dy = max(abs(y - D["place_y"]) - D["hole_hh"], 0.0)
+        if math.hypot(dx, dy) < D["screw_boss_r"] + D["seat_gap"]:
+            continue
+        bolts.append((x, y))
+    if len(bolts) > D["knob_bolt_n"]:
+        pick = [bolts[int(round(i * (len(bolts) - 1) / (D["knob_bolt_n"] - 1)))] for i in range(D["knob_bolt_n"])]
+        # unique while preserving order
+        seen = []
+        for p in pick:
+            if p not in seen:
+                seen.append(p)
+        bolts = seen
+    D["knob_bolts"] = tuple(bolts)
+    D["z_bolt0"] = D["z_fp0"] - D["engage"]
+    # four cover screws, one per corner of the rail-safe body. The post is boss_r, so the
+    # corner grows inward until the printed thread has a full diameter of wall.
+    br = D["screw_boss_r"]
+    D["corners"] = ((D["panel_x0"] + br, D["body_y0"] + br),
+                    (D["panel_x1"] - br, D["body_y0"] + br),
+                    (D["panel_x0"] + br, D["body_y1"] - br),
+                    (D["panel_x1"] - br, D["body_y1"] - br))
+    D["z_thread0"] = D["z_wall0"]
+    D["tap_len"] = D["engage"] - D["screw_p"]
+    D["z_thread1"] = D["z_thread0"] + D["tap_len"]
+    D["z_tip"] = D["z_thread1"]
+    D["z_bolt_tip"] = D["z_bolt0"] + D["tap_len"]
+    # cross-pin axis: through each side wall, at the joystick, just under the plate
+    D["pin_z"] = D["z_fp0"] - D["pin_below_ratio"] * (D["z_fp0"] - D["z_seat"])
+    D["pin_hole_r"] = D["cross_pin_d"] * (0.5 + D["pin_clear_ratio"])
+    D["edge_depth"] = D["fp_t"] - D["edge_t"]
+    D["lig_depth"] = D["fp_t"] - D["ligament_t"]
+    D["scope_short"] = need - D["panel_w_scope"]
+    D["ox"] = 0.0
+    D["oy"] = 0.0
+    return D

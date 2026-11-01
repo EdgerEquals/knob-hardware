@@ -1,0 +1,343 @@
+{
+ "rows": [
+  {
+   "name": "SLA wall",
+   "value": 2.5,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "UTR-8100, nominal 2.5",
+   "owner": "case"
+  },
+  {
+   "name": "faceplate thickness",
+   "value": 2.5,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "same resin wall as the sides",
+   "owner": "case"
+  },
+  {
+   "name": "edge strip thickness",
+   "value": 1.2,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "light-pipe rim, thinner than the plate",
+   "owner": "case"
+  },
+  {
+   "name": "ligament thickness",
+   "value": 1.2,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "bridge between knob hole and joystick hole",
+   "owner": "case"
+  },
+  {
+   "name": "grating-slot lip",
+   "value": 0.84,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "shelf left above and below the film",
+   "owner": "case"
+  },
+  {
+   "name": "fillet bead",
+   "value": 1.2,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "wall-to-faceplate joint",
+   "owner": "case"
+  },
+  {
+   "name": "bezel thickness under the cap",
+   "value": 0.3,
+   "target": ">= 0",
+   "ok": true,
+   "note": "joystick v0.4 lip 1.20, cap 1.5",
+   "owner": "case"
+  },
+  {
+   "name": "knob radial clearance",
+   "value": 0.2,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "hole \u00d842.10, knob \u00d841.70 (live 40.85, design 41.70)",
+   "owner": "case"
+  },
+  {
+   "name": "joystick lip overlap",
+   "value": 0.9,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "opening 42.22\u00d727.34 at place_y 36.37",
+   "owner": "case"
+  },
+  {
+   "name": "web, knob hole to joystick hole",
+   "value": 1.65,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "plan width of the bridge",
+   "owner": "case"
+  },
+  {
+   "name": "bezel above the faceplate",
+   "value": 0.02,
+   "target": ">= 0",
+   "ok": true,
+   "note": "lip z 46.00\u201347.20, plate top 45.98",
+   "owner": "case"
+  },
+  {
+   "name": "PCB side air",
+   "value": 0.79,
+   "target": ">= 0.6",
+   "ok": true,
+   "note": "11HP panel 55.58 (scope 10HP is 50.50, short by 4.70)",
+   "owner": "case"
+  },
+  {
+   "name": "rear envelope air",
+   "value": 1.29,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "d_big_tip \u00d848.00",
+   "owner": "case"
+  },
+  {
+   "name": "body clears the rails",
+   "value": 10.0,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "outer 10 mm of the panel, behind the face only",
+   "owner": "case"
+  },
+  {
+   "name": "panel height",
+   "value": 128.5,
+   "target": ">= 128.5",
+   "ok": true,
+   "note": "3U",
+   "owner": "case"
+  },
+  {
+   "name": "panel height cap",
+   "value": 128.5,
+   "target": "<= 128.5",
+   "ok": true,
+   "note": "3U, not taller",
+   "owner": "case"
+  },
+  {
+   "name": "cover depth past the rear stack",
+   "value": 2.136,
+   "target": ">= 2.136",
+   "ok": true,
+   "note": "placeholder rear stack 26.70 (bearing 2); cover cavity 28.84; retainer plate on 0050274 has not reported a depth yet",
+   "owner": "case"
+  },
+  {
+   "name": "carrier fits the rounded opening",
+   "value": 0.422,
+   "target": ">= 0",
+   "ok": true,
+   "note": "corner clearance 0.42; carrier 40.92\u00d726.04",
+   "owner": "case"
+  },
+  {
+   "name": "top light-strip width",
+   "value": 1.96,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "panel edge above the bezel",
+   "owner": "case"
+  },
+  {
+   "name": "mirror reaches the beam",
+   "value": 0.75,
+   "target": ">= 0",
+   "ok": true,
+   "note": "mirror \u00d816.0 assumed; beam 7.25 off the motor axis",
+   "owner": "case"
+  },
+  {
+   "name": "film clears the motor can",
+   "value": 1.0,
+   "target": ">= 0.8",
+   "ok": true,
+   "note": "FLAG: motor is an assumed \u00d88\u00d712 coreless, no part chosen",
+   "owner": "case"
+  },
+  {
+   "name": "side wall is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "probe in the left wall",
+   "owner": "case"
+  },
+  {
+   "name": "knob hole is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "probe on the dial axis, in the plate",
+   "owner": "case"
+  },
+  {
+   "name": "shell back is open for the cover",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the shell drops down over the PCB; the PETG plate closes the back",
+   "owner": "case"
+  },
+  {
+   "name": "collar bore is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "knob module slides down through the collar",
+   "owner": "case"
+  },
+  {
+   "name": "edge strip is material",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "bottom rim, the light pipe, kept at the back of the plate",
+   "owner": "case"
+  },
+  {
+   "name": "edge strip is thinned",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the front of the rim is pocketed so the band lights",
+   "owner": "case"
+  },
+  {
+   "name": "beam vs knob",
+   "value": 3.24,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "swept fan stays off the dial",
+   "owner": "case"
+  },
+  {
+   "name": "beam vs joystick",
+   "value": 3.63,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "fan stays off the carrier and the lip",
+   "owner": "case"
+  },
+  {
+   "name": "beam reaches the side wall",
+   "value": 0.4,
+   "target": ">= 0",
+   "ok": true,
+   "note": "fan stands off the wall by beam_gap",
+   "owner": "case"
+  },
+  {
+   "name": "beam close to the side wall",
+   "value": 0.8,
+   "target": ">= 0",
+   "ok": true,
+   "note": "close enough to light the wall",
+   "owner": "case"
+  },
+  {
+   "name": "beam reaches the rim",
+   "value": 43.08,
+   "target": ">= 12.08",
+   "ok": true,
+   "note": "rises from the mirror to the faceplate underside",
+   "owner": "case"
+  },
+  {
+   "name": "thread engagement / diameter",
+   "value": 2.833,
+   "target": ">= 2",
+   "ok": true,
+   "note": "printed M3\u00d70.50, engagement 8.50 (asked 9.00)",
+   "owner": "case"
+  },
+  {
+   "name": "boss wall / diameter",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "boss \u00d89.00 around the \u00d83.00 thread",
+   "owner": "case"
+  },
+  {
+   "name": "countersink vs cover thickness",
+   "value": 0.279,
+   "target": ">= 0.279",
+   "ok": true,
+   "note": "ISO 10642 countersink 1.86 in PETG 2.14 (smoky grey, see-through)",
+   "owner": "case"
+  },
+  {
+   "name": "corner screw tip vs PCB",
+   "value": 20.256,
+   "target": ">= 1.5",
+   "ok": true,
+   "note": "tip z -21.86, PCB back -1.60",
+   "owner": "case"
+  },
+  {
+   "name": "knob bolt tip vs front skin",
+   "value": 3.0,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "4 bolts up into the shell, tip z 42.98",
+   "owner": "case"
+  },
+  {
+   "name": "knob bolts present",
+   "value": 4.0,
+   "target": ">= 4",
+   "ok": true,
+   "note": "lower arc, clear of the bezel",
+   "owner": "case"
+  },
+  {
+   "name": "corner boss is resin",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "printed thread, no insert",
+   "owner": "case"
+  },
+  {
+   "name": "cross pin opens the side",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "\u00d81.60 pin, hole \u00d82.24, z 36.97 (axis not yet exported by joystick v0.4)",
+   "owner": "case"
+  },
+  {
+   "name": "case mass",
+   "value": 82.49,
+   "target": "<= 140",
+   "ok": true,
+   "note": "volume 63454 mm\u00b3 (63.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "owner": "case"
+  },
+  {
+   "name": "one hollow shell",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "overall 55.58 \u00d7 128.50 \u00d7 78.56 mm",
+   "owner": "case"
+  }
+ ],
+ "clashes": {},
+ "set": [],
+ "sub": "case"
+}

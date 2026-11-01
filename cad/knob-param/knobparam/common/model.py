@@ -1,4 +1,4 @@
-"""The parameter model harness (owned by the assembly agent). Merges the INTERFACE params, the assembly params and the five
+"""The parameter model harness (owned by the assembly agent). Merges the INTERFACE params, the assembly params and the
 sub-assembly params files into ONE flat dict D (same keys/values as the pre-split v0.15 params.derive()) and records each
 sub-assembly's SCOPE = interface keys + its own params + its own derived keys + its declared IMPORTS.
 Rules enforced here:
@@ -7,8 +7,8 @@ Rules enforced here:
   * every IMPORT names a key that the source sub-assembly lists in its EXPORTS."""
 import copy, importlib
 
-SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb"]   # derive order (exports flow forward)
-ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics"]     # build / report order
+SUBS = ["electronics", "control_dial", "main_knob", "base_drive", "under_pcb", "case"]   # derive order (exports flow forward)
+ALL = ["main_knob", "control_dial", "base_drive", "under_pcb", "electronics", "case"]     # build / report order
 
 def sub(name): return importlib.import_module(f"knobparam.{name}")
 def sub_params(name): return importlib.import_module(f"knobparam.{name}.params")
