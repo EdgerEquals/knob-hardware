@@ -142,8 +142,12 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
   (`apt install kicad` or the KiCad PPA). After regenerating the STEP, commit it.
 * `kicad/*/knob_main_pcb.py` and `screen_adapter.py` are legacy generators that need `cad/tools/sheet`;
   they are not used by the parametric build.
-* The committed KiCad board does not yet carry the v0.15 Hall-vernier sensor rows / B2B move (the
-  parametric proxy does) — that's a pending electronics task.
+* v0.16b boards (main PCB v0.10, screen adapter v0.4) are **generated**: `cad_constraints.json`
+  (`export_cad_constraints.py`, cadenv) -> `make_v016_footprints.py` -> `<board>/kicad/make_board.py`
+  (`/usr/bin/python3`, pcbnew; one netlist -> schematic + board, DRC schematic parity; main board
+  `--route` = Freerouting 2.1.0 on Java 21, retried until 0 unconnected) -> `export_pcb_proxy.py`
+  (`pcb_proxy.json`: extra holes / back-side parts for the proxy) -> `fab_export.py` (PCBWay pack in `<board>/fab/`).
+  Re-running `make_board.py` without `--route` leaves the main board unrouted.
 
 ## Deliverable conventions (assembly agent)
 

@@ -53,7 +53,7 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
   is bonded to the PCB. An M1.6 rod with a sleeve and nuts down the middle is the **centre bolt**: it clamps the
   stack (adapter board → tube → PCB).
 - **Rod VBUS pad (v0.16):** the bottom nut clamps straight onto an enlarged B.Cu pad, Ø11.48 sized from the
-  clearances in the model. There is no washer. KiCad still needs this change.
+  clearances in the model. There is no washer. In KiCad (main PCB v0.10, H1 B.Cu ring).
 - **Dial-centre link:** one PTFE wire down the tube carries power and data (single-wire, LIN/1-Wire style),
   with the brass tube as the ground return. A CH32V003 on the adapter board behind the centre screen splits
   them. No slip ring, no wireless.
@@ -107,13 +107,14 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
 ## Check status (v0.16b)
 - 54/54 gap checks PASS (the two dial-TMAG5273 rows are replaced by the TMAG5273 air-gap and field rows).
 - The contract check passes.
-- One known clash remains, PCB / motor (4.24 mm³). It is a proxy artefact.
+- No known clashes: the PCB / motor proxy clash (4.24 mm³) is gone now that the proxy carries the KiCad M1 Ø3.2 relief
+  (`electronics/kicad/knob-main-pcb/pcb_proxy.json`). `build.py` and `build.py --full` both give 54/54 PASS.
 
 ## Open items
-- **KiCad (main PCB):** the Hall row pitch (2.5) with H3 = TMAG5273 (SOT-23-6, I2C), the enlarged rod pad, the
-  feel motor pads, dropping U3 from the screen adapter. The dial sensor board is no longer needed. For the
-  top-screen joystick: a 2×3 2.54 mm socket, 4 spring holes, 4 base locating holes and the screen-FPC slot (see
-  `docs/top-screen-joystick.md`).
+- **KiCad (1 Nov 2026):** main PCB v0.10 and screen adapter v0.4 match v0.16b (Hall row, rod pad, 716 lead pads +
+  DRV8837, joystick J2/holes/slot/keep-out; U3 removed from the adapter). Still open: the MCU section (J10 is a
+  placeholder test-pad field with an assumed pin-out), the 1220 driver, the EE-SX1131 (discontinued, no LCSC), the
+  J2 socket part number, and the adapter's display-tail wiring / VCC regulator (adapter is placed, not routed).
 - TMAG5273 Hall-element height (0.65 above the PCB) is assumed. Check it against the TI drawing.
 - The ±5.5° travel was an interface change (from ±10°) and needs confirming.
 - Inside the closed lip, about 0.9 mm of the bend pocket shows at −X.
@@ -123,5 +124,5 @@ Renders: `cad/assemblies/knob-stack-v0.16b/` (clean section + iso, plan view, `c
 
 ## Top-screen joystick v0.1 (1 Nov 2026)
 See `docs/top-screen-joystick.md` and `cad/joystick-param/`. The carrier centre is board (25.25, 21.1) and knob frame (0, 31.8).
-The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB still needs the J2 socket,
-the spring/pin holes and the FPC slot (listed in that doc).
+The carrier slid toward the knob clears the knob OD (Ø40.85) by 0.675. The main PCB v0.10 carries the J2 socket,
+the spring/pin holes, the FPC slot and the base keep-out (listed in that doc).

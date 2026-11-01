@@ -17,8 +17,9 @@
 - **Cost target:** well under about **$400 per dial** (currency to confirm) in parts and assembly at the 5–10 kit level.
 
 ## What to send
-- KiCad projects (Gerbers, BOM with MPNs, CPL) from `cad/knob-param/knobparam/electronics/kicad/` once the
-  v0.16 KiCad updates are done (see `design-notes.md`, Open items).
+- KiCad PCBWay packs (Gerber+drill zip, BOM with MPN/LCSC, CPL, ERC/DRC reports, README status) in
+  `cad/knob-param/knobparam/electronics/kicad/<board>/fab/` (`fab_export.py`). Main PCB v0.10: routed, ERC/DRC clean,
+  but J10 (MCU link) is a placeholder and U2/J2 have no LCSC part yet. Screen adapter v0.4: placed, not routed.
 - STEP files per printed part from the parametric model, with the material and process for each.
 - A purchased-parts BOM with quantities per kit.
 - An assembly drawing showing which sub-assemblies PCBWay builds and which Ed builds.

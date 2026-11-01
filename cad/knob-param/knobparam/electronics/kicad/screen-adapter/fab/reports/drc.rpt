@@ -1,0 +1,22 @@
+** Drc report for screen-adapter.kicad_pcb **
+** Created on 2026-11-01T17:22:18+0800 **
+
+** Found 0 DRC violations **
+
+** Found 3 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(97.4500 mm, 104.7200 mm): Pad 2 [GND] of C2 on F.Cu
+    @(98.6500 mm, 104.2000 mm): Pad 4 [GND] of U1 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(98.6500 mm, 104.2000 mm): Pad 4 [GND] of U1 on F.Cu
+    @(102.2000 mm, 100.0000 mm): Pad 1 [GND] of C1 on B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(97.4500 mm, 105.6800 mm): Pad 1 [VCC] of C2 on F.Cu
+    @(99.2000 mm, 105.1500 mm): Pad 6 [VCC] of U1 on F.Cu
+
+** Found 0 Footprint errors **
+
+** End of Report **

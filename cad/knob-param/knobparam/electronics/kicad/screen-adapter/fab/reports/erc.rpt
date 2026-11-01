@@ -1,0 +1,8 @@
+ERC report (2026-11-01T17:22:18+0800, Encoding UTF8)
+
+***** Sheet /
+[global_label_dangling]: Global label not connected anywhere else in the schematic
+    ; warning
+    @(55.88 mm, 107.95 mm): Global Label 'VBUS_DATA'
+
+ ** ERC messages: 1  Errors 0  Warnings 1

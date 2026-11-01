@@ -1,150 +1,209 @@
 """Authoring script for the KiCad knob main PCB (KiCad is the single source of truth for the board).
-Run with the system python that has pcbnew:  /usr/bin/python3 make_board.py
-Writes knob-main-pcb.kicad_pcb / .kicad_pro / fp-lib-table, then exports knob-main-pcb.step with kicad-cli.
-Contents: Edge.Cuts outline, 1.6 mm board, M1 = footprints:Motor_1220_Tabs at the motor position (offset from the dial axis),
-H1 = footprints:Shaft_Hole_NPTH_5.2mm on the dial axis (v0.3; was 6.2 in v0.2).
-H2 = footprints:Bearing_F682ZZ_Press_NPTH_5.0mm, encoder take-off bearing, ENC_CD below the dial axis (v0.4); v0.5 flipped H2 to the back; v0.6 (2026-10-31) puts H2 back on the FRONT: the bearing is pressed in from the front through the base cradle
-floor and into the PCB (locating dowel for gluing the cradle), flange on the cradle floor. Hole Ø5.0 NPTH unchanged.
-v0.7 (2026-10-31): H2 rotated 3.0° [A] about the dial axis toward the motor side (still 19.0 from the axis) so the two idler
-pinions at 120°/240° clear the motor.
-v0.8 (2026-10-31): H1 = TubeRodClamp_Main_M1.6: the brass tube (GND) is soldered on a F.Cu ring pad, the M1.6 rod (VBUS_DATA,
-data over power) passes an NPTH Ø1.8 and clamps on a B.Cu ring pad. Nets GND, VBUS_DATA [A]. Nothing else.
-v0.9 (2026-10-31): Ed: motor closer to the axis, driving a 32T spur gear on the knob's bearing hub (12T pinion, m0.5):
-MOTOR_OFFSET 14.0 -> 11.0 = (32 + 12) x 0.5 / 2. The knob shrinks (skirt ID 38), bottom ring 90T -> 78T, so the encoder
-H2 moves in to ENC_CD 16.0 = (78 - 14) x 0.5 / 2, back on the board centre line (ENC_SET_ROT 0: encoder exactly 90° from
-the motor; the idler nearest the motor is moved instead, see encoder-takeoff v0.5).
-v0.9 also: U2 = Omron EE-SX1131 (Ed: encoder locked) on B.Cu, directly below H2 (panel +y) at SENS_R from the encoder axis, slot
-tangent to the big gear's slotted rim (119 windows, pitch 0.8 / 0.75 = 1.0667 so the two 0.8-spaced channels are in quadrature).
-Tags: [L] layout v5 (scope/knob-module-v1.md + knob-panel-layout/make_v5.py), [A] assumed.
-Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from panel top (same as the layout)."""
-import os, json, subprocess, pcbnew
+Run with the system python that has pcbnew:   /usr/bin/python3 make_board.py [--route]
+Writes knob-main-pcb.kicad_sch (+ knob.kicad_sym, sym-lib-table) from design.py, then knob-main-pcb.kicad_pcb / .kicad_pro /
+fp-lib-table, routes with Freerouting (--route; java + FREEROUTING_JAR, default /workspace/tools/freerouting/freerouting-2.1.0.jar)
+and exports ../knob-main-pcb.step with kicad-cli. ERC / DRC / fab outputs: ../../fab_export.py.
 
-# ---------------- params ----------------
-ORIGIN = (100.0, 100.0)               # KiCad position of the panel top-left corner (sheet placement only)
+History (v0.3-v0.9 notes kept in git history of this file):
+v0.9 (2026-10-31): M1 1220 tabs at MOTOR_OFFSET, H1 TubeRodClamp_Main_M1.6 (GND tube ring F, VBUS_DATA rod ring B), H2 F682ZZ
+  press bore, U2 EE-SX1131 on B.Cu, U4/U5 DRV5055 + C3/C4, J2 1x4 pads; v0.16 interim: M2 716 lead pads at 102° / 12.75.
+v0.10 (2026-11-01, knob CAD v0.16, Ed):
+  - Hall row: 5 sensors on the vernier arc at 2.5 pitch (r 6.6-16.6, CAD hv_r / hv_phi_s); outer four TMAG5253BA3 X2SON (analog,
+    shared EN), MIDDLE one TMAG5273A1 SOT-23-6 (3D, I2C + INT, 4k7/4k7/10k pull-ups); 100 nF 0402 behind each on B.Cu. The arm's
+    magnets alternate N/S (CAD hv_pol). Replaces U4/U5 DRV5055 + C3/C4.
+  - H1 rod pad on B.Cu enlarged to Ø(2 x rod_pad_r) = Ø11.48 (CAD), no washer. F.Cu tube ring unchanged.
+  - M1 gets the Ø3.2 NPTH relief for the 1220 rear boss (closes the known PCB / motor clash).
+  - M2: the old under-PCB feel-motor footprint is gone; two Ø1 lead holes + B.Cu pads at the CAD 716 axis (fm_ang, fm_cd), routed
+    to a DRV8837 H-bridge (U20) on B.Cu.
+  - Encoder U2 wired: 150R LED, 10k emitter loads (R30-R32).
+  - Cradle keep-out: F.Cu 'no footprints' rule area = the CAD base-cradle footprint on the PCB (section at z 0.02), shrunk 0.3.
+  - Top-screen joystick v0.1 (docs/top-screen-joystick.md): J2 2x3 2.54 female socket (8.5 tall) at carrier-local (5.6, 0) =
+    the daughterboard riser (pin-out = daughterboard J1); MH1 = 4 x Ø3.4 spring holes (+-10.8, +-6.6), 4 x Ø1.3 base-pin holes
+    (+-6, +-8.5), FPC slot 3.2 x 10.7 at x 13.0-16.2; F.Cu 'no footprints' keep-out for the 31.2 x 18.2 base (J2 exempt).
+    Carrier centre = board (25.25, 21.1).
+  - J10 = 2x14 MCU-link test pads (PLACEHOLDER pin-out, design.py J10_PINS) until the MCU section is drawn.
+Coordinates: panel top-left = KiCad grid origin (ORIGIN); x right, y down from the panel top (same as the layout)."""
+import os, sys, json, math, subprocess, pcbnew
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, "..", ".."))
+import design, sch_gen
+
+NAME, PCB_VERSION = "knob-main-pcb", "v0.10"
+ORIGIN = (100.0, 100.0)
 PANEL_W, PANEL_H = 50.5, 128.5        # [L] 10HP x 3U
-RAIL = 10.0                           # [L] rail zone top/bottom
-CUT_Y0, CAR_INSET, CAR_H = 10.0, 0.8, 20.6   # [L] top-screen carriage
-BEZ_GAP, BEZ_D = 4.0, 35.0            # [L]
-DIAL_X = PANEL_W / 2                                        # [L] 25.25
-DIAL_Y = CUT_Y0 + CAR_INSET + CAR_H + BEZ_GAP + BEZ_D / 2   # [L] 52.9
-PCB_T = 1.6                           # [L] FR4
-EDGE_CLEAR = 0.75                     # [A] board edge to panel edge (left/right)
-RAIL_CLEAR = 0.5                      # [A] board edge to rail-zone line (top/bottom)
-CORNER_R = 1.0                        # [A]
-# dial / fixed-shaft axis (H1) and motor (M1) are separate (Ed, 2026-10-31: motor offset from the dial axis)
-SHAFT_X, SHAFT_Y = DIAL_X, DIAL_Y     # [L] shaft hole on the dial axis
-MOTOR_OFFSET = 10.75                  # v0.10 (knob stack v0.12): 12T on a 31T hub gear, (31 + 12) x 0.5 / 2; the knob bearing is now
-#   loose Ø1 balls, so the hub-gear root wall no longer limits it; 30T would put the can 0.44 from the dial tube (< 0.5 [A]).
-# v0.9: 11.0 = 12T pinion on the 32T knob hub gear, m0.5: (32 + 12) x 0.5 / 2 (was 14.0, 68T internal ring)
-MOTOR_X, MOTOR_Y = DIAL_X + MOTOR_OFFSET, DIAL_Y
-MOTOR_FP = ("footprints", "Motor_1220_Tabs")   # project library, cad/library/kicad/footprints.pretty
-MOTOR_ROT = 0.0                       # tabs side by side along x
-# encoder take-off (encoder-takeoff v0.1): bearing hole H2 below the dial axis (panel y down = 90° from the motor) [A]
-ENC_CD = 14.75                        # v0.10: (73T bottom ring - 14T) x 0.5 / 2 (knob Ø39.5: skirt 1.0 [A] from the can). v0.9: 16.0, (78T bottom internal ring - 14T encoder pinion) x m0.5 / 2 (was 19.0 with 90T)
-# v0.7: the encoder + 2 idler pinion set (120° apart) is rotated by ENC_SET_ROT so the idler nearest the motor clears the
-# motor body by 0.5 [A] (at 0° it would be at 30° from the motor, 9.81 from its axis: overlap). Positive = toward the motor side.
-ENC_SET_ROT = 0.0                     # v0.9: 0 (encoder exactly 90° from the motor); v0.7-v0.8 used 3.0
-import math as _m
-ENC_X, ENC_Y = DIAL_X + ENC_CD * _m.sin(_m.radians(ENC_SET_ROT)), DIAL_Y + ENC_CD * _m.cos(_m.radians(ENC_SET_ROT))
-ENC_FP = ("footprints", "Bearing_F682ZZ_Press_NPTH_5.0mm")   # Ø5.0 NPTH press fit for F682ZZ 2x5x2.3 [A]
-SENS_N = 119                          # [A] rim windows (multiple of 7 -> whole counts per knob turn with 78:14)
-SENS_PITCH = 0.8 / 0.75               # datasheet channel spacing 0.8 = 3/4 pitch -> quadrature
-SENS_R = SENS_N * SENS_PITCH / (2 * _m.pi)   # 20.20 rim mean radius = sensor slot centre from the encoder axis
-SENS_X, SENS_Y = ENC_X, ENC_Y + SENS_R       # below H2 (panel y down), away from the dial axis
-SENS_FP = ("footprints", "Omron_EE-SX1131")
-SENS_ROT = 90.0                       # slot (footprint Y) along panel x = tangent to the rim here
-SHAFT_FP = ("footprints", "TubeRodClamp_Main_M1.6")   # v0.8: brass tube SOLDERED on a F.Cu ring (GND), M1.6 rod [A] through NPTH Ø1.8, B.Cu clamp ring (VBUS_DATA)
-# (v0.3–v0.7: Shaft_Hole_NPTH_5.2mm for the tube through the board)
-# ----------------------------------------
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-NAME = "knob-main-pcb"
-LIBDIR = os.path.normpath(os.path.join(HERE, "..", "..", "..", "kicad", "footprints.pretty"))
+RAIL, EDGE_CLEAR, RAIL_CLEAR, CORNER_R = 10.0, 0.75, 0.5, 1.0
+PCB_T = 1.6
+RULES = dict(clearance=0.15, track=0.2, via_d=0.6, via_drill=0.3, edge=0.3, hole_clear=0.25)   # [A] inside PCBWay standard
+CRADLE_SHRINK = 0.3                   # [A] cradle footprint -> keep-out: assembly tolerance
+LIBDIR = os.path.normpath(os.path.join(HERE, "..", "..", "footprints.pretty"))
 mm = pcbnew.FromMM
 def P(x, y): return pcbnew.VECTOR2I(mm(ORIGIN[0] + x), mm(ORIGIN[1] + y))
+FLIP = pcbnew.FLIP_DIRECTION_TOP_BOTTOM
 
-board = pcbnew.BOARD()
-ds = board.GetDesignSettings(); ds.SetBoardThickness(mm(PCB_T))
-x0, x1 = EDGE_CLEAR, PANEL_W - EDGE_CLEAR
-y0, y1 = RAIL + RAIL_CLEAR, PANEL_H - RAIL - RAIL_CLEAR
-r = CORNER_R
+def build():
+    comps = design.comps()
+    sch = os.path.join(HERE, NAME + ".kicad_sch")
+    sch_gen.write(sch, f"Knob main PCB {PCB_VERSION}", NAME, comps, rev=PCB_VERSION, comment=f"knob CAD {design.C['version']}; generated by design.py / make_board.py")
+    board = pcbnew.BOARD()
+    ds = board.GetDesignSettings(); ds.SetBoardThickness(mm(PCB_T)); ds.SetCopperLayerCount(2)
+    x0, x1 = EDGE_CLEAR, PANEL_W - EDGE_CLEAR; y0, y1 = RAIL + RAIL_CLEAR, PANEL_H - RAIL - RAIL_CLEAR; r = CORNER_R
+    def seg(a, b):
+        s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_SEGMENT); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(mm(0.05)); s.SetStart(P(*a)); s.SetEnd(P(*b)); board.Add(s)
+    def arc(start, mid, end):
+        s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_ARC); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(mm(0.05)); s.SetArcGeometry(P(*start), P(*mid), P(*end)); board.Add(s)
+    k = r * (1 - math.sqrt(0.5))
+    seg((x0 + r, y0), (x1 - r, y0)); seg((x1, y0 + r), (x1, y1 - r)); seg((x1 - r, y1), (x0 + r, y1)); seg((x0, y1 - r), (x0, y0 + r))
+    arc((x1 - r, y0), (x1 - k, y0 + k), (x1, y0 + r)); arc((x1, y1 - r), (x1 - k, y1 - k), (x1 - r, y1))
+    arc((x0 + r, y1), (x0 + k, y1 - k), (x0, y1 - r)); arc((x0, y0 + r), (x0 + k, y0 + k), (x0 + r, y0))
+    nets = {}
+    def net(n):
+        if n not in nets: nets[n] = pcbnew.NETINFO_ITEM(board, n); board.Add(nets[n])
+        return nets[n]
+    def load(name):
+        f = pcbnew.FootprintLoad(LIBDIR, name); f.SetFPID(pcbnew.LIB_ID("footprints", name)); return f
+    def fab_texts(fp):   # refs / values on the Fab layers (the board is too dense for silk refs)
+        for t in fp.GetFields():
+            t.SetLayer(pcbnew.B_Fab if fp.IsFlipped() else pcbnew.F_Fab)
+            t.SetMirrored(fp.IsFlipped())
+            if not (t.IsReference() or t.IsValue()): t.SetVisible(False)
+    placed = {}
+    for c in comps:
+        if c["place"] is None: continue
+        fp = load(c["footprint"].split(":")[1]); fp.SetReference(c["ref"]); fp.SetValue(c["value"])
+        bx, by, rot = c["place"]; fp.SetPosition(P(bx, by)); board.Add(fp)
+        if c["side"] == "B": fp.Flip(P(bx, by), FLIP)
+        fp.SetOrientationDegrees(rot)
+        fp.SetPath(pcbnew.KIID_PATH(sch_gen.fp_path(NAME, c["ref"])))
+        fp.SetSheetname("Root"); fp.SetSheetfile(NAME + ".kicad_sch")
+        for kf, v in c["fields"].items():
+            if kf != "Datasheet" and v != "": fp.SetField(kf, v)
+        if not c["bom"]: fp.SetExcludedFromBOM(True); fp.SetExcludedFromPosFiles(True)
+        pname = {pn: nm for pn, nm, *_ in c["pins"]}
+        for pad in fp.Pads():
+            num = pad.GetNumber()
+            if not num: continue
+            n = c["nets"].get(num, "")
+            if n is None: n = f"unconnected-({c['ref']}-{pname[num]}-Pad{num})"   # same name eeschema gives a no-connect pin
+            if n: pad.SetNet(net(n))
+        fab_texts(fp)
+        placed[c["ref"]] = fp
+    # M2: pick the orientation whose pad centres hit the CAD lead holes (flip mirrors the footprint)
+    m2 = placed["M2"]; want = [design.B(*p) for p in design.C["fm_pad_xy"]]
+    best = None
+    for rot in [design.C["fm_ang"] + 90 + d for d in (0, 180)] + [-(design.C["fm_ang"] + 90) + d for d in (0, 180)]:
+        m2.SetOrientationDegrees(rot)
+        got = sorted((pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]) for p in m2.Pads() if p.GetNumber())
+        err = sum(math.dist(g, w) for g, w in zip(got, sorted(want)))
+        if best is None or err < best[0]: best = (err, rot)
+    m2.SetOrientationDegrees(best[1]); assert best[0] < 0.01, f"M2 pads off the CAD lead holes by {best[0]:.3f}"
+    for ref, fpn, (bx, by, rot), side in design.MECH:
+        fp = load(fpn); fp.SetReference(ref); fp.SetPosition(P(bx, by)); board.Add(fp); fp.SetOrientationDegrees(rot)
+        fp.SetBoardOnly(True); fp.SetExcludedFromBOM(True); fp.SetExcludedFromPosFiles(True); fab_texts(fp); placed[ref] = fp
+    # ---- cradle keep-out (F.Cu, no footprints), from the CAD section ----
+    AX, AY = design.AX, design.AY
+    for f in design.C["cradle_faces"]:
+        ps = pcbnew.SHAPE_POLY_SET(); ps.NewOutline()
+        for x, y in f["outer"]: ps.Append(mm(ORIGIN[0] + AX + x), mm(ORIGIN[1] + AY - y))
+        for h in f["holes"]:
+            hi = ps.NewHole(0)
+            for x, y in h: ps.Append(mm(ORIGIN[0] + AX + x), mm(ORIGIN[1] + AY - y), 0, hi)
+        ps.Inflate(mm(-CRADLE_SHRINK), pcbnew.CORNER_STRATEGY_ROUND_ALL_CORNERS, mm(0.01))
+        # the F682ZZ flange (H2 courtyard) sits on the cradle floor, not on the PCB: exempt it
+        cut = pcbnew.SHAPE_POLY_SET(); cut.NewOutline()
+        ex, ey = design.B(*design.C["enc_xy"])
+        for i in range(48):
+            t = 2 * math.pi * i / 48; cut.Append(mm(ORIGIN[0] + ex + 3.5 * math.cos(t)), mm(ORIGIN[1] + ey + 3.5 * math.sin(t)))
+        ps.BooleanSubtract(cut)
+        z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(pcbnew.F_Cu); z.SetZoneName("CAD base cradle v0.16: no F.Cu parts")
+        z.SetDoNotAllowFootprints(True); z.SetDoNotAllowTracks(False); z.SetDoNotAllowVias(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowCopperPour(False)
+        ps.thisown = False; z.SetOutline(ps); board.Add(z)
+        # Fab outline of the cradle footprint (for review)
+        for loop in [f["outer"]] + f["holes"]:
+            pts = [P(AX + x, AY - y) for x, y in loop]
+            s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_POLY); s.SetLayer(pcbnew.F_Fab); s.SetWidth(mm(0.05)); s.SetFilled(False)
+            s.SetPolyPoints(pts); board.Add(s)
+    # ---- joystick base keep-out (F.Cu, no footprints; the J2 socket stands in the base's opening) ----
+    JS, JX, JY = design.JS, design.JX, design.JY
+    bw, bh = JS["base"]; ps = pcbnew.SHAPE_POLY_SET(); ps.NewOutline()
+    for x, y in ((-bw / 2, -bh / 2), (bw / 2, -bh / 2), (bw / 2, bh / 2), (-bw / 2, bh / 2)): ps.Append(mm(ORIGIN[0] + JX + x), mm(ORIGIN[1] + JY + y))
+    j2 = placed["J2"].GetCourtyard(pcbnew.F_CrtYd); ps.BooleanSubtract(j2)
+    z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(pcbnew.F_Cu); z.SetZoneName("joystick v0.1 printed base 31.2x18.2: no F.Cu parts")
+    z.SetDoNotAllowFootprints(True); z.SetDoNotAllowTracks(False); z.SetDoNotAllowVias(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowCopperPour(False)
+    ps.thisown = False; z.SetOutline(ps); board.Add(z)
+    # knob skirt / bottom ring circle on F.Fab
+    s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_CIRCLE); s.SetLayer(pcbnew.F_Fab); s.SetWidth(mm(0.05)); s.SetCenter(P(AX, AY)); s.SetEnd(P(AX + 20.425, AY)); board.Add(s)
+    def txt(t, x, y, layer, size=0.8, mirror=False):
+        g = pcbnew.PCB_TEXT(board); g.SetText(t); g.SetPosition(P(x, y)); g.SetLayer(layer); g.SetTextSize(pcbnew.VECTOR2I(mm(size), mm(size)))
+        g.SetTextThickness(mm(size * 0.15)); g.SetMirrored(mirror); board.Add(g)
+    txt(f"KNOB MAIN {PCB_VERSION} / CAD {design.C['version']}", 25.25, 115.6, pcbnew.B_SilkS, 0.8, True)
+    txt("J10 MCU LINK - PLACEHOLDER", 25.25, 112.6, pcbnew.B_SilkS, 0.6, True)
+    ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
+    return board, placed
 
-def seg(a, b):
-    s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_SEGMENT); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(mm(0.05))
-    s.SetStart(P(*a)); s.SetEnd(P(*b)); board.Add(s)
-def arc(c, start, mid, end):
-    s = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_ARC); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(mm(0.05))
-    s.SetArcGeometry(P(*start), P(*mid), P(*end)); board.Add(s)
-import math
-k = r * (1 - math.sqrt(0.5))
-seg((x0 + r, y0), (x1 - r, y0)); seg((x1, y0 + r), (x1, y1 - r)); seg((x1 - r, y1), (x0 + r, y1)); seg((x0, y1 - r), (x0, y0 + r))
-arc(None, (x1 - r, y0), (x1 - k, y0 + k), (x1, y0 + r))
-arc(None, (x1, y1 - r), (x1 - k, y1 - k), (x1 - r, y1))
-arc(None, (x0 + r, y1), (x0 + k, y1 - k), (x0, y1 - r))
-arc(None, (x0, y0 + r), (x0 + k, y0 + k), (x0 + r, y0))
+def write_project():
+    pro = {"meta": {"filename": NAME + ".kicad_pro", "version": 3},
+           "board": {"design_settings": {"rules": {"min_clearance": RULES["clearance"], "min_track_width": 0.15, "min_via_diameter": 0.5,
+                     "min_through_hole_diameter": 0.3, "min_copper_edge_clearance": RULES["edge"], "min_hole_clearance": RULES["hole_clear"],
+                     "min_hole_to_hole": 0.25, "min_via_annular_width": 0.1, "min_silk_clearance": 0.0, "min_text_height": 0.6},
+                     "defaults": {}, "track_widths": [0.0, 0.2, 0.3, 0.4], "via_dimensions": [{"diameter": 0.0, "drill": 0.0}, {"diameter": RULES["via_d"], "drill": RULES["via_drill"]}]}},
+           "net_settings": {"classes": [{"name": "Default", "clearance": RULES["clearance"], "track_width": RULES["track"], "via_diameter": RULES["via_d"],
+                                         "via_drill": RULES["via_drill"], "microvia_diameter": 0.3, "microvia_drill": 0.1, "diff_pair_width": 0.2,
+                                         "diff_pair_gap": 0.25, "wire_width": 6, "bus_width": 12, "line_style": 0, "pcb_color": "rgba(0, 0, 0, 0.000)",
+                                         "schematic_color": "rgba(0, 0, 0, 0.000)", "priority": 2147483647}],
+                            "meta": {"version": 4}},
+           "libraries": {"pinned_footprint_libs": [], "pinned_symbol_libs": []},
+           "schematic": {"legacy_lib_dir": "", "legacy_lib_list": []},
+           "sheets": [[sch_gen.uid(NAME, "root"), "Root"]]}
+    json.dump(pro, open(os.path.join(HERE, NAME + ".kicad_pro"), "w"), indent=2)
+    open(os.path.join(HERE, "fp-lib-table"), "w").write(
+        '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../../footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
 
-fp = pcbnew.FootprintLoad(LIBDIR, MOTOR_FP[1])
-fp.SetFPID(pcbnew.LIB_ID(MOTOR_FP[0], MOTOR_FP[1]))
-fp.SetReference("M1"); fp.SetPosition(P(MOTOR_X, MOTOR_Y)); fp.SetOrientationDegrees(MOTOR_ROT)
-board.Add(fp)
-h = pcbnew.FootprintLoad(LIBDIR, SHAFT_FP[1])
-h.SetFPID(pcbnew.LIB_ID(SHAFT_FP[0], SHAFT_FP[1]))
-h.SetReference("H1"); h.SetPosition(P(SHAFT_X, SHAFT_Y))
-board.Add(h)
-NETS = {n: pcbnew.NETINFO_ITEM(board, n) for n in ("GND", "VBUS_DATA")}   # [A] net names
-for n in NETS.values(): board.Add(n)
-for pad in h.Pads():
-    if pad.GetNumber() == "1": pad.SetNet(NETS["GND"])         # tube solder ring, F.Cu
-    elif pad.GetNumber() == "2": pad.SetNet(NETS["VBUS_DATA"]) # rod clamp ring, B.Cu
-e = pcbnew.FootprintLoad(LIBDIR, ENC_FP[1])
-e.SetFPID(pcbnew.LIB_ID(ENC_FP[0], ENC_FP[1]))
-e.SetReference("H2"); e.SetPosition(P(ENC_X, ENC_Y))
-board.Add(e)
-u = pcbnew.FootprintLoad(LIBDIR, SENS_FP[1])
-u.SetFPID(pcbnew.LIB_ID(SENS_FP[0], SENS_FP[1]))
-u.SetReference("U2"); u.SetPosition(P(SENS_X, SENS_Y)); u.SetOrientationDegrees(SENS_ROT)
-board.Add(u)
-u.Flip(u.GetPosition(), pcbnew.FLIP_DIRECTION_TOP_BOTTOM if hasattr(pcbnew, "FLIP_DIRECTION_TOP_BOTTOM") else False)   # to B.Cu
-# v0.11 (knob stack v0.12, control-dial Hall array [Ed]): 2 x DRV5055A3 linear Hall (SOT-23) on F.Cu under the dial arm's
-# 5-magnet alternating array, at r HALL_R from the dial axis, 210 +- 9 deg (world/cradle frame: motor 0 deg, H2 270 deg; board y = -world y).
-# Quadrature (sensor spacing 18 deg = 3/4 of the 24 deg magnet period). 0402 100 nF on B.Cu behind each; J2 pads to the MCU [A].
-import math
-HALL_R, HALL_ANGS = 15.85, (201.0, 219.0)   # = control-dial/hall-arm-v0.1 P["r_m"], P["sens_angs"] (asserted there)
-HALL_FP, CAP_FP, J2_FP = "SOT-23_DRV5055", "C_0402", "Pads_1x04_P1.27_SMD"
-J2_POS = (SHAFT_X, 104.0)                  # [A] B.Cu, below the big encoder gear (tip y 91.65)
-for n in ("VCC", "HALL_A", "HALL_B"):
-    NETS[n] = pcbnew.NETINFO_ITEM(board, n); board.Add(NETS[n])
-def load(name):
-    f = pcbnew.FootprintLoad(LIBDIR, name); f.SetFPID(pcbnew.LIB_ID("footprints", name)); return f
-def flip(f): f.Flip(f.GetPosition(), pcbnew.FLIP_DIRECTION_TOP_BOTTOM if hasattr(pcbnew, "FLIP_DIRECTION_TOP_BOTTOM") else False)
-HALL_POS = []
-for i, (a, out) in enumerate(zip(HALL_ANGS, ("HALL_A", "HALL_B"))):
-    x, y = SHAFT_X + HALL_R * math.cos(math.radians(a)), SHAFT_Y - HALL_R * math.sin(math.radians(a))
-    HALL_POS.append((round(x, 3), round(y, 3)))
-    hs = load(HALL_FP); hs.SetReference(f"U{4 + i}"); hs.SetValue("DRV5055A3"); hs.SetPosition(P(x, y)); hs.SetOrientationDegrees(a); board.Add(hs)
-    for pad in hs.Pads(): pad.SetNet(NETS[{"1": "VCC", "2": out, "3": "GND"}[pad.GetNumber()]])
-    cp = load(CAP_FP); cp.SetReference(f"C{3 + i}"); cp.SetValue("100n"); cp.SetPosition(P(x, y)); cp.SetOrientationDegrees(a + 90); board.Add(cp); flip(cp)
-    for pad in cp.Pads(): pad.SetNet(NETS["VCC" if pad.GetNumber() == "1" else "GND"])
-j2 = load(J2_FP); j2.SetReference("J2"); j2.SetPosition(P(*J2_POS)); board.Add(j2); flip(j2)
-for pad in j2.Pads(): pad.SetNet(NETS[{"1": "VCC", "2": "GND", "3": "HALL_A", "4": "HALL_B"}[pad.GetNumber()]])
-# v0.16: the 716 moved to the PCB top (base cradle). M2 is two lead holes + B.Cu pads at the derived motor axis
-# (default params: bisector of idler 1/2 = 102°, 22T pinion, centre distance 12.75). The parametric proxy in
-# electronics/parts/pcb.py is what build.py uses; keep these in step with interface fm_ang / fm_cd when regenerating.
-FM_ANG, FM_R = 102.0, 12.75
-FM_POS = (SHAFT_X + FM_R * math.cos(math.radians(FM_ANG)), SHAFT_Y - FM_R * math.sin(math.radians(FM_ANG)))
-for n in ("MOT_A", "MOT_B"):
-    NETS[n] = pcbnew.NETINFO_ITEM(board, n); board.Add(NETS[n])
-fm = load("FeelMotor_716_Shaft_Pads"); fm.SetReference("M2"); fm.SetPosition(P(*FM_POS)); fm.SetOrientationDegrees(FM_ANG + 90); board.Add(fm)
-for pad in fm.Pads():
-    if pad.GetNumber() in ("1", "2"): pad.SetNet(NETS["MOT_A" if pad.GetNumber() == "1" else "MOT_B"])
-# v0.6: no flip (v0.5 flipped H2 to B); the bearing inserts from the FRONT through the base cradle v0.3 floor
-ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
+def route(pcb_path, passes=120, attempts=6):
+    jar = os.environ.get("FREEROUTING_JAR", "/workspace/tools/freerouting/freerouting-2.1.0.jar")
+    dsn = pcb_path.replace(".kicad_pcb", ".dsn"); ses = pcb_path.replace(".kicad_pcb", ".ses")
+    t = pcbnew.LoadBoard(pcb_path)   # the 'no footprints' rule areas would export as full copper keep-outs: drop them for the router only
+    for z in list(t.Zones()):
+        if z.GetIsRuleArea() and not (z.GetDoNotAllowTracks() or z.GetDoNotAllowVias()): t.Remove(z)
+    assert pcbnew.ExportSpecctraDSN(t, dsn), "DSN export failed"
+    def drc(path):
+        rep = path + ".drc.json"
+        subprocess.run(["kicad-cli", "pcb", "drc", "--severity-all", "--format", "json", "-o", rep, path], capture_output=True)
+        r = json.load(open(rep)); os.remove(rep); return r
+    unrouted = open(pcb_path).read(); best = None
+    for attempt in range(attempts):   # Freerouting is multi-threaded and not deterministic: retry, keep the best
+        subprocess.run(["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes), "--router.max_passes=" + str(passes),
+                        "-dct", "0", "--gui.enabled=false"], check=True, timeout=1500, capture_output=True)
+        open(pcb_path, "w").write(unrouted); b = pcbnew.LoadBoard(pcb_path)
+        assert pcbnew.ImportSpecctraSES(b, ses), "SES import failed"
+        pcbnew.SaveBoard(pcb_path, b); n = len(drc(pcb_path)["unconnected_items"]); print("route attempt", attempt + 1, "unconnected", n)
+        if best is None or n < best[0]: best = (n, open(pcb_path).read())
+        if n == 0: break
+    open(pcb_path, "w").write(best[1])
+    for _ in range(4):   # drop short router stubs / duplicate overlaps (< 2 mm) that DRC calls dangling; keep a pass only if nothing disconnects
+        r0 = drc(pcb_path); n0 = len(r0["unconnected_items"])
+        ids = {it["uuid"] for v in r0["violations"] if v["type"] in ("track_dangling", "via_dangling") for it in v["items"]}
+        print("routed: unconnected", n0, "dangling stubs", len(ids))
+        if not ids: break
+        b2 = pcbnew.LoadBoard(pcb_path)
+        for t in list(b2.GetTracks()):
+            if t.m_Uuid.AsString() in ids and (t.GetClass() == "PCB_VIA" or t.GetLength() < pcbnew.FromMM(2.0)): b2.Remove(t)
+        tmp = pcb_path.replace(".kicad_pcb", "_tmp.kicad_pcb"); pcbnew.SaveBoard(tmp, b2)
+        n1 = len(drc(tmp)["unconnected_items"]); print("after stub cleanup: unconnected", n1)
+        for ext in (".kicad_pcb", ".kicad_pro", ".kicad_prl"):
+            if os.path.exists(tmp.replace(".kicad_pcb", ext)): os.remove(tmp.replace(".kicad_pcb", ext))
+        if n1 > n0: break
+        pcbnew.SaveBoard(pcb_path, b2)
+    if not os.environ.get("KEEP_SES"):
+        for p in (dsn, ses): os.remove(p)
 
-pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")
-pcbnew.SaveBoard(pcb_path, board)
-json.dump({"meta": {"filename": NAME + ".kicad_pro", "version": 1}, "board": {}, "libraries": {}}, open(os.path.join(HERE, NAME + ".kicad_pro"), "w"), indent=2)
-open(os.path.join(HERE, "fp-lib-table"), "w").write(
-    '(fp_lib_table\n  (version 7)\n  (lib (name "footprints")(type "KiCad")(uri "${KIPRJMOD}/../../../kicad/footprints.pretty")(options "")(descr "Ed project footprints"))\n)\n')
-step = os.path.join(HERE, "..", NAME + ".step")
-subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "-o", step, pcb_path], check=True)
-print("board", x0, x1, y0, y1, "M1 at", MOTOR_X, MOTOR_Y, "H1 at", SHAFT_X, SHAFT_Y, "H2 at", ENC_X, ENC_Y, "U2 at", SENS_X, SENS_Y, "B" if u.IsFlipped() else "F", "U4/U5 at", HALL_POS, "J2", J2_POS, "M2 at", FM_POS)
+if __name__ == "__main__":
+    write_project()
+    board, placed = build()
+    pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")
+    pcbnew.SaveBoard(pcb_path, board)
+    write_project()   # SaveBoard may rewrite the .kicad_pro; put the rules back
+    if "--route" in sys.argv: route(pcb_path); write_project()
+    step = os.path.join(HERE, "..", NAME + ".step")
+    subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "--no-dnp", "-o", step, pcb_path], check=True)
+    for ref in ("H1", "M1", "M2", "U13", "U2", "J2", "J10", "MH1"):
+        f = placed[ref]; print(ref, round(pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], 3), round(pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1], 3),
+                               f.GetOrientationDegrees(), "B" if f.IsFlipped() else "F")

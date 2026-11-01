@@ -1,0 +1,12 @@
+(footprint "C_0603"
+  (version 20241229) (generator "make_v016_footprints.py")
+  (layer "F.Cu")
+  (descr "0603 capacitor")
+  (attr smd)
+  (property "Reference" "REF**" (at 0 -1.20 0) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.08))))
+  (property "Value" "C_0603" (at 0 1.20 0) (layer "F.Fab") (effects (font (size 0.4 0.4) (thickness 0.06))))
+  (fp_rect (start -0.800 -0.400) (end 0.800 0.400) (stroke (width 0.05) (type solid)) (fill no) (layer "F.Fab"))
+  (fp_rect (start -1.500 -0.750) (end 1.500 0.750) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))
+  (pad "1" smd roundrect (at -0.7750 0.0000) (size 0.900 0.950) (layers "F.Cu" "F.Mask" "F.Paste") (roundrect_rratio 0.2))
+  (pad "2" smd roundrect (at 0.7750 0.0000) (size 0.900 0.950) (layers "F.Cu" "F.Mask" "F.Paste") (roundrect_rratio 0.2))
+)

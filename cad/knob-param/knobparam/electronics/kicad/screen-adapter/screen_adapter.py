@@ -87,23 +87,22 @@ if __name__ == "__main__":
     sh.vdim("front", 0, u["y"], R, R + 2, f"{-u['y']:.2f} U1 [K]")
     sh.note("front", -5.3, j["y"] + 2.3, "J1 FPC 14P 0.5 [A] (cable entry ↑)", 6.5)
     sh.note("front", 1.8, u["y"] - 0.3, "U1 CH32V003 QFN-20 [A]", 6.5)
-    u3 = F["fps"]["U3"]; sh.note("front", u3["x"] - 1.0, u3["y"] + 2.4, "U3 TMAG5273", 6.5)
+    c2 = F["fps"]["C2"]; sh.note("front", c2["x"] - 3.2, c2["y"] - 1.2, "C2 100n", 6.5)
     sh.vdim("plan", 0, bb.max.Z, -R, -R - 2, f"{T:.1f} [A] (STEP {bb.max.Z:.2f})")
     sh.vdim("plan", bb.max.Z, bb.max.Z + 1.0, R, R + 2, "1.0 J1 body [A]")
-    lines = [f"Round 2-layer board in KiCad (pcbs/screen-adapter/kicad), Ø{F['diameter']:.1f} [A], {T:.1f} thick [A]; DRC clean",
+    lines = [f"Round 2-layer board in KiCad (electronics/kicad/screen-adapter/kicad), Ø{F['diameter']:.1f} [A], {T:.1f} thick [A]; DRC clean",
              "Footprints: shared library kicad/footprints.pretty; placed only, not routed",
              "v0.2: C1 replaces W1 (wires): data over power on 2 conductors [Ed]",
              "M1.6 rod (VBUS_DATA) through the NPTH Ø1.8; DIN 934 nut (1.3) on the F.Cu ring (Ø2.4–Ø3.6), 3.0 [A] cord room above",
-             f"v0.3: U3 TMAG5273 3D Hall (SOT-23-6) at ({u3['x']:.2f}, {u3['y']:.2f}), r {(u3['x']**2 + u3['y']**2) ** 0.5:.2f}: control-dial magnet below",
-             "U3 I2C to U1 PC1 SDA (8) / PC2 SCL (9), INT to PC3 (10) [A]; C2 100n at VCC; R1/R2 4k7 pull-ups [A]",
-             "Nets VCC [A], GND, SDA, SCL, HALL_INT, VBUS_DATA; DRC 0 violations (placed, ratsnest not routed)",
+             "v0.4 (knob v0.16b): U3 TMAG5273, R1/R2 and SDA/SCL/HALL_INT removed (dial sensor dropped, rel_sensor=False)",
+             f"C2 100n at U1 VDD (6) / VSS (4), ({c2['x']:.2f}, {c2['y']:.2f}); nets VCC [A], GND, VBUS_DATA; schematic + DRC parity, 0 violations (placed, not routed)",
              "Brass tube top end (GND) presses on the B.Cu ring (Ø3.2–Ø5.6); nets GND / VBUS_DATA [A]",
              "C1 at the centre: NPTH Ø1.8 (rings dotted in the front view)",
              "J1 moved to 3.7 and U1 to 3.8 from the centre (were 3.2 / 3.5) to clear the nut",
              "Component bodies are envelopes [A]; the KiCad STEP is the bare board"]
     for i, l in enumerate(["NOTES"] + lines):
         sh.note("side", sh.bb["side"][1] + 3, R - i * 1.2, l, 8 if i == 0 else 6.5, **(dict(weight="bold") if i == 0 else {}))
-    title = "Screen adapter board — v0.3, 2026-10-31"
+    title = "Screen adapter board — v0.4, 2026-11-01"
     sub = ["Source: KiCad kicad/screen-adapter.kicad_pcb (STEP export).", "[K] = from KiCad, [A] = assumed.", "Third-angle projection · mm · plan view drawn front-up"]
     sh.dxf(os.path.join(HERE, "screen-adapter.dxf"), [title] + sub)
     sh.png(os.path.join(HERE, "screen-adapter-drawing.png"), title, sub)
