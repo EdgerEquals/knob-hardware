@@ -1,6 +1,7 @@
-"""Top-screen joystick stack (v0.1): build, checks, clash, render.
+"""Top-screen joystick stack (v0.2): build, checks, clash, render.
   python build.py                 parts + checks + clashes -> ../assemblies/joystick-<version>/check.json
-  python build.py --render        + joystick-<version>.png (A-A section + iso cut-away + plan)
+  python build.py --render        + joystick-<version>.png (A-A section + iso cut-away + plan) and -plan.png
+  python build.py --preview       plan PNG only (fast), before the colour render
   python build.py --set slide=0.35 --set sp_gap=0.45   override any param (dotted for dicts: sw.tilt_travel=0.3)
   python build.py --step          + STEP of the whole stack"""
 import argparse, ast, json, os, sys, time
@@ -21,6 +22,7 @@ def overrides(P, sets):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--set", action="append", default=[]); ap.add_argument("--render", action="store_true")
+    ap.add_argument("--preview", action="store_true")
     ap.add_argument("--step", action="store_true"); ap.add_argument("--out", default=None)
     a = ap.parse_args()
     from jsparam import params, parts, checks
@@ -36,8 +38,16 @@ def main():
     for k, v in cl.items(): print(f"  {'KNOWN' if k in KNOWN else 'CLASH'} {k}: {v:.3f} mm³")
     nf = sum(not r["ok"] for r in rows)
     print(f"\nSUMMARY: {len(rows) - nf}/{len(rows)} checks PASS, {nf} FAIL; {len(cl)} clashes")
-    keyd = {k: D[k] for k in ("riser_h", "stack_h", "z_db0", "z_db1", "z_stem_top", "z_c0", "z_ball", "z_scr0", "slide", "slide_need", "sp_gap", "sp_k", "press_f", "base_w", "base_h", "db", "car", "spr_len")}
+    keyd = {k: D[k] for k in ("version", "riser_h", "stack_h", "scr_top", "z_knob_top", "z_db0", "z_db1", "z_stem_top", "z_c0", "z_ball", "z_scr0", "z_skirt0", "slide", "slide_need", "sp_gap", "sp_k", "sp_f_click", "press_f", "base_w", "base_h", "base_x0", "base_x1", "base_y0", "base_y1", "car", "car_floor", "db", "db_xy", "place_y", "board_xy", "spr_len", "back_panel", "knob_od_live", "knob_od_design", "fpc_x", "slot_x", "hole_x0", "hole_x1", "hole_hy", "balls", "springs", "pins", "standoff_xy", "stop_xy", "sw_xy", "hdr_xy")}
     json.dump(dict(rows=rows, clashes=cl, set=a.set, key=keyd), open(os.path.join(OUT, "check.json"), "w"), indent=1, default=str)
+    if a.preview and not a.render:
+        from jsparam import render
+        import matplotlib; matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        prev = os.path.join(OUT, f"joystick-{V}-preview.png")
+        f2, ax2 = plt.subplots(figsize=(12, 10), dpi=80); render.plan(ax2, D)
+        ax2.set_title(f"Top-screen joystick {V} — preview plan", fontsize=14, weight="bold", loc="left")
+        f2.tight_layout(); f2.savefig(prev); print("preview:", prev)
     if a.render:
         from jsparam import render
         png = os.path.join(OUT, f"joystick-{V}.png"); render.render(D, P, rows, png); print("PNG:", png)

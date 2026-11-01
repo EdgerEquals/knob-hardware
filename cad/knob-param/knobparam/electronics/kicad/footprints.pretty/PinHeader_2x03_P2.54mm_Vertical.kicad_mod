@@ -1,7 +1,7 @@
 (footprint "PinHeader_2x03_P2.54mm_Vertical"
   (version 20241229) (generator "make_joystick_footprints.py")
   (layer "F.Cu")
-  (descr "2x3 2.54 mm pin header, THT (plain). Joystick daughterboard J1: plastic on the TOP side, long pins down into J2 (2x3 female 8.5 on the main PCB).")
+  (descr "2x3 2.54 mm pin header, THT. J1 plastic on TOP, 6 mm mating pin down into J2 (2x3 female, 11 mm, on the main PCB). LXWCONN 254PZ-2x3P-V.")
   (attr through_hole)
   (property "Reference" "J1" (at 0 -1.90 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
   (property "Value" "PinHeader_2x03_P2.54mm_Vertical" (at 0 7.00 0) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.08))))
