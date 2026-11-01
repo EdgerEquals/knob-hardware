@@ -138,6 +138,20 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   (`electronics/kicad/knob-main-pcb/pcb_proxy.json`). `build.py` and `build.py --full` both give 54/54 PASS.
 
 ## Open items
+- **Optics placement rule (retired).** "All light sources on the underside of the folded top board" is gone. LEDs and lasers may sit on the bottom board as well. Put each source where it is simplest. Not drawn in this gear pass.
+- **Glow coat (decided, not drawn).** Queued for the optics round. No coat solid and no beam targets are in the knob CAD yet.
+  - Phosphor (strontium aluminate) goes only on the horizontal surface: the lid, the top face of the dial.
+  - The Risley motors and their wedge prisms sit under the top panel. The 405 nm violet laser stays with those prisms: it fires down through them and the scattered beams hit the enclosure walls.
+  - The enclosure walls carry the heavier phosphor coat and are the main beam targets.
+  - The knob shells stay see-through. No coat on their walls.
+  - Every beam ends on a glow, fluorescent, or diffusing surface. Class 1/2 at ≤1 mW, hardware current limit, default off, and the stall cut-off are unchanged.
+- **Waterfall edge-light (Ed approved, not drawn).** Emitters are on the bottom board, under the main knob's bearing carrier. Light runs up through the clear carrier and through the balls, which throw the sparkle. The carrier is clear SLA resin (PCBWay tough/clear or the same class), as clear as the process allows. Standard finish: not frosted, not polished; Ed may polish it later. On that board, each layer its own microcontroller modulation destination:
+  - a small ring of addressable RGB LEDs, side-firing or top-firing mini parts
+  - 2–4 UV LEDs, about 395–405 nm, breathing on PWM
+  - 1–2 low-power red VCSELs, ≤1 mW, aimed up through the carrier
+  - The 405 nm violet laser is not in this stack; it stays on the Risley path. Same safety rules as above.
+  - **Race vs clear resin.** The seat floor under the Ø1.5 thrust balls is 1.0 mm (`ot_floor`, set by `print_wall_min`). The radial land beside that groove is **0.48 mm** a side (`ot_land`). PCBWay SLA is usually held to about a 0.8 mm wall, with 1.0 mm the comfortable figure; their clear-resin page does not publish a separate number. The 1.0 mm floor is on that line. The 0.48 mm land is not. Clear resin is also brittle and wears under a steel ball, so the rolling surface should not be bare resin at this land. Next round: thicken the land to at least 1.0 mm, or drop in a hard insert (steel or PA12) that leaves a clear path so the light still reaches the balls. Until one of those is done, the race is not a clear-resin part.
+- **Dial screen, next knob round (not switched yet).** Kingtech 1.39" RM69330 stays the model in this pass. Next: DWO DO0132FMST01, 1.32" round AMOLED, 466×466, CO5300, QSPI (IM1 high, IM0 low), one 3.3 V rail and PWR_EN, no 1.8 V regulator or level shifters. FPC header Panasonic AXE630124, 30-pin 0.4 mm, same as the joystick's DO0164FMST05; socket AXE530127 (LCSC C425103). DWO's page also lists touch (FT3168) and 600 nit; touch is not adopted here. Outline about Ø36.35 and active area about Ø33.55 are Ed's figures — the 2D drawing is not in the tree. With the current 1.2 mm lip, a 0.8 mm bend and an assumed 12 mm ledge, the lip balancer lands near **Ø39.7**, so Ø39.5 is only there if the bend or the ledge is smaller. **Assumed until the drawing is in:** FPC tail length, width, thickness and stiffener, where the 0.8 mm bend is measured, ledge width, and module thickness.
 - **KiCad for v0.17 (not done):**
   - Main PCB: NPTH for the 716 shaft at the 102° axis (Ø1.6) and for the compound idler pin at 150° (Ø1.8). The proxy and the `--full` STEP have these holes as a CAD drill only.
   - Replace the EE-SX1321 footprint with a header for the encoder daughterboard. New board: small riser, 0.8 mm, the EE-SX1321, a 1×6 2.54 mm header and two standoffs, dropped 3.6 mm so the slot meets the rim. Schematic, footprint, fab pack.
