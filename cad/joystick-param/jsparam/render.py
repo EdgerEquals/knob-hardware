@@ -13,8 +13,8 @@ GROUPS = [
     ("1×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
     ("1×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
     ("joystick daughterboard (1.0 FR4)", "#1b5e20", lambda n: n == "joystick daughterboard"),
-    ("M2 male-female standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
-    ("M2 nuts under the main PCB", "#f9a825", lambda n: n.startswith("M2 nut")),
+    ("M2 female-female brass standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
+    ("M2 socket-head screws", "#f9a825", lambda n: n.startswith("M2 socket screw")),
     ("SKRHADE010 body (45°)", "#b0bec5", lambda n: n.startswith("SW1") and "body" in n),
     ("SKRHADE010 stem", "#fff176", lambda n: n.startswith("SW1") and "stem" in n),
     ("seat plate (glued on the daughterboard)", "#6d4c41", lambda n: n.startswith("seat plate")),
@@ -261,7 +261,8 @@ def _explode(P, D):
         "top screen": 62, "screen carrier": 46, "compression spring": 36, "joystick carrier": 24,
         "grub screw": 16, "brass insert": 16, "ball ": 14,
         "seat plate": 10, "SW1": 10, "joystick daughterboard": 6, "header ": 6,
-        "brass standoff": 0, "M2 nut": -10, "socket ": 0, "main PCB": 0, "screen FPC": 8,
+        "brass standoff": 0, "M2 socket screw bottom": -10, "M2 socket screw top": 12,
+        "socket ": 0, "main PCB": 0, "screen FPC": 8,
         "hold-down": -6, "rear spring": -14, "cross pin": -14,
     }
     out = {}

@@ -183,10 +183,10 @@ Nominal preload is half a turn: **0.77 N** on the up-stop, **2.12 N** when the c
 
 The knob gap is **0.50 mm** against the design Ø41.7 (was 0.60). The cup clearance is **0.20 mm** (was 0.075, which SLA cannot hold). The daughterboard is **31.88 × 13.87** (the −y stop tab is gone). Carrier floor is 1.00 mm. FPC pin-out is still open.
 
-### knob_proud (1 Nov 2026)
+### knob_proud and the 25 mm riser (1 Nov 2026)
 
-`knob_proud` = 18.0 mm is the knob top above the faceplate front. It is not on `origin/sub/assembly-v017` yet (tip 0050274); the joystick reads it from knob-param when the key appears and uses 18.0 mm until then. Faceplate front is z 34.50 (knob top 52.50 − 18). The bezel stays a 1.2 mm lip on that face, so the glass top comes down to **z 36.32** (16.18 mm below the knob, not the old 5 mm).
+Ed wants a stocked brass M2 riser near 1 inch, screw-in, no glue. The part is XHHD **STTZ1022**, round female-female M2×25 brass, LCSC **C50378470**, 870 in stock at $0.0354 (qty 10). An ISO 4762 M2×6 socket screw goes through the seat plate and the daughterboard; an M2×4 socket screw holds the pillar under the main PCB.
 
-The riser is derived from that faceplate, with 1.35 mm of stem slack under the carrier: **23.45 mm**. DTTZ3033's 35 mm body is 11.55 mm too long. Nearest stocked male-female M2 on LCSC that day is DTTZ2020, H3×M2×20+3 (C50377589, 940), 3.45 mm short, and its 3 mm stud does not seat the M2 nut. Nearest with a 4 mm stud is DTTZ3016, H3×M2×18+4 (C50377625, 820), 5.45 mm short. 23+4 and 24+4 are out of stock. The part was not changed.
+The riser is that 25 mm body. With the knob top still at z 52.50, the faceplate front lands at z **36.05**, so **knob_proud = 16.45 mm**. That is the number for the knob and the case. Adding 5.45 the other way (25 − 5.45 = 19.55) would put the faceplate 3.1 mm below the bezel, because a longer riser lifts the faceplate toward the knob. 16.45 is inside the 16–20 mm acceptance. No brass M2 at 25.4 mm was in stock.
 
-The Samtec −20 pin (25.91 mm) then engages 16 mm and the tip sits at z −5, through the main PCB. Checks 75/77, the two fails being that length and that mate, plus 9 pin clashes. Section preview only.
+The header is Samtec **TSW-103-17-T-S** (mating pin 15.74 mm, consigned). It engages the H11 socket by 4.28 mm and the tip stops at z 6.72. Checks 79/79, 0 clashes. Daughterboard outline is now 31.61 × 13.87. ERC 0, DRC 0. Section preview only.

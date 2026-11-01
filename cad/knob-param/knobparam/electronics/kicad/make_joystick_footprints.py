@@ -69,7 +69,7 @@ def header():
 
 def header_1x3():
     n = "PinHeader_1x03_P2.54mm_Vertical_Long"
-    L = head(n, "1x3 2.54 mm pin header, THT, long mating pin. Samtec TSW-103-20-T-S: insulator 2.54, mating pin 25.91, tail 2.79. Plastic on the UNDERSIDE of the joystick daughterboard, pin 1 toward the switch.", "J", "through_hole")
+    L = head(n, "1x3 2.54 mm pin header, THT. Samtec TSW-103-17-T-S: insulator 2.54, mating pin 15.74, tail 2.79. Plastic on the UNDERSIDE of the joystick daughterboard, pin 1 toward the switch.", "J", "through_hole")
     L += prop("J", n, -2.2, 2.6)
     L += [rect(-3.81, -1.27, 3.81, 1.27, "F.Fab", 0.1), rect(-4.06, -1.52, 4.06, 1.52, "F.CrtYd", 0.05),
           line(-3.81, -1.55, -3.81, 1.55, "F.SilkS", 0.12)]
@@ -80,7 +80,7 @@ def header_1x3():
 
 def standoff_35():
     n = "Mount_M2x35_Standoff"
-    L = head(n, "M2 male-female brass standoff, hex H3, body 35 mm, stud 4 mm (XHHD DTTZ3033, LCSC C50377642). PTH to GND. Drill 2.4, pad 3.2. Nut under the main PCB.", "MH", "through_hole")
+    L = head(n, "M2 female-female brass standoff, round body 25 mm, OD 3.2 (XHHD STTZ1022, LCSC C50378470). PTH to GND. Drill 2.4, pad 3.2. ISO 4762 M2 screw through this board into the pillar.", "MH", "through_hole")
     L += prop("MH", n, -3.2, 3.4)
     L += ['  (fp_circle (center 0 0) (end 1.75 0) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))',
           '  (fp_circle (center 0 0) (end 2.05 0) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd"))']

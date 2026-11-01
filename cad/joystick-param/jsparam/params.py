@@ -40,7 +40,7 @@ P = dict(
     scr=dict(part="DWO DO0164FMST05 1.64\" 456x280 AMOLED", w=41.62, h=26.74, t=1.5, active=(35.57, 21.84),
              mass_g=8.0),  # [S] outline/thickness; mass [A] until the module is weighed
     scr_below_knob=5.0,     # [Ed] old screen target. knob_proud now places the faceplate; the screen follows the bezel
-    knob_proud=18.0,        # [Ed] knob top above the faceplate front face. Overwritten when knob-param publishes the key
+    knob_proud=16.45,       # [Ed] adopted value. derive() recomputes it from the 25 mm riser; 16–20 is the accepted window
     print_min=1.0,          # [S] PCBWay SLS nylon minimum wall (SLA resin is 0.8). Structural walls use this
     # FPC: exit side, width, pitch and pin-out are OPEN. Model is [A].
     fpc_w=8.0,              # [A]
@@ -75,15 +75,17 @@ P = dict(
     db_t=1.0,               # [A] 2-layer FR4
     cu_edge=0.30,           # [A] copper-to-outline, same rule as the KiCad board
     pitch=2.54,             # [S]
-    # male header, plastic on the UNDERSIDE, long pin down into the socket. Samtec ships the 1x3;
-    # LCSC lists the same -20 lead as TSW-103-20-T-D (C3345998, dual row) and TSW-125-20-T-S (C3334257).
-    hdr=dict(part="Samtec TSW-103-20-T-S", lcsc="C3345998 lead style", mate=25.91, ins=2.54, tail=2.79, n=3),  # [S]
+    # male header, plastic on the UNDERSIDE, pin down into the socket. Lead style -17 is the
+    # straight-pin post that mates a 25 mm riser (Samtec TSW chart: tail 2.79, post 15.74).
+    # The -20 post (25.91) went through the main PCB. The 1x3 is consigned; LCSC's -20 line is 2-row.
+    hdr=dict(part="Samtec TSW-103-17-T-S", lcsc="consigned", mate=15.74, ins=2.54, tail=2.79, n=3),  # [S]
     # female socket on the main PCB. Same hanxia H11 family as the v0.2 2x3, split into two 1x3s.
     sock=dict(part="hanxia HX PM2.54-1x3P ZC H11", lcsc="C41427518", h=11.0, tail=3.2, n=3),  # [S]
-    # hex male-female. H3 x M2 x 35 is the body between the boards; +4 is the stud through the main PCB.
-    # STTZ2032 (C50377216, female-female) was out of stock. The nut under the PCB replaces the lower screw.
-    standoff=dict(part="XHHD DTTZ3033", lcsc="C50377642", length=35.0, af=3.0, stud=4.0),  # [S] H3*M2*35+4 brass. Catalog length; the riser is derived
-    nut=dict(part="ISO 4032 M2", af=4.0, thick=1.6),  # [S] hex nut, across flats 4, height 1.6
+    # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
+    # Hex H3×M2×25 (STTZ2022) and the male-female 25 mm parts were out of stock on LCSC, 1 Nov 2026.
+    # OD 3.2 is the usual knurled round M2 pillar; LCSC does not publish it. [A]
+    standoff=dict(part="XHHD STTZ1022", lcsc="C50378470", length=25.0, od=3.2, kind="female-female"),  # [S] M2*25 brass
+    shcs=dict(part="ISO 4762 M2 A2", head_d=3.8, head_h=2.0, socket=1.5, top=6.0, bot=4.0),  # [S] DIN 912. Top through plate+board, bottom through the PCB
     pad_m2=3.2,             # [A] Ø pad on the Ø2.4 M2 clearance (annular ring 0.4)
     drill_m2=2.4,           # [A]
     # ---- plate, balls, hold-down springs (kept from v0.3) ----
@@ -106,30 +108,6 @@ P = dict(
     tgt=dict(stem_cup_min=0.20, gap_min=0.20, cable_min=0.25, spring_min=0.10,
              knob_min=0.50, board_min=0.25, mate_min=3.5, mate_max=6.5),
 )
-
-
-# XHHD hex male-female H3×M2 that LCSC had in stock on 1 Nov 2026.
-# (body mm, stud mm, part, lcsc, qty). The +3 stud cannot seat the ISO 4032 nut; +4 can.
-M2_MF_STOCK = (
-    (2, 3, "DTTZ2000", "C50377571", 2100), (3, 3, "DTTZ2001", "C50377572", 1080),
-    (4, 3, "DTTZ2002", "C50377573", 1960), (5, 3, "DTTZ2003", "C50377574", 4700),
-    (6, 3, "DTTZ2004", "C50377575", 740), (7, 3, "DTTZ2007", "C50377576", 600),
-    (8, 3, "DTTZ2008", "C50377577", 940), (9, 3, "DTTZ2009", "C50377578", 880),
-    (10, 3, "DTTZ2010", "C50377579", 1680), (11, 3, "DTTZ2011", "C50377580", 780),
-    (12, 3, "DTTZ2012", "C50377581", 1800), (14, 3, "DTTZ2014", "C50377583", 1900),
-    (15, 3, "DTTZ2015", "C50377584", 870), (20, 3, "DTTZ2020", "C50377589", 940),
-    (3, 4, "DTTZ3001", "C50377610", 3380), (4, 4, "DTTZ3002", "C50377611", 1780),
-    (5, 4, "DTTZ3003", "C50377612", 60), (6, 4, "DTTZ3004", "C50377613", 1640),
-    (7, 4, "DTTZ3005", "C50377614", 360), (8, 4, "DTTZ3006", "C50377615", 380),
-    (14, 4, "DTTZ3012", "C50377621", 930), (18, 4, "DTTZ3016", "C50377625", 820),
-    (35, 4, "DTTZ3033", "C50377642", 445),
-)
-
-
-def _nearest_m2(need, stud_min=None):
-    rows = [r for r in M2_MF_STOCK if stud_min is None or r[1] + 1e-9 >= stud_min]
-    body, stud, part, lcsc, qty = min(rows, key=lambda r: (abs(r[0] - need), -r[1], r[0]))
-    return dict(length=float(body), stud=float(stud), part="XHHD " + part, lcsc=lcsc, qty=qty)
 
 
 def _knob_data():
@@ -235,11 +213,23 @@ def derive(P_):
     D["car"] = (2 * D["half_w"], 2 * D["half_h"])
     D["pocket"] = (S["w"] + 2 * D["glue"], S["h"] + 2 * D["glue"])
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
-    # Faceplate front is knob_proud below the knob top. The bezel rests on that face, and the
-    # screen sits on the 0.30 mm pads in the bezel. The old "5 mm under the knob" target does not.
+    # The stock body is the riser. Everything above it — stem slack, carrier, faceplate, bezel —
+    # stacks on that length. knob_proud is then the gap from the faceplate front up to the knob top,
+    # which is what the knob and the case adopt. A longer riser lifts the faceplate, so proud falls.
+    so, hd, sk = D["standoff"], D["hdr"], D["sock"]
     D["knob_proud_live"] = "knob_proud" in K
-    D["z_fp1"] = D["z_knob_top"] - D["knob_proud"]
-    D["z_fp0"] = D["z_fp1"] - D["fp_t"]
+    D["knob_proud_in"] = D["knob_proud"]
+    D["z_db0"] = so["length"]
+    D["z_db1"] = D["z_db0"] + D["db_t"]
+    D["z_sw1"] = D["z_db1"] + sw["h"]
+    D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
+    D["z_pivot"] = D["z_db1"] + sw["pivot"]
+    D["z_ref"] = D["z_db1"] + sw["ref_h"]
+    D["car_floor"] = pm
+    D["z_c0"] = D["z_stem_top"] + D["stem_below"]
+    D["z_floor1"] = D["z_c0"] + D["car_floor"]
+    D["z_fp0"] = D["z_floor1"] + sla
+    D["z_fp1"] = D["z_fp0"] + D["fp_t"]
     D["z_bz0"] = D["z_fp1"] + D["up_gap"]
     D["z_bz1"] = D["z_bz0"] + D["bz_t"]
     D["z_roof"] = D["z_bz0"] + 0.30
@@ -247,38 +237,24 @@ def derive(P_):
     D["scr_top"] = D["z_scr0"] + S["t"]
     D["scr_drop"] = D["z_knob_top"] - D["scr_top"]
     D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
-    # carrier floor is one SLA tolerance under the faceplate, so the module hangs below it
-    D["car_floor"] = pm
-    D["z_floor1"] = D["z_fp0"] - sla
-    D["z_c0"] = D["z_floor1"] - D["car_floor"]
-    # stem_below is the design slack. The riser is the length that lands the stem under the carrier.
-    so, hd, sk = D["standoff"], D["hdr"], D["sock"]
-    D["z_stem_top"] = D["z_c0"] - D["stem_below"]
-    D["z_db1"] = D["z_stem_top"] - sw["stem_top"]
-    D["z_db0"] = D["z_db1"] - D["db_t"]
-    D["z_sw1"] = D["z_db1"] + sw["h"]
-    D["z_pivot"] = D["z_db1"] + sw["pivot"]
-    D["z_ref"] = D["z_db1"] + sw["ref_h"]
+    D["knob_proud"] = D["z_knob_top"] - D["z_fp1"]
     D["riser_h"] = D["z_db0"]
     D["riser_catalog"] = so["length"]
-    D["riser_near"] = _nearest_m2(D["riser_h"])
-    D["riser_near_stud"] = _nearest_m2(D["riser_h"], stud_min=so["stud"])
     D["z_hdr_tip"] = D["z_db0"] - hd["ins"] - hd["mate"]
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
-    D["standoff_d"] = so["af"] / math.cos(math.radians(30))
-    # the 4 mm stud through the 1.6 mm board leaves 2.4 mm below it. The nut lives in that 2.4 mm.
-    nt = D["nut"]
-    D["stud_d"] = 2.0
-    D["stud_below"] = so["stud"] - D["pcb_t"]
-    D["z_stud0"] = -so["stud"]
-    D["z_nut1"] = -D["pcb_t"] - 0.01
-    D["z_nut0"] = D["z_nut1"] - nt["thick"]
-    D["nut_past"] = D["z_nut0"] - D["z_stud0"]
-    D["nut_d"] = nt["af"] / math.cos(math.radians(30))
+    D["standoff_d"] = so["od"]
+    sc = D["shcs"]
+    D["screw_d_model"] = 1.70            # slip in the Ø2.4 hole. The real thread engages the pillar
+    D["z_head_bot1"] = -D["pcb_t"] - 0.01
+    D["z_head_bot0"] = D["z_head_bot1"] - sc["head_h"]
+    D["engage_bot"] = sc["bot"] - D["pcb_t"]
     D["plate_t"] = pm
     D["z_plate0"] = D["z_db1"]
     D["z_plate1"] = D["z_plate0"] + D["plate_t"]
+    D["z_head_top0"] = D["z_plate1"] + 0.01
+    D["z_head_top1"] = D["z_head_top0"] + D["shcs"]["head_h"]
+    D["engage_top"] = D["shcs"]["top"] - D["plate_t"] - D["db_t"]
     D["z_ball"] = D["z_c0"] - D["ball_d"] / 2
     D["boss_h"] = D["z_ball"] - D["z_plate1"]
     D["seat_r"] = D["ball_d"] / 2 + D["seat_clear"]
@@ -363,11 +339,11 @@ def derive(P_):
     sy_corner = D["db_half_h"] - inset
     sy_pad = D["y_pcb"] - D["pcb_edge"] - D["pad_m2"] / 2
     # the nut is wider than the pad, so it sets how close the screw can sit to the PCB edge
-    sy_nut = D["y_pcb"] - D["pcb_edge"] - D["nut"]["af"] / 2
-    D["sy"] = min(sy_corner, sy_pad, sy_nut)
+    sy_head = D["y_pcb"] - D["pcb_edge"] - D["shcs"]["head_d"] / 2
+    D["sy"] = min(sy_corner, sy_pad, sy_head)
     D["sy_corner"] = sy_corner
     D["sy_pad"] = sy_pad
-    D["sy_nut"] = sy_nut
+    D["sy_head"] = sy_head
     D["standoff_xy"] = [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
     D["hdr_xy"] = [(D["hx"], 0.0), (-D["hx"], 0.0)]
     # shallow spherical cups, same above and below. The ratio is the smallest cup radius

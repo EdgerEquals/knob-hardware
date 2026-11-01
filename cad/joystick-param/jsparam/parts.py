@@ -183,13 +183,15 @@ def build(D):
         for k in (-1, 0, 1):
             out[f"header pin {i + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], y)
     for i, (x, y) in enumerate(D["standoff_xy"]):
-        # hex body is the derived riser. The catalog stud continues down through the main PCB.
+        # round female-female body. The screws are slip-fit solids; the real thread is in the pillar.
         body = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
-        stud = cyl(D["stud_d"], D["z_stud0"], 0.04, x, y)
-        out[f"brass standoff M2x{D['riser_h']:.2f} {i + 1}"] = body + stud
-        nut = hex_at(D["nut"]["af"], D["z_nut0"], D["z_nut1"], x, y)
-        nut -= cyl(D["stud_d"] + 0.30, D["z_nut0"] - 0.04, D["z_nut1"] + 0.04, x, y)
-        out[f"M2 nut {i + 1}"] = nut
+        out[f"brass standoff M2x{D['riser_h']:.0f} {i + 1}"] = body
+        head_b = cyl(D["shcs"]["head_d"], D["z_head_bot0"], D["z_head_bot1"], x, y)
+        shaft_b = cyl(D["screw_d_model"], D["z_head_bot1"], -0.02, x, y)
+        out[f"M2 socket screw bottom {i + 1}"] = head_b + shaft_b
+        head_t = cyl(D["shcs"]["head_d"], D["z_head_top0"], D["z_head_top1"], x, y)
+        shaft_t = cyl(D["screw_d_model"], D["z_db0"] + 0.05, D["z_head_top0"], x, y)
+        out[f"M2 socket screw top {i + 1}"] = head_t + shaft_t
     body, stem = switch(D)
     out["SW1 SKRHADE010 body (45°)"] = body
     out["SW1 SKRHADE010 stem"] = stem

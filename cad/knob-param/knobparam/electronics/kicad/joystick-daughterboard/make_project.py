@@ -27,12 +27,12 @@ MH_UUID = ["6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c04", "6a0f3c1e-1f0b-4b8e-9d55-7e1f
            "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c14", "6a0f3c1e-1f0b-4b8e-9d55-7e1f0a2b3c15"]
 PARTS = {
     "SW1": ("Alps Alpine", "SKRHADE010", "C202415"),
-    "J1": ("Samtec", "TSW-103-20-T-S", ""),
-    "J2": ("Samtec", "TSW-103-20-T-S", ""),
-    "MH1": ("XHHD", "DTTZ3033", "C50377642"),
-    "MH2": ("XHHD", "DTTZ3033", "C50377642"),
-    "MH3": ("XHHD", "DTTZ3033", "C50377642"),
-    "MH4": ("XHHD", "DTTZ3033", "C50377642"),
+    "J1": ("Samtec", "TSW-103-17-T-S", ""),
+    "J2": ("Samtec", "TSW-103-17-T-S", ""),
+    "MH1": ("XHHD", "STTZ1022", "C50378470"),
+    "MH2": ("XHHD", "STTZ1022", "C50378470"),
+    "MH3": ("XHHD", "STTZ1022", "C50378470"),
+    "MH4": ("XHHD", "STTZ1022", "C50378470"),
 }
 
 def _sym(name, ref, val, fp, ds, desc, hw, hh, pins):
@@ -63,13 +63,13 @@ def sym_skrh(name):
 
 def sym_conn(name):
     pins = [("1", "Inner", -7.62, 2.54, 0), ("2", "Mid", -7.62, 0, 0), ("3", "Outer", -7.62, -2.54, 0)]
-    return _sym(name, "J", "TSW-103-20-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
+    return _sym(name, "J", "TSW-103-17-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
                 "https://www.samtec.com/products/tsw-103-20-t-s",
-                "1x3 2.54 header, mating pin 25.91 mm, plastic on the underside", 5.08, 5.08, pins)
+                "1x3 2.54 header, mating pin 15.74 mm, plastic on the underside", 5.08, 5.08, pins)
 
 def sym_mount(name):
-    return _sym(name, "MH", "DTTZ3033", "footprints:Mount_M2x35_Standoff", "",
-                "M2x35+4 brass male-female standoff to GND. Nut under the main PCB", 5.08, 2.54, [("1", "GND", -7.62, 0, 0)])
+    return _sym(name, "MH", "STTZ1022", "footprints:Mount_M2x35_Standoff", "",
+                "M2x25 brass female-female standoff to GND. Socket screw through this board", 5.08, 2.54, [("1", "GND", -7.62, 0, 0)])
 
 def write_symlib():
     s1, _ = sym_skrh("SKRHADE010"); s2, _ = sym_conn("Conn_01x03"); s3, _ = sym_mount("Mount_M2")
@@ -105,14 +105,14 @@ def write_sch():
          f'  (title_block (title "Top-screen joystick daughterboard") (date "2026-11-01") (rev "{REV}") (company "Ed / Edger_Equals - knob module")',
          '    (comment 1 "SW1 Alps SKRHADE010 at -45 deg, on the carrier axis. a/b/c/d -> UP/RIGHT/LEFT/DOWN, confirmed at first power")',
          '    (comment 2 "J1 pin 1 GND, pin 2 DOWN, pin 3 RIGHT. J2 pin 1 LEFT, pin 2 CENTER, pin 3 UP. Inner pin faces the switch")',
-         '    (comment 3 "Four M2x35 standoffs and the frame tabs are GND. No LEDs. Headers are consigned Samtec parts"))',
+         '    (comment 3 "Four M2x25 female-female standoffs and the frame tabs are GND. No LEDs. Headers are consigned Samtec parts"))',
          '  (lib_symbols', sk, cn, mh, '  )']
     L += inst("joystick:SKRHADE010", "SW1", "SKRHADE010", "footprints:Alps_SKRHADE010", sx, sy, SW_UUID, list(skp), *PARTS["SW1"],
               "https://tech.alpsalpine.com/e/products/detail/SKRHADE010/")
     for i, ref in enumerate(("J1", "J2")):
         jx, jy = 139.70, 50.80 + i * 40.64
         nets = {str(k + 1): SCH_NETS[ref][k] for k in range(3)}
-        L += inst("joystick:Conn_01x03", ref, "TSW-103-20-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
+        L += inst("joystick:Conn_01x03", ref, "TSW-103-17-T-S", "footprints:PinHeader_1x03_P2.54mm_Vertical_Long",
                   jx, jy, J_UUID[i], list(cnp), *PARTS[ref], "https://www.samtec.com/products/tsw-103-20-t-s")
         for num, (px, py) in cnp.items():
             X, Y = jx + px, jy - py
@@ -123,10 +123,10 @@ def write_sch():
     for i, uid in enumerate(MH_UUID):
         my = 129.54 + (i % 2) * 12.70
         mx = 40.64 + (i // 2) * 30.48
-        L += inst("joystick:Mount_M2", f"MH{i + 1}", "DTTZ3033", "footprints:Mount_M2x35_Standoff", mx, my, uid, list(mhp), *PARTS[f"MH{i + 1}"])
+        L += inst("joystick:Mount_M2", f"MH{i + 1}", "STTZ1022", "footprints:Mount_M2x35_Standoff", mx, my, uid, list(mhp), *PARTS[f"MH{i + 1}"])
         X, Y = mx + mhp["1"][0], my - mhp["1"][1]
         L.append(wire(X, Y, X - 5.08, Y)); L.append(label("GND", X - 5.08, Y, True))
-    L.append(f'  (text "v0.4. Switch on the carrier axis. Two 1x3 headers, plastic on the underside, long pin down into the H11 sockets on the main PCB.\\nFour M2x35 standoffs and frame tabs 7 and 8 are GND. No LEDs. No round-stop tab. No ESD or pull-ups on this board.\\nJ1 and J2 are Samtec TSW-103-20-T-S, consigned (same -20 lead as LCSC C3345998, which is the 2-row part)." (exclude_from_sim no) (at 20 165 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
+    L.append(f'  (text "v0.4. Switch on the carrier axis. Two 1x3 headers, plastic on the underside, pin down into the H11 sockets on the main PCB.\\nFour M2x25 female-female standoffs and frame tabs 7 and 8 are GND. No LEDs. No round-stop tab. No ESD or pull-ups on this board.\\nJ1 and J2 are Samtec TSW-103-17-T-S, consigned. Lead style -17 is a 15.74 mm mating pin." (exclude_from_sim no) (at 20 165 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "{uuid.uuid4()}"))')
     L += ['  (sheet_instances (path "/" (page "1")))', ')']
     open(os.path.join(HERE, NAME + ".kicad_sch"), "w").write("\n".join(L) + "\n")
 
@@ -160,14 +160,14 @@ def build_board():
     headers = []
     for i, (x, y) in enumerate(G["headers"]):
         j = pcbnew.FootprintLoad(lib, "PinHeader_1x03_P2.54mm_Vertical_Long")
-        ref = f"J{i + 1}"; j.SetReference(ref); j.SetValue("TSW-103-20-T-S")
+        ref = f"J{i + 1}"; j.SetReference(ref); j.SetValue("TSW-103-17-T-S")
         j.SetFPID(pcbnew.LIB_ID("footprints", "PinHeader_1x03_P2.54mm_Vertical_Long"))
         j.SetPosition(P(x, y)); b.Add(j)
         j.Flip(j.GetPosition(), False)   # plastic on the underside
         j.SetPath(pcbnew.KIID_PATH(f"/{J_UUID[i]}")); headers.append(j)
     mhs = []
     for i, (x, y) in enumerate(G["standoffs"]):
-        m = pcbnew.FootprintLoad(lib, "Mount_M2x35_Standoff"); m.SetReference(f"MH{i + 1}"); m.SetValue("DTTZ3033")
+        m = pcbnew.FootprintLoad(lib, "Mount_M2x35_Standoff"); m.SetReference(f"MH{i + 1}"); m.SetValue("STTZ1022")
         m.SetFPID(pcbnew.LIB_ID("footprints", "Mount_M2x35_Standoff")); m.SetPosition(P(x, y)); b.Add(m)
         m.SetPath(pcbnew.KIID_PATH(f"/{MH_UUID[i]}")); mhs.append(m)
     def cad(pad):
@@ -293,10 +293,10 @@ def export_fab():
         f.write(("READY TO QUOTE" if ready else "NOT READY TO ORDER (see below)") + "\n\n")
         f.write(json.dumps(status, indent=2) + "\n\n")
         f.write("Board: 2 layers, 1.0 mm FR-4; HASL or ENIG; green mask, white silk [A]. No LEDs.\n")
-        f.write("J1 and J2 are Samtec TSW-103-20-T-S (1x3, mating pin 25.91 mm). Plastic on the BOTTOM. Trim the 2.79 mm tails flush on the top before the seat plate is glued on.\n")
-        f.write("LCSC lists the same -20 lead as TSW-103-20-T-D (C3345998, two rows) and TSW-125-20-T-S (C3334257, 25 pins). The 1x3 is ordered from Samtec and consigned. Do not fit the 2-row part.\n")
+        f.write("J1 and J2 are Samtec TSW-103-17-T-S (1x3, mating pin 15.74 mm). Plastic on the BOTTOM. Trim the 2.79 mm tails flush on the top before the seat plate is glued on.\n")
+        f.write("The 1x3 is ordered from Samtec and consigned. Lead style -17 replaces the -20 pin, which was too long for the 25 mm riser.\n")
         f.write("The two mating sockets are on the MAIN PCB: hanxia HX PM2.54-1x3P ZC H11, LCSC C41427518, one each side of the switch.\n")
-        f.write("MH1-MH4 are XHHD DTTZ3033, hex male-female H3*M2*35+4 brass, LCSC C50377642, all GND. The 4 mm stud passes through the main PCB and is held by an ISO 4032 M2 nut on the back. Four M2x6 screws go through the seat plate into the female end. The nuts are hand-fit, not on this board.\n")
+        f.write("MH1-MH4 are XHHD STTZ1022, round female-female M2x25 brass, LCSC C50378470, all GND. An ISO 4762 M2x6 socket screw goes through the seat plate and this board into the pillar. An M2x4 socket screw holds the other end under the main PCB.\n")
         f.write("Screen FPC pin-out is not on this board (still open). Pull-ups and ESD are on the main PCB.\n")
         f.write("Direction map is confirmed at first-power calibration, not by a fixed legend.\n")
     print(json.dumps(status, indent=2))

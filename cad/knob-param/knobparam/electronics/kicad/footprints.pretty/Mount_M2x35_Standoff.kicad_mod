@@ -1,7 +1,7 @@
 (footprint "Mount_M2x35_Standoff"
   (version 20241229) (generator "make_joystick_footprints.py")
   (layer "F.Cu")
-  (descr "M2 male-female brass standoff, hex H3, body 35 mm, stud 4 mm (XHHD DTTZ3033, LCSC C50377642). PTH to GND. Drill 2.4, pad 3.2. Nut under the main PCB.")
+  (descr "M2 female-female brass standoff, round body 25 mm, OD 3.2 (XHHD STTZ1022, LCSC C50378470). PTH to GND. Drill 2.4, pad 3.2. ISO 4762 M2 screw through this board into the pillar.")
   (attr through_hole)
   (property "Reference" "MH" (at 0 -3.20 0) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
   (property "Value" "Mount_M2x35_Standoff" (at 0 3.40 0) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.08))))

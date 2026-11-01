@@ -150,26 +150,28 @@ def run(D, P):
     row("standoff count", len(stands), "4", len(stands) == 4, "one in each quadrant, all GND")
     sd = min(s.distance_to(db) for s in stands)
     row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05,
-        "hex body 0.02 short of the daughterboard. The stud continues through the main PCB")
-    nuts = [P[n] for n in P if n.startswith("M2 nut")]
-    row("stud and nut below the main PCB", D["stud_below"], "2.30-2.50",
-        2.30 <= D["stud_below"] <= 2.50 and D["nut_past"] >= 0.5,
-        f"{D['standoff']['part']} stud {D['standoff']['stud']:.1f} through PCB {D['pcb_t']:.1f} "
-        f"leaves {D['stud_below']:.2f} mm. {D['nut']['part']} is {D['nut']['thick']:.1f} thick, "
-        f"{D['nut_past']:.2f} mm of stud past the nut. Back panel is {D['back_panel']:.2f} mm behind the board [A]")
-    nd = min(n.distance_to(pcb) for n in nuts)
-    row("nuts seated under the main PCB", nd, "0.005-0.05", 0.005 <= nd <= 0.05,
-        f"four nuts, across flats {D['nut']['af']:.1f}. No second screw on this end")
-    row("nut clear of the hold-down springs", min(n.distance_to(s) for n in nuts for s in sprs), ">= 1.0",
-        min(n.distance_to(s) for n in nuts for s in sprs) >= 1.0)
+        "round body 0.02 short of the daughterboard. An M2 socket screw passes through the plate")
+    bots = [P[n] for n in P if n.startswith("M2 socket screw bottom")]
+    tops = [P[n] for n in P if n.startswith("M2 socket screw top")]
+    row("bottom screw head under the PCB", min(s.distance_to(pcb) for s in bots), "0.005-0.05",
+        0.005 <= min(s.distance_to(pcb) for s in bots) <= 0.05,
+        f"{D['shcs']['part']} M2×{D['shcs']['bot']:.0f}, head Ø{D['shcs']['head_d']:.1f} × {D['shcs']['head_h']:.1f}. "
+        f"{D['engage_bot']:.2f} mm of thread in the pillar")
+    row("top screw head on the plate", min(s.distance_to(plate) for s in tops), "0.005-0.05",
+        0.005 <= min(s.distance_to(plate) for s in tops) <= 0.05,
+        f"M2×{D['shcs']['top']:.0f} through the plate and the board, {D['engage_top']:.2f} mm in the pillar")
+    row("screw thread engagement", min(D["engage_bot"], D["engage_top"]), ">= 2.0",
+        D["engage_bot"] >= 2.0 and D["engage_top"] >= 2.0, "both ends, female-female pillar")
+    row("bottom screw clear of the hold-downs", min(s.distance_to(h) for s in bots for h in sprs), ">= 1.0",
+        min(s.distance_to(h) for s in bots for h in sprs) >= 1.0)
     ra = P["rear spring anchor (printed)"]
     pins = [P[n] for n in P if n.startswith("cross pin")]
     row("rear anchor glued to the PCB back", ra.distance_to(pcb), "0.01-0.05",
         0.01 <= ra.distance_to(pcb) <= 0.05,
         f"bond outline {D['ra_bond']:.0f} mm², wall {D['ra_wall']:.1f}, volume {ra.volume/1000:.2f} cm³")
-    row("rear anchor clear of the M2 nuts", min(ra.distance_to(n) for n in nuts), ">= 1.0",
-        min(ra.distance_to(n) for n in nuts) >= 1.0,
-        "the anchor stops inboard of the studs. Nuts stay reachable")
+    row("rear anchor clear of the bottom screws", min(ra.distance_to(s) for s in bots), ">= 1.0",
+        min(ra.distance_to(s) for s in bots) >= 1.0,
+        "the anchor stops inboard of the screws. The heads stay reachable")
     row("lower hooks just behind the PCB", -D["pcb_t"] - D["z_pin"], "1.5-4.0",
         1.5 <= -D["pcb_t"] - D["z_pin"] <= 4.0,
         f"pin axis z {D['z_pin']:.2f}, PCB back z {-D['pcb_t']:.2f}")
@@ -188,28 +190,23 @@ def run(D, P):
     blind = ra.is_inside((D["ra_x0"] + 0.4, D["spr_y"], D["z_pin"]))
     row("pin mouth open, far end stopped", 1.0 if mouth_open and blind else 0.0, "open",
         mouth_open and blind, "push in from +x. The -x end is a 1 mm wall")
-    row("stud clears the PCB hole", (D["drill_m2"] - D["stud_d"]) / 2, ">= 0.15",
-        (D["drill_m2"] - D["stud_d"]) / 2 >= 0.15, f"Ø{D['stud_d']:.1f} stud in the Ø{D['drill_m2']:.1f} hole")
+    row("screw clears the PCB hole", (D["drill_m2"] - D["screw_d_model"]) / 2, ">= 0.15",
+        (D["drill_m2"] - D["screw_d_model"]) / 2 >= 0.15,
+        f"Ø{D['screw_d_model']:.2f} screw in the Ø{D['drill_m2']:.1f} hole")
     row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",
         min(s.distance_to(plate) for s in stands) >= 0.5, "the screw, not the standoff, passes through the plate")
     row("standoff vs switch body", min(s.distance_to(body) for s in stands), ">= 0.8",
         min(s.distance_to(body) for s in stands) >= 0.8)
     row("standoff vs header", min(min(s.distance_to(h) for h in hdrs) for s in stands), ">= 0.6",
         min(min(s.distance_to(h) for h in hdrs) for s in stands) >= 0.6)
-    near, near4 = D["riser_near"], D["riser_near_stud"]
-    row("catalog standoff is the derived riser", D["riser_h"], f"{D['riser_catalog']:.0f}",
-        abs(D["riser_h"] - D["riser_catalog"]) <= 0.25,
-        f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − knob_proud {D['knob_proud']:.1f}"
-        f"{'' if D['knob_proud_live'] else ' (Ed 1 Nov; not on origin/sub/assembly-v017 yet)'}. "
-        f"Need {D['riser_h']:.2f} mm. {D['standoff']['part']} is {D['riser_catalog']:.0f} mm "
-        f"({D['riser_h'] - D['riser_catalog']:+.2f}). "
-        f"Nearest stocked male-female M2 is {near['part']} H3×M2×{near['length']:.0f}+{near['stud']:.0f} "
-        f"({near['lcsc']}, {near['qty']} in stock on 1 Nov), {near['length'] - D['riser_h']:+.2f} mm. "
-        f"That stud is {near['stud']:.0f} mm, so the nut does not seat. "
-        f"Nearest with a {D['standoff']['stud']:.0f} mm stud is {near4['part']} "
-        f"H3×M2×{near4['length']:.0f}+{near4['stud']:.0f} ({near4['lcsc']}, {near4['qty']}), "
-        f"{near4['length'] - D['riser_h']:+.2f} mm. "
-        f"H3×M2×23+4 (DTTZ3022, C50377630) and ×24+4 (DTTZ3023, C50377631) are both out of stock")
+    row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
+        abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
+        f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
+    row("knob_proud in the accepted window", D["knob_proud"], "16-20",
+        16.0 - 1e-6 <= D["knob_proud"] <= 20.0 + 1e-6,
+        f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − {D['knob_proud']:.2f}. "
+        f"Parameter was {D['knob_proud_in']:.2f}"
+        f"{'' if not D['knob_proud_live'] else ' from knob-param'}")
     row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
         T["mate_min"] <= D["mate_in"] <= T["mate_max"],
         f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
@@ -249,11 +246,11 @@ def run(D, P):
     holes = D["standoff_xy"] + D["hdr_xy"] + D["springs"]
     holes_ok = all(on_board(x, y, D["pad_m2"] / 2 if (x, y) in D["standoff_xy"] or (x, y) in D["hdr_xy"] else D["spr_bore"] / 2)
                    for x, y in holes)
-    nuts_on = all(on_board(x, y, D["nut"]["af"] / 2) for x, y in D["standoff_xy"])
+    nuts_on = all(on_board(x, y, D["shcs"]["head_d"] / 2) for x, y in D["standoff_xy"])
     row("standoff, socket and spring holes on the main PCB", 1.0 if holes_ok else 0.0, "on", holes_ok,
         f"hold-down hooks at x ±{D['spr_x']:.2f} (the corner formula wanted ±{D['spr_x_raw']:.2f}, past the PCB)")
-    row("M2 nut across-flats on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
-        f"nut {D['nut']['af']:.1f} mm AF needs the screws at y ±{D['sy']:.2f} "
+    row("socket-screw head on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
+        f"head Ø{D['shcs']['head_d']:.1f} needs the screws at y ±{D['sy']:.2f} "
         f"(the pad alone would have allowed ±{D['sy_pad']:.2f})")
     row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
         f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
