@@ -215,6 +215,7 @@ P = dict(
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fm_keepout=[(160.0, 222.0, 6.0, 9.5)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
     fg_edge_x=22.45,   # [A] v0.19: panel |x| the compound gear tip may reach (cover side wall 22.75 - 0.3)
+    hb_mn_pref=0.60,   # [A] v0.19: keep the v0.18 herringbone module (the arm, cradle and caps are tuned to it); 0.55 broke the arm/cradle checks
     fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
     fg_z_pin=12,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08) but only gains 15.75 -> 15.82, because the centre tube and rod nut cap the compound gear. Kept 12T.
@@ -418,6 +419,7 @@ def _place_herringbone(D, R):
                     continue
                 cands.append((mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt))
     # prefer a band that also holds the full race groove; otherwise the thickest wall that is still past the main wall
+    D["_hb_cands"] = [(c[0], round(c[1], 2), c[2], c[3], c[4], round(c[5], 2)) for c in cands]
     full = [c for c in cands if c[5] >= D["ring_wall_race_req"] - 1e-9]
     pool = full or cands
     near = [c for c in pool if abs(c[1] - D["hb_ratio_target"]) <= 0.5]
@@ -425,10 +427,12 @@ def _place_herringbone(D, R):
     if not pool:
         raise ValueError("no herringbone module fits the fixed OD, the main wall and the feel ratio")
     if D["fg_ratio_max"]:
-        # [Ed] 2 Nov: the feel motor needs all the reduction the space allows. Highest overall ratio among the candidates
-        # that pass every wall and tooth floor; then the coarser module, then the thicker wall.
+        # [Ed] 2 Nov: the feel motor needs all the reduction the space allows. The compound gear is already as big as the
+        # space allows (zbig = zmax); keep v0.18's coarsest herringbone module (the arm, cradle and caps are tuned to it),
+        # then take the highest ratio, then the thicker wall.
         pool = full or cands
-        best = max(pool, key=lambda c: (round(c[1], 3), c[0], c[5]))
+        pref = [c for c in pool if abs(c[0] - D["hb_mn_pref"]) < 1e-9]
+        best = max(pref or pool, key=lambda c: (round(c[1], 3), c[0], c[5]))
     else:
         # coarsest module, then the thickest root wall, then the ratio closest to the target
         best = max(pool, key=lambda c: (c[0], c[5], -abs(c[1] - D["hb_ratio_target"])))
