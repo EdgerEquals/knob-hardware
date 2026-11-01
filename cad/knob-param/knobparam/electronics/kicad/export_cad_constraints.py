@@ -4,7 +4,8 @@ board; this keeps it in step with the parametric model). Run with the knob-param
 Frame: dial axis origin, x toward the 1220 motor, y up (frame); make_board.py converts to board coords (bx = axis_bx + x,
 by = axis_by - y). Contents: the base-cradle footprint on the PCB front (section at z = 0.02, outer + openings), the Hall row
 (radius, angle, part per sensor, magnet polarity), the 716 lead holes, the rod-pad radius, encoder/motor axes, idlers, detents,
-spring anchors."""
+spring anchors, the lower-race locating pins (one round NPTH, one radial slot), and the faceplate
+(front z and thickness in the knob frame, PCB front = 0) for sub/case-v01."""
 import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..", "..", "..")))   # cad/knob-param
@@ -41,6 +42,18 @@ def main():
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],
         d_big_tip=D["d_big_tip"], sens_xy=D["sens_xy"], pcb=(D["pcb_w"], D["pcb_above"], D["pcb_below"]),
+        knob_proud=D["knob_proud"], z_top=D["z_top"], z_knob_top=g("z_knob_top"),
+        knob_od=D["knob_od"], sleeve_id=D["sleeve_id"], sleeve_len=g("sleeve_len"), sleeve_wall=D["sleeve_wall"],
+        sleeve_z0=g("sleeve_z0"), sleeve_z1=g("sleeve_z1"), sleeve_od_tol=D["sleeve_od_tol"], sleeve_ovality=D["sleeve_ovality"],
+        knob_hole_clear=D["knob_hole_clear"],
+        knob_hole_d=D["knob_od"] + 2 * D["knob_hole_clear"],
+        knob_hole_d_max=D["knob_od"] + D["sleeve_od_tol"] + 2 * D["knob_hole_clear"],
+        faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
+        em_reverse=D["em_reverse"],
+        em_ap=D["em_ap"], em_hole_d=D["em_hole_d"], em_pin_od=D["em_pin_od"], em_pin_len=D["em_pin_len"],
+        em_holes=[dict(i=h["i"], kind=h["kind"], x=h["x"], y=h["y"], ang=h["ang"],
+                       hole="slot" if h["slot"] else "round", hole_d=h["hole_d"], slot_l=h["slot_l"],
+                       pin=h["pin"], aperture=D["em_ap"]) for h in D["em_holes"]],
     )
     p = os.path.join(HERE, "cad_constraints.json"); json.dump(out, open(p, "w"), indent=1)
     print("wrote", p, "cradle faces", len(faces), "holes", [len(f["holes"]) for f in faces], "version", out["version"])

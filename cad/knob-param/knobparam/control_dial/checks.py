@@ -1,8 +1,27 @@
 """control_dial LOCAL checks (own parts + interface values only)."""
 import math
 from build123d import Rot
-from ..common.checks import Rows, maxr
+from ..common.checks import Rows, min_dist, posed, maxr
 from .parts import hall_arm as hall
+
+def _rib_defl(D):
+    """In-plane tip deflection (mm) of the tapered rib as a cantilever, load at ha_rib_rload, root at the dial tube."""
+    F, E = D["ha_rib_load"], D["ha_rib_E"]
+    r0, rh, rF = D["ha_rib_r_hub"], D["ha_rib_r_head"], D["ha_rib_rload"]
+    w0, w1 = D["ha_rib_w0"], D["ha_rib_w1"]
+    z1, zc, zl, rs = D["ha_rib_z_top"], D["ha_rib_z_cage"], D["ha_rib_z_low"], D["ha_rib_r_step"]
+    def w(r):
+        return w0 + (w1 - w0) * (r - r0) / (rh - r0) if r <= rh else w1
+    def h(r):
+        return z1 - (zc if r < rs else zl)
+    def I(r):
+        return h(r) * w(r) ** 3 / 12.0   # bending in the plane of the sweep
+    n = 2000
+    s = 0.0
+    for i in range(n):
+        r = r0 + (rF - r0) * (i + 0.5) / n
+        s += F * (rF - r) ** 2 / (E * I(r))
+    return s * (rF - r0) / n
 
 def checks(D, parts):
     T = D["tgt"]; r = Rows("control_dial"); row = r.row
@@ -16,6 +35,8 @@ def checks(D, parts):
         if D["lip_closed"]:
             row("dial lip wall outside the COF-bend pocket (closed ring)", D["lip_wall_bend"], T["lip_wall"],
                 f"bend reaches r {D['bend_reach_ax']:.3f} + clear {D['bend_clear']:g}; knob Ø{D['knob_od']:.2f} (min {D['knob_od_min']:.3f})")
+            row("printed walls (lip far side and outside the bend pocket)", min(D["lip_wall"], D["lip_wall_bend"]), D["print_wall_min"],
+                f"v0.17 floor {D['print_wall_min']:g}; designed lip {D['lip_wall_lines']}×{D['nozzle']:g} mm = {D['lip_wall_min']:.2f}")
             row("dial up-stop: free lift to the adapter board (no cup)", D["dial_lift"], 0.1, "board clamped by the rod nut; 45° race carries the knob up-load into the dial")
             row("dial up-stop: free lift (max)", D["dial_lift"], 0.5, "", higher_ok=False)
     else:
@@ -42,7 +63,11 @@ def checks(D, parts):
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]
         if tc:
-            row("Hall spoke vs thrust balls / cage (±travel)", min(hall.arm(D, t).distance_to(q) for t in TR for q in tc), 0.3)
+            row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
+        row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
+            f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
+            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}",
+            higher_ok=False)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)
     if D["kb_groove_h"] > 0:

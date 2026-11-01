@@ -5,17 +5,36 @@ from ...common.util import A, cyl, sector
 
 def _vern(D): return D["hall_layout"] == "vernier"
 
-def window(D):   # through the cradle plate: per-pad swept sectors (+-travel, + clearance), merged
+def _bar_samples(D, n=8):
+    """Centreline of the magnet bar (pads + the links between them)."""
+    rs, ps = D["hv_r"], D["hv_phi_m"]
+    pts = []
+    for i, (r, a) in enumerate(zip(rs, ps)):
+        if i:
+            r0, a0 = rs[i - 1], ps[i - 1]
+            for k in range(1, n):
+                t = k / n
+                pts.append((r0 + (r - r0) * t, a0 + (a - a0) * t))
+        pts.append((r, a))
+    return pts
+
+def window(D):
+    """v0.17 [Ed]: one smooth slot, an even clearance off the arm's swept envelope (not the stepped per-pad zig-zag).
+    v0.18: the sweep is an annular sector, not three disks. Disks at ±travel left the ±10° pose 0.2 mm closer to the web."""
     if not _vern(D): return sector(D["ha_win_r0"], D["ha_pad_r1"] + 3.0, D["ha_win_half"], -0.1, 10.0, D["ha_ang0"])
-    pr, c, T = D["hv_pad_r"], D["hv_slot_clear"], D["travel_deg"]; w = None
-    rs = D["hv_r"]
-    for i, (r, am, as_) in enumerate(zip(rs, D["hv_phi_m"], D["hv_phi_s"])):
-        r0 = r - pr - c; r1 = (r + pr + c) if i < len(rs) - 1 else D["hv_slot_r1"]
-        half_m = T + math.degrees(math.asin(min((pr + c) / r0, 1)))
-        sl = D["hv_dims"][i][1]   # v0.16b: tangential length per sensor (TMAG5273 in the middle)
-        lo = min(am - half_m, as_ - math.degrees((sl / 2 + c) / r0))
-        hi = max(am + half_m, as_ + math.degrees((sl / 2 + c) / r0))
-        q = sector(r0, r1, (hi - lo) / 2, -0.1, 10.0, (hi + lo) / 2)
+    pr, c, T = D["hv_pad_r"], D["hv_slot_clear"], D["travel_deg"]
+    rad = pr + c
+    w = None
+    for r, a in _bar_samples(D):
+        q = sector(max(r - rad, 0.2), r + rad, T, -0.1, D["plate_t"] + 0.3, a)
+        for th in (-T, T):   # round end caps; the sector's radial edge stops at the pad centre
+            x = r * math.cos(math.radians(a + th)); y = r * math.sin(math.radians(a + th))
+            q += cyl(rad, -0.1, D["plate_t"] + 0.3, x, y)
         w = q if w is None else w + q
+    # sensors are fixed; open the slot over each body too so the bar's sweep is not the only cut
+    for i, (r, a) in enumerate(zip(D["hv_r"], D["hv_phi_s"])):
+        sl = D["hv_dims"][i][1]
+        x, y = r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
+        w += cyl(max(sl, D["hv_dims"][i][0]) / 2 + c, -0.1, D["plate_t"] + 0.3, x, y)
     return w
 

@@ -151,9 +151,9 @@ def render(D, P, rows, png):
     sw = D["sw"]
     fig.suptitle(f"Top-screen joystick stack {D['version']} — {sw['part']} on a daughterboard over the main PCB; ball-slide carrier, spider, cup (1 Nov 2026, Ed / Edger_Equals)", fontsize=17, weight="bold", x=0.01, ha="left", y=0.985)
     nf = sum(not r["ok"] for r in rows)
-    key = (f"Stack (z from the main-PCB front): J2 socket / riser 0-{D['z_db0']:g} · daughterboard {D['z_db0']:g}-{D['z_db1']:g} · switch body to {D['z_sw1']:.2f}, stem top {D['z_stem_top']:.2f} · "
+    key = (f"Stack (z from the main-PCB front): J2 socket 0-{D['sock_h']:g} + printed extender to {D['z_db0']:.2f} · daughterboard {D['z_db0']:.2f}-{D['z_db1']:.2f} · switch body to {D['z_sw1']:.2f}, stem top {D['z_stem_top']:.2f} · "
            f"cup {D['z_cup0']:.2f}-{D['z_c0']:.2f} · balls (Ø{D['ball_d']:g}) centre {D['z_ball']:.2f} = base top · carrier underside {D['z_c0']:.2f} · spider {D['z_sp0']:.2f}-{D['z_sp1']:.2f} "
-           f"(free travel {D['sp_gap']:g}) · screen {D['z_scr0']:.2f}-{D['scr_top']:.2f} [A].\n"
+           f"(free travel {D['sp_gap']:g}) · screen {D['z_scr0']:.2f}-{D['scr_top']:.2f} = faceplate front.\n"
            f"Slide: ±{D['slide']:g} per axis to the skirt stop; a direction needs {D['slide_need']:.3f} (cup clearance {D['cup_rad_clear']:.3f} + tilt {sw['tilt_travel']:g}). Press: plunger {D['plunger_gap']:g} above the stem, "
            f"{sw['push_travel']:g} click, spider k ≈ {D['sp_k']:.1f} N/mm → ≈ {D['press_f']:.1f} N total; the switch's own stop takes the full press. "
            f"Hold-down: 4 × {D['spr_f']:g} N extension springs (~{D['spr_len']:.0f} mm to the back panel) inside the balls.\n"

@@ -19,22 +19,44 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] PCB back to the back panel inner face (bearing 2 seat)
+    # ---- v0.17 encoder daughterboard [Ed]: the EE-SX1321 moves off the main PCB so its slot meets the rim at the new depth ----
+    enc_db_t=0.8,   # [A] daughterboard thickness
+    enc_db_clear=0.6,   # [A] board margin past the sensor body
+    enc_header_pitch=2.54,   # [S] pin header pitch
+    enc_header_n=6,   # [S] EE-SX1321 has 6 pins; the header stands in for them on the riser
+    enc_header_d=0.64,   # [A] header pin diameter
+    enc_standoff_d=2.5,   # [A] printed standoff OD
+    enc_pip_r=1.35,   # [A] cap boss on the pinion top face
+    enc_pip_h=0.60,   # [A] that boss height
+    enc_tip_relief=0.9,   # [A] tooth-tip underside opened this far in, clear of the thrust balls
+    enc_pin_gap=0.05,   # [A] header and standoffs stop this short of the main PCB
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"]}
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
+           "main_knob": ["hb_mid"]}
 EXPORTS = ["d_big_tip"]   # -> electronics (J2 pads below the wheel)
 
 
 def derive(D):
-    m = D["module"]; B = D["brg"]
+    B = D["brg"]
     D["h_brg_top"] = D["cr_floor"] + B["ft"]; D["h_brg_bot"] = D["h_brg_top"] - B["B"]
     sn = D["sens"]
     D["win_pitch"] = sn["ap_pitch"] / 0.75; D["sens_r"] = D["n_win"] * D["win_pitch"] / (2 * math.pi)
     D["rim_r0"], D["rim_r1"] = D["sens_r"] - D["rim_t"] / 2, D["sens_r"] + D["rim_t"] / 2
-    D["z_sens_open"] = D["z_pcb_back"] - sn["body_h"]
+    # nominal (sensor on the main PCB) then drop so the rim clears the compound gear where they overlap in plan
+    z_open0 = D["z_pcb_back"] - sn["body_h"]
+    rim0 = z_open0 + sn["slot_d"] - D["rim_in"]
+    ix, iy = D["fg_xy"]; ex, ey = D["enc_xy"]
+    dist = math.hypot(ix - ex, iy - ey)
+    overlap = dist < D["sens_r"] + D["rim_t"] / 2 + D["fg_tip"] + D["fg_clear"]
+    drop = max(0.0, rim0 - (D["fg_z_bot"] - D["fg_clear"])) if overlap else 0.0
+    # the riser is at least the daughterboard; a shorter drop still gets the board
+    D["enc_drop"] = max(drop, D["enc_db_t"])
+    D["z_sens_open"] = z_open0 - D["enc_drop"]
     D["z_slot_bot"] = D["z_sens_open"] + sn["slot_d"]
     D["z_axis"] = D["z_sens_open"] + sn["axis_from_open"]
     D["rim_top"] = D["z_slot_bot"] - D["rim_in"]
+    D["enc_standoff_h"] = D["enc_drop"] - D["enc_db_t"]
     D["h_big_top"] = D["z_sens_open"] - D["gear_sensor_gap"]; D["h_big_bot"] = D["h_big_top"] - D["big_face"]
     D["h_hub_bot"] = D["h_big_bot"] - D["big_hub"][1]
     D["win_z0"], D["win_z1"] = D["z_axis"] - sn["ap_h"] / 2 - 0.6, D["z_axis"] + sn["ap_h"] / 2 + 0.3
@@ -42,9 +64,9 @@ def derive(D):
     D["h_b2_top"] = D["h_panel"] + B["ft"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
     ex, ey = D["enc_xy"]
     r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
-    D["z_big"] = int(math.floor(2 * r_avail / m + 1e-9)) - 2
-    D["disc_r"] = D["rim_r1"]                                            # v0.16: plain disc out to the slotted rim (no teeth)
-    D["d_big_tip"] = (D["z_big"] + 2) * m                                # board envelope for J2 (unchanged: pads stay where the KiCad has them)
+    D["disc_r"] = D["rim_r1"]                                            # plain disc out to the slotted rim (no teeth)
+    D["z_big"] = 0
+    D["d_big_tip"] = 2 * D["disc_r"]                                     # the disc is the envelope; the old phantom tooth count followed the spur module
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
     D["sens_xy"] = (ex, ey - D["sens_r"])

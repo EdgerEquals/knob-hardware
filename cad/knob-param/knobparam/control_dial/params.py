@@ -33,7 +33,7 @@ P = dict(
     tb_ball_up=0.3,
     tb_pocket_d=1.1,
     tb_web_min=0.65,
-    tb_cage=(5.3, 8.6, 0.4),   # [A] cage ID, OD, thickness
+    tb_cage=(5.3, 8.58, 0.4),   # [A] cage ID, OD, thickness. OD 8.58 leaves the inner Hall pad 0.30 mm clear (8.60 was 0.295).
     # ---- screen holder + adapter ----
     hold_z0_socket=5.0,   # [A] socket engagement on the tube
     socket_d=5.2,   # [A]
@@ -59,8 +59,9 @@ P = dict(
     carr_r=15.0,   # [A] pin + magnet radius on the dial shoulder (outside the fold window, far from the dial TMAG5273)
     carr_mag_ang=90.0,   # [A] magnet angle (opposite side of the fold from the pin)
     carr_pin_ang=270.0,   # [A] locating-pin angle
-    carr_mag=(2.0, 1.0),   # [A] Ø2×1 N52 axial in the dial shoulder, top flush
-    carr_steel=(2.0, 0.5),   # [A] Ø2×0.5 steel (430) disc in the carrier underside
+    carr_mag=(3.0, 1.0),   # [Ed] v0.17: Ø3×1 N52 in the dial shoulder (the base), at 90°, opposite the Ø1 pin
+    carr_mate=(3.0, 1.0),   # [Ed] v0.17: Ø3×1 N52 in the carrier, facing the base magnet (attracting)
+    carr_steel=(2.0, 0.5),   # unused in v0.17 (v0.16 was a steel disc pulled by a Ø2×1 magnet)
     carr_pin=(1.0, 1.5, 0.8),   # [A] Ø1 steel dowel: pressed depth in the dial, engagement in the carrier
     carr_mag_gap=0.0,   # [A] carrier magnet top below the dial shoulder (0 = flush, touching the steel disc)
     carr_pin_clear=0.05,   # [A] carrier hole over the pin
@@ -77,7 +78,7 @@ P = dict(
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     fan_on=True,   # [Ed] v0.16 fan arm + lever (False = v0.15 bar only)
     hv_spoke_w=3.0,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
-    hv_spoke_clear=0.3,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
+    hv_spoke_clear=0.31,   # [A] spoke bottom above the thrust balls / cage. 0.30 left the solid 0.295 mm clear.
 )
 
 IMPORTS = {"electronics": ["adapter_d", "adapter_fps", "adapter_env"]}
@@ -200,7 +201,9 @@ def derive(D):
     # ---- v0.16 carrier retention ----
     pol = lambda r, a: (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
     D["carr_mag_xy"] = pol(D["carr_r"], D["carr_mag_ang"]); D["carr_pin_xy"] = pol(D["carr_r"], D["carr_pin_ang"])
-    md_, mh_ = D["carr_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md_ / 2e3) ** 2 * (mh_ / 1e3)   # A·m²
+    def _dip(d, h):
+        return D["hv_br"] / (4e-7 * math.pi) * math.pi * (d / 2e3) ** 2 * (h / 1e3)   # A·m²
+    md_, mh_ = D["carr_mag"]; m_dip = _dip(md_, mh_) + _dip(*D["carr_mate"])   # attracting pair, moments add [Ed]
     if D["rel_sensor"]:
         d_u3 = math.dist(D["carr_mag_xy"], D["tm_xy"]) / 1e3                               # to the dial TMAG5273 (co-rotating)
         D["carr_stray_to"], D["carr_stray_rng"] = "dial TMAG5273", D["tm_range_mt"]
@@ -225,4 +228,7 @@ def derive(D):
     if D["hall_layout"] == "vernier":
         D["hv_bar_z0"] = D["hv_z_mag0"]
         D["hv_spoke_z0"] = max(D["tb_z_ball"] + D["tb_ball_d"] / 2, D["tb_cage_z0"] + D["tb_cage"][2]) + D["hv_spoke_clear"]
+        # v0.17 rib: over the thrust cage the bottom stays at the spoke; past the cage OD + a web it drops to ha_rib_z_low
+        D["ha_rib_z_cage"] = D["hv_spoke_z0"]
+        D["ha_rib_r_step"] = D["tb_cage"][1] / 2 + D["tb_web_min"]   # 4.95 at the v0.16 cage (Ø8.6 + 0.65 web)
     return D

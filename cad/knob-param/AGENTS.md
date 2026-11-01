@@ -1,15 +1,12 @@
 # knob-param — agent guide (parallel work by sub-assembly)
 
-Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø40.85, derived from the
-AMOLED COF bend + a 0.8 mm printable lip wall).
-Default params are **v0.16b** (v0.16 minus the knob-ring/dial TMAG5273 relative sensor; Hall row H3 = 3D TMAG5273A2,
-magnets N/S/N/S/N). v0.16 was: no adapter cup (centre bolt clamps the stack), screen carrier cartridge
-(pin + magnet/steel), Hall arm straight off the hub with a perimeter fan, 5 magnets / 5 TMAG5253 at 2.5 pitch,
-two tangential centring springs, top-loaded spring-ball detents at ±5° over a Ø1 ball track, magnet cushions at
-±5.5°, 716 feel motor in an open saddle at 102°, dial TMAG5273 reading a diametric ring in the knob
-(relative knob-vs-dial angle), toothless encoder disc, enlarged rod VBUS pad (no washer).
-54/54 gap checks PASS, no known clashes (`check.json`, proxy and `--full`). Output: `cad/assemblies/knob-stack-v0.16b/`
-(clean + opposite sections, plan view, check.json). Design notes: `docs/design-notes.md`.
+Parametric build123d model of the motorised Eurorack knob (10HP, knob OD Ø42.0, the measured
+borosilicate sleeve; the screen still needs at least Ø41.641).
+Default params are **v0.18**. v0.17 is kept in `cad/assemblies/knob-stack-v0.17/`. v0.18: 25° herringbone
+(module 0.67, 51T ring split in two halves, 12T pinions), every gear PA-12 (the motor pinions use the Tempero
+0.5M-12T and RW m0.6 14T tooth forms, printed), feel train 15.58:1, hub 1.571:1, and UTR-8100 Fresnel caps on the
+four gears with a free face. Output: `cad/assemblies/knob-stack-v0.18/` (preview, clean section + iso, plan, check.json).
+Design notes: `docs/design-notes.md`.
 
 ## Branch model
 
@@ -125,12 +122,12 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 ### Checks
 
-* **Local** (`<sub>/checks.py`): main_knob 3, control_dial 15, base_drive 10, under_pcb 2, electronics 2, plus 22 cross
-  rows (`assembly`) = **54 total**. These counts come from `cad/assemblies/knob-stack-v0.16b/check.json` (`rows[].owner`);
+* **Local** (`<sub>/checks.py`): main_knob 17, control_dial 17, base_drive 18, under_pcb 2, electronics 2, plus 49 cross
+  rows (`assembly`) = **105 total**. These counts come from `cad/assemblies/knob-stack-v0.18/check.json` (`rows[].owner`);
   re-count from that file whenever checks are added or removed, rather than editing numbers by hand.
-* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.16b).
-* **v0.16b: 54/54 PASS, 0 clashes**, with the proxy board and with `--full` (real KiCad STEP, main PCB v0.11). The old
-  PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
+* **Cross** (`assembly/checks.py`) + all-pairs clashes; `KNOWN` lists accepted clashes (none in v0.18).
+* **v0.18 glass sleeve: 105/105 gap checks PASS, 0 clashes** on the proxy. v0.17 was 62/62. v0.16b was 54/54.
+  The old PCB / motor proxy clash (4.24 mm³) is gone: the proxy reads the M1 Ø3.2 relief from `pcb_proxy.json`.
 * History: v0.16 had 41/42 (dial lip wall far side 0.36 < 0.4, fixed by the closed 0.8 lip); v0.15d also failed
   "geared feel motor depth 25.8 > 25" (removed in v0.16: the 716 is no longer under the board).
 * A sub PR must not turn any other row red; the assembly agent re-runs everything before merging.
@@ -156,5 +153,5 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 * Sections PNG: A-A on the left, iso quarter cut on the right, insets along the bottom; clashes are
   reported as text only (no red overlays). No GLB/USDZ.
-* Knob OD: the old Ø39.5 rule is relaxed [Ed]; it grows by the minimum the lip wall needs (Ø40.85 in v0.16b).
+* Knob OD: the old Ø39.5 rule is relaxed [Ed]; it grows by the minimum the lip wall needs (Ø41.65 in v0.17, was Ø40.85 in v0.16b).
 * Bump `version` in `assembly/params.py` for a new release; outputs land in `cad/assemblies/knob-stack-<version>/`.

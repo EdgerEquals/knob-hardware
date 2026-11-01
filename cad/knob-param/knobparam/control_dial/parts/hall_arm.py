@@ -9,6 +9,7 @@ v0.14 'sector': 5 magnets in a paddle, 2 x DRV5055 (kept for --set hall_layout='
 import math
 from build123d import *
 from ...common.util import A, cyl, sector
+from build123d import Face, Wire, Vector
 
 def _vern(D): return D["hall_layout"] == "vernier"
 
@@ -28,10 +29,11 @@ def arm(D, travel=0.0):
     sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
     L = rs[0] - r_in
     s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
-    if D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + spring/cushion lever
+    if D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + lever; v0.17 adds the tapered rib and detent ears
         s += sector(D["fan_r0"], D["fan_r1"], D["fan_half"], D["fan_z0"], z1 - D["fan_z0"], D["ha_ang0"], n=48)
-        # fill between the outer pads and the fan sector (the fan is one plate from the bar out to the wings)
         s += lever(D)
+        s += rib(D)
+        s += ears(D)
     md, mh = D["hv_mag"]
     for r, a in zip(rs, ps):   # pockets open from below, top flush with the magnet top (press / glue fit)
         x, y = _pt(r, a); s -= cyl(md / 2, D["hv_z_mag0"] - 0.1, mh + 0.1, x, y)
@@ -40,16 +42,69 @@ def arm(D, travel=0.0):
     s -= cyl(D["dial_tube_id"] / 2 + 0.01, 0, 20)
     return Rot(0, 0, travel) * s
 
+def _trap(r0, r1, w0, w1, z0, h, ang):
+    """Plan trapezoid (width w0 at r0, w1 at r1) extruded from z0, centred on world angle ang."""
+    a = math.radians(ang); ca, sa = math.cos(a), math.sin(a); px, py = -sa, ca
+    def p(r, w, s): return (r * ca + s * px * w / 2, r * sa + s * py * w / 2)
+    # CCW from +Z so extrude goes upward
+    pts = [p(r0, w0, -1), p(r1, w1, -1), p(r1, w1, 1), p(r0, w0, 1)]
+    return Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), h)
+
+def _rib_w(D, r):
+    r0, rh = D["ha_rib_r_hub"], D["ha_rib_r_head"]
+    if r <= rh:
+        return D["ha_rib_w0"] + (D["ha_rib_w1"] - D["ha_rib_w0"]) * (r - r0) / max(rh - r0, 1e-6)
+    return D["ha_rib_w1"]
+
+def rib(D):
+    """v0.17 [Ed]: tapered spine on the Hall arm. Width 3.0 at the hub to 5.2 at the hammerhead, on to ha_rib_r1.
+    Top at the lever top. Bottom stays over the thrust cage and drops to ha_rib_z_low beyond ha_rib_r_step."""
+    ang = D["ha_ang0"]
+    r_hub, r_step = D["ha_rib_r_hub"], D["ha_rib_r_step"]
+    r_head, r1 = D["ha_rib_r_head"], D["ha_rib_r1"]
+    z_top = D["ha_rib_z_top"]
+    s = _trap(r_hub, r_step, _rib_w(D, r_hub), _rib_w(D, r_step), D["ha_rib_z_cage"], z_top - D["ha_rib_z_cage"], ang)
+    if r_head > r_step:
+        s += _trap(r_step, r_head, _rib_w(D, r_step), _rib_w(D, r_head), D["ha_rib_z_low"], z_top - D["ha_rib_z_low"], ang)
+    if r1 > r_head:
+        s += _trap(r_head, r1, D["ha_rib_w1"], D["ha_rib_w1"], D["ha_rib_z_low"], z_top - D["ha_rib_z_low"], ang)
+    return s
+
+def ears(D):
+    """Inboard pads the detent balls ride on (wide enough for ±travel) plus a spoke back to the dial tube."""
+    T = D["travel_deg"]
+    half = T + math.degrees((D["det_ball"] / 2) / D["det_r"])
+    r0 = min(D["bt_rs"]) - D["bt_groove_r"] - D["fan_clear"]
+    r_pin = D["enc_cd"] - D["d_pin_tip"] / 2 - D["tgt"]["hall_vs_pinions"]
+    r1 = min(max(D["bt_rs"]) + D["bt_groove_r"] + D["fan_clear"], r_pin)
+    z0, z1 = D["fan_z0"], D["fan_top"]
+    r_hub, r_step = D["ha_rib_r_hub"], D["ha_rib_r_step"]
+    zc = D["ha_rib_z_cage"]
+    s = None
+    for a in D["det_angs"]:
+        q = sector(r0, r1, half, z0, z1 - z0, a, n=32)
+        # over the thrust cage the spoke stays high; it drops only once it is clear of the cage
+        if r_step < r0:
+            q += _trap(r_hub, r_step, D["sl_w"], D["sl_w"], zc, z1 - zc, a)
+            q += _trap(r_step, r0, D["sl_w"], D["sl_w"], z0, z1 - z0, a)
+        else:
+            q += _trap(r_hub, r0, D["sl_w"], D["sl_w"], zc, z1 - zc, a)
+        s = q if s is None else s + q
+    return s
+
 def lever(D):
-    """Radial lever on the dial tube at sl_ang: bar above the thrust cage, end block lower (cushion magnet), spring pin on top."""
+    """Radial lever on the dial tube at sl_ang: bar above the thrust cage, end block, spring pin on top.
+    v0.17: no cushion-magnet pocket unless cu_on."""
     a, r1, w = D["sl_ang"], D["sl_r"], D["sl_w"]; r0 = D["dial_tube_od"] / 2 - 0.3
-    rb = D["cu_mag_r"] - D["cu_mag"][0] / 2 - 0.6                          # end block from here out
+    rb = D["sl_pin_r"]
     bar = Pos((r0 + r1) / 2, 0, D["hv_spoke_z0"]) * Box(r1 - r0, w, D["sl_top"] - D["hv_spoke_z0"], align=A)
-    end = Pos((rb + r1) / 2, 0, D["sl_z0"]) * Box(r1 - rb, w, D["sl_top"] - D["sl_z0"], align=A)
+    end = Pos((rb + r1) / 2, 0, D["sl_z0"]) * Box(max(r1 - rb, 0.2), w, D["sl_top"] - D["sl_z0"], align=A)
     pin = cyl(D["sl_pin_d"] / 2, D["sl_top"] - 0.01, D["sl_pin_top"] - D["sl_top"] + 0.01, D["sl_pin_r"], 0)
-    md, mh = D["cu_mag"]
-    pocket = Pos(D["cu_mag_r"], 0, D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01)
-    return Rot(0, 0, a) * (bar + end + pin - pocket)
+    body = bar + end + pin
+    if D["cu_on"]:
+        md, mh = D["cu_mag"]
+        body -= Pos(D["cu_mag_r"], 0, D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01)
+    return Rot(0, 0, a) * body
 
 def lever_magnet(D, travel=0.0):
     md, mh = D["cu_mag"]
@@ -63,8 +118,8 @@ def wing_cuts(D):
             g = Pos(0, 0, D["bt_z"]) * Torus(r, D["bt_groove_r"])
             g = g & sector(r - 1.0, r + 1.0, D["bt_half"], D["bt_z"] - 1, 2, a)
             out = g if out is None else out + g
-        for sgn in (-1, 1):    # dimple that sits under the plunger when the dial is at sgn*det_deg (wing frame: a - sgn*det)
-            t = math.radians(a - sgn * D["det_deg"]); r = D["det_r"]
+        for th in (-D["det_deg"], 0.0, D["det_deg"]):   # v0.17 [Ed]: latch at the centre and at both ends
+            t = math.radians(a - th); r = D["det_r"]
             out += Pos(r * math.cos(t), r * math.sin(t), D["fan_top"] + D["det_ball"] / 2 - D["det_dimple"]) * Sphere(D["det_ball"] / 2)
     return out
 
@@ -78,7 +133,7 @@ def magnets(D, travel=0.0):
 def build(D):
     pol = D["hv_pol"] if _vern(D) else [1] * len(magnets(D))
     out = {f"hall magnet {i + 1} {'N' if pol[i] > 0 else 'S'}-down": m for i, m in enumerate(magnets(D))}   # v0.16b [Ed]: N/S/N/S/N
-    if _vern(D) and D["fan_on"]:
+    if _vern(D) and D["fan_on"] and D["cu_on"]:
         out[f"cushion magnet lever {D['cu_mag'][0]:g}x{D['cu_mag'][1]:g}"] = lever_magnet(D)
     return out
 

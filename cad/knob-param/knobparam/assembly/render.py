@@ -7,6 +7,7 @@ from build123d import *
 from ..common.cache import CACHE
 
 GROUPS = [  # (legend, colour, match)
+    ("clear resin cap (UTR-8100, Fresnel)", "#80deea", lambda n: n.endswith(" cap")),
     ("rod VBUS pad, B.Cu (enlarged, no washer)", "#d4883a", lambda n: n.startswith("PCB rod pad")),
     ("main PCB (proxy; --full = KiCad STEP)", "#2e7d32", lambda n: n.startswith("PCB")),
     ("1220 motor", "#9e9e9e", lambda n: n == "motor"),
@@ -14,22 +15,25 @@ GROUPS = [  # (legend, colour, match)
     ("brass tube", "#c9a227", lambda n: n == "brass tube"),
     ("M1.6 rod + sleeve, nuts, washer", "#5c6bc0", lambda n: n.startswith("rod")),
     ("base cradle", "#8d6e63", lambda n: n == "base cradle"),
-    ("big knob body + hub gear", "#1e88e5", lambda n: n.startswith("knob body")),
-    ("bottom internal ring", "#42a5f5", lambda n: n == "bottom internal ring"),
+    ("borosilicate sleeve (3.3)", "#e1f5fe", lambda n: n.startswith("knob glass")),
+    ("knob upper cap (inside the bore)", "#1e88e5", lambda n: n.startswith("knob upper-cap")),
+    ("knob lower cap, clear land", "#b2dfdb", lambda n: n.startswith("knob lower-cap")),
+    ("bottom internal ring", "#42a5f5", lambda n: n.startswith("bottom internal ring")),
     ("knob balls (opposed 45° cones)", "#bdbdbd", lambda n: n.startswith("knob balls")),
     ("control dial (+ Hall arm)", "#ab47bc", lambda n: n == "control dial"),
-    ("magnets (Hall row N/S/N/S/N, cushions, carrier) N52", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet", "knob ring magnet", "cushion magnet", "screen carrier magnet"))),
+    ("magnets (Hall row N/S/N/S/N, carrier pair) N52", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet", "knob ring magnet", "cushion magnet", "screen carrier magnet"))),
     ("dial TMAG5273 sensor board (turns with the dial)", "#2f6b2f", lambda n: n.startswith(("dial sensor board", "dial TMAG5273"))),
     ("detent balls, track balls, steel pins + disc", "#cfd8dc", lambda n: (n.startswith("detent") and " ball" in n) or n.startswith(("track ball", "spring anchor pin", "screen carrier steel", "screen carrier locating"))),
     ("detent springs, grub screws, centring springs (non-magnetic)", "#fdd835", lambda n: n.startswith(("detent", "centring spring"))),
     ("Hall sensors on the PCB front", "#212121", lambda n: n.startswith("hall sensor")),
-    ("thrust carrier + balls", "#78909c", lambda n: n.startswith("thrust")),
+    ("reverse-mount VCSEL / RGB", "#ff8a65", lambda n: n.startswith("emitter ")),
+    ("thrust carrier + balls", "#78909c", lambda n: n.startswith("thrust") or n.startswith("outer thrust")),
     ("encoder bearings + shaft", "#607d8b", lambda n: n.startswith(("encoder bearing", "encoder shaft"))),
     ("encoder pinion", "#ffa726", lambda n: n == "encoder pinion"),
     ("encoder disc + slotted rim (no teeth)", "#26a69a", lambda n: n.startswith("encoder disc")),
-    ("encoder sensor EE-SX1321", "#37474f", lambda n: n.startswith("encoder sensor")),
+    ("encoder sensor EE-SX1321 + riser", "#37474f", lambda n: n.startswith(("encoder sensor", "encoder daughter", "encoder header", "encoder standoff"))),
     ("idler pinions + pin 2", "#ff8a65", lambda n: n.startswith("idler")),
-    ("feel motor + shaft [A]", "#00838f", lambda n: n.startswith("feel motor") and "saddle" not in n),
+    ("feel motor + shaft [A]", "#00838f", lambda n: (n.startswith("feel motor") or n.startswith("feel compound") or n.startswith("feel pinion")) and "saddle" not in n),
     ("feel motor open saddle (seat + strap) [A]", "#80deea", lambda n: n.startswith("feel motor saddle")),
     ("screen holder (fixed, plate under the panel)", "#6d4c41", lambda n: n == "screen holder"),
     ("adapter cup (fixed, on the tube)", "#6d4c41", lambda n: n == "adapter cup (fixed)"),
@@ -67,6 +71,10 @@ def region_solid(spec):
         pts.append((0.0, 0.0))
         wedge = Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), z1 - z0)
         return allb - wedge
+    if spec["kind"] == "plan":   # keep Z <= z; the cut face is the horizontal plane
+        x0, y0, z0, x1, y1, _z1 = spec["bb"]
+        zc = spec["z"]
+        return Pos(x0, y0, z0) * Box(x1 - x0, y1 - y0, zc - z0, align=(Align.MIN,) * 3)
     o, a, (u0, u1), depth, (z0, z1) = spec["o"], spec["a"], spec["u"], spec["depth"], spec["z"]
     return Pos(o[0], o[1], z0) * Rot(0, 0, a) * Pos(u0, -depth, 0) * Box(u1 - u0, depth, z1 - z0, align=(Align.MIN,) * 3)
 
@@ -77,6 +85,7 @@ def cut_planes(spec):
         def _n(a):
             a = math.radians(a); return (-math.sin(a), math.cos(a), 0.0)
         return [((0, 0, 0), _n(spec.get("a0", 0.0))), ((0, 0, 0), _n(spec.get("a1", 90.0)))]
+    if spec["kind"] == "plan": return [((0.0, 0.0, spec["z"]), (0.0, 0.0, 1.0))]
     a = math.radians(spec["a"]); return [((spec["o"][0], spec["o"][1], 0), (-math.sin(a), math.cos(a), 0))]
 
 def _solids(s):
@@ -159,6 +168,24 @@ def _shot(pl, path, aa=True):
 def _bbox(meshes):
     P = np.vstack([p for m in meshes.values() for (p, _) in m.values()]); return P.min(0), P.max(0)
 
+def _rim_light(D):
+    """Ray up the glass wall and out of the exposed top rim into the dial. Section plane is XZ; y is toward the camera."""
+    if "sleeve_z1" not in D or "ot_r" not in D:
+        return None
+    rm = (D["sleeve_id"] / 2 + D["knob_od"] / 2) / 2
+    y = 0.45
+    z_top = D.get("z_lip0", D["sleeve_z1"] + 6.0)
+    z_back = -D.get("pcb_t", 1.6) - D.get("em_vcsel", (0, 0, 0.8))[2]
+    pts = [(D["ot_r"], y, z_back), (D["ot_r"], y, D["ot_z"]), (rm, y, D["sleeve_z0"] + D["sleeve_chamfer"]),
+           (rm, y, D["sleeve_z1"]), (rm, y, z_top + 1.2)]
+    def extra(pl, pv):
+        pairs = []
+        for a, b in zip(pts, pts[1:]):
+            pairs += [a, b]
+        pl.add_lines(np.array(pairs), color="#ff6f00", width=8)
+        pl.add_mesh(pv.Sphere(radius=0.35, center=pts[-1]), color="#ff6f00")
+    return extra
+
 def ortho(meshes, centre, cam_dir, up, w_mm, h_mm, ppm, path, extra=None, lw=1.4, edges=True, aa=True):
     pv = _pv(); W, H = max(int(w_mm * ppm), 50), max(int(h_mm * ppm), 50)
     pl = pv.Plotter(off_screen=True, window_size=(W, H)); pl.set_background("white")
@@ -198,7 +225,7 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
     lo, hi = _bbox(MA)
     t = time.time()
     rawA = ortho(MA, ((lo[0] + hi[0]) / 2, 0, (lo[2] + hi[2]) / 2), (0, -1, 0) if opposite else (0, 1, 0), (0, 0, 1), hi[0] - lo[0] + 2, hi[2] - lo[2] + 2,
-                 9 if preview else (40 if clean else 30), f"{tmp}/aa.png", edges=not preview, aa=not preview)
+                 9 if preview else (40 if clean else 30), f"{tmp}/aa.png", extra=_rim_light(D) if preview else None, edges=not preview, aa=not preview)
     tm["A-A render"] = time.time() - t
     fang = float(D.get("fm_ang", 90.0)) % 360.0
     a0, a1 = (0.0, fang) if fang <= 180.0 else (fang, 360.0)
@@ -331,7 +358,7 @@ def compose(D, parts, rawA, rawI, insets, out, preview, clash_lines, gap_lines, 
             put([0.162, y0, 0.20, hh], insets[1], f"C-C  Hall bar, radial at {D['ha_ang0']:g}° (~5x)", f"Arm down through the cradle slot; {D['hv_n']} × Ø{D['hv_mag'][0]:g}×{D['hv_mag'][1]:g} N52 " + "/".join("N" if p > 0 else "S" for p in D['hv_pol']) + f"\nover 4 × TMAG5253 X2SON + TMAG5273 (H3, 3D), magnets z {D['hv_z_mag0']:.2f}\n(element {D['hv_elem_gap']:.2f}); pitch {D['hv_pitch']:g}, r {D['hv_r'][0]:.1f}-{D['hv_r'][-1]:.1f}.", frame=True, fs=8)
             put([0.372, y0, 0.15, hh], insets[2], "D  45° cone race + seat (~17x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° line.\nSeat groove R{D['kb_seat_r']:g} (blue) × {D['kb_seat_depth']:g} deep in the\nDIAL cone, ±{D['kb_seat_w']:.2f} wide, centre on the 45° line.\nASSEMBLY: dial lip-down, grease the groove,\ndrop the {D['kb_n']} balls in (they sit + stay),\nlower the knob on axially, flip, fit.", frame=True, fs=7.5)
             put([0.53, y0, 0.25, hh], insets[4], "H  Hall vernier: plan at ±travel + field", f"Magnet arc +{D['hv_g']:.3f}°/mm, sensor arc -{D['hv_g']:.3f}°/mm (cross at r{D['hv_r_mid']:.1f}, θ=0);\ncrossing moves {1 / (2 * D['hv_g']):.2f} mm/deg -> end pair at ±{D['hv_cross_travel']:g}°.", frame=True, fs=8)
-            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['z_feel']}T into the {D['z_ring']}T ring\n(ratio {D['fm_ratio']:.2f}).", frame=True, fs=8)
+            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['fg_pinion']['part']}\n× {D['fg_z_gear']}T compound, overall {D['fm_ratio']:.2f}:1.", frame=True, fs=8)
         else:
             put([0.005, y0, 0.20, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1321, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True)
             put([0.215, y0, 0.25, hh], insets[1], "C-C  Hall array (~6x)", f"{D['ha_n']} × Ø{D['ha_mag'][0]:g}×{D['ha_mag'][1]:g} N52 alternating over\n2 × DRV5055A3, gap {D['ha_gap']:.1f}.", frame=True)
@@ -354,8 +381,8 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
     fig = plt.figure(figsize=(FW, FH), dpi=150)
     feel_line = ""
     if "z_feel" in D:
-        feel_line = (f" Feel motor on the PCB top: {D['feel']['part']} axial at {D['fm_ang']:.0f}°, "
-                     f"{D['z_feel']}T pinion into the {D['z_ring']}T ring (ratio {D['fm_ratio']:.2f}).")
+        feel_line = (f" Feel motor: {D['feel']['part']} axial at {D['fm_ang']:.0f}°, "
+                     f"{D['fg_pinion']['part']} × {D['fg_z_gear']}T compound, overall {D['fm_ratio']:.2f}:1.")
     fig.text(0.012, 0.985, title, fontsize=26, weight="bold", va="top")
     fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.2f}, 10HP module. " + (note or "Default parameters (no overrides).") + feel_line + " "
              "Cut faces are drawn in a lighter tint of the part colour." +

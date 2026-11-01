@@ -57,7 +57,7 @@ def lint_imports(subs):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE", help="override a param (dotted for dict params)")
-    ap.add_argument("--sub", default=None, help="build + check ONE sub-assembly: main_knob, control_dial, base_drive, under_pcb, electronics")
+    ap.add_argument("--sub", default=None, help="build + check ONE sub-assembly: main_knob, control_dial, base_drive, under_pcb, electronics, optics")
     ap.add_argument("--preview", action="store_true"); ap.add_argument("--render", action="store_true")
     ap.add_argument("--opposite", action="store_true", help="with --clean: view from the other side (A-A from -Y, iso from -X-Y; the other half / quadrant cut away)")
     ap.add_argument("--clean", action="store_true", help="clean assembly view: A-A + iso quarter cut + colour legend only (no insets/tables/clash text)")
@@ -65,6 +65,7 @@ def main():
     ap.add_argument("--step", action="store_true"); ap.add_argument("--no-check", action="store_true"); ap.add_argument("--no-clash", action="store_true")
     ap.add_argument("--dump", action="store_true"); ap.add_argument("--clear-cache", action="store_true"); ap.add_argument("--contract", action="store_true")
     ap.add_argument("--out", default=None, help="output PNG path")
+    ap.add_argument("--export", default="", help="comma list of step,stl,usdz -> the output folder (whole stack, or the --sub)")
     a = ap.parse_args()
     if a.contract: return contract()
     from knobparam.common import model, cache
@@ -112,8 +113,17 @@ def main():
     rows = []
     if not a.no_check:
         t = time.time()
-        rows = check.local(D, parts, owner, [a.sub] if a.sub else None)
-        if not a.sub: rows += check.cross(D, parts)
+        import importlib
+        cmods = [check] + [importlib.import_module(f"knobparam.{s}.checks") for s in model.ALL]
+        rk = cache._h(["rows", a.sub, sorted(keys.items()), {k: D[k] for k in sorted(D)}, [cache.src_hash(m) for m in cmods]])
+        rp = os.path.join(cache.CACHE, f"rows_{rk}.json")
+        if os.path.exists(rp):
+            rows = json.load(open(rp))
+        else:
+            rows = check.local(D, parts, owner, [a.sub] if a.sub else None)
+            if not a.sub: rows += check.cross(D, parts)
+            os.makedirs(cache.CACHE, exist_ok=True)
+            json.dump(rows, open(rp, "w"))
         t_gaps = time.time() - t
         w = max(len(r["name"]) for r in rows)
         print(f"\n{'CHECK':{w}s}  {'value':>8s}  {'target':>8s}  result  {'owner':12s}  note"); print("-" * (w + 54))
@@ -121,6 +131,10 @@ def main():
         print(); print("\n".join(clash_lines))
         nf = sum(not r["ok"] for r in rows); nc = sum(1 for k in cl if k not in check.KNOWN)
         print(f"\nSUMMARY{' (' + a.sub + ', local only)' if a.sub else ''}: {len(rows) - nf}/{len(rows)} gap checks PASS, {nf} FAIL; {nc} unexpected clashes, {len(cl) - nc} known")
+        tight = sorted((r for r in rows if r.get("slack") is not None), key=lambda r: r["slack"])[:8]
+        print("TIGHTEST (slack above target): " + "; ".join(f"{r['name'][:40]} {r['slack']:+.3f}" for r in tight))
+        risky = [r for r in rows if r.get("tol_ok") is False]
+        if risky: print("UNDER PROCESS TOLERANCE: " + "; ".join(f"{r['name'][:40]} {r['value']:.3f} < {r['tol_need']:.3f}" for r in risky))
         json.dump(dict(rows=rows, clashes=cl, set=a.set, sub=a.sub), open(os.path.join(OUT, "check.json"), "w"), indent=1)
     if tm is not None:   # re-compose with the gap FAIL list now that gaps are known (matplotlib only, no OCC)
         from knobparam.assembly import render
@@ -130,6 +144,17 @@ def main():
         ins = [] if prev else [f"{tmp}/{n}.png" for n in ("bb", "cc", "d", "ee") + (("hh",) if D["hall_layout"] == "vernier" else ())]
         render.compose(D, parts, f"{tmp}/aa.png", f"{tmp}/iso.png", ins, png, prev, clash_lines, g, title)
         print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items()))
+    if a.export:
+        from knobparam.assembly import export as ex
+        stem = os.path.join(OUT, f"{'knob-stack' if not a.sub else a.sub}-{V}")
+        os.makedirs(OUT, exist_ok=True)
+        for kind in [k for k in a.export.split(",") if k]:
+            t = time.time()
+            if kind == "step": ex.step(parts, stem + ".step")
+            elif kind == "stl": ex.stl(parts, stem + "-stl")
+            elif kind == "usdz": print("usdz:", ex.usdz(parts, keys, stem + ".usdz"))
+            else: print("unknown export", kind); continue
+            print(f"export {kind}: {time.time() - t:.1f} s -> {stem}")
     if a.step:
         from build123d import Compound, export_step
         export_step(Compound(children=list(parts.values())), os.path.join(OUT, f"knob-stack-{V}.step"))
