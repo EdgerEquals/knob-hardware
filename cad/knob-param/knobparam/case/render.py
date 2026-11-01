@@ -283,7 +283,7 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
     handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
-               Patch(facecolor=(0.72, 0.74, 0.78), label="DIN 7984 M3 socket head"),
+               Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head"),
                Patch(facecolor=(0.25, 0.75, 0.95), label="bottom TFT window"),
                Patch(facecolor=(0.95, 0.25, 0.35), label="laser placeholder")]
     fig.legend(handles=handles, loc="upper left", fontsize=fs - 2, frameon=False, bbox_to_anchor=(0.62, 0.44))
@@ -314,7 +314,7 @@ def _compose(paths, titles, out, D, footer):
     handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
                Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
                Patch(facecolor=tuple(c / 255 for c in D["glow_rgb"]), label="Shimicoat glow coat, inside walls"),
-               Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 10642 screws, printed resin threads")]
+               Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head, A2")]
     fig.legend(handles=handles, loc="lower left", ncol=2, fontsize=9, frameon=False,
                bbox_to_anchor=(0.01, 0.0))
     fig.text(0.01, 0.045, footer, fontsize=8.5, va="bottom", family="monospace", color="#222")

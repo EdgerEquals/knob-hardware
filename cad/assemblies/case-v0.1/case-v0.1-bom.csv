@@ -1,0 +1,2 @@
+Item,Qty,Description,Standard,Material,Size,Thread,Notes
+1,4,Socket head cap screw,ISO 4762 / DIN 912,Stainless A2,M3x10,full (to the head; M3 is full-thread for l <= 20),"Knurled cylindrical head Ø5.5 x 3.0 mm, hex socket 2.5 mm, socket depth 1.3 mm min. Flat-bottom counterbore sinks the head 0.10 mm below the PETG face. 1.50 mm of PETG left under the head. Printed resin thread engagement 8.33 mm."

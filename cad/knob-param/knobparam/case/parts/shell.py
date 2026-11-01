@@ -107,15 +107,19 @@ def _tap(D, z0, length):
     return _add(pilot, groove)
 
 
-def _screw(D, z_head, z_shank1, z_th0, length):
-    """DIN 7984 socket head. z_head is the outer face of the head. Thread runs toward +Z from z_th0."""
+def _screw(D, z_head, z_shank1, z_th0, length, head_k=None, hex_s=None):
+    """Socket head. z_head is the outer face of the head. Thread runs toward +Z from z_th0.
+
+    A full-thread screw passes z_shank1 = z_th0 = the bearing face, so there is no plain shank.
+    """
     d = D["screw_d"]
-    k = D["head_k"]
+    k = D["head_k"] if head_k is None else head_k
+    s = D["screw_hex"] if hex_s is None else hex_s
     head = _cyl_z(D["screw_dk"] / 2.0, z_head, z_head + k, 0.0, 0.0)
     shank = _cyl_z(d / 2.0 - D["thread_fit"], z_head + k, max(z_shank1, z_head + k), 0.0, 0.0)
     core = _pilot(D, z_th0, z_th0 + length, internal=False)
     tooth = _thread_groove(D, z_th0, length, internal=False)
-    sock_r = (D["screw_hex"] / 2.0) / math.cos(math.radians(30.0))
+    sock_r = (s / 2.0) / math.cos(math.radians(30.0))
     sock = Pos(0, 0, z_head) * Rot(0, 0, 30) * extrude(RegularPolygon(sock_r, 6), min(D["screw_socket"], k))
     return _sub(_add(_add(head, shank), _add(core, tooth)), sock)
 
@@ -283,9 +287,12 @@ def build(D):
         cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
     screws = {}
     for i, (x, y) in enumerate(D["corners"]):
-        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, D["z_pad_out"] + D["head_below"], D["z_thread0"], D["z_thread0"], D["tap_len"]))
+        z_head = D["z_pad_out"] + D["head_below"]
+        screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, z_head, D["z_screw_under"], D["z_screw_under"], D["screw_thread"]))
     for i, (x, y) in enumerate(D["knob_bolts"]):
-        screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(D, D["z_bolt0"] - D["head_k"], D["z_bolt0"], D["z_bolt0"], D["tap_len"]))
+        screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(
+            D, D["z_bolt0"] - D["bolt_head_k"], D["z_bolt0"], D["z_bolt0"], D["tap_len"],
+            head_k=D["bolt_head_k"], hex_s=D["bolt_hex"]))
     pins = {}
     for i, x0, x1 in ((1, D["x_out0"] - D["cross_pin_d"], D["x_in0"]), (2, D["x_in1"], D["x_out1"] + D["cross_pin_d"])):
         pins[f"cross pin {i}"] = _box(x0, x1, D["place_y"] - D["cross_pin_d"] / 2.0, D["place_y"] + D["cross_pin_d"] / 2.0,

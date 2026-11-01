@@ -50,7 +50,7 @@ def main():
             pcb_live_w=D["pcb_w"],
             notches=[dict(x=round(x, 3), y=round(y, 3), bx=round(D["axis_bx"] + x, 3), by=round(D["axis_by"] - y, 3),
                           d=round(2 * D["notch_r"], 3), kind="notch") for x, y in D.get("corners", ())],
-            screw="DIN 7984 M3 low-head socket cap, flat counterbore in the PETG cover",
+            screw="ISO 4762 / DIN 912 M3×10 socket head cap screw, stainless A2, full thread, knurled head Ø5.5×3.0, flat counterbore in the PETG cover",
             note="Board is inset from the 10HP box by the wall plus the drop-in clearance on all four sides, "
                  "so the PCB edge never reaches the outside. Cut a notch of diameter d at each (bx, by)."),
     )

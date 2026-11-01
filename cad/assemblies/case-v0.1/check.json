@@ -413,7 +413,39 @@
    "value": 1.5,
    "target": ">= 1.5",
    "ok": true,
-   "note": "DIN 7984 head 2.00, counterbore 2.10 (head 0.10 below the face); pad 2.64 on the 0.96 tongue; left under the head 1.50",
+   "note": "ISO 4762 head \u00d85.5\u00d73.00, hex 2.5; counterbore 3.10 (head 0.10 below the face); pad 3.64 on the 0.96 tongue; left under the head 1.50",
+   "owner": "case"
+  },
+  {
+   "name": "counterbore sinks the head",
+   "value": 0.1,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "flat bottom, the \u00d85.5 \u00d7 3.0 knurled head is fully below the cover face",
+   "owner": "case"
+  },
+  {
+   "name": "ISO 4762 engagement",
+   "value": 2.778,
+   "target": ">= 2",
+   "ok": true,
+   "note": "M3\u00d710 A2, thread 10 (to the head); grip 1.67, in the resin 8.33",
+   "owner": "case"
+  },
+  {
+   "name": "screw tip inside the printed tap",
+   "value": 0.166,
+   "target": ">= 0",
+   "ok": true,
+   "note": "tip z 6.73, tap ends 6.90",
+   "owner": "case"
+  },
+  {
+   "name": "pad does not set the depth",
+   "value": 26.21,
+   "target": ">= 0",
+   "ok": true,
+   "note": "pad face -6.37, cover back -32.58; the 3 mm head fits in the local pad",
    "owner": "case"
   },
   {
@@ -426,10 +458,10 @@
   },
   {
    "name": "corner screw tip vs faceplate",
-   "value": 26.65,
+   "value": 26.816,
    "target": ">= 1.5",
    "ok": true,
-   "note": "tip z 6.90, plate underside 33.55",
+   "note": "tip z 6.73, plate underside 33.55",
    "owner": "case"
   },
   {

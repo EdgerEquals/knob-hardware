@@ -99,18 +99,27 @@ P = dict(
     beam_t=0.80,           # [A] thickness of the check volume for the swept fan
     beam_gap=0.40,         # [A] fan stops this far short of the wall and the faceplate
     beam_reach=1.2,        # [A] the fan must come at least this close (it is the light)
-    # ---- printed metric thread + DIN 7984 low-head socket cap (M3) ----
-    # Ed: ISO 4762 Allen head, low-head DIN 7984 acceptable if it saves depth. DIN 7984 M3
-    # head is 2.0 mm instead of ISO 4762's 3.0 mm, so the counterbore is 1 mm shallower.
-    # Flat-bottom counterbore in the PETG, head flush or just below. No 90° countersink.
-    # Bosses are tapped in the resin. No inserts.
+    # ---- printed metric thread + ISO 4762 / DIN 912 M3 socket head (corner screws) ----
+    # Ed: standard full-height knurled cylindrical head, not the DIN 7984 low head.
+    # Head Ø5.5 × 3.0, hex 2.5, socket depth t min 1.3. Stainless A2.
+    # ISO 4762 M3 thread length b = 18, and the thread runs to the head for l ≤ 20.
+    # M3×10 is that full-thread length: it fills the printed tap (grip is only the
+    # 1.5 mm under the head plus the seat gap) and stays inside the 3×d thread.
+    # Flat-bottom counterbore, head just below the face. No 90° countersink.
+    # Bosses are tapped in the resin. No inserts. The knob bolts are not these screws.
     screw_d=3.0,           # [Ed] M3
     screw_p=0.5,           # [S] ISO coarse pitch for M3
-    screw_dk=5.50,         # [S] DIN 7984 / ISO 4762 head diameter, M3
-    head_k=2.0,            # [S] DIN 7984 M3 head height (ISO 4762 is 3.0)
-    screw_hex=2.0,         # [S] DIN 7984 hex socket across flats (ISO 4762 M3 is 2.5)
-    screw_socket=1.3,      # [S] hex socket depth
+    screw_dk=5.50,         # [S] ISO 4762 M3 head diameter
+    head_k=3.0,            # [Ed][S] ISO 4762 M3 head height
+    screw_hex=2.5,         # [S] ISO 4762 M3 hex socket across flats
+    screw_socket=1.3,      # [S] ISO 4762 M3 socket depth t min
+    screw_len=10.0,        # [S] standard length, mm under the head
+    screw_b=18.0,          # [S] ISO 4762 M3 reference thread length, used when l > screw_full_to
+    screw_full_to=20.0,    # [S] M3 is threaded to the head up to this length
+    screw_mat="A2",        # [Ed] stainless
     head_below=0.10,       # [A] head sits this far below the cover face
+    bolt_head_k=2.0,       # [A] knob-bolt head, not the cover screw
+    bolt_hex=2.0,          # [A] knob-bolt socket, not the cover screw
     cbore_clear=0.20,      # [A] counterbore radius over the head radius
     thread_int_k=1.082532, # [S] internal minor D1 = d − this × pitch
     thread_ext_k=1.226869, # [S] external minor d3 = d − this × pitch
@@ -563,7 +572,13 @@ def derive(D):
     D["z_thread0"] = D["z_rim"]
     D["tap_len"] = D["engage"] - D["screw_p"]
     D["z_thread1"] = D["z_thread0"] + D["tap_len"]
-    D["z_tip"] = D["z_thread1"]
+    # ISO 4762 length is under the head. M3×10 is fully threaded, so the thread
+    # starts at the bearing face and the tip lands inside the printed tap.
+    D["z_screw_under"] = D["z_pad_out"] + D["cbore_depth"]
+    D["screw_grip"] = D["z_thread0"] - D["z_screw_under"]
+    D["screw_thread"] = D["screw_len"] if D["screw_len"] <= D["screw_full_to"] else D["screw_b"]
+    D["screw_engage"] = D["screw_thread"] - D["screw_grip"]
+    D["z_tip"] = D["z_screw_under"] + D["screw_len"]
     D["z_bolt_tip"] = D["z_bolt0"] + D["tap_len"]
     # cross-pin axis: through each side wall, at the joystick, just under the plate
     D["pin_z"] = D["z_fp0"] - D["pin_below_ratio"] * (D["z_fp0"] - D["z_seat"])

@@ -4029,7 +4029,7 @@
    {"x": -19.95, "y": 17.389, "bx": 5.3, "by": 35.511, "d": 9.6, "kind": "notch"},
    {"x": 19.95, "y": 17.389, "bx": 45.2, "by": 35.511, "d": 9.6, "kind": "notch"}
   ],
-  "screw": "DIN 7984 M3 low-head socket cap, flat counterbore in the PETG cover",
+  "screw": "ISO 4762 / DIN 912 M3×10 socket head cap screw, stainless A2, full thread, knurled head Ø5.5×3.0, flat counterbore in the PETG cover",
   "note": "Board is inset from the 10HP box by the 2.5 mm wall plus 0.60 mm clearance on all four sides, so the PCB edge never reaches the outside. Cut a notch of diameter d at each (bx, by). The resin boss and the screw occupy the notch. Frame x,y is the dial axis; bx,by is board coords."
  }
 }

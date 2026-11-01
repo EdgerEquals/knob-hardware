@@ -23,7 +23,8 @@ CASE_GROUPS = [
     ("back cover, smoky PETG", "#84888e", lambda n: n.startswith("back cover")),
     ("bottom TFT window", "#3ec0f0", lambda n: n.startswith("bottom TFT")),
     ("laser placeholder", "#f23b52", lambda n: n.startswith("laser")),
-    ("DIN 7984 M3 screws", "#b7bcc6", lambda n: n.startswith(("corner screw", "knob bolt"))),
+    ("ISO 4762 M3×10 corner screws, A2", "#b7bcc6", lambda n: n.startswith("corner screw")),
+    ("knob bolts, M3", "#9aa0aa", lambda n: n.startswith("knob bolt")),
     ("joystick cross pin", "#d4b44a", lambda n: n.startswith("cross pin")),
 ]
 JOY_GROUPS = [

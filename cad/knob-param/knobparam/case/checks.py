@@ -160,9 +160,20 @@ def checks(D, parts):
         f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
     row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
         f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
-    row("PETG under the screw head", D["cover_under"], D["cover_under_mult"] * D["screw_d"],
-        f"DIN 7984 head {D['head_k']:.2f}, counterbore {D['cbore_depth']:.2f} (head {D['head_below']:.2f} below the face); "
+    row("PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
+        f"ISO 4762 head Ø{D['screw_dk']:.1f}×{D['head_k']:.2f}, hex {D['screw_hex']:.1f}; "
+        f"counterbore {D['cbore_depth']:.2f} (head {D['head_below']:.2f} below the face); "
         f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; left under the head {D['cover_skin']:.2f}")
+    row("counterbore sinks the head", D["cbore_depth"] - D["head_k"], D["head_below"],
+        "flat bottom, the Ø5.5 × 3.0 knurled head is fully below the cover face")
+    row("ISO 4762 engagement", D["screw_engage"] / D["screw_d"], D["engage_min"],
+        f"M{D['screw_d']:.0f}×{D['screw_len']:.0f} {D['screw_mat']}, thread {D['screw_thread']:.0f} "
+        f"({'to the head' if D['screw_len'] <= D['screw_full_to'] else 'partial, b=' + format(D['screw_b'], '.0f')}); "
+        f"grip {D['screw_grip']:.2f}, in the resin {D['screw_engage']:.2f}")
+    row("screw tip inside the printed tap", D["z_thread1"] - D["z_tip"], 0.0,
+        f"tip z {D['z_tip']:.2f}, tap ends {D['z_thread1']:.2f}")
+    row("pad does not set the depth", D["z_pad_out"] - D["z_cover_out"], 0.0,
+        f"pad face {D['z_pad_out']:.2f}, cover back {D['z_cover_out']:.2f}; the 3 mm head fits in the local pad")
     row("corner screw through the notch", D["notch_r"] - D["screw_d"] / 2, D["notch_gap"],
         f"notch Ø{2 * D['notch_r']:.2f} at x {D['corners'][1][0]:.2f}, y {D['corners'][1][1]:.2f}")
     row("corner screw tip vs faceplate", D["z_fp0"] - D["z_tip"], D["tip_clear"],
