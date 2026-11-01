@@ -9,7 +9,12 @@ P = dict(
 
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
                             "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # ball circle + 45° faces
-                            "kb_seat_c_knob", "kb_groove_h"]}
+                            "kb_seat_c_knob", "kb_groove_h"],
+            # seal shoulder: a skirt that drops over the case ring. Placed by the case after this
+            # sub derives, so the solids here do not use it yet. bore radius lab_shoulder_r,
+            # skirt from lab_shoulder_z0 up past lab_shoulder_z1 (the top of the ring).
+            "case": ["lab_ring_r", "lab_ring_z0", "lab_ring_z1",
+                     "lab_shoulder_r", "lab_shoulder_z0", "lab_shoulder_z1"]}
 EXPORTS = ["h_bi1"]   # top of the bottom internal ring -> base_drive (feel-motor can sits above it)
 
 

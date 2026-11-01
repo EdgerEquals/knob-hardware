@@ -77,8 +77,9 @@ P = dict(
     tol_sla=0.20,          # [J][S] SLA, wide end of PCBWay ±0.1–0.2
     tol_mjf=0.25,          # [J][S] carrier and knob are MJF; joystick's knob clearance is 2 × this
     hole_corner_r=1.2,     # [A] rounded joystick opening (material left in the corners)
-    fp_corner_r=2.0,       # [A] faceplate outer corner
-    fillet_r=1.2,          # [A] bead on the wall-to-faceplate joint and the body corners
+    edge_r_ratio=0.16,     # [Ed] outside edge radius / wall; the only break in the plain box
+    fp_corner_r=2.0,       # [A] replaced in derive by edge_r_ratio × wall
+    fillet_r=1.2,          # [A] kept for the scanner bead; the plain box has no bead when the scanner is off
     # ---- scanner (665 nm). Parked: nothing is built or checked while this is false. ----
     scanner_enabled=False, # [Ed] off until there is room beside the bottom TFT
     scan_motor_d=8.0,      # [A] FLAG: assumed small coreless / coin-style can, no catalogue part
@@ -143,13 +144,10 @@ P = dict(
     cover_rho=1.27e-3,     # [A] PETG, g/mm³
     cover_rgb=(132, 136, 142),  # [A] smoky grey, still see-through
     cover_opacity=0.34,    # [A]
-    # ---- knob collar, labyrinth placeholder, bolts up into the shell ----
+    # ---- knob collar under the plate, bolts up into the shell ----
+    # The seal itself is the thin ring on the front face (interface lab_ring_*).
     collar_h_mult=3.0,     # [A] collar length / screw diameter
-    collar_wall=2.5,       # [A] radial wall; the labyrinth is cut into it
-    lab_n=3,               # [A] placeholder groove count
-    lab_w_ratio=0.4,       # [A] groove width / pitch, the pitch itself is a fraction of the collar
-    lab_pitch_ratio=0.35,  # [A] groove pitch / collar length
-    lab_d_ratio=0.25,      # [A] groove depth / collar wall
+    collar_wall=2.5,       # [A] radial wall of the tube the knob slides through
     knob_bolt_n=4,         # [Ed] bolts the knob module up into the shell
     # ---- joystick spring cross pins: side access. v0.4 has no exported pin axis yet. ----
     cross_pin_d=1.6,       # [A] cross pin diameter
@@ -193,7 +191,9 @@ P = dict(
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "under_pcb": ["d_big_tip"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
-           "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb"]
+           "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
+           "lab_ring_r", "lab_ring_z0", "lab_ring_z1",
+           "lab_shoulder_r", "lab_shoulder_z0", "lab_shoulder_z1"]
 
 
 def _clear_rect(cx, cy, r, x0, y0, x1, y1):
@@ -281,6 +281,8 @@ def derive(D):
     D["z_fp1"] = D["knob_top_used"] - D["knob_proud"]
     D["z_fp0"] = D["z_fp1"] - D["wall"]
     D["fp_t"] = D["wall"]
+    D["edge_r"] = D["edge_r_ratio"] * D["wall"]
+    D["fp_corner_r"] = D["edge_r"]
     D["fp_to_pcb"] = D["z_fp1"]
     D["z_bz0"] = D["z_fp1"] + D["up_gap"]
     D["z_bz1"] = D["z_bz0"] + D["bz_t"]
@@ -483,14 +485,17 @@ def derive(D):
         D["lasers"] = ((0.0, ly),)
     else:
         D["lasers"] = ((-lx, ly), (lx, ly))
-    # collar under the knob opening, and the placeholder labyrinth
+    # collar under the knob opening. The seal ring stands on the front face.
     D["collar_h"] = D["collar_h_mult"] * D["screw_d"]
     D["z_collar0"] = D["z_fp0"] - D["collar_h"]
     D["collar_r"] = D["knob_hole_r"] + D["collar_wall"]
-    D["lab_pitch"] = D["collar_h"] * D["lab_pitch_ratio"]
-    D["lab_w"] = D["lab_pitch"] * D["lab_w_ratio"]
-    D["lab_d"] = D["collar_wall"] * D["lab_d_ratio"]
-    D["lab_z0"] = D["z_collar0"] + (D["collar_h"] - (D["lab_n"] - 1) * D["lab_pitch"]) / 2.0
+    D["lab_ring_r"] = D["knob_hole_r"] + D["lab_ring_t"]
+    D["lab_ring_z0"] = D["z_fp1"]
+    D["lab_ring_z1"] = D["z_fp1"] + D["lab_ring_h"]
+    # Knob shoulder: bore just outside the ring, skirt overlapping the ring from above.
+    D["lab_shoulder_r"] = D["lab_ring_r"] + D["lab_gap"]
+    D["lab_shoulder_z1"] = D["lab_ring_z1"]
+    D["lab_shoulder_z0"] = D["lab_ring_z1"] - D["lab_overlap"]
     D["z_bolt0"] = D["z_fp0"] - D["engage"]
     # Cover screws. The axis is inside the PCB outline; a notch in the board lets the
     # resin post occupy the corner and the wall. Upper pair sits in the gap between the
@@ -583,8 +588,10 @@ def derive(D):
     # cross-pin axis: through each side wall, at the joystick, just under the plate
     D["pin_z"] = D["z_fp0"] - D["pin_below_ratio"] * (D["z_fp0"] - D["z_seat"])
     D["pin_hole_r"] = D["cross_pin_d"] * (0.5 + D["pin_clear_ratio"])
-    D["edge_depth"] = D["fp_t"] - D["edge_t"]
-    D["lig_depth"] = D["fp_t"] - D["ligament_t"]
+    D["edge_t"] = D["fp_t"]
+    D["ligament_t"] = D["fp_t"]
+    D["edge_depth"] = 0.0
+    D["lig_depth"] = 0.0
     D["scope_short"] = D["pcb_w"] - D["pcb_max_w"]
     D["bezel_w"] = 2.0 * D["half_w"]
     D["bezel_margin"] = (D["panel_w"] - D["bezel_w"]) / 2.0

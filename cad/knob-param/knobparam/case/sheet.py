@@ -9,8 +9,7 @@ import sys
 from build123d import Align, Box, Pos
 
 from ..assembly.render import GROUPS as KNOB_GROUPS
-from ..assembly.render import iso as iso_shot
-from ..assembly.render import ortho, cut_meshes, _mesh, _solids, _trim
+from ..assembly.render import cut_meshes, _mesh, _solids, _trim
 from ..common.cache import CACHE
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -18,10 +17,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # cad/
 
 
 CASE_GROUPS = [
-    ("shell, plain clear resin (printed M3 threads)", "#c5d0d8", lambda n: n == "case"),
+    ("shell, plain clear resin — printed M3 threads in the bosses", "#c5d0d8", lambda n: n == "case"),
     ("Shimicoat glow coat, inside walls", "#8fd184", lambda n: n.startswith("glow")),
     ("back cover, smoky PETG", "#84888e", lambda n: n.startswith("back cover")),
-    ("bottom TFT window", "#3ec0f0", lambda n: n.startswith("bottom TFT")),
+    ("TFT light path (air, keep-out)", "#3ec0f0", lambda n: n.startswith("bottom TFT")),
     ("laser placeholder", "#f23b52", lambda n: n.startswith("laser")),
     ("ISO 4762 M3×10 corner screws, A2", "#b7bcc6", lambda n: n.startswith("corner screw")),
     ("knob bolts, M3", "#9aa0aa", lambda n: n.startswith("knob bolt")),
@@ -123,6 +122,78 @@ def _restore_pcb(parts, keys, paths, D):
         paths[n] = got[n]
 
 
+def _lighten(hexc, k=0.45):
+    h = hexc.lstrip("#")
+    rgb = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return "#%02x%02x%02x" % tuple(int(v + (255 - v) * k) for v in rgb)
+
+
+def _draw(pl, pv, meshes, lw=1.2):
+    """Solids in the part colours. The TFT keep-out is an outline, not a filled part."""
+    import numpy as np
+    for n, m in meshes.items():
+        gi = group_of(n)
+        col = GROUPS[gi][1] if gi is not None else "#9e9e9e"
+        keep = n.startswith("bottom TFT")
+        for _cut, (P, T) in m.items():
+            if len(T) == 0:
+                continue
+            pm = pv.PolyData(np.ascontiguousarray(P), np.hstack([np.full((len(T), 1), 3), T]).ravel())
+            if keep:
+                fe = pm.extract_feature_edges(feature_angle=25, boundary_edges=True,
+                                              feature_edges=True, non_manifold_edges=False, manifold_edges=True)
+                if fe.n_points:
+                    pl.add_mesh(fe, color="#0288d1", line_width=3.0)
+                continue
+            pl.add_mesh(pm, color=_lighten(col) if _cut else col, smooth_shading=False,
+                        specular=0.05, ambient=0.35, diffuse=0.75)
+            if _cut:
+                be = pm.extract_feature_edges(boundary_edges=True, feature_edges=False,
+                                              non_manifold_edges=False, manifold_edges=False)
+                if be.n_points:
+                    pl.add_mesh(be, color="#101010", line_width=lw)
+            else:
+                fe = pm.extract_feature_edges(feature_angle=35, boundary_edges=False,
+                                              non_manifold_edges=False, manifold_edges=False)
+                if fe.n_points:
+                    pl.add_mesh(fe, color="#303030", line_width=lw * 0.7)
+
+
+def _shot(meshes, centre, cam_dir, up, w_mm, h_mm, ppm, path, iso=False):
+    import numpy as np
+    import pyvista as pv
+    pv.OFF_SCREEN = True
+    if iso:
+        pl = pv.Plotter(off_screen=True, window_size=(1500, 1500))
+    else:
+        pl = pv.Plotter(off_screen=True, window_size=(max(int(w_mm * ppm), 50), max(int(h_mm * ppm), 50)))
+    pl.set_background("white")
+    _draw(pl, pv, meshes)
+    if iso:
+        P = np.vstack([p for m in meshes.values() for pair in m.values() for p in (pair[0],) if len(pair[0])])
+        lo, hi = P.min(0), P.max(0)
+        c = (lo + hi) / 2
+        d = np.array([1.0, 1.0, 0.9]); d /= np.linalg.norm(d)
+        pl.camera.position = tuple(c + 500 * d)
+        pl.camera.focal_point = tuple(c)
+        pl.camera.up = (0, 0, 1)
+        pl.enable_parallel_projection()
+        pl.reset_camera()
+        pl.camera.zoom(1.25)
+    else:
+        c = np.array(centre, float)
+        d = np.array(cam_dir, float); d /= np.linalg.norm(d)
+        pl.camera.position = tuple(c + 500 * d)
+        pl.camera.focal_point = tuple(c)
+        pl.camera.up = up
+        pl.enable_parallel_projection()
+        pl.camera.parallel_scale = h_mm / 2
+    pl.camera.clipping_range = (1, 2000)
+    pl.screenshot(path)
+    pl.close()
+    return path
+
+
 def render_sheet(D, parts, keys, paths, out_png):
     import matplotlib
     matplotlib.use("Agg")
@@ -146,13 +217,13 @@ def render_sheet(D, parts, keys, paths, out_png):
     tmp = os.path.join(os.path.dirname(out_png), "_sheet_tmp")
     os.makedirs(tmp, exist_ok=True)
     ppm = 11
-    ortho(m_y, (0.0, (y0 + y1) / 2, (z0 + z1) / 2), (-1, 0, 0), (0, 1, 0),
-          (z1 - z0) + 2 * pad, (y1 - y0) + 2 * pad, ppm, f"{tmp}/sy.png", edges=True, aa=True)
-    ortho(m_x, ((x0 + x1) / 2, 0.0, (z0 + z1) / 2), (0, 1, 0), (0, 0, 1),
-          (x1 - x0) + 2 * pad, (z1 - z0) + 2 * pad, ppm, f"{tmp}/sx.png", edges=True, aa=True)
-    ortho(m_p, ((x0 + x1) / 2, (y0 + y1) / 2, 1.4), (0, 0, 1), (0, 1, 0),
-          (x1 - x0) + 2 * pad, (y1 - y0) + 2 * pad, ppm, f"{tmp}/sp.png", edges=True, aa=True)
-    iso_shot(m_i, 1500, f"{tmp}/iso.png", edges=True, aa=True)
+    _shot(m_y, (0.0, (y0 + y1) / 2, (z0 + z1) / 2), (-1, 0, 0), (0, 1, 0),
+          (z1 - z0) + 2 * pad, (y1 - y0) + 2 * pad, ppm, f"{tmp}/sy.png")
+    _shot(m_x, ((x0 + x1) / 2, 0.0, (z0 + z1) / 2), (0, 1, 0), (0, 0, 1),
+          (x1 - x0) + 2 * pad, (z1 - z0) + 2 * pad, ppm, f"{tmp}/sx.png")
+    _shot(m_p, ((x0 + x1) / 2, (y0 + y1) / 2, 1.4), (0, 0, 1), (0, 1, 0),
+          (x1 - x0) + 2 * pad, (y1 - y0) + 2 * pad, ppm, f"{tmp}/sp.png")
+    _shot(m_i, None, None, None, 1, 1, ppm, f"{tmp}/iso.png", iso=True)
 
     behind = D["z_fp1"] - D["z_foot"]
     shots = [
@@ -163,7 +234,7 @@ def render_sheet(D, parts, keys, paths, out_png):
         (f"{tmp}/sp.png", "SECTION  —  just above the PCB",
          f"TFT window {D['win_w']:.2f} × {D['win_h']:.2f} mm, x {D['win_x0']:.2f}..{D['win_x1']:.2f}, y {D['win_y0']:.2f}..{D['win_y1']:.2f}."),
         (f"{tmp}/iso.png", "ISOMETRIC CUT-AWAY",
-         "Clear shell and the module inside. Cut faces are a lighter tint."),
+         "Helices in the bosses are the printed M3 threads. The cyan outline is the TFT light path, not a part."),
     ]
     shown = []
     for meshes in (m_y, m_x, m_p, m_i):

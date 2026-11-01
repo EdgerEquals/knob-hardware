@@ -50,11 +50,12 @@ def checks(D, parts):
         f"{len(lasers)}× at " + ", ".join(f"({x:.1f},{y:.1f})" for x, y in D["lasers"]) + " under the joystick",
         higher_ok=False)
     row("faceplate thickness", D["fp_t"], D["wall"], "same resin wall as the sides")
-    row("edge strip thickness", D["edge_t"], sla, "light-pipe rim, thinner than the plate")
-    row("ligament thickness", D["ligament_t"], sla, "bridge between knob hole and joystick hole")
+    row("edge strip thickness", D["edge_t"], D["wall"], "the rim is the full faceplate, one plane with the rest")
+    row("ligament thickness", D["ligament_t"], D["wall"], "bridge between the holes is the full plate")
     if D["scanner_enabled"]:
         row("grating-slot lip", D["slot_lip"], sla, "shelf left above and below the film")
-    row("fillet bead", D["fillet_r"], sla, "wall-to-faceplate joint")
+    row("outside edge radius", D["edge_r"], D["edge_r_ratio"] * D["wall"],
+        "the only radius on the plain box, a ratio of the wall")
     row("bezel thickness under the cap", D["bz_max"] - D["bz_t"], 0.0,
         f"joystick v0.4 lip {D['bz_t']:.2f}, cap {D['bz_max']:.1f}")
     # the row above uses higher_ok so value 1.5-bz_t >= 0. Good.
@@ -141,10 +142,17 @@ def checks(D, parts):
     row("collar bore is open", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_collar0"] + D["z_fp0"]) / 2) else 1.0, 1.0,
         "knob module slides down through the collar")
     rim_y = D["panel_y0"] + D["edge_w"] / 2
-    row("edge strip is material", 1.0 if _inside(case, D["ox"], rim_y, D["z_fp0"] + D["edge_t"] / 2) else 0.0, 1.0,
-        "bottom rim, the light pipe, kept at the back of the plate")
-    row("edge strip is thinned", 0.0 if _inside(case, D["ox"], rim_y, D["z_fp1"] - D["edge_depth"] / 2) else 1.0,
-        1.0, "the front of the rim is pocketed so the band lights")
+    row("edge strip is material", 1.0 if _inside(case, D["ox"], rim_y, (D["z_fp0"] + D["z_fp1"]) / 2) else 0.0, 1.0,
+        "bottom rim is the same plate as the rest of the face")
+    row("front face is one plane", 1.0 if _inside(case, D["ox"], rim_y, D["z_fp1"] - 0.4) else 0.0, 1.0,
+        "no light-pipe step and no joystick rebate; the TFT window, knob and joystick opening share z_fp1")
+    row("seal ring stands on the face",
+        1.0 if _inside(case, D["knob_hole_r"] + D["lab_ring_t"] / 2.0, 0.0, (D["lab_ring_z0"] + D["lab_ring_z1"]) / 2.0) else 0.0,
+        1.0, f"thin ring Ø{2 * D['lab_ring_r']:.2f}, {D['lab_ring_h']:.2f} mm above the face; "
+             f"knob shoulder bore Ø{2 * D['lab_shoulder_r']:.2f} from z {D['lab_shoulder_z0']:.2f}")
+    row("seal ring bore is open",
+        0.0 if _inside(case, 0.0, 0.0, (D["lab_ring_z0"] + D["lab_ring_z1"]) / 2.0) else 1.0, 1.0,
+        "the knob passes through; its shoulder drops over the ring")
 
     if D["scanner_enabled"]:
         knob = knob_envelope(D)

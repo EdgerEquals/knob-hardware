@@ -74,26 +74,26 @@
   },
   {
    "name": "edge strip thickness",
-   "value": 1.2,
-   "target": ">= 0.8",
+   "value": 2.5,
+   "target": ">= 2.5",
    "ok": true,
-   "note": "light-pipe rim, thinner than the plate",
+   "note": "the rim is the full faceplate, one plane with the rest",
    "owner": "case"
   },
   {
    "name": "ligament thickness",
-   "value": 1.2,
-   "target": ">= 0.8",
+   "value": 2.5,
+   "target": ">= 2.5",
    "ok": true,
-   "note": "bridge between knob hole and joystick hole",
+   "note": "bridge between the holes is the full plate",
    "owner": "case"
   },
   {
-   "name": "fillet bead",
-   "value": 1.2,
-   "target": ">= 0.8",
+   "name": "outside edge radius",
+   "value": 0.4,
+   "target": ">= 0.4",
    "ok": true,
-   "note": "wall-to-faceplate joint",
+   "note": "the only radius on the plain box, a ratio of the wall",
    "owner": "case"
   },
   {
@@ -381,15 +381,31 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "bottom rim, the light pipe, kept at the back of the plate",
+   "note": "bottom rim is the same plate as the rest of the face",
    "owner": "case"
   },
   {
-   "name": "edge strip is thinned",
+   "name": "front face is one plane",
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "the front of the rim is pocketed so the band lights",
+   "note": "no light-pipe step and no joystick rebate; the TFT window, knob and joystick opening share z_fp1",
+   "owner": "case"
+  },
+  {
+   "name": "seal ring stands on the face",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "thin ring \u00d843.60, 1.00 mm above the face; knob shoulder bore \u00d844.10 from z 36.35",
+   "owner": "case"
+  },
+  {
+   "name": "seal ring bore is open",
+   "value": 1.0,
+   "target": ">= 1",
+   "ok": true,
+   "note": "the knob passes through; its shoulder drops over the ring",
    "owner": "case"
   },
   {
@@ -498,10 +514,10 @@
   },
   {
    "name": "case mass",
-   "value": 57.278,
+   "value": 59.009,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 44060 mm\u00b3 (44.1 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 45391 mm\u00b3 (45.4 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case"
   },
   {

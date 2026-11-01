@@ -30,6 +30,15 @@ P = dict(
     knob_wall=2.0,   # [A] skirt wall (ring root to OD is what is left: flagged)
     skirt_gap=2.0,   # [Ed] bottom ring underside above the PCB front
     knob_run=0.3,   # [A] knob <-> dial running gap
+    # Labyrinth: the case stands a thin ring up around the knob opening. The knob
+    # grows a shoulder that drops down over and around that ring. The knob sub-assembly
+    # reads these and the placed shoulder the case exports (lab_shoulder_r / _z0 / _z1).
+    # shoulder bore radius = knob opening radius + lab_ring_t + lab_gap
+    # shoulder skirt runs from (front face + lab_ring_h - lab_overlap) up over the ring
+    lab_ring_h=1.0,     # [Ed] ring height above the front face
+    lab_ring_t=0.60,    # [Ed] radial thickness of the ring
+    lab_gap=0.25,       # [Ed] radial air, ring outside to the shoulder bore
+    lab_overlap=0.70,   # [Ed] how far the shoulder overlaps the ring, axially
     knob_hub_z0=39.6,   # [A] knob hub / hub-gear bottom
     hub_gear_face=4.4,   # [A] hub gear face (pinion 3.0 inside it)
     # ---- knob top bearing: opposed 45 deg faces, ball track grooved into both [Ed] ----

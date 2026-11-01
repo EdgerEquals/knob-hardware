@@ -38,6 +38,12 @@ def _plate(w, h, r, z0, z1, x, y):
     return Pos(x, y, z0) * extrude(RectangleRounded(w, h, r), z1 - z0)
 
 
+def _round_box(w, h, r, z0, z1, x, y):
+    """Outside of the plain box. r is the plan-corner radius."""
+    rr = min(r, w / 4.0, h / 4.0)
+    return Pos(x, y, z0) * extrude(RectangleRounded(w, h, rr), z1 - z0)
+
+
 def _cyl_z(r, z0, z1, x, y):
     if z1 <= z0 or r <= 0:
         return None
@@ -156,14 +162,14 @@ def joy_envelope(D):
 def build(D):
     sl = D["cut_slop"]
     fu = D["fuse"]
-    r = D["fillet_r"]
-    # ---- faceplate, full HP × 3U ----
-    case = _plate(D["panel_w"], D["panel_h"], D["fp_corner_r"], D["z_fp0"], D["z_fp1"], D["ox"], D["panel_yc"])
-    # four outer walls, same rectangle the cover continues. Top and bottom stay inside the rail zone.
-    case = _add(case, _box(D["x_out0"], D["x_in0"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
-    case = _add(case, _box(D["x_in1"], D["x_out1"], D["body_y0"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
-    case = _add(case, _box(D["x_out0"], D["x_out1"], D["body_y0"], D["y_in0"], D["z_rim"], D["z_fp0"] + fu))
-    case = _add(case, _box(D["x_out0"], D["x_out1"], D["y_in1"], D["body_y1"], D["z_rim"], D["z_fp0"] + fu))
+    # ---- one faceplate, full HP × 3U, one flat front at z_fp1 ----
+    case = _round_box(D["panel_w"], D["panel_h"], D["edge_r"], D["z_fp0"], D["z_fp1"], D["ox"], D["panel_yc"])
+    # body behind the rails: same width, inset in Y, radiused vertical corners. Hollow.
+    bw, bh = D["panel_w"], D["body_y1"] - D["body_y0"]
+    outer = _round_box(bw, bh, D["edge_r"], D["z_rim"], D["z_fp0"] + fu, D["ox"], D["body_yc"])
+    ir = min(max(D["edge_r"] * 0.5, 0.05), (bw - 2 * D["wall"]) / 4.0, (bh - 2 * D["wall"]) / 4.0)
+    inner = _round_box(bw - 2 * D["wall"], bh - 2 * D["wall"], ir, D["z_rim"] - sl, D["z_fp0"], D["ox"], D["body_yc"])
+    case = _add(case, _sub(outer, inner))
     # ledge the PCB front sits against, inboard of the board edge
     lw, z0, z1 = D["ledge_w"], D["z_ledge0"], D["z_ledge1"]
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y0"], D["pcb_y0"] + lw, z0, z1))
@@ -186,10 +192,6 @@ def build(D):
     case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_bolt0"], D["z_fp0"] + fu, x, y))
-    # fillet beads where the side walls meet the plate. With the scanner on, its corner stays square.
-    y_bead = (D["y_mot"] + D["mirror_r"]) if D["scanner_enabled"] else D["body_y0"]
-    case = _add(case, _bead_y(D["x_in0"], D["z_fp0"], y_bead, D["body_y1"], r))
-    case = _add(case, _bead_y(D["x_in1"], D["z_fp0"], D["body_y0"], D["body_y1"], r))
     if D["scanner_enabled"]:
         shelf = _box(D["shelf_x0"], D["shelf_x1"], D["shelf_y0"] - fu, D["shelf_y1"], D["shelf_z0"], D["shelf_z1"])
         cheek = _box(D["shelf_x0"], D["shelf_x1"], D["pcb_y0"], D["pcb_y0"] + lw, D["z_ledge1"] - fu, D["shelf_z1"])
@@ -199,38 +201,16 @@ def build(D):
     joy = _plate(D["joy_hole"][0], D["joy_hole"][1], D["hole_corner_r"], D["z_seat"] - sl, D["z_fp1"] + sl,
                  D["ox"], D["place_y"])
     case = _sub(case, joy)
-    # bridge between the holes, thinned so the lip can drop and the web stays ≥ sla_min
-    case = _sub(case, _box(-D["hole_hw"], D["hole_hw"], D["knob_hole_r"], D["joy_y_near"],
-                           D["z_fp1"] - D["lig_depth"], D["z_fp1"] + sl))
-    # rebate under the rest of the lip, kept off the knob bridge
-    rebate = _plate(2 * (D["half_w"] + D["tol_sla"]), 2 * (D["half_h"] + D["tol_sla"]), D["hole_corner_r"],
-                    D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + sl, D["ox"], D["place_y"])
-    rebate = _sub(rebate, _cyl_z(D["knob_hole_r"] + D["web_min"], D["z_fp0"] - sl, D["z_fp1"] + sl, D["ox"], D["oy"]))
-    case = _sub(case, rebate)
-    # light-pipe rim. The top band starts at the bezel edge so it does not eat the lip.
-    pocket = _box(D["panel_x0"] - sl, D["panel_x1"] + sl, D["panel_y0"] - sl, D["panel_y0"] + D["edge_w"],
-                  D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl)
-    pocket = _add(pocket, _box(D["panel_x0"] - sl, D["panel_x0"] + D["edge_w"], D["panel_y0"], D["panel_y1"],
-                               D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl))
-    pocket = _add(pocket, _box(D["panel_x1"] - D["edge_w"], D["panel_x1"] + sl, D["panel_y0"], D["panel_y1"],
-                               D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl))
-    pocket = _add(pocket, _box(D["panel_x0"], D["panel_x1"], D["bezel_y_far"], D["panel_y1"] + sl,
-                               D["z_fp1"] - D["edge_depth"], D["z_fp1"] + sl))
-    if D["rail_top_ok"]:
-        for x in D["rail_x_top"]:
-            pocket = _sub(pocket, _cyl_z(D["rail_pad_r"], D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
-    for x in D["rail_x_std"]:
-        pocket = _sub(pocket, _cyl_z(D["rail_pad_r"], D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_bot"]))
-    case = _sub(case, pocket)
+    # rail holes through the flat face. No rebate, no light-pipe step, no thinned bridge.
     if D["rail_top_ok"]:
         for x in D["rail_x_top"]:
             case = _sub(case, _cyl_z(D["rail_hole_d"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_top"]))
     for x in D["rail_x_std"]:
         case = _sub(case, _cyl_z(D["rail_hole_d"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, D["rail_y_bot"]))
-    # labyrinth placeholder: annular grooves in the collar bore
-    for i in range(D["lab_n"]):
-        z = D["lab_z0"] + i * D["lab_pitch"]
-        case = _sub(case, _cyl_z(D["knob_hole_r"] + D["lab_d"], z, z + D["lab_w"], D["ox"], D["oy"]))
+    # seal ring: a short thin collar standing up around the knob opening
+    ring = _cyl_z(D["lab_ring_r"], D["z_fp1"] - fu, D["lab_ring_z1"], D["ox"], D["oy"])
+    ring = _sub(ring, _cyl_z(D["knob_hole_r"], D["z_fp1"] - fu - sl, D["lab_ring_z1"] + sl, D["ox"], D["oy"]))
+    case = _add(case, ring)
     # printed threads
     for x, y in D["corners"]:
         case = _sub(case, _at(x, y, _tap(D, D["z_thread0"], D["tap_len"])))
@@ -246,13 +226,29 @@ def build(D):
                            D["pin_z"] - D["pin_hole_r"], D["pin_z"] + D["pin_hole_r"]))
     if D["scanner_enabled"]:
         case = _sub(case, _box(D["slot_x0"], D["slot_x1"], D["slot_y0"], D["slot_y1"], D["slot_z0"], D["slot_z1"]))
+    # radius only the outside front edges, not the openings
+    try:
+        front = []
+        for e in case.edges():
+            c = e.center()
+            if abs(c.Z - D["z_fp1"]) > 0.05:
+                continue
+            on_rim = (abs(abs(c.X) - D["panel_w"] / 2.0) < 0.3 or abs(c.Y - D["panel_y0"]) < 0.3
+                      or abs(c.Y - D["panel_y1"]) < 0.3)
+            if on_rim:
+                front.append(e)
+        if front:
+            case = fillet(front, D["edge_r"])
+    except Exception:
+        pass
     case = _one(case)
 
     # ---- glow coat on the inside faces Ed brushes: the side walls, and the ledge lips ----
     g0, gt = D["glow_gap"], D["glow_t"]
-    z_glow1 = D["z_fp0"] - r - g0
-    glow = _box(D["x_in0"] + g0, D["x_in0"] + g0 + gt, D["y_in0"] + r, D["y_in1"] - r, D["z_ledge1"], z_glow1)
-    glow = _add(glow, _box(D["x_in1"] - g0 - gt, D["x_in1"] - g0, D["y_in0"] + r, D["y_in1"] - r, D["z_ledge1"], z_glow1))
+    er = D["edge_r"]
+    z_glow1 = D["z_fp0"] - er - g0
+    glow = _box(D["x_in0"] + g0, D["x_in0"] + g0 + gt, D["y_in0"] + er, D["y_in1"] - er, D["z_ledge1"], z_glow1)
+    glow = _add(glow, _box(D["x_in1"] - g0 - gt, D["x_in1"] - g0, D["y_in0"] + er, D["y_in1"] - er, D["z_ledge1"], z_glow1))
     # keep the lip coat inboard of the side ledges, which run the full board height
     gx0 = -D["pcb_x1"] + lw + g0
     gx1 = D["pcb_x1"] - lw - g0
