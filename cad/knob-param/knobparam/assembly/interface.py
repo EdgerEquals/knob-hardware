@@ -55,7 +55,8 @@ P = dict(
     # ---- 1220 motor [M] ----
     motor=dict(title="Motor 1220 coreless planetary", body_d=12.0, motor_len=20.0, gearbox_len=17.0, boss_d=4.0, boss_len=1.0, shaft_d=3.0, shaft_flat=2.5, shaft_len=5.5, flat_len=4.5, seam_groove=0.3, endcap_len=1.5, endcap_d=11.0, rear_boss_d=3.0, rear_boss_len=0.6, term_w=1.2, term_t=0.3, term_len=2.5, term_pitch=6.0, mount_holes=None, ratio="1:144 (3-stage)", version="v0.1"),
     # ---- knob [Ed/A] ----
-    skirt_clear=1.0,   # [Ed/A] motor can to the skirt ID / ring tips (v0.12: 1.0)
+    skirt_clear=1.0,   # [Ed/A] old motor-can preference. A root wall of knob_wall cannot keep this inside the fixed OD.
+    ring_can_clear=0.5,   # [A] 1220 can to the ring tips after the band thickens inward. Same clearance as the cradle.
     knob_wall=2.0,   # [A] skirt wall (ring root to OD is what is left: flagged)
     skirt_gap=2.0,   # [Ed] bottom ring underside above the PCB front
     knob_run=0.3,   # [A] knob <-> dial running gap
@@ -169,12 +170,19 @@ P = dict(
     ha_rib_rload=15.5,   # [Ed] radius of that load
     ha_rib_E=1700.0,   # [Ed] PA12 Young's modulus, N/mm² (1.7 GPa)
     ha_rib_defl=0.07,   # [Ed] mm, max in-plane deflection at ha_rib_rload
-    # ---- v0.17 outer thrust [Ed]: flat horizontal race, Ø1.5 balls, no 45° faces ----
-    ot_ball_d=1.5,   # [Ed] steel ball diameter
-    ot_seat_gap=0.05,   # [A] groove radius over the ball radius (round seat, contact normal vertical)
-    ot_axial_gap=0.30,   # [A] carrier top under the ring underside
-    ot_web=0.45,   # [A] mm between balls along the race
-    ot_keep_ang=(124.0, 137.0),   # [Ed] no balls / no carrier flange here (C20–C22 / U20 plan keep-out)
+    # ---- outer thrust [Ed]: cageless, tracks only. Load balls Ø2 stainless; cheap glass spacers 1.5–1.6 ----
+    ot_ball_d=2.0,   # [Ed] load ball, 316 or 440C stainless
+    ot_spacer_min=1.5,   # [Ed] cheap loose glass, small end of the sieve (Cospheric P-BSGS 1.50 is the stock floor)
+    ot_spacer_max=1.6,   # [Ed] large end. 1.588 is the other stock size and still sits inside this window
+    ot_spacer_alt=1.588,   # [Ed] alternate stock glass, checked but not the modelled size
+    ot_play=0.03,   # [A] extra chord at the LARGE spacer so it cannot jam
+    ot_play_max=0.12,   # [A] largest chord gap still called "touching" at the SMALL spacer
+    ot_ruby_n=4,   # [Ed] synthetic ruby accents, same diameter as the load balls
+    ot_ruby_d=2.0,   # [Ed] ruby diameter (2.0 carries load; set equal to the spacer to accent a spacer)
+    ot_seat_gap=0.05,   # [A] groove radius over the load-ball radius
+    ot_land_min=1.0,   # [Ed] clear resin under the bottom track (groove bottom to the PCB front). The laser comes up through it; not a metal insert.
+    ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
+    ot_keep_ang=(124.0, 137.0),   # [Ed] C20–C22 / U20. A cageless ring cannot skip this; a printed blank fills it
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
@@ -307,27 +315,33 @@ def _motor_room(enc, ang, cd, tip_r, D):
 
 
 def _place_herringbone(D, R):
-    """Coarsest normal module whose 25° herringbone still clears the 1220, leaves hb_wall_min, keeps a pinion of at least
-    hb_z_min, and whose feel train (Tempero 12T × printed spur × ring/pinion) can reach hb_ratio_target without the
-    printed spur crossing the centre tube. Stub addendum is already in the tip-thickness test."""
+    """Coarsest normal module whose 25° herringbone keeps the root-to-skin wall at least the main knob wall
+    (a bit thicker when the race seat allows), clears the 1220 by the cradle clearance, keeps hb_z_min teeth,
+    and whose feel train can reach hb_ratio_target. The outer radius R is fixed: the teeth move inward."""
     beta, pa = D["hb_beta"], D["hb_pressure"]
     ha, ded = D["hb_addendum"], D["hb_dedendum"]
     cosb = math.cos(math.radians(beta))
-    tip_min = D["motor_offset"] + D["can_r"] + D["skirt_clear"]
+    rg = D["ot_ball_d"] / 2 + D["ot_seat_gap"]
+    D["ot_groove_depth"] = 2 * rg                                          # full radial depth of the race groove
+    # a bit thicker than the main wall; the extra fraction is the race seat gap over the ball (no new millimetre)
+    D["ring_wall_ratio"] = 1.0 + D["ot_seat_gap"] / D["ot_ball_d"]
+    D["ring_wall_req"] = D["knob_wall"] * D["ring_wall_ratio"]
+    D["ring_wall_race_req"] = D["knob_wall"] + D["ot_groove_depth"]        # main wall plus the full groove depth
+    # the 1.0 mm skirt clearance cannot coexist with that wall inside the fixed OD; the floor is the cradle clearance
+    tip_min = D["motor_offset"] + D["can_r"] + D["ring_can_clear"]
     dial_r = D["dial_tube_od"] / 2
-    keep = 2.5 + D["feel"]["clear"]   # centre tube Ø5 [S] plus the feel running clearance; the spur must stay on the feel side of it
-    # the compound idler is the one farther from the 1220 (inputs, so this does not need the derived centres)
+    keep = 2.5 + D["feel"]["clear"]
     idler_ang = max((D["idler1_ang"], (D["enc_ang"] + D["idler2_from_enc"]) % 360),
                     key=lambda a: min((a - 0.0) % 360.0, (0.0 - a) % 360.0))
     cands = []
     for mn_i in range(120, 49, -1):               # 1.20 mm down to 0.50, 0.01 mm
         mn = mn_i / 100
         mt = mn / cosb
-        pitch_max = R - D["hb_wall_min"] - ded * mn
+        pitch_max = R - D["ring_wall_req"] - ded * mn
         pitch_min = tip_min + ha * mn
         if pitch_max < pitch_min:
             continue
-        for zp in range(D["hb_z_min"], D["hb_z_min"] + 8):
+        for zp in range(D["hb_z_min"], D["hb_z_min"] + 12):
             if tooth_tip(zp, mn, pa, D["hb_backlash"] / 2, ha, beta) < D["hb_tooth_min"]:
                 continue
             zr_lo = int(math.ceil(2 * pitch_min / mt - 1e-9))
@@ -336,7 +350,7 @@ def _place_herringbone(D, R):
                 pr = zr * mt / 2
                 tip_r, root_r = pr - ha * mn, pr + ded * mn
                 wall = R - root_r
-                if tip_r < tip_min or wall < D["hb_wall_min"]:
+                if tip_r < tip_min or wall < D["ring_wall_req"]:
                     continue
                 pp = zp * mt / 2
                 enc = pr - pp
@@ -352,12 +366,15 @@ def _place_herringbone(D, R):
                 if _motor_room(enc, idler_ang, cd, tip_r, D) < D["feel"]["clear"]:
                     continue
                 cands.append((mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt))
-    near = [c for c in cands if abs(c[1] - D["hb_ratio_target"]) <= 0.5]
-    pool = near or cands
+    # prefer a band that also holds the full race groove; otherwise the thickest wall that is still past the main wall
+    full = [c for c in cands if c[5] >= D["ring_wall_race_req"] - 1e-9]
+    pool = full or cands
+    near = [c for c in pool if abs(c[1] - D["hb_ratio_target"]) <= 0.5]
+    pool = near or pool
     if not pool:
-        raise ValueError("no herringbone module fits the envelope and the feel ratio")
-    # coarsest module, then the ratio closest to the target
-    best = max(pool, key=lambda c: (c[0], -abs(c[1] - D["hb_ratio_target"])))
+        raise ValueError("no herringbone module fits the fixed OD, the main wall and the feel ratio")
+    # coarsest module, then the thickest root wall, then the ratio closest to the target
+    best = max(pool, key=lambda c: (c[0], c[5], -abs(c[1] - D["hb_ratio_target"])))
     mn, total, zp, zr, zbig, wall, enc, tip_r, root_r, mt = best
     D["hb_mn"] = mn
     D["hb_mt"] = mt
@@ -450,31 +467,61 @@ def _set_travel(D):
     D["travel_deg"] = D["det_deg"] + math.degrees(D["det_stop_clear"] / D["det_r_nom"])
 
 
+def _ot_gaps(r, n_pairs, free_deg, d_load, d_spacer):
+    """Chord between a load ball and the next spacer, and how much air is left."""
+    ang = free_deg / (2 * n_pairs)
+    chord = 2 * r * math.sin(math.radians(ang) / 2.0)
+    return ang, chord, chord - (d_load + d_spacer) / 2.0
+
+
 def _place_outer_thrust(D):
-    """Flat horizontal Ø1.5 race in the skirt underside. Ball-centre height leaves print_wall_min under the seat.
-    PCD centred in the skirt annulus. Balls and the carrier flange skip the C20–C22/U20 keep-out."""
-    rb = D["ot_ball_d"] / 2
+    """Cageless Ø2 load balls between a top track (knob) and a bottom track (cradle). No carrier.
+    Glass spacers alternate and must touch both neighbours and clear both tracks from ot_spacer_min to ot_spacer_max.
+    The C20–C22/U20 sector cannot be left empty, so a printed blank fills it."""
+    d_load = D["ot_ball_d"]
+    dmin, dmax = D["ot_spacer_min"], D["ot_spacer_max"]
+    rb = d_load / 2.0
     rg = rb + D["ot_seat_gap"]
-    z_ball = D["print_wall_min"] + rg                         # torus bottom at z = print_wall_min (floor under the seat)
-    tip_r, R = D["skirt_id"] / 2, D["R"]
-    face = D["h_skirt0"]
-    half_w = math.sqrt(max(rg * rg - (face - z_ball) ** 2, 0.0))
-    # centre the groove in the annulus outside the ring tip; clamp so it stays inside the skirt
-    r = (tip_r + R) / 2
-    r = min(max(r, tip_r + half_w), R - half_w)
-    land_in, land_out = r - half_w - tip_r, R - (r + half_w)
+    root_r, R = D["hb_root_r"], D["R"]
+    # Groove bottom sits ot_land_min above the PCB. The ball equator stays on the knob underside,
+    # so the underside rises with the land. Radial ring band and cradle clearance are not moved.
+    z_ball = max(D["h_skirt0"], D["ot_land_min"] + rg)
+    if z_ball > D["h_skirt0"]:
+        D["h_skirt0"] = z_ball
+        D["h_pin0"] = z_ball + D["pin_above_skirt"]
+        D["h_pin1"] = D["h_pin0"] + D["pin_face"]
+    half_w = rg
+    span = R - root_r
+    if span > 2 * half_w:
+        land = (span - 2 * half_w) / 2.0
+        r = root_r + land + half_w
+    else:
+        r = min(max((root_r + R) / 2.0, root_r + half_w), R - half_w)
+    land_in, land_out = r - half_w - root_r, R - (r + half_w)
     a0, a1 = D["ot_keep_ang"]
-    pitch = D["ot_ball_d"] + D["ot_web"]
-    # usable arc is the full circle minus the keep-out (and one pitch of margin each side)
-    span = 360.0 - ((a1 - a0) % 360.0)
-    marg = math.degrees(pitch / r)
-    n = max(3, int((span - 2 * marg) / 360.0 * (2 * math.pi * r) / pitch))
-    step = (span - 2 * marg) / n
+    keep = (a1 - a0) % 360.0
+    free = 360.0 - keep
+    # keep a load-ball radius clear of the printed blank that fills the keep-out
+    margin = math.degrees(math.asin(min(0.999, rb / r))) + D["ot_seat_gap"]
+    usable = free - 2 * margin
+    best = None
+    for n in range(6, 90):
+        ang = usable / (2 * n - 1)
+        chord = 2 * r * math.sin(math.radians(ang) / 2.0)
+        gap_max = chord - (d_load + dmax) / 2.0
+        gap_min = chord - (d_load + dmin) / 2.0
+        if gap_max < D["ot_play"] or gap_min > D["ot_play_max"] or gap_min <= 0:
+            continue
+        if best is None or gap_max < best[0]:
+            best = (gap_max, n, ang, chord, gap_min)
+    if best is None:
+        raise ValueError("no cageless ball count fits the spacer window")
+    _g, n, ang, chord, gap_min = best
     angs = []
-    a = (a1 + marg) % 360.0
-    for _ in range(n):
+    a = (a1 + margin) % 360.0
+    for _i in range(2 * n):
         angs.append(a % 360.0)
-        a += step
+        a += ang
     D["ot_rg"] = rg
     D["ot_z"] = z_ball
     D["ot_r"] = r
@@ -482,11 +529,24 @@ def _place_outer_thrust(D):
     D["ot_land"] = min(land_in, land_out)
     D["ot_land_in"] = land_in
     D["ot_land_out"] = land_out
-    D["ot_n"] = len(angs)
-    D["ot_angs"] = angs
-    # keep the flange under the Hall bar (the outer pad reaches the cradle OD) as well as under the ring
-    D["ot_z_top"] = min(face - D["ot_axial_gap"], D["hv_z_mag0"] - D["tgt"]["arm_vs_cradle"])
-    D["ot_floor"] = z_ball - rg                               # material under the seat, from the PCB front
+    D["ot_n"] = n                                 # load balls (ruby accents are some of these)
+    D["ot_n_spacer"] = n
+    D["ot_angs"] = angs[0::2]                     # load
+    D["ot_spacer_angs"] = angs[1::2]
+    D["ot_chord"] = chord
+    D["ot_gap_max"] = best[0]                     # air at the large spacer
+    D["ot_gap_min"] = gap_min                     # air at the small spacer
+    D["ot_play_total"] = 2 * n * best[0]          # whole ring, large spacers
+    D["ot_track_clear_max"] = (d_load - dmax) / 2.0
+    D["ot_track_clear_min"] = (d_load - dmin) / 2.0
+    D["ot_track_clear_alt"] = (d_load - D["ot_spacer_alt"]) / 2.0
+    D["ot_gap_alt"] = chord - (d_load + D["ot_spacer_alt"]) / 2.0
+    D["ot_light_gap"] = best[0]                  # slit between a load ball and a max spacer
+    ruby = min(D["ot_ruby_n"], n)
+    D["ot_ruby_idx"] = list(range(ruby))
+    D["ot_z_top"] = z_ball                        # bottom track stops at the equator (not a cage)
+    D["ot_floor"] = z_ball - rb                   # resin under the ball's lowest point
+    D["ot_land_th"] = z_ball - rg                 # clear resin under the groove bottom, PCB front = 0
 
 
 def _place_det_columns(D):
@@ -623,8 +683,9 @@ def derive(D):
                                                       D["lip_wall_min"], D["bend_clear"])
     st = D["knob_od_step"]
     screen_od = math.ceil(D["knob_od_min"] / st - 1e-9) * st
-    _place_herringbone(D, screen_od / 2)   # coarsest 25° herringbone; sets skirt_id, enc_cd, the feel tooth counts
-    D["knob_od"] = max(D["skirt_id"] + 2 * D["knob_wall"], screen_od)
+    # OD stays the screen lip. The ring band and the race grow inward; the teeth and the cradle follow.
+    D["knob_od"] = screen_od
+    _place_herringbone(D, D["knob_od"] / 2)
     D["skirt_wall"] = (D["knob_od"] - D["skirt_id"]) / 2
     D["R"] = D["knob_od"] / 2
     _set_travel(D)   # v0.17: ±det_deg latch, hard stop a ball-clearance past it (hall arc and the fan follow this)

@@ -29,6 +29,14 @@ mating pin (25.91 mm) enters the 11 mm H11 socket by 4.45 mm at a 35 mm riser, w
 window, and by 11.63 mm at 27.82 mm, which is not. The 35 mm body and the -20 pin are a pair. No replacement
 catalogue number is assigned here. The main PCB was not edited.
 
+## Bottom thrust land (Ed, 1 Nov 2026)
+
+The face under the Ø2 load balls is clear resin (UTR-8100), not an insert, so the laser still comes up through it.
+`ot_land_min = 1.0` is the resin from the PCB front to the bottom of the groove. It was **0.95 mm** (ball centre at
+`skirt_gap` 2.0, groove radius 1.05). The ball equator stays on the knob underside, so the underside moves to **2.05**
+and the land is **1.00 mm**. Apex `hb_mid` 3.50 → 3.55, ring top 5.00 → 5.05, pinion band up 0.05. Radial ring wall
+stays 2.20 and the cradle clearance stays 0.5.
+
 ## v0.18 gear train (Ed, 1 Nov 2026)
 
 PCBWay makes the parts: MJF PA-12 for every gear, SLA clear resin for the caps. The Kingtech 1.39" screen is unchanged in this pass, so the knob stays **Ø41.65**.

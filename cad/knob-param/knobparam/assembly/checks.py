@@ -133,7 +133,7 @@ def cross(D, parts):
         f"thinnest nylon spur (hub, motor pinion, {D['fg_z_gear']}T, feel pinion); preferred {D['hb_tooth_min']:.2f}")
     row("compound gear vs encoder rim (axial)", D["fg_z_bot"] - D["rim_top"], D["fg_clear"],
         f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
-    ot = [parts[n] for n in parts if n.startswith("outer thrust")][0]
+    ot_bits = [parts[n] for n in parts if n.startswith("outer thrust") and "blank" not in n]
     caps = [n for n in parts if n.endswith(" cap")]
 
     def _cap_mount(cap, other):
@@ -161,10 +161,19 @@ def cross(D, parts):
                     cap_d, cap_who = d, f"{n} / {m}"
         row("resin caps vs everything they do not mount on", cap_d, 0.3,
             f"nearest {cap_who}; UTR-8100 stepped Fresnel, press modelled at {D['cap_fit_gap']:.2f}")
-    row("outer thrust balls vs bottom ring", ot.distance_to(ring), 0.0,
-        f"Ø{D['ot_ball_d']:g} × {D['ot_n']} on r {D['ot_r']:.2f}, land {D['ot_land']:.2f}; keep-out {D['ot_keep_ang'][0]:.0f}–{D['ot_keep_ang'][1]:.0f}°")
-    row("outer thrust carrier top vs ring underside", D["h_skirt0"] - D["ot_z_top"], D["ot_axial_gap"],
-        f"carrier is part of the cradle; floor under the seat {D['ot_floor']:.2f}")
+    row("bottom thrust land, clear resin under the groove", D["ot_land_th"], D["ot_land_min"],
+        f"groove bottom z {D['ot_z'] - D['ot_rg']:.2f}; ball centre {D['ot_z']:.2f}; underside was skirt_gap {D['skirt_gap']:.2f}, now {D['h_skirt0']:.2f}. UTR-8100, not an insert")
+    row("outer thrust balls vs bottom ring", min(b.distance_to(ring) for b in ot_bits), 0.0,
+        f"Ø{D['ot_ball_d']:g} load × {D['ot_n']}, glass {D['ot_spacer_min']:g}–{D['ot_spacer_max']:g} × {D['ot_n_spacer']}, ruby {len(D['ot_ruby_idx'])} on r {D['ot_r']:.2f}")
+    row("spacer clears both tracks at the large end", D["ot_track_clear_max"], D["ot_seat_gap"],
+        f"{D['ot_track_clear_min']:.3f} at {D['ot_spacer_min']:g} mm, {D['ot_track_clear_alt']:.3f} at {D['ot_spacer_alt']:g} mm")
+    row("spacer gap at the large end (no jam)", D["ot_gap_max"], D["ot_play_max"],
+        f"chord {D['ot_chord']:.3f}; ring play {D['ot_play_total']:.2f}", higher_ok=False)
+    row("spacer still touches at the small end (gap)", D["ot_gap_min"], D["ot_play_max"],
+        f"1.588 mm gap {D['ot_gap_alt']:.3f}", higher_ok=False)
+    row("spacer gap stays positive at the small end", D["ot_gap_min"], D["ot_play"])
+    row("light path between a load ball and a spacer", D["ot_light_gap"], D["ot_play"],
+        f"axial window beside a {D['ot_spacer_max']:g} spacer {D['ot_track_clear_max']:.3f}")
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
         B = ring_field(D)

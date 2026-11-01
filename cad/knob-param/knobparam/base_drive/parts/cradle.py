@@ -36,21 +36,23 @@ def _breakout_relief(D, cx, cy, hole_r):
         cut += cyl(fr, -0.05, D["plate_t"] + 0.1, r_in * math.cos(a), r_in * math.sin(a))
     return cut
 
-def _thrust_flange(D):
-    """Printed ball carrier, one part with the cradle, on the centre-tube clamp (the cradle bore) and the existing
-    encoder Ø5 press (no new PCB holes). Flat seat; the keep-out sector over C20–C22/U20 is left open."""
-    r0 = D["r_out"] - 0.3
-    r1 = D["ot_r"] + D["ot_rg"] + D["ot_land_out"]
-    if r1 <= r0 + 0.2: return None
-    z1 = D["ot_z_top"]
-    fl = cyl(r1, 0, z1) - cyl(r0, -0.05, z1 + 0.1)
-    a0, a1 = D["ot_keep_ang"]
-    fl -= sector(r0 - 0.1, r1 + 0.3, (a1 - a0) / 2 + 0.6, -0.1, z1 + 0.2, (a0 + a1) / 2)
+def _thrust_track(D):
+    """Bottom track only: clear resin (UTR-8100) annulus and groove, so the laser still comes up through ot_land_th.
+    It stops at the ball equator, so it does not cage the balls."""
+    r0 = D["ot_r"] - D["ot_rg"] - D["ot_seat_gap"]
+    r1 = D["ot_r"] + D["ot_rg"] + D["ot_seat_gap"]
+    z1 = D["ot_z"] - D["ot_seat_gap"]
+    if z1 <= 0.3 or r1 <= r0 + 0.2:
+        return None
+    fl = cyl(r1, 0, z1) - cyl(max(r0, 0.2), -0.05, z1 + 0.1)
     fl -= Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], D["ot_rg"])
-    # the encoder bearing's outer flange reaches into this annulus
-    ex, ey = D["enc_xy"]
-    fl -= cyl(D["brg"]["fd"] / 2 + D["fg_clear"], -0.1, D["ot_z_top"] + 0.3, ex, ey)
     return fl
+
+def _thrust_blank(D):
+    """Printed filler in the C20–C22/U20 sector. A closed cageless ring cannot skip that arc."""
+    a0, a1 = D["ot_keep_ang"]
+    rb = D["ot_ball_d"] / 2
+    return sector(D["ot_r"] - rb, D["ot_r"] + rb, (a1 - a0) / 2, D["ot_z"] - rb + 0.15, D["ot_ball_d"] - 0.3, (a0 + a1) / 2)
 
 def build(D):
     pt, ro, mx = D["plate_t"], D["r_out"], D["offset"]
@@ -88,8 +90,20 @@ def build(D):
         if rel is not None: c -= rel
     rel = _breakout_relief(D, fx, fy, D["fm_shaft_hole"] / 2)
     if rel is not None: c -= rel
-    fl = _thrust_flange(D)
+    fl = _thrust_track(D)
     if fl is not None: c += fl
-    balls = Compound(children=[Pos(D["ot_r"] * math.cos(math.radians(a)), D["ot_r"] * math.sin(math.radians(a)), D["ot_z"]) * Sphere(D["ot_ball_d"] / 2) for a in D["ot_angs"]])
-    return {"base cradle": c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_land_out"] + 0.2), -0.01, 40.01),
-            f"outer thrust balls {D['ot_n']} x Ø{D['ot_ball_d']:g}": balls}
+    blank = _thrust_blank(D)
+    out = {"base cradle": c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + 0.4), -0.01, 40.01),
+           "outer thrust blank": blank}
+    ruby = set(D["ot_ruby_idx"])
+    load, gems = [], []
+    for i, a in enumerate(D["ot_angs"]):
+        p = Pos(D["ot_r"] * math.cos(math.radians(a)), D["ot_r"] * math.sin(math.radians(a)), D["ot_z"]) * Sphere(D["ot_ball_d"] / 2)
+        (gems if i in ruby else load).append(p)
+    spacers = [Pos(D["ot_r"] * math.cos(math.radians(a)), D["ot_r"] * math.sin(math.radians(a)), D["ot_z"]) * Sphere((D["ot_spacer_min"] + D["ot_spacer_max"]) / 4)
+               for a in D["ot_spacer_angs"]]
+    out[f"outer thrust load balls {len(load)} x Ø{D['ot_ball_d']:g}"] = Compound(children=load)
+    out[f"outer thrust spacer balls {len(spacers)} x Ø{(D['ot_spacer_min'] + D['ot_spacer_max']) / 2:g} glass"] = Compound(children=spacers)
+    if gems:
+        out[f"outer thrust ruby {len(gems)} x Ø{D['ot_ruby_d']:g}"] = Compound(children=gems)
+    return out
