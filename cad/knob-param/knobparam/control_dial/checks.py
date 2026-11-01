@@ -25,9 +25,10 @@ def checks(D, parts):
         row("FPC strap bend strain at ±travel (%)", D["strap_strain_pct"], D["strap_strain_max"],
             f"L {D['strap_L']:.1f}, R {D['strap_R']:.0f} mm, t {D['strap_t']:g}, end moves {D['strap_end_move']:.2f}", higher_ok=False)
         b2b = parts[fp]
-        bmin = min((Rot(0, 0, t) * b2b).distance_to(parts["adapter cup (fixed)"]) for t in TR)
-        row("rotating B2B / fold vs fixed adapter cup (±travel)", bmin, T["carrier_vs_cup"])
-        row("screen carrier vs fixed adapter cup", parts["screen carrier (on dial)"].distance_to(parts["adapter cup (fixed)"]), T["carrier_vs_cup"], f"carrier_run {D['carrier_run']:g}")
+        if "adapter cup (fixed)" in parts:
+          bmin = min((Rot(0, 0, t) * b2b).distance_to(parts["adapter cup (fixed)"]) for t in TR)
+          row("rotating B2B / fold vs fixed adapter cup (±travel)", bmin, T["carrier_vs_cup"])
+          row("screen carrier vs fixed adapter cup", parts["screen carrier (on dial)"].distance_to(parts["adapter cup (fixed)"]), T["carrier_vs_cup"], f"carrier_run {D['carrier_run']:g}")
     else:
         row("panel vs dial lip (running gap)", parts[pn].distance_to(dial), D["run_gap"] - 0.01)
     if D["hall_layout"] == "vernier":
@@ -37,12 +38,18 @@ def checks(D, parts):
             row("Hall spoke vs thrust balls / cage (±travel)", min(hall.arm(D, t).distance_to(q) for t in TR for q in tc), 0.3)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)
-    if D["kb_seat_depth"] > 0:
+    if D["kb_groove_h"] > 0:
         cr_, cz_ = D["kb_seat_c"]; px, pz = D["kb_seat_contact"]
         ang = math.degrees(math.atan2(cz_ - pz, px - cr_)) % 180          # contact -> groove centre direction
         row("seat: 45° contact line kept (|angle - 45|, deg)", abs(ang - 135.0) if ang > 90 else abs(ang - 45.0), 0.01,
             f"groove R{D['kb_seat_r']:g} centred {D['kb_seat_r'] - D['kb_ball_d'] / 2:.2f} past the ball centre on the 45° line", higher_ok=False)
         row("seat: groove rim half-width - ball chord at the cone face", D["kb_seat_w"] - D["kb_ball_cap_w"], 0.0,
-            f"depth {D['kb_seat_depth']:g}: groove ±{D['kb_seat_w']:.3f}, ball ±{D['kb_ball_cap_w']:.3f}")
-        row("seat: ball vs dial plain tube (radial)", D["kb_ball_tube"], T["race_ball_tube"])
+            f"depth {D['kb_groove_h']:.3g}: groove ±{D['kb_seat_w']:.3f}, ball ±{D['kb_ball_cap_w']:.3f}")
+        if D["kb_race"] == "chamfer":
+            row("dial: material under the cup-boss bore (above the hub bottom)", D["z_bore0"] - D["z_hub0"], D["dial_bore_floor"] - 1e-6,
+                f"socket on the tube {D['hold_socket_len']:.2f}" if D["adapter_cup"] else "no cup: plain tube ID")
+            row("seat: groove land to the 45° face ends (min)", D["kb_land"], T["race_land"],
+                f"track at {D['kb_race_at']:g} of the {D['kb_face_len']:.2f} gusset face, both faces grooved")
+        else:
+            row("seat: ball vs dial plain tube (radial)", D["kb_ball_tube"], T["race_ball_tube"])
     return r

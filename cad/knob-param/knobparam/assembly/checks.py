@@ -26,7 +26,7 @@ def cross(D, parts):
     if on:
         stat = {n: parts[n] for n in parts if n.startswith("adapter part") and not n.endswith(D["b2b_at"])}
         stat["rod + nut"] = cyl(D["nut_s"] / math.sqrt(3), D["z_board_top"], D["nut_m"])
-        stat["adapter cup (fixed)"] = parts["adapter cup (fixed)"]
+        if "adapter cup (fixed)" in parts: stat["adapter cup (fixed)"] = parts["adapter cup (fixed)"]
         smin, swho = 1e9, ""
         for t in TR:
             sb = cd.strap_bent(Dc, t)
@@ -62,7 +62,7 @@ def cross(D, parts):
         H = hall_dyn.analyse(D)
         row("Hall peak field vs sensor range (mT)", H["B_peak"], 0.9 * D["hv_sensor"]["range_mt"], f"{D['hv_sensor']['part']} ±{D['hv_sensor']['range_mt']:g} mT", higher_ok=False)
         row("Hall angle noise, worst over ±travel (deg rms)", H["s_theta_worst"], 0.01, f"min |dB/dθ| {H['slope_min']:.1f} mT/deg, noise {H['noise_mT'] * 1e3:.0f} µT rms", higher_ok=False)
-    if D["kb_seat_depth"] > 0:
+    if D["kb_groove_h"] > 0:
         kb = [parts[n] for n in parts if n.startswith("knob") and "ball" not in n]
         row("seat: dial vs knob (race region)", min(parts["control dial"].distance_to(q) for q in kb), T["seat_vs_knob"])
     row("idler 1 / feel motor vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])

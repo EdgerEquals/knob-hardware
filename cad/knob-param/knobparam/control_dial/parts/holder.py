@@ -17,5 +17,5 @@ def build(D):
     win += Pos(S["r_edge"], 0, zh - 1) * Box(3.0, S["ledge_w"] + 0.6, 5, align=A)
     carrier = screen.place(D, plate) - screen.place(D, win)
     if D["screen_on_dial"]:   # carrier bonded on the dial shoulder, panel bonded on the carrier: turns with the dial
-        return {"adapter cup (fixed)": h, "screen carrier (on dial)": carrier}
+        return ({"adapter cup (fixed)": h} if D["adapter_cup"] else {}) | {"screen carrier (on dial)": carrier}
     return {"screen holder": h + carrier}

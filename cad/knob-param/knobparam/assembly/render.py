@@ -44,6 +44,9 @@ def lighten(hexc, k=0.45):
 
 # ---- regions: box in a local frame (origin o, angle a about Z); keep local v in [-depth, 0]; cut plane local v = 0 ----
 def region_solid(spec):
+    if spec["kind"] == "whole":   # no cut (parts lying wholly in a cut-away region, --clean)
+        x0, y0, z0, x1, y1, z1 = spec["bb"]
+        return Pos(x0, y0, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=(Align.MIN,) * 3)
     if spec["kind"] == "half":
         x0, y0, z0, x1, y1, z1 = spec["bb"]
         return Pos(x0, y0, z0) * Box(x1 - x0, -y0, z1 - z0, align=(Align.MIN,) * 3)
@@ -55,6 +58,7 @@ def region_solid(spec):
     return Pos(o[0], o[1], z0) * Rot(0, 0, a) * Pos(u0, -depth, 0) * Box(u1 - u0, depth, z1 - z0, align=(Align.MIN,) * 3)
 
 def cut_planes(spec):
+    if spec["kind"] == "whole": return []
     if spec["kind"] == "half": return [((0, 0, 0), (0, 1, 0))]
     if spec["kind"] == "quarter": return [((0, 0, 0), (0, 1, 0)), ((0, 0, 0), (1, 0, 0))]
     a = math.radians(spec["a"]); return [((spec["o"][0], spec["o"][1], 0), (-math.sin(a), math.cos(a), 0))]
@@ -118,11 +122,12 @@ def _pv():
     import pyvista as pv; pv.OFF_SCREEN = True; return pv
 def _poly(pv, P, T): return pv.PolyData(P, np.hstack([np.full((len(T), 1), 3), T]).ravel())
 
-def _add(pl, pv, meshes, lw=1.4, edges=True):
+def _add(pl, pv, meshes, lw=1.4, edges=True, ghost=()):
     for n, m in meshes.items():
         col = GROUPS[group_of(n)][1]
         if False in m:
-            pm = _poly(pv, *m[False]); pl.add_mesh(pm, color=col, smooth_shading=False, specular=0.1, ambient=0.3, diffuse=0.75)
+            pm = _poly(pv, *m[False])
+            pl.add_mesh(pm, color=col, smooth_shading=False, specular=0.1, ambient=0.3, diffuse=0.75, opacity=0.45 if n in ghost else 1.0)
             if edges:
                 fe = pm.clean().extract_feature_edges(feature_angle=35, boundary_edges=False, non_manifold_edges=False, manifold_edges=False)
                 if fe.n_points: pl.add_mesh(fe, color="#303030", line_width=lw * 0.7)
@@ -148,9 +153,10 @@ def ortho(meshes, centre, cam_dir, up, w_mm, h_mm, ppm, path, extra=None, lw=1.4
     pl.enable_parallel_projection(); pl.camera.parallel_scale = h_mm / 2; pl.camera.clipping_range = (1, 2000)
     return _shot(pl, path, aa)
 
-def iso(meshes, size, path, lw=1.6, edges=True, aa=True):
+def iso(meshes, size, path, lw=1.6, edges=True, aa=True, ghost=()):
     pv = _pv(); pl = pv.Plotter(off_screen=True, window_size=(size, size)); pl.set_background("white")
-    _add(pl, pv, meshes, lw, edges)
+    if ghost: pl.enable_depth_peeling(number_of_peels=8)
+    _add(pl, pv, meshes, lw, edges, ghost)
     lo, hi = _bbox(meshes); c = (lo + hi) / 2; d = np.array([1.0, 1.0, 0.9]); d /= np.linalg.norm(d)
     pl.camera.position = tuple(c + 500 * d); pl.camera.focal_point = tuple(c); pl.camera.up = (0, 0, 1)
     pl.enable_parallel_projection(); pl.reset_camera(); pl.camera.zoom(1.25)
@@ -163,7 +169,7 @@ def _trim(img, m=12):
 import tempfile
 TMP = os.path.join(tempfile.gettempdir(), "knobparam-render")
 
-def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_lines=(), title=""):
+def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_lines=(), title="", clean=False, note=None):
     os.makedirs(tmp, exist_ok=True); T0 = time.time(); tm = {}
     bbs = [s.bounding_box() for s in parts.values()]
     pad = 5.0
@@ -175,10 +181,18 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
     lo, hi = _bbox(MA)
     t = time.time()
     rawA = ortho(MA, ((lo[0] + hi[0]) / 2, 0, (lo[2] + hi[2]) / 2), (0, 1, 0), (0, 0, 1), hi[0] - lo[0] + 2, hi[2] - lo[2] + 2,
-                 9 if preview else 30, f"{tmp}/aa.png", edges=not preview, aa=not preview)
+                 9 if preview else (40 if clean else 30), f"{tmp}/aa.png", edges=not preview, aa=not preview)
     tm["A-A render"] = time.time() - t
     t = time.time(); MQ = cut_meshes(parts, keys, dict(kind="quarter", bb=BB), tol); tm["iso cut"] = time.time() - t
-    t = time.time(); rawI = iso(MQ, 1100 if preview else 2600, f"{tmp}/iso.png", edges=not preview, aa=not preview); tm["iso render"] = time.time() - t
+    hidden = []
+    if clean:   # parts lying wholly in the cut-away quadrant (idler 1, feel motor + clip) are drawn whole in the iso view
+        hidden = [n for n in parts if n not in MQ]
+        if hidden: MQ.update(cut_meshes({n: parts[n] for n in hidden}, keys, dict(kind="whole", bb=BB), tol))
+    t = time.time(); rawI = iso(MQ, 1100 if preview else (3400 if clean else 2600), f"{tmp}/iso.png", edges=not preview, aa=not preview, ghost=hidden); tm["iso render"] = time.time() - t
+    if clean:   # two views + colour legend only
+        t = time.time(); compose_clean(D, parts, rawA, rawI, out_png, title, hidden, note); tm["compose"] = time.time() - t
+        tm["total"] = time.time() - T0
+        return tm
     insets = []
     if not preview:
         t = time.time()
@@ -217,7 +231,7 @@ def render(D, parts, keys, out_png, preview=False, tmp=TMP, clash_lines=(), gap_
             pl.add_lines(np.array([A_, B_]), color="#d50000", width=6)
             for q in (-1, 1): pl.add_mesh(pv.Sphere(radius=0.07, center=(bx + q * k, 0.35, bz - q * k)), color="#d50000")
             pl.add_mesh(pv.Sphere(radius=0.04, center=(bx, 0.35, bz)), color="black")
-            if D["kb_seat_depth"] > 0:   # groove centre + R0.52 arc (blue)
+            if D["kb_groove_h"] > 0:   # groove centre + R0.52 arc (blue)
                 cr, cz = D["kb_seat_c"]; rs = D["kb_seat_r"]
                 pl.add_mesh(pv.Sphere(radius=0.03, center=(cr, 0.4, cz)), color="#0d47a1")
                 ang = np.radians(np.linspace(100, 170, 40)); arc = np.c_[cr + rs * np.cos(ang), np.full(40, 0.4), cz + rs * np.sin(ang)]
@@ -314,4 +328,31 @@ def compose(D, parts, rawA, rawI, insets, out, preview, clash_lines, gap_lines, 
     fig.legend(handles=hand, loc="lower left", ncol=3, fontsize=9.5 if not preview else 8, frameon=True, bbox_to_anchor=(0.005, 0.0), title="PARTS", title_fontsize=11)
     txt = list(clash_lines) + ([""] if gap_lines else []) + list(gap_lines)
     fig.text(0.62 if not preview else 0.62, 0.118 if not preview else 0.18, "\n".join(txt[:22]), fontsize=8.5 if not preview else 7.5, va="top", color="#7a0000", family="monospace")
+    fig.savefig(out, dpi=fig.dpi)
+
+
+def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None):
+    """--clean: A-A straight on (left) + iso quarter cut (right) + a part-colour legend. No insets, tables or clash text."""
+    import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt; from matplotlib.patches import Patch
+    A, I = _trim(plt.imread(rawA), 4), _trim(plt.imread(rawI), 4)
+    FW, FH = 22.5, 16.0
+    fig = plt.figure(figsize=(FW, FH), dpi=150)
+    fig.text(0.012, 0.985, title, fontsize=26, weight="bold", va="top")
+    fig.text(0.012, 0.952, f"Knob Ø{D['knob_od']:.1f}, 10HP module. " + (note or "Default parameters (no overrides).") + " "
+             "Cut faces are drawn in a lighter tint of the part colour." +
+             (f"\nIn the iso view, parts lying wholly inside the cut-away quarter ({', '.join(n.replace(' [A]', '') for n in hidden)}) are drawn whole, semi-transparent." if hidden else ""), fontsize=14, va="top", color="#333333", linespacing=1.4)
+    y0, y1, gap, mx = 0.235, 0.865, 0.03, 0.012
+    ra, ri = A.shape[1] / A.shape[0], I.shape[1] / I.shape[0]          # width/height
+    h = y1 - y0; k = FH / FW
+    if (ra + ri) * h * k + gap + 2 * mx > 1: h = (1 - gap - 2 * mx) / ((ra + ri) * k)
+    wa, wi = ra * h * k, ri * h * k; x0 = (1 - wa - wi - gap) / 2
+    for (x, w), img, ttl in [((x0, wa), A, "SECTION A-A, straight on\n(dial + motor axes; motor on the left)"),
+                             ((x0 + wa + gap, wi), I, "ISOMETRIC QUARTER CUT-AWAY\n(A-A + the plane at 90° through the dial axis)")]:
+        ax = fig.add_axes([x, y1 - h, w, h]); ax.imshow(img, interpolation="lanczos"); ax.set_xticks([]); ax.set_yticks([])
+        for sp in ax.spines.values(): sp.set_visible(False)
+        fig.text(x, y1 + 0.006, ttl, fontsize=17, weight="bold", va="bottom")
+    shown = sorted({group_of(n) for n in parts})
+    hand = [Patch(facecolor=GROUPS[i][1], edgecolor="#222222", label=GROUPS[i][0]) for i in shown]
+    fig.legend(handles=hand, loc="lower center", ncol=4, fontsize=13.5, frameon=True, bbox_to_anchor=(0.5, 0.008),
+               title="PART COLOURS", title_fontsize=16, handlelength=2.4, handleheight=1.4, columnspacing=2.5, labelspacing=0.55)
     fig.savefig(out, dpi=fig.dpi)

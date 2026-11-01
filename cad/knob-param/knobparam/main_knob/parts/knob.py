@@ -1,4 +1,4 @@
-"""Big knob: cap + skirt + hub with the external hub gear and the knob half of the 45 deg cone race; bottom internal ring; cone balls."""
+"""Big knob: cap + skirt + hub with the external hub gear and the knob half of the 45 deg race (v0.15c: track in the top chamfer); bottom internal ring; balls."""
 import math
 from build123d import *
 from ...common.util import A, rev, cyl, ext_gear, int_cutter, ext_phase
@@ -15,6 +15,11 @@ def profile(D):
     z_l = zl - o + (r_s - rw)
     r_l = rw + f + o - (D["z_lip0"] - D["z_knob_top"])
     z0, zt = D["knob_hub_z0"], D["knob_hub_top"]
+    if D["kb_race"] == "chamfer":   # v0.15c: plain bore up to the 45° top chamfer (the ball track face)
+        rk = D["r_knob_bore"]   # v0.15d: hub filled in to the dial tube; flat top 0.3 under the dial hub, then the 45° chamfer
+        return [(rk, z0), (rh, z0), (rh, D["h_band1"]), (ri, D["h_band1"]), (ri, D["h_bi1"]), (ro, D["h_bi1"]),
+                (ro, D["z_knob_top"]), (r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]),
+                (r_w, D["z_under_web"]), (D["r_chamfer0"], zt), (rk, zt)]
     return [(rD, z0), (rh, z0), (rh, D["h_band1"]), (ri, D["h_band1"]), (ri, D["h_bi1"]), (ro, D["h_bi1"]),
             (ro, D["z_knob_top"]), (r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]),
             (r_w, D["z_under_web"]), (rb, z_b), (rb, zt), (rD, zt)]
@@ -26,9 +31,13 @@ def race_cut(D):
 
 def build(D):
     zh, fh = D["knob_hub_z0"], D["hub_gear_face"]
-    teeth = Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_motor_pinion"])) * ext_gear(D, D["z_hub_gear"], zh, fh)
+    teeth = Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_pinion"])) * ext_gear(D, D["z_hub_gear"], zh, fh)
     teeth -= cyl(D["d_hg_root"] / 2 - 0.02, zh, fh)
-    body = rev(profile(D)) + teeth - race_cut(D)
+    body = rev(profile(D)) + teeth
+    if D["kb_race"] == "chamfer":   # ball track groove in the chamfer (torus, R kb_seat_r, centre on the 45° line)
+        cr, cz = D["kb_seat_c_knob"]; body -= Pos(0, 0, cz) * Torus(cr, D["kb_seat_r"])
+    else:
+        body -= race_cut(D)
     h0, h = D["h_skirt0"], D["bot_face"]
     ring = cyl(D["knob_od"] / 2, h0, h) - int_cutter(D, D["z_ring"], h0, h)
     R = D["kb_ball_d"] / 2; n = D["kb_n"]

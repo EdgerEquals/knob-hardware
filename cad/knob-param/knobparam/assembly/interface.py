@@ -18,7 +18,8 @@ P = dict(
     pressure=20.0,   # [A]
     backlash=0.1,   # [A] tooth thinning (pinions) / space widening (rings)
     motor_offset=10.75,   # [Ed/K] dial axis to the 1220 motor axis; hub-gear teeth derived from it (snapped to whole teeth)
-    z_motor_pinion=12,   # [A] 12T on the motor shaft
+    z_motor_pinion=12,   # [A] 12T on the motor shaft (used when hub_gear_min is False)
+    hub_gear_min=True,   # [Ed] v0.15d: smallest hub (sun) gear with tgt.race_wall over the knob bore; pinion = the rest of the centre distance
     z_enc_pinion=14,   # [A] 14T encoder pinion and idlers in the bottom ring
     enc_ang=270.0,   # [K] encoder pinion / H2 angle (90 deg from the motor)
     idler2_from_enc=-120.0,   # [A] idler 2 = encoder angle - 120 = 150 deg
@@ -31,11 +32,12 @@ P = dict(
     knob_run=0.3,   # [A] knob <-> dial running gap
     knob_hub_z0=39.6,   # [A] knob hub / hub-gear bottom
     hub_gear_face=4.4,   # [A] hub gear face (pinion 3.0 inside it)
-    # ---- knob top bearing: opposed 45 deg cones [Ed] ----
+    # ---- knob top bearing: opposed 45 deg faces, ball track grooved into both [Ed] ----
+    kb_race="chamfer",   # [Ed] v0.15c: balls on the 45° dial-gusset / knob-chamfer faces ("tube" = v0.15 cone race at the dial tube)
+    kb_race_at=0.5,   # [Ed] ball circle at this fraction along the 45° face (0.5 = the middle)
     kb_ball_d=1.0,   # [Ed] Ø1 steel balls
-    kb_ball_tube=0.1,   # [A] ball to the plain tube
-    kb_clear=0.25,   # [A] knob <-> dial radial elsewhere
-    kb_zc=41.45,   # [A] ball centre height
+    kb_seat_r=0.52,   # [Ed] track groove radius (single-radius seat, centre on the 45° contact line); same in both faces
+    kb_clear=0.25,   # [A] knob <-> dial radial elsewhere ("tube" race)
     kb_play=0.06,   # [A] minimum chord play for a full ring
     # ---- control dial [Ed/A] ----
     dial_tube_id=5.12,   # [Ed] dial tube Ø5.12/Ø8.12
@@ -86,7 +88,7 @@ P = dict(
     hv_sensor=dict(part="TMAG5253BA3 (TI) X2SON-4", l=1.4, w=1.1, h=0.4, elem=0.13, bw_khz=15.0, s_mv_mt=15.0, range_mt=80.0, nd_nt=220.0, vcc=3.3),   # [S] datasheet; elem = Hall element below the package top [S]
     hv_ring_clear=0.5,   # [A] bar to the ring tips
     # ---- check targets (minimum gaps) [A] ----
-    tgt=dict(knob_od_vs_screen=0.0, feel_vs_wheel=0.3, tab_vs_rim=0.5, hall_vs_pinions=0.3, race_wall=1.0, lip_wall=0.4, back_panel_max=26.0, clash_mm3=1e-3, idler_motor=0.5, motor_dial_tube=0.5, arm_vs_cradle=0.3, arm_vs_ring=0.3, sensor_gap=0.2, sensor_vs_cradle=0.2, strap_vs_parts=0.2, seat_vs_knob=0.2, carrier_vs_cup=0.2, race_ball_tube=0.05),
+    tgt=dict(knob_od_vs_screen=0.0, feel_vs_wheel=0.3, tab_vs_rim=0.5, hall_vs_pinions=0.3, race_wall=1.0, lip_wall=0.4, back_panel_max=26.0, clash_mm3=1e-3, idler_motor=0.5, motor_dial_tube=0.5, arm_vs_cradle=0.3, arm_vs_ring=0.3, sensor_gap=0.2, sensor_vs_cradle=0.2, strap_vs_parts=0.2, seat_vs_knob=0.2, carrier_vs_cup=0.2, race_ball_tube=0.05, race_land=0.2),
 )
 
 # screens table (screen choice envelope; library SPECs): od = round outline, r_edge = ledge/chin edge from the panel centre,
@@ -107,15 +109,22 @@ def derive(D):
     m = D["module"]; R2D = math.degrees
     # ---- motor + knob size chain ----
     M = D["motor"]; D["can_r"] = M["body_d"] / 2
-    D["z_hub_gear"] = int(round(2 * D["motor_offset"] / m)) - D["z_motor_pinion"]
-    D["offset"] = (D["z_hub_gear"] + D["z_motor_pinion"]) * m / 2        # snapped to whole teeth
+    zsum = int(round(2 * D["motor_offset"] / m))                        # hub + pinion teeth at this centre distance
+    if D["hub_gear_min"]:   # hub gear pushed in to the axle: root wall over the knob bore (dial tube + kb_clear) >= tgt.race_wall
+        r_bore = D["dial_tube_id"] / 2 + D["dial_tube_wall"] + D["kb_clear"]
+        D["z_hub_gear"] = int(math.ceil(2 * (r_bore + D["tgt"]["race_wall"]) / m + 2.5 - 1e-9))
+        D["z_pinion"] = zsum - D["z_hub_gear"]
+    else:
+        D["z_pinion"] = D["z_motor_pinion"]
+        D["z_hub_gear"] = zsum - D["z_pinion"]
+    D["offset"] = (D["z_hub_gear"] + D["z_pinion"]) * m / 2        # snapped to whole teeth
     need_id = 2 * (D["offset"] + D["can_r"] + D["skirt_clear"])
     D["z_ring"] = int(math.ceil(need_id / m + 2 - 1e-9))                 # bottom internal ring: tip Ø = skirt ID
     D["skirt_id"] = (D["z_ring"] - 2) * m
     D["knob_od"] = D["skirt_id"] + 2 * D["knob_wall"]
     D["R"] = D["knob_od"] / 2
     D["enc_cd"] = (D["z_ring"] - D["z_enc_pinion"]) * m / 2
-    D["ratio_knob_motor"] = D["z_hub_gear"] / D["z_motor_pinion"]
+    D["ratio_knob_motor"] = D["z_hub_gear"] / D["z_pinion"]
     D["d_pin_tip"] = (D["z_enc_pinion"] + 2) * m
     D["h_skirt0"] = D["skirt_gap"]
     D["h_band1"] = D["knob_hub_z0"] + D["hub_gear_face"]
@@ -137,15 +146,9 @@ def derive(D):
     D["h_pin0"] = D["h_skirt0"] + D["pin_above_skirt"]; D["h_pin1"] = D["h_pin0"] + D["pin_face"]   # pinion band in the bottom ring
     # ---- dial tube + 45 deg cone bearing (shared by main_knob and control_dial) ----
     D["dial_tube_od"] = D["dial_tube_id"] + 2 * D["dial_tube_wall"]
-    kR = D["kb_ball_d"] / 2; k = kR / math.sqrt(2)
     D["kb_rt"] = D["dial_tube_od"] / 2
-    D["kb_rc"] = D["kb_rt"] + kR + D["kb_ball_tube"]
-    D["kb_pcd"] = 2 * D["kb_rc"]
-    D["kb_n"] = int(math.pi / math.asin((D["kb_ball_d"] + D["kb_play"]) / D["kb_pcd"]))
-    D["kb_gap"] = D["kb_pcd"] * math.sin(math.pi / D["kb_n"]) - D["kb_ball_d"]
-    zc = D["kb_zc"]
-    D["kb_c_dial"] = D["kb_rc"] - zc - 2 * k; D["kb_c_knob"] = D["kb_rc"] - zc + 2 * k
-    D["kb_r_collar"] = D["kb_rc"] + kR + 0.15 - D["kb_clear"]
+    # the ball circle itself (kb_rc, kb_zc, kb_n, faces kb_c_dial / kb_c_knob, grooves) is derived by control_dial, which owns the
+    # dial face the balls run on, and EXPORTED to main_knob (v0.15c: the 45° face is the dial gusset under the web)
     # ---- Hall layout (dial magnets / cradle slot / PCB sensors) ----
     D["ha_r_tip"] = D["skirt_id"] / 2
     D["ha_pad_r1"] = D["ha_r_tip"] - D["ha_ring_clear"]

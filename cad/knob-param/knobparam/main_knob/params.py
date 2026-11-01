@@ -6,7 +6,9 @@ P = dict(
     bot_face=3.0,   # [A] bottom internal ring face
 )
 
-IMPORTS = {"control_dial": ["dial_hub_z0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet"]}   # the knob follows the dial underside
+IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
+                            "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # ball circle + 45° faces
+                            "kb_seat_c_knob", "kb_groove_h"]}
 EXPORTS = []
 
 
@@ -16,11 +18,16 @@ def derive(D):
     D["ring_wall"] = (D["knob_od"] - D["ring_root_d"]) / 2
     D["d_hg_root"] = (D["z_hub_gear"] - 2.5) * m; D["d_hg_tip"] = (D["z_hub_gear"] + 2) * m
     D["h_bi1"] = D["h_skirt0"] + D["bot_face"]
-    D["kb_r_up"] = D["kb_r_collar"] + D["kb_clear"]; D["kb_r_lo"] = D["kb_rt"] + D["kb_clear"]
-    D["kb_zk0"], D["kb_zk1"] = D["kb_r_lo"] - D["kb_c_knob"], D["kb_r_up"] - D["kb_c_knob"]
-    D["knob_hub_top"] = D["dial_hub_z0"] - D["knob_run"]
-    D["race_wall"] = D["d_hg_root"] / 2 - D["kb_r_up"]                     # hub-gear root over the knob race
+    D["knob_hub_top"] = D["z_hub0"] - D["knob_run"]
+    D["r_bore_hi"] = D["dial_hub_od"] / 2 + D["knob_run"]
+    if D["kb_race"] == "chamfer":   # v0.15d: track in the knob's 45° top chamfer; the hub fills down to the dial tube (no annular gap)
+        D["r_knob_bore"] = D["kb_rt"] + D["kb_clear"]                       # running bore round the plain dial tube
+        D["r_chamfer0"] = D["kb_c_knob"] + D["knob_hub_top"]                # chamfer foot (r - z = c_knob at the hub top)
+        D["race_wall"] = D["d_hg_root"] / 2 - D["r_knob_bore"]              # hub-gear root over the bore
+    else:
+        D["kb_r_up"] = D["kb_r_collar"] + D["kb_clear"]; D["kb_r_lo"] = D["kb_rt"] + D["kb_clear"]
+        D["kb_zk0"], D["kb_zk1"] = D["kb_r_lo"] - D["kb_c_knob"], D["kb_r_up"] - D["kb_c_knob"]
+        D["race_wall"] = D["d_hg_root"] / 2 - D["kb_r_up"]                 # hub-gear root over the knob race
     D["z_knob_top"] = D["z_lip0"] - D["knob_run"]
     D["z_under_web"] = D["z_web0"] - D["knob_run"]
-    D["r_bore_hi"] = D["dial_hub_od"] / 2 + D["knob_run"]
     return D

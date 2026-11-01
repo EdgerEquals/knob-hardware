@@ -8,7 +8,13 @@ SRC_DEPS = [thrust, hall]
 def profile(D):
     ri, rt, rb, rh = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2, D["dial_bore_d"] / 2, D["dial_hub_od"] / 2
     rc, rw, rl, g, f = D["r_cup"], D["r_web"], D["knob_od"] / 2, D["gusset"], D["lip_fillet"]
-    return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"]), (rt, D["dial_hub_z0"]), (D["dial_collar_d"] / 2, D["dial_hub_z0"]),
+    if D["kb_race"] == "chamfer":   # v0.15c: plain tube straight into the hub (no flare, no collar); the gusset is the ball face
+        hub = [(rt, D["z_hub0"]), (rh, D["z_hub0"])] + ([(rh, D["z_web0"] - g)] if D["z_hub0"] < D["z_web0"] - g - 1e-6 else [])
+        top = [(rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well"])]
+        bore = [(rb, D["z_well"]), (rb, D["z_bore0"]), (ri, D["z_bore0"])] if D["adapter_cup"] else [(ri, D["z_well"])]   # no cup: plain tube ID
+        return ([(ri, D["dial_z_base"]), (rt, D["dial_z_base"])] + hub + [(rh + g, D["z_web0"]),
+                (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"]), (rl, D["z_lip0"]), (rl, D["z_top"]), (rc, D["z_top"])] + top + bore)
+    return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"]), (rt, D["z_hub0"]), (D["dial_collar_d"] / 2, D["z_hub0"]),
             (D["dial_collar_d"] / 2, D["z_hubf"]), (rh, D["z_hubf"]), (rh, D["z_web0"] - g), (rh + g, D["z_web0"]),
             (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"]), (rl, D["z_lip0"]), (rl, D["z_top"]), (rc, D["z_top"]),
             (rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well"]), (rb, D["z_well"]), (rb, D["z_bore0"]), (ri, D["z_bore0"])]
@@ -24,7 +30,7 @@ def panel_ctr(D):
 def race_add(D):   # 45 deg flare + collar on the tube, up into the hub
     rt, zd0 = D["kb_rt"], D["kb_zd0"]
     return rev([(rt - 0.6, zd0 - 1.6), (rt, zd0 - 1.6), (rt, zd0), (D["kb_r_collar"], D["kb_zd1"]),
-                (D["kb_r_collar"], D["dial_hub_z0"] + 0.2), (rt - 0.6, D["dial_hub_z0"] + 0.2)])
+                (D["kb_r_collar"], D["z_hub0"] + 0.2), (rt - 0.6, D["z_hub0"] + 0.2)])
 
 def lip_slot(D):   # through the lip where the COF bend passes, widened for the dial travel
     r0 = math.sqrt(max((D["lip_id"] / 2) ** 2 - (D["lip_slot_w"] / 2) ** 2, 0)) - D["lip_ctr_off"] - 0.3   # through the ring over the slot width
@@ -33,8 +39,9 @@ def lip_slot(D):   # through the lip where the COF bend passes, widened for the 
 def build(D):
     md, mh = D["dial_mag"]; mx, my = D["mag_xy"]
     pocket = cyl((md + D["dial_mag_press"]) / 2, D["z_mag0"], mh + 0.01, mx, my)
-    d = rev(profile(D)) + race_add(D) - thrust.groove(D) - pocket
-    if D["kb_seat_depth"] > 0: d -= seat_groove(D)
+    d = rev(profile(D)) - thrust.groove(D) - pocket
+    if D["kb_race"] != "chamfer": d += race_add(D)
+    if D["kb_groove_h"] > 0: d -= seat_groove(D)
     d += hall.arm(D)
     d -= cyl(D["lip_id"] / 2, D["z_screen_cut"], 10, *panel_ctr(D))
     d -= lip_slot(D)

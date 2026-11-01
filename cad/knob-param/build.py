@@ -59,6 +59,7 @@ def main():
     ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE", help="override a param (dotted for dict params)")
     ap.add_argument("--sub", default=None, help="build + check ONE sub-assembly: main_knob, control_dial, base_drive, under_pcb, electronics")
     ap.add_argument("--preview", action="store_true"); ap.add_argument("--render", action="store_true")
+    ap.add_argument("--clean", action="store_true", help="clean assembly view: A-A + iso quarter cut + colour legend only (no insets/tables/clash text)")
     ap.add_argument("--full", action="store_true", help="committed KiCad STEP board instead of the proxy (no KiCad needed)")
     ap.add_argument("--step", action="store_true"); ap.add_argument("--no-check", action="store_true"); ap.add_argument("--no-clash", action="store_true")
     ap.add_argument("--dump", action="store_true"); ap.add_argument("--clear-cache", action="store_true"); ap.add_argument("--contract", action="store_true")
@@ -91,7 +92,16 @@ def main():
     tm = None
     title = f"Knob stack {V} — sections in colour (2026-10-31; Ed / Edger_Equals, knob module v1, 10HP)" + (f"  [--set {' '.join(a.set)}]" if a.set else "")
     if a.sub: title = f"{a.sub} ({V}) — sub-assembly preview" + (f"  [--set {' '.join(a.set)}]" if a.set else "")
-    if a.preview or a.render:
+    if a.clean:
+        from knobparam.assembly import render
+        png = a.out or os.path.join(OUT, f"knob-stack-{V}-clean.png")
+        t = time.time()
+        ov = [x for x in a.set if not x.startswith("version=")]
+        tm = render.render(D, parts, keys, png, clean=True, title=f"Knob stack {V} — assembly sections",
+                           note=(f"Overrides: {' '.join(ov)}." if ov else None))
+        t_render = time.time() - t
+        print(f"\nPNG: {png}  render {t_render:.1f} s  " + " ".join(f"{k}={v:.1f}" for k, v in tm.items())); tm = None
+    elif a.preview or a.render:
         from knobparam.assembly import render
         if a.sub: a.preview, a.render = True, False   # sub-assembly renders are previews (insets need the whole stack)
         png = a.out or os.path.join(OUT, f"{'knob-stack-' + V if not a.sub else a.sub + '-' + V}-{'preview' if a.preview and not a.render else 'sections'}.png")
