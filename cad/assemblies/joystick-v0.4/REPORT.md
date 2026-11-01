@@ -1,5 +1,7 @@
 # Joystick v0.4
 
+The four hold-down springs stop just behind the main PCB. Installed length **45.4 mm** (was 65.9 mm to the back panel). Free length **37.4 mm**, stretch **8.0 mm**, force still **0.50 N** each (0.062 N/mm). A printed rear anchor, **18.3 × 12.0 × 4.65 mm**, **0.83 cm³**, bond outline **220 mm²**, is glued to the PCB back. Two Ø1.20 mm cross pins, shaft 16.7 mm, run along X at y ±3.50. Each pin passes both hooks on that row. The bore is Ø1.50, open on +x, stopped by a 1 mm wall on −x. The anchor clears the M2 nuts by **2.4 mm**.
+
 Each Ø2 ball sits in a pair of shallow spherical cups, one in the seat post and one in the carrier. Cup radius **1.396 mm** (1.396 × the ball radius), depth **0.60 mm** (0.30 × the diameter). The cups still hold the ball out to **0.65 mm** of carrier travel; the slide is 0.45 mm, so the margin is **0.20 mm**. The wider posts put the balls at **(±9.51, ±4.14)**.
 
 The module rests on the case faceplate. The bezel is a 1.2 mm lip (44.02 × 29.14) on a 2.5 mm faceplate proxy. The carrier, springs, switch, daughterboard and standoffs are below that plate.

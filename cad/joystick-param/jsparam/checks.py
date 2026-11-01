@@ -127,8 +127,8 @@ def run(D, P):
     # 6 hold-down springs, kept
     sm = D["spr_bore"] / 2 - D["spr_d"] / 2 - D["slide"]
     row("hold-down spring vs bore at full slide", sm, f">= {T['spring_min']}", sm >= T["spring_min"],
-        f"Ø{D['spr_d']:g} in Ø{D['spr_bore']:g}; {len(sprs)} x {D['spr_f']:g} N, length {D['spr_len']:.1f} "
-        f"(hook z {D['spr_z1']:.2f} + PCB {D['pcb_t']:g} + back panel {D['back_panel']:g} [A])")
+        f"Ø{D['spr_d']:g} in Ø{D['spr_bore']:g}; {len(sprs)} x {D['spr_f']:g} N, installed {D['spr_len']:.1f} mm "
+        f"(was {D['spr_len_was']:.1f} to the back panel). Free {D['spr_free']:.1f}, stretch {D['spr_ext']:.1f}")
     sg = min(s.distance_to(plate) for s in sprs)
     row("hold-down spring vs plate (rest)", sg, ">= 0.3", sg >= 0.3 - 1e-6, "hook boss is slotted so the eye can be swapped")
     row("compression spring clear of the hold-downs", min(c.distance_to(s) for c in css for s in sprs),
@@ -162,6 +162,32 @@ def run(D, P):
         f"four nuts, across flats {D['nut']['af']:.1f}. No second screw on this end")
     row("nut clear of the hold-down springs", min(n.distance_to(s) for n in nuts for s in sprs), ">= 1.0",
         min(n.distance_to(s) for n in nuts for s in sprs) >= 1.0)
+    ra = P["rear spring anchor (printed)"]
+    pins = [P[n] for n in P if n.startswith("cross pin")]
+    row("rear anchor glued to the PCB back", ra.distance_to(pcb), "0.01-0.05",
+        0.01 <= ra.distance_to(pcb) <= 0.05,
+        f"bond outline {D['ra_bond']:.0f} mm², wall {D['ra_wall']:.1f}, volume {ra.volume/1000:.2f} cm³")
+    row("rear anchor clear of the M2 nuts", min(ra.distance_to(n) for n in nuts), ">= 1.0",
+        min(ra.distance_to(n) for n in nuts) >= 1.0,
+        "the anchor stops inboard of the studs. Nuts stay reachable")
+    row("lower hooks just behind the PCB", -D["pcb_t"] - D["z_pin"], "1.5-4.0",
+        1.5 <= -D["pcb_t"] - D["z_pin"] <= 4.0,
+        f"pin axis z {D['z_pin']:.2f}, PCB back z {-D['pcb_t']:.2f}")
+    row("hold-down force unchanged", D["spr_f"], "0.50", abs(D["spr_f"] - 0.5) < 1e-9,
+        f"rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch. "
+        f"Length {D['spr_len_was']:.1f} → {D['spr_len']:.1f} mm")
+    row("two pins, each through a pair", len(pins), "2", len(pins) == 2 and len(sprs) == 4,
+        f"Ø{D['pin_d']:.2f} x {D['pin_x1'] - D['pin_x0']:.1f} mm, along X, at y ±{D['spr_y']:.2f}")
+    row("pin slides in the bore", min(p.distance_to(ra) for p in pins), ">= 0.10",
+        min(p.distance_to(ra) for p in pins) >= 0.10,
+        f"bore Ø{D['pin_bore']:.2f} over pin Ø{D['pin_d']:.2f}")
+    row("pin clears the hook eye", min(p.distance_to(s) for p in pins for s in sprs), ">= 0.10",
+        min(p.distance_to(s) for p in pins for s in sprs) >= 0.10,
+        f"eye wire Ø{D['eye_wire']:.2f}, radial gap {D['eye_clear']:.2f}. Pull the hook on, then push the pin")
+    mouth_open = not ra.is_inside((D["ra_x1"] - 0.15, D["spr_y"], D["z_pin"]))
+    blind = ra.is_inside((D["ra_x0"] + 0.4, D["spr_y"], D["z_pin"]))
+    row("pin mouth open, far end stopped", 1.0 if mouth_open and blind else 0.0, "open",
+        mouth_open and blind, "push in from +x. The -x end is a 1 mm wall")
     row("stud clears the PCB hole", (D["drill_m2"] - D["stud_d"]) / 2, ">= 0.15",
         (D["drill_m2"] - D["stud_d"]) / 2 >= 0.15, f"Ø{D['stud_d']:.1f} stud in the Ø{D['drill_m2']:.1f} hole")
     row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",

@@ -201,7 +201,7 @@
    "value": 0.24999999999999994,
    "target": ">= 0.1",
    "ok": true,
-   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, length 65.9 (hook z 41.68 + PCB 1.6 + back panel 22.65 [A])"
+   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, installed 45.4 mm (was 65.9 to the back panel). Free 37.4, stretch 8.0"
   },
   {
    "name": "hold-down spring vs plate (rest)",
@@ -286,6 +286,62 @@
    "target": ">= 1.0",
    "ok": true,
    "note": ""
+  },
+  {
+   "name": "rear anchor glued to the PCB back",
+   "value": 0.020000000000000018,
+   "target": "0.01-0.05",
+   "ok": true,
+   "note": "bond outline 220 mm\u00b2, wall 1.0, volume 0.83 cm\u00b3"
+  },
+  {
+   "name": "rear anchor clear of the M2 nuts",
+   "value": 2.3877035581759394,
+   "target": ">= 1.0",
+   "ok": true,
+   "note": "the anchor stops inboard of the studs. Nuts stay reachable"
+  },
+  {
+   "name": "lower hooks just behind the PCB",
+   "value": 2.17,
+   "target": "1.5-4.0",
+   "ok": true,
+   "note": "pin axis z -3.77, PCB back z -1.60"
+  },
+  {
+   "name": "hold-down force unchanged",
+   "value": 0.5,
+   "target": "0.50",
+   "ok": true,
+   "note": "rate 0.062 N/mm over 8.0 mm stretch. Length 65.9 \u2192 45.4 mm"
+  },
+  {
+   "name": "two pins, each through a pair",
+   "value": 2.0,
+   "target": "2",
+   "ok": true,
+   "note": "\u00d81.20 x 16.8 mm, along X, at y \u00b13.50"
+  },
+  {
+   "name": "pin slides in the bore",
+   "value": 0.14999999999999927,
+   "target": ">= 0.10",
+   "ok": true,
+   "note": "bore \u00d81.50 over pin \u00d81.20"
+  },
+  {
+   "name": "pin clears the hook eye",
+   "value": 0.1999999999999984,
+   "target": ">= 0.10",
+   "ok": true,
+   "note": "eye wire \u00d80.70, radial gap 0.20. Pull the hook on, then push the pin"
+  },
+  {
+   "name": "pin mouth open, far end stopped",
+   "value": 1.0,
+   "target": "open",
+   "ok": true,
+   "note": "push in from +x. The -x end is a 1 mm wall"
   },
   {
    "name": "stud clears the PCB hole",
@@ -536,7 +592,7 @@
    25.25,
    16.53
   ],
-  "spr_len": 65.92999999999999,
+  "spr_len": 45.449999999999996,
   "back_panel": 22.65,
   "knob_od_live": 40.85,
   "knob_od_design": 41.7,

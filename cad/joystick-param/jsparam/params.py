@@ -93,8 +93,14 @@ P = dict(
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
-    spr_f=0.5,              # [Ed] N each
-    back_panel=22.65,       # [A] v0.2's derived back-panel depth. Still unknown; the length follows the hook
+    spr_f=0.5,              # [Ed] N each, kept at the new shorter length
+    spr_ext=8.0,            # [A] extension at rest, mm. Free length is installed length minus this
+    pin_d=1.2,              # [A] push-in cross pin, stainless or music wire
+    pin_clear=0.30,         # [A] bore diameter over the pin, so it slides while pliers hold the hook
+    eye_wire=0.70,          # [A] hook wire diameter
+    eye_clear=0.20,         # [A] radial gap from the pin to the hook wire
+    ra_wall=1.0,            # [S] rear-anchor wall, the print minimum
+    back_panel=22.65,       # [A] old back-panel depth. The springs no longer reach it
     # ---- check targets. derive() overwrites the ones that are process tolerances ----
     tgt=dict(stem_cup_min=0.20, gap_min=0.20, cable_min=0.25, spring_min=0.10,
              knob_min=0.50, board_min=0.25, mate_min=3.5, mate_max=6.5),
@@ -385,7 +391,33 @@ def derive(P_):
     D["hole_x1"] = D["slot_x"][1] + D["slide"] + D["hole_extra"]
     D["hole_hy"] = D["slot_hy"] + D["slide"] + D["hole_extra"]
     D["spr_z1"] = D["z_c0"] - D["spr_boss"][1]
-    D["spr_len"] = D["spr_z1"] + D["pcb_t"] + D["back_panel"]
+    # lower hooks end just behind the PCB. Two pins run along X, one per Y pair.
+    pr = D["pin_d"] / 2.0
+    wr = D["eye_wire"] / 2.0
+    major = pr + D["eye_clear"] + wr
+    D["eye_major"] = major
+    D["eye_minor"] = wr
+    D["eye_ro"] = major + wr
+    D["pin_bore"] = D["pin_d"] + D["pin_clear"]
+    D["z_pin"] = -D["pcb_t"] - 0.02 - D["ra_wall"] - major
+    D["spr_len"] = D["spr_z1"] - D["z_pin"]
+    D["spr_len_was"] = D["spr_z1"] + D["pcb_t"] + D["back_panel"]
+    D["spr_free"] = D["spr_len"] - D["spr_ext"]
+    D["spr_rate"] = D["spr_f"] / D["spr_ext"]
+    wall = D["ra_wall"]
+    D["ra_x0"] = -D["spr_x"] - major - wall
+    D["ra_x1"] = D["spr_x"] + major + 2.0
+    D["ra_y0"] = -D["spr_y"] - D["eye_ro"] - wall
+    D["ra_y1"] = D["spr_y"] + D["eye_ro"] + wall
+    D["ra_z1"] = -D["pcb_t"] - 0.02
+    D["ra_z0"] = D["z_pin"] - D["eye_ro"] - wall
+    D["pin_x0"] = D["ra_x0"] + wall + 0.3
+    D["pin_x1"] = D["ra_x1"] - 0.25
+    D["pin_head_d"] = D["pin_d"] * 1.8
+    D["pin_head_t"] = 0.8
+    D["pin_y"] = (D["spr_y"], -D["spr_y"])
+    D["ra_slot"] = D["spr_d"] + 1.2
+    D["ra_bond"] = (D["ra_x1"] - D["ra_x0"]) * (D["ra_y1"] - D["ra_y0"])
     D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
     return D
 

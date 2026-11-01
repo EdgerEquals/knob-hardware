@@ -25,7 +25,9 @@ GROUPS = [
     ("compression springs (Lee CI 008B)", "#546e7a", lambda n: n.startswith("compression spring")),
     ("top screen 1.64\" AMOLED", "#101828", lambda n: n.startswith("top screen")),
     ("screen FPC [A]", "#ffb300", lambda n: n.startswith("screen FPC")),
-    ("hold-down extension springs (to back panel)", "#fdd835", lambda n: n.startswith("hold-down")),
+    ("rear spring anchor (glued to PCB back)", "#26a69a", lambda n: n.startswith("rear spring")),
+    ("cross pins (two, side entry)", "#455a64", lambda n: n.startswith("cross pin")),
+    ("hold-down extension springs", "#fdd835", lambda n: n.startswith("hold-down")),
 ]
 def group_of(n):
     for i, (_, _, f) in enumerate(GROUPS):
@@ -151,15 +153,16 @@ def _centre_z(D):
     return (0.0, 0.0, D["scr_top"] * 0.55)
 
 def section_preview(D, P, png):
-    """Low-resolution section on y = 0, from -y. The view Ed marks up. Not the full sheet."""
+    """Low-resolution section through the +y cross pin (plane y = spr_y), from -y."""
     tmp = tempfile.mkdtemp()
-    zc = _centre_z(D)
-    rem = Pos(0, -BIG / 2, 0) * Box(BIG, BIG, BIG)
-    m = _meshes(P, rem, [((0, 0, 0), (0, 1, 0))], tol=0.15)
-    im = _shot(m, (0, -1, 0), (0, 0, 1), os.path.join(tmp, "s.png"), (1100, 800), centre=zc, scale=27.0)
+    y = D["spr_y"]
+    rem = Pos(0, y - BIG / 2, 0) * Box(BIG, BIG, BIG)
+    m = _meshes(P, rem, [((0, y, 0), (0, 1, 0))], tol=0.12)
+    im = _shot(m, (0, -1, 0), (0, 0, 1), os.path.join(tmp, "s.png"), (1100, 800),
+               centre=(0.0, y, 18.0), scale=32.0)
     fig, ax = plt.subplots(figsize=(11, 8), dpi=70)
     ax.imshow(im); ax.axis("off")
-    ax.set_title(f"Top-screen joystick {D['version']} — section y=0, from -y (low res)", fontsize=12, weight="bold", loc="left")
+    ax.set_title(f"Top-screen joystick {D['version']} — section through the +y pin (y={y:.2f})", fontsize=12, weight="bold", loc="left")
     fig.tight_layout(); fig.savefig(png); plt.close(fig)
 
 def preview(D, P, png):
@@ -256,7 +259,8 @@ def _explode(P, D):
         "top screen": 62, "screen carrier": 46, "compression spring": 36, "joystick carrier": 24,
         "grub screw": 16, "brass insert": 16, "ball ": 14,
         "seat plate": 10, "SW1": 10, "joystick daughterboard": 6, "header ": 6,
-        "brass standoff": 0, "M2 nut": -10, "socket ": 0, "main PCB": 0, "screen FPC": 8, "hold-down": 0,
+        "brass standoff": 0, "M2 nut": -10, "socket ": 0, "main PCB": 0, "screen FPC": 8,
+        "hold-down": -6, "rear spring": -14, "cross pin": -14,
     }
     out = {}
     for n, s in P.items():

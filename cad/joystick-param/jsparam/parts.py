@@ -19,6 +19,10 @@ def cbox(w, h, z0, z1, x=0.0, y=0.0):
 def cyl(d, z0, z1, x=0.0, y=0.0):
     return Pos(x, y, z0) * Cylinder(d / 2, z1 - z0, align=A)
 
+def cyl_x(d, x0, x1, y=0.0, z=0.0):
+    """Cylinder along X, from x0 to x1."""
+    return Pos((x0 + x1) / 2, y, z) * Rot(0, 90, 0) * Cylinder(d / 2, abs(x1 - x0))
+
 def hex_at(af, z0, z1, x=0.0, y=0.0):
     """Hex prism, across-flats `af`. A flat faces +y so the wrench flat is parallel to the PCB edge."""
     r = (af / 2) / math.cos(math.radians(30))
@@ -120,6 +124,30 @@ def faceplate(D):
               D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + 0.05)
     return p
 
+def rear_anchor(D):
+    """Printed bar glued to the PCB back. Two pin bores along X, open on +x, each through one pair of hooks.
+    A slot over each spring lets the hook be pulled down onto the pin with pliers."""
+    b = box(D["ra_x0"], D["ra_x1"], D["ra_y0"], D["ra_y1"], D["ra_z0"], D["ra_z1"])
+    sw = D["ra_slot"]
+    for y in D["pin_y"]:
+        b -= cyl_x(D["pin_bore"], D["ra_x0"] + D["ra_wall"], D["ra_x1"] + 0.05, y, D["z_pin"])
+        for x in (D["spr_x"], -D["spr_x"]):
+            b -= box(x - sw / 2, x + sw / 2, y - sw / 2, y + sw / 2, D["z_pin"] - D["eye_ro"], D["ra_z1"] + 0.05)
+    return b
+
+def hold_down(D, x, y):
+    """Spring body plus the lower hook eye. The eye clears the cross pin so the pin can be pushed through."""
+    top = D["z_pin"] + D["eye_major"]
+    body = cyl(D["spr_d"], top - 0.05, D["spr_z1"], x, y)
+    eye = Pos(x, y, D["z_pin"]) * Rot(0, 90, 0) * Torus(D["eye_major"], D["eye_minor"])
+    return body + eye
+
+def cross_pin(D, y):
+    """Shaft along X through both hooks at this y, with a head outside the +x mouth."""
+    shaft = cyl_x(D["pin_d"], D["pin_x0"], D["pin_x1"], y, D["z_pin"])
+    head = cyl_x(D["pin_head_d"], D["ra_x1"] + 0.25, D["ra_x1"] + 0.25 + D["pin_head_t"], y, D["z_pin"])
+    return shaft + head
+
 def insert(D, x, y):
     """Slip-fit model of the heat-set insert. The real one is an interference fit; that is not a solid overlap."""
     s = cyl(D["ins_od_model"], D["z_ins0"], D["z_seat"] - 0.02, x, y)
@@ -186,6 +214,9 @@ def build(D):
         box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, -D["pcb_t"] - 3.0, z_run + t)
         + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
     )
+    out["rear spring anchor (printed)"] = rear_anchor(D)
+    for i, y in enumerate(D["pin_y"]):
+        out[f"cross pin {i + 1}"] = cross_pin(D, y)
     for i, (x, y) in enumerate(D["springs"]):
-        out[f"hold-down spring {i + 1}"] = cyl(D["spr_d"], -D["pcb_t"] - 6.0, D["spr_z1"], x, y)
+        out[f"hold-down spring {i + 1}"] = hold_down(D, x, y)
     return out
