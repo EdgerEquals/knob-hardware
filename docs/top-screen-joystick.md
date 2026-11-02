@@ -207,21 +207,25 @@ Decisions and reasons: `docs/case-decisions-2026-11-02.md`, "2 Nov midday (v0.20
   the flat faceplate (closes to 0.2 at full press); the faceplate opening tucks behind its edge (0.9 overlap). Glass top z 44.95:
   6.15 above the faceplate, 11.85 under the knob screen.
 - **Lift.** Switch, board and carrier 2 mm higher (30 mm). The carrier floor (z 37.1–38.1, corners R1.2) is inside the faceplate hole.
-- **Guides / up-stop.** Two ISO 7984 M2×8 screws through brass sleeves (OD 3.0, 6.0 long) at (±9, 0); reamed Ø3.06 bores 4.25 long
+- **Guides / up-stop.** Two ISO 7984 M2×8 screws through brass sleeves (OD 3.0, 6.0 long) at (±8.5, 0); reamed Ø3.06 bores 4.25 long
   in the carrier; 2.0 of thread in M2×3 roof inserts. The heads under the carrier are the up-stop.
 - **Press peg.** ISO 4026 M2×6 grub in a centre roof insert; set the 0.2 gap to the stem with a feeler before gluing the glass.
 - **Base.** Printed cradle (MJF PA-12, 30 mm) glued to the main PCB on two ISO 8734 1.5×5 dowels; ring ±16.0 × (−8.15 .. +7.65),
   0.42 inside the main-PCB top edge. The board (30.4 × 14.3, plus the socket tab) is glued on a 0.7 land. No standoffs, no seat plate.
 - **Balls at the corners.** Four Ø2 balls in gentle cups (radius 2.5, 8.6° at the full slide) on cradle towers at (±17.8, +8.45) and
   (±17.8, −10.3). The top towers start at z 22.5, above the case's top corner posts; the knob-side towers stand on the PCB.
-- **Springs inside the balls.** Press springs (Lee CI 008B 01 M; 0.5 turn: 0.77 N preload, 2.12 N at the bottom) at (±11.5, ±7.5).
-  Hold-down springs **0.9 N** at (±12.5, ±3.0); cross pins along x behind the PCB.
+- **Springs inside the balls.** Press springs (Lee CI 008B 01 M; 0.5 turn: 0.77 N preload, 2.12 N at the bottom) at (±11.5, ±5.6).
+  Hold-down springs **0.9 N** at (±12.5, ±1.5); cross pins along x behind the PCB.
+- **Grub access after assembly** [Ed 13:23]. A Ø1.6 hole through the main PCB patch and the daughterboard lines up under each of
+  the four press-spring grubs, so the preload can be reset from behind the main PCB with a 0.9 hex key (key line checked clear).
+  The stations moved inside the cradle ring for this (from (±11.5, ±7.5)); the hold-downs and guides moved with them.
 - **Tipping.** Push to click 1.75 N nominal / 2.44 N worst (switch + 0.55 N cup spring-back). Safety at the worst-case click: 1.32 up,
   1.61 toward the knob, 2.78 left/right (≥ 1.3).
 - **Board-to-board.** Two 2×5 long-post headers (long side along y) at x ±7.71 into 2×5 H11 sockets; mates 5.04.
 - **Screen flex.** AXE530127 socket on a +x tab (centre x 16.0, long side along y); slots in the roof and carrier floor; fold pocket
   inside the +x wall at the glass edge.
-- **Skirt.** Two walls along the board's ±y edges, split to leave the grubs open and short of the towers; the anti-rotation stop.
+- **Skirt.** Two full walls along the board's ±y edges, short of the towers; the anti-rotation stop. (No split needed now the grubs
+  are reached from behind.)
 - **Rail strip.** Nothing behind the panel reaches into the outer 10 mm (0.4 air).
 - Open: flex tail length [C]; the fold pocket leaves 0.6 of the +x wall (MJF minimum 1.0) [C]; parts to pick (2×5 header code, 2×5
   sockets, M2×8 low-head, M2×6 grub, inserts, brass tube 3.0/2.1, 0.9 N Ø2 extension springs, dowels, epoxy); the daughterboard

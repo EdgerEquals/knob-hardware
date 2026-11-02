@@ -48,9 +48,21 @@ def checks(D, parts):
     r.row("cap engagement leaves an open bore between the plugs", D["sleeve_len"] - 2 * D["sleeve_insert"], D["sleeve_insert"])
     if D["glass_to_dial"]:
         from ..common.process import PROCESS
-        r.row("upper cap: dished web / flare wall (normal) vs MJF wall", D["cap_flare_wall"], PROCESS["mjf"]["wall"],
-              f"web {D['z_under_web'] - D['h_band1']:.2f} at the hub gear to {D['cap_web_rim']:.2f} at r {D['cap_r_s']:.2f}; "
-              f"flare {D['cap_flare_slope']:.0f}° up to the plug foot z {D['cap_z_plug0']:.2f}")
+        if "cap_neck" in D:   # v0.21 cone cap [Ed 2 Nov]
+            r.row("upper cap: neck at the hub (hub-gear root corner to the cap top)", D["cap_neck"], 1.5,
+                  f"was 0.70 in v0.20; race {D['kb_rc']:.2f} from the axis; flat top z {D['knob_hub_top']:.2f}, flat underside z {D['h_band1']:.2f}")
+            r.row("upper cap: cone wall (normal), parallel faces", D["cap_cone_t"], 2 * PROCESS["mjf"]["wall"],
+                  f"{D['cone_deg']:g}° cone from r {D['cap_cone_r0']:.2f} to {D['cap_cone_r1']:.2f}; underside flat to r {D['cap_flat_r1']:.2f}")
+            r.row("upper cap: running gap to the dial cone (normal)", D["cap_cone_run"], D["knob_run"] - 0.01,
+                  "dial underside and cap top are parallel cones")
+            r.row("upper cap: plug length in the glass bore", D["cap_plug_len"], 1.0,
+                  f"plug Ø{2 * D['sleeve_spigot_r']:.2f} from z {D['cap_plug_z0']:.2f} to the chamfer seat z {D['cap_seat_z_foot']:.2f}")
+            r.row("upper cap: cone top lands inside the glass-top seat", D["cap_seat_r_top"] - D["cap_cone_r1"], 0.5,
+                  f"flat ring r {D['cap_cone_r1']:.2f}–{D['cap_seat_r_top']:.2f} flush with the glass top")
+        else:
+            r.row("upper cap: dished web / flare wall (normal) vs MJF wall", D["cap_flare_wall"], PROCESS["mjf"]["wall"],
+                  f"web {D['z_under_web'] - D['h_band1']:.2f} at the hub gear to {D['cap_web_rim']:.2f} at r {D['cap_r_s']:.2f}; "
+                  f"flare {D['cap_flare_slope']:.0f}° up to the plug foot z {D['cap_z_plug0']:.2f}")
         if D["cap_top"] == "chamfer":
             r.row("glass top: flat face left between the two ground chamfers", D["glass_top_flat"], 0.4,
                   f"wall {D['sleeve_wall']:.2f} − inner {D['sleeve_top_cin']:g} − outer {D['sleeve_top_cout']:g} (45°); thin wall {D['sleeve_wall_lo']:g} leaves {D['sleeve_wall_lo'] - D['sleeve_top_cin'] - D['sleeve_top_cout']:.2f}")

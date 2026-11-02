@@ -142,7 +142,7 @@
   },
   {
    "name": "skirt clear at switch end of travel",
-   "value": 0.24999999999999822,
+   "value": 0.2499999999999991,
    "target": ">= 0.25",
    "ok": true,
    "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.250, 0.320, 0.250, 0.320, 0.250, 0.320, 0.250, 0.320"
@@ -155,11 +155,11 @@
    "note": "the skirt is the anti-rotation stop. It is not the tilt stop"
   },
   {
-   "name": "press-spring grubs reachable from underneath (sub-assembly)",
-   "value": 1.0,
-   "target": "open",
+   "name": "press-spring grubs reachable from behind the main PCB (key line clear, mm\u00b3)",
+   "value": 0.0,
+   "target": "0",
    "ok": true,
-   "note": "stations (\u00b111.50, \u00b17.50) inside the balls (\u00b117.80); skirt segments stop at \u00b110.25 and restart at \u00b112.75"
+   "note": "[Ed 13:23] stations (\u00b111.50, \u00b15.60) inside the cradle ring; \u00d81.6 holes in the main PCB and the joystick board; worst: none. Before the back cover goes on"
   },
   {
    "name": "hex proud of the insert",
@@ -233,14 +233,14 @@
   },
   {
    "name": "compression spring clear of the hold-downs",
-   "value": 3.4512411898531634,
+   "value": 3.181649922066254,
    "target": ">= 1.0",
    "ok": true,
    "note": "the two spring sets do not share a job"
   },
   {
    "name": "compression spring clear of the plate",
-   "value": 4.131635136500788,
+   "value": 4.495720561493405,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -313,7 +313,7 @@
    "value": 0.020000000000000018,
    "target": "0.01-0.05",
    "ok": true,
-   "note": "bond outline 324 mm\u00b2, wall 1.0, volume 1.28 cm\u00b3"
+   "note": "bond outline 236 mm\u00b2, wall 1.0, volume 0.87 cm\u00b3"
   },
   {
    "name": "lower hooks just behind the PCB",
@@ -362,18 +362,18 @@
    "value": 2.0,
    "target": "2",
    "ok": true,
-   "note": "\u00d81.20 x 27.9 mm, along X, at y \u00b13.00"
+   "note": "\u00d81.20 x 27.9 mm, along X, at y \u00b11.50"
   },
   {
    "name": "pin slides in the bore",
-   "value": 0.1499999999999994,
+   "value": 0.14999999999999936,
    "target": ">= 0.10",
    "ok": true,
    "note": "bore \u00d81.50 over pin \u00d81.20"
   },
   {
    "name": "pin clears the hook eye",
-   "value": 0.19999999999999735,
+   "value": 0.19999999999999737,
    "target": ">= 0.10",
    "ok": true,
    "note": "eye wire \u00d80.70, radial gap 0.20. Pull the hook on, then push the pin"
@@ -425,7 +425,7 @@
    "value": 1.0,
    "target": "mirror",
    "ok": true,
-   "note": "standoffs (\u00b113.30, \u00b18.60), compression springs (\u00b111.50, \u00b17.50)"
+   "note": "standoffs (\u00b113.30, \u00b18.60), compression springs (\u00b111.50, \u00b15.60)"
   },
   {
    "name": "ball seated in the upper cup",
@@ -527,7 +527,7 @@
   },
   {
    "name": "carrier volume",
-   "value": 1.5061208450175188,
+   "value": 1.576888064887477,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
@@ -586,7 +586,7 @@
    "value": 0.29999999999999005,
    "target": ">= 0.25",
    "ok": true,
-   "note": "guides at (9.0, 0.0) and mirror; head z 32.25-33.85 at rest (the up-stop); under it z 31.60 (board top + solder, or the switch)"
+   "note": "guides at (8.5, 0.0) and mirror; head z 32.25-33.85 at rest (the up-stop); under it z 31.60 (board top + solder, or the switch)"
   },
   {
    "name": "roof bosses clear the carrier floor at full press",
@@ -604,7 +604,7 @@
   },
   {
    "name": "guide head vs switch body (rest)",
-   "value": 1.814418876668332,
+   "value": 1.3144254199964693,
    "target": ">= 0.25",
    "ok": true,
    "note": ""
@@ -723,37 +723,37 @@
   "springs": [
    [
     12.5,
-    3.0
+    1.5
    ],
    [
     12.5,
-    -3.0
+    -1.5
    ],
    [
     -12.5,
-    3.0
+    1.5
    ],
    [
     -12.5,
-    -3.0
+    -1.5
    ]
   ],
   "cs_xy": [
    [
     11.5,
-    7.5
+    5.6
    ],
    [
     11.5,
-    -7.5
+    -5.6
    ],
    [
     -11.5,
-    7.5
+    5.6
    ],
    [
     -11.5,
-    -7.5
+    -5.6
    ]
   ],
   "standoff_xy": [],
@@ -786,7 +786,7 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "joystick carrier (printed)": 1.5061208450175188,
+   "joystick carrier (printed)": 1.576888064887477,
    "screen carrier (printed)": 2.560116933546872
   }
  }

@@ -2,9 +2,9 @@
 
 Parametric build123d model of the top-screen 5-way joystick. An Alps SKRHADE010 sits on the carrier axis, on a daughterboard
 glued on a printed cradle (MJF PA-12, 30 mm) that is glued to the main PCB on two dowels; two 2×5 long-post headers carry the
-signals down. Four Ø2 balls on cradle towers at the extreme corners carry the carrier; four hold-down springs (0.65 N) keep it
+signals down. Four Ø2 balls on cradle towers at the extreme corners carry the carrier; four hold-down springs (0.9 N) keep it
 on them. The screen is glued on the roof of a 5 mm grip block (the bezel), which floats on four Lee Spring CI 008B 01 M
-compression springs (grub-screw preload, set on the sub-assembly) and is tied to the carrier by two guide screws in brass
+compression springs (grub-screw preload, reset after assembly through Ø1.6 holes in the main PCB) and is tied to the carrier by two guide screws in brass
 sleeves; their heads are the up-stop. The case places it: as high as the top rail screws allow.
 Design notes: `docs/top-screen-joystick.md` (v0.5 section). Decisions: `docs/case-decisions-2026-11-02.md`. v0.4 is kept in
 `cad/assemblies/joystick-v0.4/` (outputs only; the v0.4 code is in git history before `asm/v020-layout`).

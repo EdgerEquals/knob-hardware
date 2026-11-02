@@ -20,6 +20,13 @@ def profile(D):
     z_l = zl - o + (r_s - rw)
     r_l = rw + f + o - (D["z_lip0"] - D["z_knob_top"])
     z0, zt = D["knob_hub_z0"], D["knob_hub_top"]
+    if D["cap_shape"] == "cone" and D["glass_to_dial"] and D["kb_race"] == "chamfer" and D["cap_top"] == "chamfer":
+        # v0.21 [Ed 2 Nov]: no steps. Hub, flat underside over the pinion, one straight cone up to the plug in the bore, the 45° seat
+        # on the glass's inner chamfer, a flat ring flush with the glass top, one straight cone (parallel) down to the race, hub top.
+        rk = D["r_knob_bore"]; z1 = D["sleeve_z1"]
+        return [(rk, z0), (rh, z0), (rh, D["h_band1"]), (D["cap_flat_r1"], D["h_band1"]), (sp, D["cap_plug_z0"]),
+                (sp, D["cap_seat_z_foot"]), (D["cap_seat_r_top"], z1), (D["cap_cone_r1"], z1),
+                (D["cap_cone_r0"], D["z_under_web"]), (D["r_chamfer0"], zt), (rk, zt)]
     if D["glass_to_dial"] and D["kb_race"] == "chamfer" and D["cap_top"] == "chamfer":
         # v0.19b [Ed 2 Nov, later]: the glass runs right up under the dial. Its top inner edge is ground to a 45° chamfer and the cap's
         # cone seats on it, so the cap cannot go down past it; the cap top is flush with the glass top face.

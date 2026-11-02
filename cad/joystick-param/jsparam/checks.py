@@ -3,6 +3,7 @@ springs, preloaded by grub screws that are reached on the sub-assembly. The four
 springs are unchanged in kind from v0.3."""
 import math, itertools
 from build123d import Pos, Rot
+from .parts import cyl as cyl_
 
 def _mirror_ok(pts, tol=1e-6):
     s = {(round(x, 4), round(y, 4)) for x, y in pts}
@@ -118,12 +119,25 @@ def run(D, P):
     row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
         "the skirt is the anti-rotation stop. It is not the tilt stop")
     # 4 grub screws: on the sub-assembly only. No hole in the plate or the daughterboard
-    if cradle_on:   # v0.5: the press springs sit inside the corner balls; the skirt segments skip the grubs
-        gr = D["grub_d_model"] / 2
-        reach = all(D["skirt_x_in"] < abs(x) - gr and D["skirt_x0"] > abs(x) + gr for x, _ in D["cs_xy"])
-        row("press-spring grubs reachable from underneath (sub-assembly)", 1.0 if reach else 0.0, "open", reach,
-            f"stations (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f}) inside the balls (±{D['bx']:.2f}); skirt segments stop at "
-            f"±{D['skirt_x_in']:.2f} and restart at ±{D['skirt_x0']:.2f}")
+    if cradle_on:   # v0.5: the press springs sit inside the corner balls; the grubs stay reachable from underneath
+        from build123d import Pos as _P
+        hits, who = 0.0, "none"
+        grub_names = [n for n in P if n.startswith("grub screw")]
+        for (x, y), gname in zip(D["cs_xy"], grub_names):
+            g_bb = P[gname].bounding_box()
+            line = cyl_(D["grub_access_d"] - 0.3, -12.0, g_bb.min.Z - 0.05, x, y)   # a 1.3 hex-key line from behind the PCB
+            for n, s_ in P.items():
+                if n.startswith(("grub screw", "faceplate (case proxy")):
+                    continue
+                try:
+                    v = (line & s_).volume
+                except Exception:
+                    v = 1e9
+                if v > 1e-3 and v > hits:
+                    hits, who = v, n
+        row("press-spring grubs reachable from behind the main PCB (key line clear, mm³)", hits, "0", hits <= 1e-3,
+            f"[Ed 13:23] stations (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f}) inside the cradle ring; Ø{D['grub_access_d']:g} holes in "
+            f"the main PCB and the joystick board; worst: {who}. Before the back cover goes on")
     else:
         outside = all(abs(x) - D["cs_bore_r"] > D["board_x1"] or abs(y) - D["cs_bore_r"] > D["board_y1"] for x, y in D["cs_xy"])
         row("spring pilots outside the plate", 1.0 if outside else 0.0, "outside", outside,

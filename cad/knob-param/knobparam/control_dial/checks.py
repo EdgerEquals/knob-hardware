@@ -111,6 +111,15 @@ def checks(D, parts):
             f"groove R{D['kb_seat_r']:g} centred {D['kb_seat_r'] - D['kb_ball_d'] / 2:.2f} past the ball centre on the 45° line", higher_ok=False)
         row("seat: groove rim half-width - ball chord at the cone face", D["kb_seat_w"] - D["kb_ball_cap_w"], 0.0,
             f"depth {D['kb_groove_h']:.3g}: groove ±{D['kb_seat_w']:.3f}, ball ±{D['kb_ball_cap_w']:.3f}")
+        if D["kb_race"] == "chamfer" and D["dial_shape"] == "cone":   # v0.21 [Ed 2 Nov]: straight parallel cones, no steps
+            row("dial: cone wall (normal), parallel faces", D["cone_dial_wall"], 1.5,
+                f"{D['cone_deg']:g}°; underside r {D['cone_under_r0']:.2f}–{D['cone_lip_r']:.2f}, top r {D['cone_well_r']:.2f}–{D['cone_seat_r']:.2f}")
+            row("dial: material under the adapter-board corner (well floor to the underside)", D["cone_dial_corner"], 1.5,
+                f"well Ø{2 * D['cone_well_r']:.2f}, floor z {D['z_well_top']:.2f}; race moved out {D['race_out']:g}, up {D['race_up']:.2f}")
+            row("dial: hub between the gap face and the well floor", D["z_well_top"] - D["z_hub0"], 1.5)
+            row("dial: cone underside meets the lip inside its outer chamfer", D["knob_od"] / 2 - D.get("sleeve_top_cout", 0.0) - D["cone_lip_r"], 1.0)
+            row("dial: flat carrier seat under the carrier magnet pocket (inner wall)", D["carr_r"] - D["carr_mag"][0] / 2 - D["cone_seat_r"],
+                D["carr_seat_wall"] - 1e-6, f"seat r {D['cone_seat_r']:.2f} out to the screen cut")
         if D["kb_race"] == "chamfer":
             row("dial: material under the cup-boss bore (above the hub bottom)", D["z_bore0"] - D["z_hub0"], D["dial_bore_floor"] - 1e-6,
                 f"socket on the tube {D['hold_socket_len']:.2f}" if D["adapter_cup"] else "no cup: plain tube ID")

@@ -58,6 +58,8 @@ def pcb(D):
         p -= cyl(D["drill_m2"], -t - 1, 1, x, y)
     for x, y in D.get("cr_pins", []):   # v0.5 cradle locating dowels
         p -= cyl(D["cradle"]["pin"]["d"] + 0.05, -t - 1, 1, x, y)
+    for x, y in D.get("access_xy", []):   # [Ed 13:23] press-spring grub access
+        p -= cyl(D["grub_access_d"], -t - 1, 1, x, y)
     if not D["fpc_to_db"]:   # v0.4 drop through the main PCB; v0.5 plugs into the daughterboard instead
         p -= box(D["hole_x0"], D["hole_x1"], -D["hole_hy"], D["hole_hy"], -t - 1, 1)
     return p
@@ -139,7 +141,8 @@ def carrier(D):
     if D["base"] == "cradle":
         # v0.5 cradle: two walls along the board's ±y edges, each in three segments that skip the press-spring grubs
         # (reached from underneath on the sub-assembly) and stop short of the corner towers. Still the anti-rotation stop.
-        segs = [(-D["skirt_x_in"], D["skirt_x_in"]), (D["skirt_x0"], D["skirt_x1"]), (-D["skirt_x1"], -D["skirt_x0"])]
+        segs = ([(-D["skirt_x_in"], D["skirt_x_in"]), (D["skirt_x0"], D["skirt_x1"]), (-D["skirt_x1"], -D["skirt_x0"])]
+                if D.get("skirt_split", True) else [(-D["skirt_x1"], D["skirt_x1"])])
         skirt = None
         for a, b_ in segs:
             for ya, yb in ((y1, y1 + t), (y0 - t, y0)):
@@ -244,6 +247,8 @@ def build(D):
         db -= cyl(D["spr_bore"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     if D["fpc_to_db"]:   # v0.5 tab past the +x standoffs for the screen socket
         db += box(dx1 - 0.01, D["tab_x1"], -D["tab_hy"], D["tab_hy"], D["z_db0"], D["z_db1"])
+    for x, y in D.get("access_xy", []):   # [Ed 13:23] press-spring grub access
+        db -= cyl(D["grub_access_d"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     out["joystick daughterboard"] = db
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
     pin_d = D["pitch"] * 0.25

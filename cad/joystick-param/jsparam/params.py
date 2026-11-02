@@ -71,7 +71,7 @@ P = dict(
     guide=dict(part="ISO 7984 M2 A2 low-head socket screw (length from derive) + brass tube sleeve OD 3.0 / ID 2.1, cut to length",
                d=2.0, sleeve_od=3.0, head_d=3.8, head_k=1.6, bore_fit=0.03, boss_wall=1.0,
                ins=dict(part="M2x3x3.2 brass heat-set (bezel roof)", od=3.2, length=3.0, hole=3.0)),   # [S] DIN 7984 M2 head Ø3.8 × 1.6 max [A]
-    guide_xy=(9.0, 0.0),    # [A] review fix: guides on the long axis at (±9, 0), so an off-centre press slides instead of jamming
+    guide_xy=(8.5, 0.0),    # [A] review fix: guides on the long axis at (±8.5, 0), so an off-centre press slides instead of jamming
     solder_h=0.6,           # [A] header solder joints / trimmed tails above the joystick board top
     # press peg (review fix): an M2 grub in a roof insert at the centre, set to the press gap with a feeler before the glass goes on
     peg=dict(part="ISO 4026 M2 A2 flat-point grub (press peg, set with a 0.2 feeler, threadlocker)", d=2.0,
@@ -134,12 +134,16 @@ P = dict(
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
-    spr_xy=(12.5, 3.0),     # [A] v0.5 hold-down springs at (±x, ±y): inside the balls, outboard of the 2x5 headers
+    spr_xy=(12.5, 1.5),     # [A] v0.5 hold-down springs at (±x, ±y): inside the balls, outboard of the 2x5 headers (y 1.5: room
+                            # for the press-spring grub access inside the cradle ring)
     spr_f=0.90,             # [Ed 2 Nov 13:08] N each (option B; v0.4 0.5). Sized so a sideways push on the glass top that clicks the
                             # worst-case switch against the cup spring-back still has a 1.3 tipping safety
     cup_ratio_set=2.5,      # [Ed 2 Nov 13:08] option B: gentle ball cups, radius 2.5 × the ball radius (v0.4 1.4: 35° at the full
                             # slide, 1.8 N of push-back). 8.6° at the full slide; ~0.5 N spring-back to centre
-    cs_xy_v05=(11.5, 7.5),  # [Ed 2 Nov 12:22] press springs inside the balls (v0.4 had them at the carrier corners)
+    cs_xy_v05=(11.5, 5.6),  # [Ed 2 Nov 12:22] press springs inside the balls (v0.4 had them at the carrier corners). y 5.6 [Ed 13:23]:
+                            # inside the cradle ring, so each grub can be reached from behind the main PCB
+    grub_access=True,       # [Ed 2 Nov 13:23] access holes through the main PCB and the joystick board under each press-spring grub
+    grub_access_d=1.6,      # [A] hole Ø for a 0.9 hex key (ISO 4026 M2 grub) with clearance
     tip_margin=1.3,         # [A] tipping force / worst-case switch tilt force
     spr_ext=8.0,            # [A] extension at rest, mm. Free length is installed length minus this
     pin_d=1.2,              # [A] push-in cross pin, stainless or music wire
@@ -556,12 +560,15 @@ def derive(P_):
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
     # skirt walls (±y only in v0.5) end this far out, short of the grubs hanging under the stations
     D["skirt_x"] = min(D["board_x1"] + D["skirt_gap"] + D["car_skirt"], D["cs_x"] - D["grub_d_model"] / 2 - 0.5)
+    D["access_xy"] = list(D["cs_xy"]) if D.get("grub_access") else []   # [Ed 13:23] grub access holes (PCB + joystick board)
     if D["base"] == "cradle":
         # two segments per wall: inside the grubs, and from past the grubs to short of the corner towers
         D["skirt_x_in"] = D["cs_x"] - D["grub_d_model"] / 2 - 0.5
         D["skirt_x0"] = D["cs_x"] + D["grub_d_model"] / 2 + 0.5
         D["skirt_x1"] = D["bx"] - D["boss_r"] - D["slide"] - mjf
         D["skirt_x"] = D["skirt_x1"]
+        # grubs inside the skirt line (y): the walls can run full length
+        D["skirt_split"] = D["cs_y"] + D["grub_d_model"] / 2 + 0.3 > D["board_y1"] + D["skirt_gap"]
     # ---- v0.5 guides: screw + brass sleeve, bezel to carrier. Head under a carrier boss = up-stop; sleeve in a reamed bore.
     G = D["guide"]; gi = G["ins"]
     gx_, gy_ = D["guide_xy"]
