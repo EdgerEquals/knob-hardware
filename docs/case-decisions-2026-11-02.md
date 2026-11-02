@@ -211,3 +211,10 @@ A fresh-eyes review of v0.20 found real faults; all fixed:
   springs 0.9 N** each (replaces the 0.65 above). Push to click 1.75 N nominal, 2.44 N worst. Tipping safety at the worst-case click:
   1.32 up the panel, 1.61 toward the knob, 2.78 left/right (rule ≥ 1.3). Balls at (±17.8, +8.45 / −10.3).
 - No silent fallbacks: the joystick model now stops if the case values are missing; a failed rail-strip intersection fails.
+
+### Grub access after assembly (2 Nov, 13:23)
+- [Ed 13:23] **Press-spring grubs adjustable after assembly.** A Ø1.6 NPTH through the main PCB and the joystick board under each of
+  the four grubs; a 0.9 hex key reaches them from behind the main PCB (key line checked clear). To fit inside the cradle ring the
+  press springs moved to (±11.5, ±5.6) (was ±7.5), the hold-downs to (±12.5, ±1.5) (was ±3.0) and the guides to (±8.5, 0) (was ±9).
+  The skirt walls no longer need a split. Tipping safety unchanged (1.32 / 1.61 / 2.78). Joystick checks 90/90, 0 clashes.
+  `geom.json` lists the holes as "press-spring grub access (NPTH)".
