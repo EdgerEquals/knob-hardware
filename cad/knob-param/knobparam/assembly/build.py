@@ -41,9 +41,8 @@ def _turn(out, paths, key, rot):
     o2, p2 = {}, {}
     for n, solid in out.items():
         o2[n] = Rot(0, 0, rot) * solid
-        src = paths.get(n)
         import hashlib
-        dst = (src[:-5] if src and src.endswith(".brep") else os.path.join(CACHE, hashlib.sha1((key + n).encode()).hexdigest()[:20])) + tag + ".brep"
+        dst = os.path.join(CACHE, "turn_" + hashlib.sha1((key + "|" + n).encode()).hexdigest()[:24] + tag + ".brep")
         if not os.path.exists(dst): export_brep(o2[n], dst)
         p2[n] = dst
     return o2, p2, key + tag

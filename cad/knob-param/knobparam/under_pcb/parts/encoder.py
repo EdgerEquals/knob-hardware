@@ -10,6 +10,17 @@ def bearing(D, z_top):
     B = D["brg"]; z0 = z_top - B["B"]
     return tube(B["d"] / 2, B["D"] / 2, z0, B["B"]) + tube(B["d"] / 2, B["fd"] / 2, z_top - B["ft"], B["ft"])
 
+def seat2(D):
+    """v0.19: cup glued to the PCB back round H2. Floor under the downward flange, a counterbore for the flange,
+    a bore for the body up to the board; the shaft passes the floor."""
+    B = D["brg"]; z0, z1 = D["brg2_seat_z0"], D["z_pcb_back"] - 0.02
+    zf = D["h_b2_bot"]                        # flange underside (flange faces down)
+    cup = cyl(B["fd"] / 2 + D["brg2_seat_wall"], z0, z1 - z0)
+    cup -= cyl(B["d"] / 2 + 0.6, z0 - 0.1, zf - z0 + 0.2)          # shaft through the floor
+    cup -= cyl(B["fd"] / 2 + 0.05, zf, B["ft"] + 0.02)             # flange counterbore
+    cup -= cyl(B["D"] / 2 + 0.02, zf + B["ft"], z1 - zf - B["ft"] + 0.1)   # body bore
+    return cup
+
 def pinion(D):
     g = ext_herringbone(D, D["z_enc_pinion"], D["h_pin0"], D["pin_face"], D["hb_mid"])
     hub = cyl(D["pinion_hub_d"] / 2, D["h_brg_top"], D["h_pin0"] - D["h_brg_top"])
@@ -80,8 +91,7 @@ def build(D):
             "encoder shaft": T * cyl(D["enc_shaft_d"] / 2, D["enc_shaft_bot"], D["h_pin1"] - D["enc_shaft_bot"]),
             "encoder bearing 2" + (" (seat on the PCB back)" if D["brg2_on_pcb"] else " (back panel)"):
                 T * (Rot(180, 0, 0) * Pos(0, 0, -D["h_b2_bot"] - D["h_b2_top"]) * bearing(D, D["h_b2_top"]) if D["brg2_on_pcb"] else bearing(D, D["h_b2_top"])),
-            **({"encoder bearing 2 seat (printed, glued)": T * (tube(D["brg"]["fd"] / 2 + 0.05, D["brg"]["fd"] / 2 + D["brg2_seat_wall"], D["brg2_seat_z0"], D["z_pcb_back"] - D["brg2_seat_z0"] - 0.02)
-                                                             - cyl(D["brg"]["d"] / 2 + 0.6, D["brg2_seat_z0"] - 0.1, 1.0))} if D["brg2_on_pcb"] else {}),
+            **({"encoder bearing 2 seat (printed, glued)": T * seat2(D)} if D["brg2_on_pcb"] else {}),
             "encoder disc + slotted rim": T * wheel(D),
             "encoder sensor EE-SX1321": T * S * sensor(D),
             "encoder daughterboard": T * S * board,

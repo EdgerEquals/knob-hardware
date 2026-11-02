@@ -3,6 +3,7 @@ Reads: interface + own + IMPORTS (under_pcb big-gear tip for the J2 pad position
 import math, os, json
 
 P = dict(
+    kicad_frame="mech",   # [K] v0.19: the committed KiCad boards (v0.11/v0.12) are in the mechanism frame (motor at +X); "panel" once regenerated
     # ---- main PCB [K] ----
     pcb_w=49.0,   # [K] board width (x)
     pcb_above=42.4,   # [K] dial axis to the top board edge (panel +y side, frame +y)

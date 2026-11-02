@@ -7,5 +7,5 @@ def checks(D, parts):
     if not D["brg2_on_pcb"]:
         row("back-panel depth vs module limit", D["back_panel"], T["back_panel_max"], "", higher_ok=False)
     else:
-        row("deepest under-PCB part (cover depth driver)", -D["z_rear_min"], T["back_panel_max"], f"z {D['z_rear_min']:.2f}; bearing 2 on the PCB back", higher_ok=False)
+        row("deepest under-PCB part behind the PCB back (cover depth driver)", D["z_pcb_back"] - D["z_rear_min"], T["back_panel_max"], f"z {D['z_rear_min']:.2f}; bearing 2 on the PCB back", higher_ok=False)
     return r

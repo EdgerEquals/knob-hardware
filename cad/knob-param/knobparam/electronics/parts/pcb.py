@@ -16,7 +16,9 @@ def _mpt(D, x, y):
     return c * x - s * y, s * x + c * y
 
 def _is_mech(D, x, y):
-    return math.hypot(x, y) < D.get("mech_rot_r", 24.0)
+    # KiCad boards up to v0.12 are laid out in the mechanism frame (motor at +X). A board regenerated from the v0.19
+    # cad_constraints.json is already in the panel frame: set electronics kicad_frame = "panel" and nothing is turned.
+    return D.get("kicad_frame", "mech") == "mech" and math.hypot(x, y) < D.get("mech_rot_r", 23.0)
 
 def build(D):
     t, w = D["pcb_t"], D["pcb_w"]

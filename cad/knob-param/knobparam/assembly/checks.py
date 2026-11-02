@@ -209,8 +209,8 @@ def cross(D, parts):
     # v0.19 [Ed]: screen rule. Every part behind the PCB keeps screen_air (1.0) from both back AMOLEDs.
     scr = {n: parts[n] for n in parts if n.startswith("back AMOLED")}
     if scr:
-        case_like = ("case", "back cover", "glow coat", "PCB", "corner screw", "jack ", "USB-C", "back AMOLED", "lower screen pad", "knob bolt")
-        rear = {n: p for n, p in parts.items() if not n.startswith(case_like) and p.bounding_box().min.Z < D["z_pcb_back"] - 0.01}
+        case_like = ("case", "back cover", "glow coat", "corner screw", "corner insert", "jack ", "USB-C", "back AMOLED", "lower screen pad", "knob bolt")
+        rear = {n: p for n, p in parts.items() if n != "PCB" and not n.startswith(case_like) and p.bounding_box().min.Z < D["z_pcb_back"] - 0.01}
         smin, swho = 1e9, ""
         for sn, sp in scr.items():
             sb = sp.bounding_box()

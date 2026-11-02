@@ -144,6 +144,8 @@ P = dict(
     top_corners=True,      # [Ed] top bolts at the top corners, mirroring the bottom pair (v0.2: between the knob and the joystick)
     insert_od=4.6,         # [A] stock M3 knurled brass insert, epoxied in the resin boss (Claude's pick, 2 Nov): OD
     insert_len=5.7,        # [A] insert length
+    insert_glue=0.1,       # [A] radial epoxy gap round the insert
+    tip_hole=0.5,          # [A] clearance hole runs this far past the screw tip
     insert_wall=1.5,       # [A] resin round the insert; boss radius = insert_od/2 + this (was Ø9 printed-thread boss)
     back_screens="amoled2",   # [Ed] two 2.4" AMOLEDs facing forward on the cover floor, overlapped behind the knob (v0.2: 2.0" TFT on the back)
     amo_w=38.72,           # [S] 2.4" 450x600 RM690B0 panel outline (TOH240XVT-01 / Gesight B024JMV-N50-6DP0)
@@ -653,6 +655,7 @@ def derive(D):
     D["z_thread0"] = D["z_rim"]
     D["tap_len"] = D["engage"] - D["screw_p"]
     D["z_thread1"] = D["z_thread0"] + D["tap_len"]
+    D["z_insert1"] = D["z_rim"] + D["insert_len"]
     # Corner posts stop under the jack pins. The thread is only the lower ~7 mm; the post is fused to the side wall,
     # so it does not need to reach the plate, and a full-height post would run into the jack bodies.
     D["z_jack_pins"] = D["z_fp0"] - D["jack_depth"] - D["jack_pin_len"]

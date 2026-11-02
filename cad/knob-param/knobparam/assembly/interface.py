@@ -55,7 +55,7 @@ P = dict(
     # Every mechanism part and every PCB feature inside mech_rot_r is built in the mechanism frame (motor at +X) and then
     # turned by mech_rot in the panel frame (+X right, +Y up). -90 puts the motor at 270 deg (bottom).
     mech_rot=-90.0,   # [Ed] degrees, panel angle = mechanism angle + mech_rot
-    mech_rot_r=24.0,   # [A] KiCad holes / back parts within this radius of the axis belong to the mechanism and turn with it
+    mech_rot_r=23.0,   # [A] KiCad holes / back parts within this radius of the axis belong to the mechanism and turn with it (joystick MH1 is at r 24.07)
     enc_ang=180.0,   # [Ed] 2 Nov: encoder at the TOP of the panel (mechanism 180 + mech_rot -90 = panel 90). v0.18: 270
     idler2_from_enc=120.0,   # [A] v0.19: idler 2 = encoder + 120 = 300 deg (v0.18: -120 -> 150)
     # ---- 1220 motor [M] ----
@@ -218,7 +218,7 @@ P = dict(
     hb_mn_pref=0.60,   # [A] v0.19: keep the v0.18 herringbone module (the arm, cradle and caps are tuned to it); 0.55 broke the arm/cradle checks
     fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
-    fg_z_pin=12,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08) but only gains 15.75 -> 15.82, because the centre tube and rod nut cap the compound gear. Kept 12T.
+    fg_z_pin=11,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08 fail).
     fg_pinion=dict(part="nylon 0.5M-12T", vendor="printed PA-12", material="PA-12 MJF", bore=2.04, face=5.0, hub_d=0.0, hub_w=5.0, od=6.8,
                    note="tooth form of the Tempero 0.5M-12T (was the brass reference). Stub addendum, press on the Ø2 shaft. Straight spur, 20°."),
     fg_back_h=0.8,   # [K] tallest PCB-back part the big gear can sit over (U20 / C22)
@@ -432,6 +432,8 @@ def _place_herringbone(D, R):
         # then take the highest ratio, then the thicker wall.
         pool = full or cands
         pref = [c for c in pool if abs(c[0] - D["hb_mn_pref"]) < 1e-9]
+        if not pref:
+            print(f"WARNING: no herringbone candidate at module {D['hb_mn_pref']}; using the full pool (re-check the arm, cradle and caps)")
         best = max(pref or pool, key=lambda c: (round(c[1], 3), c[0], c[5]))
     else:
         # coarsest module, then the thickest root wall, then the ratio closest to the target

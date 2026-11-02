@@ -32,6 +32,9 @@ def main():
         faces.append({"outer": wire_pts(f.outer_wire()), "holes": [wire_pts(h) for h in f.inner_wires()]})
     g = lambda k, d=None: D[k] if k in D else d
     out = dict(
+        # v0.19: every mechanism position below is in the MECHANISM frame (motor at +X). The panel frame is that turned by
+        # mech_rot about the axis. A KiCad generator must apply it (and then electronics kicad_frame = "panel").
+        frame="mech", mech_rot=D["mech_rot"], mech_rot_r=D["mech_rot_r"],
         version=D["version"], axis_b=(D["axis_bx"], D["axis_by"]),
         cradle_faces=faces, cradle_r_out=D["cr_r_out"],
         hall=[dict(r=r, ang=a, part=(g("hv_parts") or [D["hv_sensor"]["part"]] * D["hv_n"])[i],

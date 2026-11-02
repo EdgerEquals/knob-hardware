@@ -75,7 +75,7 @@ def derive(D):
         D["brg2_seat_z0"] = D["h_b2_bot"]
         D["enc_shaft_bot"] = D["h_b2_bot"]
     # deepest under-PCB part, for the case cover depth (v0.19)
-    D["z_rear_min"] = min(D["h_hub_bot"], D["enc_shaft_bot"], D["brg2_seat_z0"], D["z_sens_open"] - D["enc_db_t"])
+    D["z_rear_min"] = min(D["h_hub_bot"], D["enc_shaft_bot"], D["brg2_seat_z0"], D["z_sens_open"])
     ex, ey = D["enc_xy"]
     r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
     D["disc_r"] = D["rim_r1"]                                            # plain disc out to the slotted rim (no teeth)

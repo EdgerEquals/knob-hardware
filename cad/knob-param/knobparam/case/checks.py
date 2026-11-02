@@ -171,8 +171,15 @@ def checks(D, parts):
         row("beam close to the side wall", D["beam_reach"] - D["beam_gap"], 0.0, "close enough to light the wall")
         row("beam reaches the rim", D["beam_z1"], D["z_mirror"], "rises from the mirror to the faceplate underside")
 
-    row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
-        f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
+    if D["insert_od"]:
+        eng = min(D["screw_engage"], D["insert_len"])
+        row("M3 thread engaged in the brass insert / diameter", eng / D["screw_d"], D["engage_min"],
+            f"insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} at z {D['z_rim']:.2f}..{D['z_insert1']:.2f}; screw engages {eng:.2f}")
+        row("screw tip clearance hole stays under the post top", D["z_post_top"] - (D["z_tip"] + D["tip_hole"]), D["wall"],
+            f"tip z {D['z_tip']:.2f}, hole to {D['z_tip'] + D['tip_hole']:.2f}, post top {D['z_post_top']:.2f}")
+    else:
+        row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
+            f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
     if False:  # v0.19: brass insert; see "resin wall round the insert"
         row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
             f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
@@ -182,12 +189,13 @@ def checks(D, parts):
         f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; left under the head {D['cover_skin']:.2f}")
     row("counterbore sinks the head", D["cbore_depth"] - D["head_k"], D["head_below"],
         "flat bottom, the Ø5.5 × 3.0 knurled head is fully below the cover face")
-    row("ISO 4762 engagement", D["screw_engage"] / D["screw_d"], D["engage_min"],
+    row("ISO 4762 thread past the grip", D["screw_engage"] / D["screw_d"], D["engage_min"],
         f"M{D['screw_d']:.0f}×{D['screw_len']:.0f} {D['screw_mat']}, thread {D['screw_thread']:.0f} "
         f"({'to the head' if D['screw_len'] <= D['screw_full_to'] else 'partial, b=' + format(D['screw_b'], '.0f')}); "
         f"grip {D['screw_grip']:.2f}, in the resin {D['screw_engage']:.2f}")
-    row("screw tip inside the printed tap", D["z_thread1"] - D["z_tip"], 0.0,
-        f"tip z {D['z_tip']:.2f}, tap ends {D['z_thread1']:.2f}")
+    if not D["insert_od"]:
+        row("screw tip inside the printed tap", D["z_thread1"] - D["z_tip"], 0.0,
+            f"tip z {D['z_tip']:.2f}, tap ends {D['z_thread1']:.2f}")
     row("pad does not set the depth", D["z_pad_out"] - D["z_cover_out"], 0.0,
         f"pad face {D['z_pad_out']:.2f}, cover back {D['z_cover_out']:.2f}; the 3 mm head fits in the local pad")
     row("corner screw through the notch", D["notch_r"] - D["screw_d"] / 2, D["notch_gap"],
