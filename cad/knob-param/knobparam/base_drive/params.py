@@ -94,6 +94,12 @@ P = dict(
     sp_wall_r1=16.89,   # [A] wall outer face: 0.35 inside the knob ring's upper half (r 17.24, turns with the knob)
     sp_wall_a=(246.5, 281.0),   # [A] wall from the Hall spoke's sweep (+ gap) to short of the lever's (mechanism frame)
     sp_brk_w=3.0,   # [A] bracket width, boss to wall
+    sp_ped_pocket=1.5,   # [A] the pedestal block is guided this deep in a pocket in the plate
+    sp_ped_clear=0.1,   # [A] pocket over the block, all round (slide fit, SLA both)
+    sp_ped_lift=0.25,   # [A] block bottom above the pocket floor at nominal: ±0.25 of adjustment (the printed-stack tolerance)
+    sp_grub=(2.0, 2.0),   # [Ed 15:50] M2 x 2 grub under the pedestal, tapped into the plate like the detent boss; sets the train
+                          # height against the 45° knob race stack at assembly (key through the PCB from behind)
+    sp_thread_min=1.5,   # [A] grub thread kept in the plate at the top of its range
     sp_lift_max=0.010,   # [Ed 2x rule] boss lift under the detent spring: 0.01 (was 0.05 for the v0.21 bridge)
 )
 
@@ -227,6 +233,15 @@ def _place_split_mount(D):
     e = rm - D["ad_r"]; h = D["det_z1"] - D["plate_t"]; I = L * t ** 3 / 12
     D["sp_wall_e"], D["sp_wall_I"], D["sp_wall_h"] = e, I, h
     D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
+    # v0.22b [Ed 15:50]: pedestal is a separate block on an M2 grub, guided in a pocket
+    zb = D["tk"][0]["z"]; D["sp_z_blk1"] = zb - D["bt_up"]                     # block top (train seat level)
+    D["sp_z_pf"] = D["plate_t"] - D["sp_ped_pocket"]                       # pocket floor
+    D["sp_z_blk0"] = D["sp_z_pf"] + D["sp_ped_lift"]                       # block bottom = grub tip at nominal
+    gd, gl = D["sp_grub"]
+    D["sp_z_grub0"] = D["sp_z_blk0"] - gl                                   # grub bottom (hex socket, key from below)
+    D["sp_adj_down"] = min(D["sp_ped_lift"], D["sp_z_grub0"])               # until the block meets the floor / the grub the PCB
+    D["sp_adj_up"] = D["sp_z_pf"] - D["sp_thread_min"] - D["sp_z_grub0"]   # while sp_thread_min of thread stays in the plate
+    D["sp_guide"] = D["plate_t"] - D["sp_z_blk0"]
 
 
 def derive(D):

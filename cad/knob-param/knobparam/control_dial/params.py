@@ -113,8 +113,7 @@ P = dict(
     # second spoke over solid plate. A ball train (big, small, big) sits on a fixed pedestal directly under the detent ball, so
     # the spring load runs spring -> ball -> flange -> train -> pedestal -> plate with no bending (Ed: support right under the
     # spring). Numbers from the split-spoke study (docs/img/dial-split-study.png). ----
-    sp_ang=263.0,   # [A] detent spoke angle, mechanism frame
-    sp_r=13.5,   # [A] detent and train radius (dimple flat 1.24 here; 0.22 at the v0.20 r 7.65)
+    # sp_ang / sp_r (detent spoke angle, radius) are INTERFACE params since v0.22b: the PCB needs the pedestal grub position
     sp_flange_z0=5.75,   # [A] flange underside: 0.32 over the idler-pinion caps (top 5.43) as it sweeps; checked in the assembly
     sp_w_lo=(6.0, 5.0),   # [A] low spoke width at the dial tube / at sp_r_join (z fan_z0..fan_top, under the pinion caps' level)
     sp_w_hi=5.0,   # [A] high spoke width (z flange underside..land top)

@@ -185,6 +185,11 @@ P = dict(
     ha_rib_w0=3.0,   # [Ed] rib width at the hub
     ha_rib_w1=5.2,   # [Ed] rib width at the hammerhead (fan_r0) and on out to ha_rib_r1
     ha_rib_r1=16.7,   # [Ed] rib continues to this radius (v0.22: 16.7, was 17.0; the swept corner was 0.05 off the knob ring)
+    # ---- v0.22 split arm, shared [Ed 15:27 / 15:50]: the detent spoke and its train pedestal (control_dial arm, base_drive
+    # pedestal + grub, electronics PCB hole for the grub key) ----
+    sp_ang=263.0,   # [A] detent spoke angle, mechanism frame (split-spoke study)
+    sp_r=13.5,   # [A] detent and train radius
+    sp_access_d=1.6,   # [Ed 15:50] hole through the main PCB under the pedestal grub (0.9 hex key, from behind with the back cover off)
     ha_rib_top_min=9.0,   # [A] v0.22: rib top raised to this z (was the lever top, 6.8) for a 2x margin on the rib deflection [Ed: 2x rule]
     ha_rib_load=2.0,   # [Ed] N, tangential (in-plane) tip load for the deflection check
     ha_rib_rload=15.5,   # [Ed] radius of that load
@@ -860,6 +865,7 @@ def _place_mech(D):
     D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
     D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
     D["ha_rib_z_top"] = max(D["sl_top"], D["ha_rib_top_min"])             # v0.22: raised (was up to the lever top)
+    D["sp_grub_xy"] = (D["sp_r"] * math.cos(math.radians(D["sp_ang"])), D["sp_r"] * math.sin(math.radians(D["sp_ang"])))
     D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"] + 0.05                  # just over the plate so the swept corner stays ≥ 0.3
     # ha_rib_z_cage (over the thrust cage) is hv_spoke_z0, set by control_dial once the cage is known
     _place_det_columns(D)

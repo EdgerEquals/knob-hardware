@@ -581,6 +581,24 @@
    "slack": 0.004
   },
   {
+   "name": "split detent: pedestal grub adjustment (down / up, mm)",
+   "value": 0.25,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "down 0.25 (block to the pocket floor), up 0.25 (keeping 1.5 of M2 thread); M2x2 grub tapped into the plate, key \u00d81.6 hole through the PCB [Ed 15:50]",
+   "owner": "base_drive",
+   "slack": 0.05
+  },
+  {
+   "name": "split detent: pedestal block guided in its pocket (mm)",
+   "value": 1.25,
+   "target": ">= 1",
+   "ok": true,
+   "note": "pocket 1.5 deep, 0.1 slide clearance; block z 2.25-5.15",
+   "owner": "base_drive",
+   "slack": 0.25
+  },
+  {
    "name": "split detent: pedestal groove clear of the Hall slot (plate land, mm)",
    "value": 1.925,
    "target": ">= 0.4",
@@ -1401,12 +1419,12 @@
   },
   {
    "name": "fan vs detent springs / grubs (\u00b1travel)",
-   "value": 1.25,
+   "value": 0.6,
    "target": ">= 0.3",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 0.95
+   "slack": 0.3
   },
   {
    "name": "Hall bar / magnets vs TMAG5253 tops (air gap, \u00b1travel)",
@@ -1539,7 +1557,7 @@
    "value": 0.05,
    "target": ">= 0.04",
    "ok": true,
-   "note": "nearest: plate at +0.00\u00b0; balls posed at \u03b8/2, arm at \u03b8; seat gap 0.05 all round in the groove",
+   "note": "nearest: pedestal at +0.00\u00b0; balls posed at \u03b8/2, arm at \u03b8; seat gap 0.05 all round in the groove",
    "owner": "assembly",
    "slack": 0.01
   },
@@ -1569,6 +1587,24 @@
    "note": "flange underside z 5.75",
    "owner": "assembly",
    "slack": 0.024
+  },
+  {
+   "name": "split detent: pedestal grub reachable from behind the PCB (key line clear, mm)",
+   "value": 0.542,
+   "target": ">= 0.1",
+   "ok": true,
+   "note": "\u00d81.0 key line from z -13.4 (back cover and screens off) at r 13.5, 263\u00b0; nearest: encoder disc + slotted rim",
+   "owner": "assembly",
+   "slack": 0.442
+  },
+  {
+   "name": "split detent: PCB key hole round the key line (mm)",
+   "value": 0.3,
+   "target": ">= 0.2",
+   "ok": true,
+   "note": "\u00d81.6 NPTH in the main PCB [Ed 15:50]",
+   "owner": "assembly",
+   "slack": 0.1
   },
   {
    "name": "split detent wall vs the knob's internal ring (mm)",

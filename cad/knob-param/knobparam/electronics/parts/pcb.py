@@ -35,6 +35,8 @@ def build(D):
     mc.append(cyl(D["fm_shaft_hole"] / 2, -t - 1, t + 2, *D["fm_xy"]))
     mc.append(cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"]))
     mc += _em_cutters(D, t, 1.0)
+    if D.get("sp_access_d"):   # v0.22b [Ed 15:50]: key hole for the detent-pedestal grub (mechanism frame)
+        mc.append(cyl(D["sp_access_d"] / 2, -t - 1, t + 2, *D["sp_grub_xy"]))
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         c = D["pcb_slot_clear"]
