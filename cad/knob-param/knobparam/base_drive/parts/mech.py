@@ -12,7 +12,23 @@ def _pol(r, a): return r * math.cos(math.radians(a)), r * math.sin(math.radians(
 def _local(D, x0, x1, y0, y1, z0, z1, a):   # box in the lever frame (x radial along sl_ang, y tangential), rotated by a
     return Rot(0, 0, a) * Pos((x0 + x1) / 2, (y0 + y1) / 2, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=A)
 
-def _arc(D): return D["arm_det"] == "arc" and D["ad_r"] is not None
+def _arc(D): return D["arm_det"] in ("arc", "split") and D["ad_r"] is not None
+
+def _split(D): return D["arm_det"] == "split" and D["ad_r"] is not None
+
+def split_mount(D):
+    """v0.22 [Ed 2 Nov 15:27]: pedestal under the detent ball (carries the train groove), the wall outboard of the flange
+    sweep from the plate to the boss top, the radial bracket and the boss with the plunger bore (bore cut in cradle_cut)."""
+    a, r = D["ad_ang"], D["ad_r"]; zb = D["tk"][0]["z"]; z_ped = zb - D["bt_up"]
+    p0, p1, ph = D["sp_ped"]; pt = D["plate_t"]
+    s = sector(p0, p1, ph, pt - 0.01, z_ped - pt + 0.01, a, n=48)
+    a0, a1 = D["sp_wall_a"]; r0, r1 = D["sp_wall_r0"], D["sp_wall_r1"]; z0, z1 = D["det_z0"], D["det_z1"]
+    s += sector(r0, r1, (a1 - a0) / 2, pt - 0.01, z1 - pt + 0.01, (a0 + a1) / 2, n=64)
+    x, y = _pol(r, a)
+    s += cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
+    rb = (r0 + r1) / 2
+    s += Rot(0, 0, a) * Pos((r + rb) / 2, 0, z0) * Box(rb - r, D["sp_brk_w"], z1 - z0, align=A)
+    return s
 
 def arc_bridge(D):
     """v0.21: two columns on the plate (one each side of the arm sweep), a link from each to the boss over the detent.
@@ -49,8 +65,8 @@ def track_grooves(D):
     out = None
     if _arc(D):   # v0.21: control_dial owns the layout; same groove span as the arm web above (the balls roll θ/2)
         for t in D["tk"]:
-            r = t["r"]
-            g = (Pos(0, 0, D["bt_z"]) * Torus(r, D["bt_groove_r"])) & sector(r - 1.0, r + 1.0, t["half"], D["bt_z"] - 1, 2, t["ang"])
+            r = t["r"]; z = t.get("z", D["bt_z"])
+            g = (Pos(0, 0, z) * Torus(r, D["bt_groove_r"])) & sector(r - 1.0, r + 1.0, t["half"], z - 1, 2, t["ang"])
             out = g if out is None else out + g
         return out
     for a in D["det_angs"]:
@@ -82,6 +98,7 @@ def stop_blocks(D):
 
 def cradle_add(D):
     s = stop_blocks(D)
+    if _split(D): return s + split_mount(D)
     if _arc(D): return s + arc_bridge(D)
     for a in D["det_angs"]: s += det_block(D, a)
     return s
@@ -116,7 +133,7 @@ def track_ball_list(D, theta=0.0):
             if big: nb += 1
             else: ns += 1
             nm = f"track {t['k']} ball {nb} Ø{d:g}" if big else f"track {t['k']} separator ball {ns} Ø{d:g}"
-            out.append((nm, d, *_pol(t["r"], t["ang"] + off + theta / 2), D["bt_z"]))
+            out.append((nm, d, *_pol(t["r"], t["ang"] + off + theta / 2), t.get("z", D["bt_z"])))
     return out
 
 def track_balls_at(D, theta):

@@ -29,7 +29,11 @@ def arm(D, travel=0.0):
     sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
     L = rs[0] - r_in
     s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
-    if D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + lever; v0.17 adds the tapered rib and detent ears
+    if D["fan_on"] and D["arm_det"] == "split":   # v0.22 [Ed]: no fan; Hall spoke + rib, lever, and the detent spoke
+        s += lever(D)
+        s += rib(D)
+        s += split_adds(D)
+    elif D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + lever; v0.17 adds the tapered rib and detent ears
         s += sector(D["fan_r0"], D["fan_r1"], D["fan_half"], D["fan_z0"], z1 - D["fan_z0"], D["ha_ang0"], n=48)
         s += lever(D)
         s += rib(D)
@@ -38,7 +42,7 @@ def arm(D, travel=0.0):
     for r, a in zip(rs, ps):   # pockets open from below, top flush with the magnet top (press / glue fit)
         x, y = _pt(r, a); s -= cyl(md / 2, D["hv_z_mag0"] - 0.1, mh + 0.1, x, y)
     if D["fan_on"]:
-        s -= wing_cuts(D) if D["arm_det"] != "arc" else arc_cuts(D)
+        s -= wing_cuts(D) if D["arm_det"] not in ("arc", "split") else arc_cuts(D)
     s -= cyl(D["dial_tube_id"] / 2 + 0.01, 0, 20)
     return Rot(0, 0, travel) * s
 
@@ -108,6 +112,19 @@ def arc_adds(D):
             s += _trap(r_step, r1, D["sl_w"], D["sl_w"], z0, z1 - z0, a)
     return s
 
+def split_adds(D):
+    """v0.22 [Ed 2 Nov 15:27]: the detent spoke at sp_ang. A low spoke off the dial tube (fan level), a step up to the flange
+    level, a high spoke out to the flange, and the flange itself: the detent land (three dimples) on top, the ball-train
+    groove underneath, both centred on sp_r."""
+    a, r = D["sp_ang"], D["sp_r"]; hw = D["sp_hw"]
+    z0, z1 = D["fan_z0"], D["fan_top"]; zf, zl = D["sp_z_fu"], D["ad_z_land"]
+    r_in = D["dial_tube_od"] / 2 - 0.3; rj = D["sp_r_join"] + 0.2; w0, w1 = D["sp_w_lo"]; wh = D["sp_w_hi"]
+    s = _trap(r_in, rj, w0, w1, z0, z1 - z0, a)
+    s += _trap(D["sp_r_hi0"], rj, wh, wh, z0, zl - z0, a)
+    s += _trap(D["sp_r_hi0"], r - hw + 0.05, wh, wh, zf, zl - zf, a)
+    s += sector(r - hw, r + hw, D["ad_land_half"], zf, zl - zf, a, n=48)
+    return s
+
 def track_groove(D, t, z):
     """One ball-track groove (torus ∩ sector): the same span in the arm underside and in the cradle plate (the balls roll θ/2)."""
     r = t["r"]
@@ -117,7 +134,7 @@ def arc_cuts(D):
     """Track grooves in the web undersides + the three latch dimples (0, ±det_deg) in the land top."""
     out = None
     for t in D["tk"]:
-        g = track_groove(D, t, D["bt_z"])
+        g = track_groove(D, t, t.get("z", D["bt_z"]))
         out = g if out is None else out + g
     rb = D["det_ball"] / 2; r = D["ad_r"]
     for th in (-D["det_deg"], 0.0, D["det_deg"]):

@@ -88,10 +88,18 @@ P = dict(
     det_spring_k=0.8,   # [A] detent spring rate N/mm (Ø1.4 × 0.2 phosphor bronze, ~6 active coils, G 41 GPa): replace with the bought spring
     ad_defl_max=0.05,   # [A] boss lift under the spring (grub fully in, ball at a dimple rim): 20% of the dimple depth
     tk_slot_land=0.4,   # [A] cradle plate left between a track groove and the Hall slot
+    # ---- v0.22 [Ed 2 Nov 15:27] split arm: the detent boss on a short bracket into a wall just outboard of the flange sweep;
+    # the ball train on a pedestal under the detent ball (study: docs/img/dial-split-study.png) ----
+    sp_wall_gap=0.35,   # [A] wall inner face to the flange's swept outer edge (0.3 + rounding)
+    sp_wall_r1=16.89,   # [A] wall outer face: 0.35 inside the knob ring's upper half (r 17.24, turns with the knob)
+    sp_wall_a=(246.5, 281.0),   # [A] wall from the Hall spoke's sweep (+ gap) to short of the lever's (mechanism frame)
+    sp_brk_w=3.0,   # [A] bracket width, boss to wall
+    sp_lift_max=0.010,   # [Ed 2x rule] boss lift under the detent spring: 0.01 (was 0.05 for the v0.21 bridge)
 )
 
 IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
-                            "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs"],   # v0.21 arc detent + tracks
+                            "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs",   # v0.21 arc detent + tracks
+                            "sp_ped", "sp_hw", "ad_land_half"],   # v0.22 split arm: pedestal, flange half-width / half-angle
            "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
 
@@ -208,6 +216,19 @@ def _place_arc_bridge(D):
     D["ad_defl"] = D["det_force_max"] / k
 
 
+def _place_split_mount(D):
+    """v0.22: wall sector outboard of the flange sweep (plate to boss top), a radial bracket from the boss to the wall, and the
+    boss lift under the full spring force: the wall bends as a cantilever from the plate under the moment F·e (e = boss to the
+    wall's mid radius), lift at the boss = F e² h / (E I), I of the wall's plan section about its tangential axis."""
+    r0 = D["ad_r"] + D["sp_hw"] + D["sp_wall_gap"]; r1 = D["sp_wall_r1"]; a0, a1 = D["sp_wall_a"]
+    D["sp_wall_r0"] = r0
+    rm = (r0 + r1) / 2; t = r1 - r0; L = rm * math.radians(a1 - a0)
+    D["det_force_max"] = D["det_spring_k"] * (D["det_preload"] + D["det_grub_adj"] + D["det_dimple"])
+    e = rm - D["ad_r"]; h = D["det_z1"] - D["plate_t"]; I = L * t ** 3 / 12
+    D["sp_wall_e"], D["sp_wall_I"], D["sp_wall_h"] = e, I, h
+    D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
+
+
 def derive(D):
     R2D = math.degrees; M = D["motor"]
     D["fm_screw_d"] = D["feel"]["can_d"] * D["saddle_k_small"]
@@ -244,7 +265,7 @@ def derive(D):
         D["hv_slot_half"] = dev + D["travel_deg"] + R2D((D["hv_pad_r"] + D["hv_slot_clear"]) / D["hv_slot_r0"])
     # ---- v0.16 detents (v0.21: one detent on the arc, riding a land flush with the rib top) ----
     db = D["det_ball"]
-    arc = D["arm_det"] == "arc" and D["ad_r"] is not None
+    arc = D["arm_det"] in ("arc", "split") and D["ad_r"] is not None   # v0.22: split shares the arc keys
     z_ride = D["ad_z_land"] if arc else D["fan_top"]                         # the surface the ball rides on
     D["det_z0"] = z_ride + D["det_gap"]                                     # boss underside
     D["det_z_ball"] = z_ride + db / 2                                       # ball centre riding on the flat land / wing top
@@ -278,6 +299,8 @@ def derive(D):
     D["fm_rib_w"] = F["can_d"] / 2                                      # [A] tangential width, half the can
     D["fm_z_rib1"] = D["fm_z_can0"] - D["motor_glue"]                    # glue gap under the clip foot
     D["fm_lead_r"] = F["pad_hole"] / 2 + D["motor_glue"]
-    if arc:
+    if arc and D["arm_det"] == "split":
+        _place_split_mount(D)
+    elif arc:
         _place_arc_bridge(D)   # v0.21: needs the feel lead holes above
     return D

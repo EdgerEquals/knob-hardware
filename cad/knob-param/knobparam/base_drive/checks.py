@@ -27,6 +27,20 @@ def _arc_rows(D, parts, r):
           + "; lands " + ", ".join(f"{v:.2f}" for v in lands))
     return r
 
+def _split_rows(D, parts, r):
+    """v0.22 [Ed 2 Nov 15:27]: detent boss on a bracket into a wall outboard of the flange; the train's pedestal on solid plate."""
+    import math
+    from .parts import mech, hall_slot
+    r.row("split detent: boss lift under the spring, grub fully in, ball on a dimple rim (mm)", D["sp_lift"], D["sp_lift_max"],
+          f"{D['det_force_max']:.2f} N; wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}, {D['sp_wall_a'][0]:g}-{D['sp_wall_a'][1]:g}°, "
+          f"I {D['sp_wall_I']:.1f} mm⁴, lever {D['sp_wall_e']:.2f}, height {D['sp_wall_h']:.1f}; E {D['ad_E'] / 1000:g} GPa [A]; "
+          f"physical limit {D['ad_defl_max']:g} (20% of the dimple depth): margin {D['ad_defl_max'] / max(D['sp_lift'], 1e-9):.1f}x", higher_ok=False)
+    sl = hall_slot.window(D)
+    g = mech.track_grooves(D)
+    r.row("split detent: pedestal groove clear of the Hall slot (plate land, mm)", g.distance_to(sl), D["tk_slot_land"],
+          f"pedestal r {D['sp_ped'][0]:.2f}-{D['sp_ped'][1]:.2f}, ±{D['sp_ped'][2]:.1f}° about {D['ad_ang']:.0f}°")
+    return r
+
 def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
@@ -48,7 +62,9 @@ def checks(D, parts):
           f"open saddle: 2 bands × {D['fm_band_h']:g} over {D['fm_grip']:.1f} of the Ø{F['can_d']:g}×{F['can_len']:g} can, ears at ±{D['fm_split']:g}°")
     r.row("detent ball guided in its bore when latched (centre above the boss underside)", D["det_z_ball"] - D["det_dimple"] - D["det_z0"], 0.1,
           f"Ø{D['det_ball']:g} ball, spring {D['det_spring'][0]:g}×{D['det_spring'][1]:g} preload {D['det_preload']:g}, M{D['det_thread_d']:g}×{D['det_grub_len']:g} grub ±{D['det_grub_adj']:g}")
-    if D["arm_det"] == "arc" and D["ad_r"] is not None:   # v0.21: the inboard window no longer applies; the detent is on the arc
+    if D["arm_det"] == "split" and D["ad_r"] is not None:   # v0.22: own spoke, train under the ball
+        _split_rows(D, parts, r)
+    elif D["arm_det"] == "arc" and D["ad_r"] is not None:   # v0.21: the inboard window no longer applies; the detent is on the arc
         _arc_rows(D, parts, r)
     else:
         r.row("detent angle margin inside its window (min of both sides, deg)" if D["det_n"] != 1 else "detent angle margin inside its window (one detent, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,

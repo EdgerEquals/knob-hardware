@@ -95,7 +95,7 @@ P = dict(
     # Hard limit: the Hall bar's slot takes the cradle plate under the middle of the arc and the pinions bound its ends, so
     # under the arc itself there is no room for a ball train that rolls ±travel/2. The tracks hug the slot on both sides at
     # the largest radius the pinion tips allow. arm_det="ear" rebuilds v0.20 (inboard ear, one two-row track). ----
-    arm_det="arc",   # [Ed] "arc" (v0.21) or "ear" (v0.20)
+    arm_det="split",   # [Ed 2 Nov 15:27] "split" (v0.22), "arc" (v0.21 study branch) or "ear" (v0.20)
     ad_off=0.0,   # [A] detent angle from the Hall arm centreline (0 = on the rib line, between the two outer tracks)
     ad_r_frac=0.5,   # [A] detent radius across the fan band (0 = fan_r0, 1 = fan_r1)
     ad_land_edge=0.4,   # [A] raised land past the ball footprint: radially, and along the arc at the hard stop
@@ -109,6 +109,18 @@ P = dict(
     tk_bar_clear=1.3,   # [A] groove end to the Hall bar's swept edge, along the arc (base_drive slot clearance 0.5 + land; the slot edge slants, so 1.0 left only 0.21 of plate)
     tk_row_pitch=1.5,   # [A] radial pitch of two rows on one side (groove 1.1 + land 0.4)
     tk_end_clear=0.10,   # [A] groove end past the end ball at full travel, mm of arc (same as det_stop_clear)
+    # ---- v0.22 [Ed 2 Nov 15:27] split arm: the Hall bar keeps its own spoke (ha_ang0, now 224) and the single detent moves to a
+    # second spoke over solid plate. A ball train (big, small, big) sits on a fixed pedestal directly under the detent ball, so
+    # the spring load runs spring -> ball -> flange -> train -> pedestal -> plate with no bending (Ed: support right under the
+    # spring). Numbers from the split-spoke study (docs/img/dial-split-study.png). ----
+    sp_ang=263.0,   # [A] detent spoke angle, mechanism frame
+    sp_r=13.5,   # [A] detent and train radius (dimple flat 1.24 here; 0.22 at the v0.20 r 7.65)
+    sp_flange_z0=5.75,   # [A] flange underside: 0.32 over the idler-pinion caps (top 5.43) as it sweeps; checked in the assembly
+    sp_w_lo=(6.0, 5.0),   # [A] low spoke width at the dial tube / at sp_r_join (z fan_z0..fan_top, under the pinion caps' level)
+    sp_w_hi=5.0,   # [A] high spoke width (z flange underside..land top)
+    sp_r_join=9.0,   # [A] the low spoke runs to sp_r_join + 0.2
+    sp_r_hi0=8.7,   # [A] the step up to the flange level starts here (past the centring-spring anchor post)
+    sp_core=1.0,   # [A] flange material between the top of the train groove and the bottom of a dimple
 )
 
 IMPORTS = {"electronics": ["adapter_d", "adapter_fps", "adapter_env"]}
@@ -116,7 +128,7 @@ EXPORTS = ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_
            "tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",                                                   # -> base_drive (cradle groove)
            "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # -> main_knob (ball circle + faces)
            "kb_seat_c_knob", "kb_groove_h",                                                  # -> base_drive (cradle groove)
-           "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs",                       # -> base_drive (v0.21 arc detent + ball tracks)
+           "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs", "sp_ped", "sp_hw", "ad_land_half",   # -> base_drive (arc / split detent + tracks)
            "dial_shape", "cone_deg", "cone_under_r0", "cone_lip_r"]                          # -> main_knob (v0.21 cone top)
 
 
@@ -284,6 +296,7 @@ def derive(D):
         D["ha_rib_z_cage"] = D["hv_spoke_z0"]
         D["ha_rib_r_step"] = D["tb_cage"][1] / 2 + D["tb_web_min"]   # 4.95 at the v0.16 cage (Ø8.6 + 0.65 web)
     _arc_mech(D)
+    _split_mech(D)
     return D
 
 
@@ -365,3 +378,42 @@ def _arc_mech(D):
         D["tk_spoke_r1"] = r0 + 0.01
     else:
         D["tk_spoke_ang"] = D["tk_spoke_r1"] = None
+
+
+def _split_mech(D):
+    """v0.22 [Ed 2 Nov 15:27]: one detent on its own spoke (sp_ang, sp_r) with a big/small/big ball train directly under the
+    detent ball, between a fixed pedestal (base_drive) and the flange underside. Reuses the arc keys the base_drive and the
+    checks already read (ad_r, ad_ang, ad_z_land, tk); tk entries carry their own z."""
+    D["sp_ped"] = D["sp_hw"] = None
+    D.setdefault("ad_land_half", None)
+    if not (D["arm_det"] == "split" and D["hall_layout"] == "vernier" and D["fan_on"]):
+        return
+    R2D = math.degrees; T = D["travel_deg"]; rb = D["det_ball"] / 2; g = D["bt_groove_r"]; land = D["tk_land"]
+    r, a = D["sp_r"], D["sp_ang"]
+    D["ad_r"], D["ad_ang"], D["ad_off"] = r, a, 0.0
+    z_fu = D["sp_flange_z0"]; z_ball = z_fu - D["bt_up"]; z_ped = z_ball - D["bt_up"]
+    z_land = z_ball + g + D["sp_core"] + D["det_dimple"]
+    D["sp_z_fu"], D["sp_z_ball"], D["sp_z_ped"], D["ad_z_land"] = z_fu, z_ball, z_ped, z_land
+    D["ad_rim"] = math.sqrt(max(rb * rb - (rb - D["det_dimple"]) ** 2, 0.0))
+    D["ad_pitch"] = 2 * r * math.sin(math.radians(D["det_deg"]) / 2)
+    D["ad_flat"] = D["ad_pitch"] - 2 * D["ad_rim"]
+    D["ad_stop_off"] = r * math.radians(T - D["det_deg"])
+    # train: balls touching, centred under the detent; both races move θ apart, so the balls roll θ/2
+    b, sm, nb = D["bt_ball"], D["tk_small"], D["tk_n_big"]
+    seq = [b if i % 2 == 0 else sm for i in range(2 * nb - 1)]
+    pos = [0.0]
+    for i in range(1, len(seq)):
+        pos.append(pos[-1] + (seq[i - 1] + seq[i]) / 2)
+    c = (pos[0] + pos[-1]) / 2; pos = [q - c for q in pos]
+    offs = [R2D(2 * math.asin(q / (2 * r))) for q in pos]
+    half_g = T / 2 + offs[-1] + R2D((seq[-1] / 2 + D["tk_end_clear"]) / r)   # same rule as the v0.21 tracks
+    hw = max(rb + D["ad_land_edge"], g + land)
+    land_half = T + R2D((rb + D["ad_land_edge"]) / r)
+    D["sp_hw"] = hw
+    D["ad_land_half"] = max(land_half, half_g + R2D(land / r))       # flange half-angle (land + groove web)
+    D["ad_land_r0"], D["ad_land_r1"] = r - hw, r + hw
+    D["sp_ped"] = (r - g - land, r + g + land, half_g + R2D(land / r))   # pedestal r0, r1, half-angle (base_drive builds it)
+    D["tk"] = [dict(k=1, side=0, row=0, r=r, ang=a, half=half_g, offs=offs, dias=seq, edge=None, z=z_ball)]
+    D["tk_webs"] = []
+    D["tk_spoke_ang"] = D["tk_spoke_r1"] = None
+    D["tk_web_z0"], D["tk_web_z1"] = D["fan_z0"], D["fan_top"]

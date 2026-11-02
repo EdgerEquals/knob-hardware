@@ -121,7 +121,7 @@ def cross(D, parts):
     spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
     row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
         f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
-    if D.get("arm_det") == "arc" and D.get("tk"):
+    if D.get("arm_det") in ("arc", "split") and D.get("tk"):
         _arc_cross(D, parts, row, TR, ARM)
     else:
         roll_left = min(D["bt_half"] - abs(th) / 2 for th in TR)
@@ -282,11 +282,27 @@ def _arc_cross(D, parts, row, TR, ARM):
             d = bs.distance_to(Rot(0, 0, th) * parts[n])
             if d < dmin: dmin, who = d, n
     row("ball tracks vs every other part across ±travel (mm)", dmin, T["arm_vs_cradle"], f"nearest: {who} (Hall magnets posed with the arm)")
-    br = arc_bridge(model.view(D, "base_drive"))
-    bd = min(ARM[th].distance_to(br) for th in TR)
-    row("arc detent bridge (columns, links, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
-        f"links from z {D['ad_z_link']:.2f} over the land / rib top {D['ad_z_land']:.2f}; columns r " +
-        ", ".join(f"{math.hypot(x, y):.2f}" for x, y in D["ad_col_xy"]))
+    if D["arm_det"] == "split":
+        from ..base_drive.parts.mech import split_mount
+        mt = split_mount(model.view(D, "base_drive"))
+        bd = min(ARM[th].distance_to(mt) for th in TR)
+        row("split detent mount (pedestal, wall, bracket, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
+            f"wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}")
+        caps = [s for n, s in parts.items() if "cap" in n and "pinion" in n]
+        if caps:
+            dc = min(ARM[th].distance_to(c) for th in TR for c in caps)
+            row("split detent: arm (flange, spokes) vs the pinion caps across ±travel (mm)", dc, T["arm_vs_cradle"],
+                f"flange underside z {D['sp_z_fu']:.2f}")
+        ring = [s for n, s in parts.items() if n.startswith("bottom internal ring")]
+        if ring:
+            row("split detent wall vs the knob's internal ring (mm)", min(mt.distance_to(q) for q in ring), T["arm_vs_cradle"],
+                "the ring turns with the knob")
+    else:
+        br = arc_bridge(model.view(D, "base_drive"))
+        bd = min(ARM[th].distance_to(br) for th in TR)
+        row("arc detent bridge (columns, links, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
+            f"links from z {D['ad_z_link']:.2f} over the land / rib top {D['ad_z_land']:.2f}; columns r " +
+            ", ".join(f"{math.hypot(x, y):.2f}" for x, y in D["ad_col_xy"]))
 
 
 def ring_field(D):
