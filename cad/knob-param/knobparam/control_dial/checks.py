@@ -23,6 +23,35 @@ def _rib_defl(D):
         s += F * (rF - r) ** 2 / (E * I(r))
     return s * (rF - r0) / n
 
+def _arc_rows(D, row):
+    """v0.21 [Ed 2 Nov]: the single detent on the arc (three dimples on a raised land) and the three ball tracks
+    (big, small, big) under the arm. Analytic rows; the swept solids are checked in the assembly cross-checks."""
+    T, rb, r = D["travel_deg"], D["det_ball"] / 2, D["ad_r"]
+    old = 2 * D["det_r"] * math.sin(math.radians(D["det_deg"]) / 2) - 2 * D["ad_rim"]
+    row("arc detent: flat land between neighbouring dimple rims (mm)", D["ad_flat"], D["ad_land_min"],
+        f"dimples at 0, ±{D['det_deg']:g}° on r {r:.2f} (v0.20 inboard r {D['det_r']:.2f}: {old:.2f}); pitch {D['ad_pitch']:.2f}, "
+        f"rim Ø{2 * D['ad_rim']:.2f} (Ø{2 * rb:g} ball, {D['det_dimple']:g} deep)")
+    row("arc detent: land left past the ball at the hard stop (mm of arc)",
+        r * math.radians(D["ad_land_half"] - T) - rb, D["tgt"]["arm_vs_cradle"],
+        f"land r {D['ad_land_r0']:.2f}–{D['ad_land_r1']:.2f}, ±{D['ad_land_half']:.1f}° about {D['ad_ang']:.0f}°, top z {D['ad_z_land']:.2f} (rib top)")
+    row("arc detent: ball still in the end dimple at the hard stop (rim - offset, mm)", D["ad_rim"] - D["ad_stop_off"], D["det_stop_clear"],
+        f"hard stop ±{T:.2f}° (unchanged) is {D['ad_stop_off']:.2f} mm of arc past the ±{D['det_deg']:g}° dimple at r {r:.2f}")
+    ang_in = r * math.radians(D["fan_half"] - abs(D["ad_off"]) - D["ad_land_half"])
+    row("arc detent: land inside the fan (radial and along the arc, mm)", min(D["ad_land_r0"] - D["fan_r0"], D["fan_r1"] - D["ad_land_r1"], ang_in),
+        D["tgt"]["arm_vs_cradle"], f"fan r {D['fan_r0']:.2f}–{D['fan_r1']:.2f}, ±{D['fan_half']:.1f}°; {ang_in:.2f} along the arc")
+    b, s = D["bt_ball"], D["tk_small"]
+    row("ball tracks: separator below both races ((big - small)/2, mm)", (b - s) / 2, D["tk_seat_min"],
+        f"Ø{b:g} load balls, Ø{s:g} separators (1/32\" = 0.794 also fits); groove R{D['bt_groove_r']:g}")
+    slit = D["fan_z0"] - D["plate_t"]
+    row("ball tracks: separator cannot leave through the plate-to-web slit (Ø - slit, mm)", s - slit, 0.1, f"slit {slit:.2f}")
+    row("ball tracks: separator cannot pass a load ball in the groove (big + small - groove Ø, mm)", b + s - 2 * D["bt_groove_r"], 0.1)
+    for t in D["tk"]:
+        left = t["r"] * math.radians(t["half"] - T / 2 - t["offs"][-1]) - b / 2
+        row(f"ball track {t['k']}: groove left past the end ball at ±travel, both races (mm of arc)", left, D["tk_end_clear"] - 1e-6,
+            f"{'encoder' if t['side'] < 0 else 'lever'} side of the Hall slot, row {t['row']}: r {t['r']:.2f}, groove {t['ang']:.1f}° ±{t['half']:.1f}°, "
+            f"balls " + "/".join(f"{d:g}" for d in t["dias"]) + f" at ±{t['offs'][-1]:.1f}°, rolled ±{T / 2:.2f}°; "
+            f"groove end {D['tk_bar_clear']:g} off the bar's swept edge ({t['edge']:.1f}°)")
+
 def checks(D, parts):
     T = D["tgt"]; r = Rows("control_dial"); row = r.row
     scr = [s for n, s in parts.items() if n.startswith("screen ") and "jumper" not in n]
@@ -73,6 +102,8 @@ def checks(D, parts):
             higher_ok=False)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)
+    if D["hall_layout"] == "vernier" and D["fan_on"] and D["ad_r"] is not None:
+        _arc_rows(D, row)
     if D["kb_groove_h"] > 0:
         cr_, cz_ = D["kb_seat_c"]; px, pz = D["kb_seat_contact"]
         ang = math.degrees(math.atan2(cz_ - pz, px - cr_)) % 180          # contact -> groove centre direction

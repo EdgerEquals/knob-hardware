@@ -33,12 +33,12 @@ def arm(D, travel=0.0):
         s += sector(D["fan_r0"], D["fan_r1"], D["fan_half"], D["fan_z0"], z1 - D["fan_z0"], D["ha_ang0"], n=48)
         s += lever(D)
         s += rib(D)
-        s += ears(D)
+        s += ears(D) if D["arm_det"] != "arc" else arc_adds(D)
     md, mh = D["hv_mag"]
     for r, a in zip(rs, ps):   # pockets open from below, top flush with the magnet top (press / glue fit)
         x, y = _pt(r, a); s -= cyl(md / 2, D["hv_z_mag0"] - 0.1, mh + 0.1, x, y)
     if D["fan_on"]:
-        s -= wing_cuts(D)
+        s -= wing_cuts(D) if D["arm_det"] != "arc" else arc_cuts(D)
     s -= cyl(D["dial_tube_id"] / 2 + 0.01, 0, 20)
     return Rot(0, 0, travel) * s
 
@@ -91,6 +91,39 @@ def ears(D):
             q += _trap(r_hub, r0, D["sl_w"], D["sl_w"], zc, z1 - zc, a)
         s = q if s is None else s + q
     return s
+
+def arc_adds(D):
+    """v0.21 [Ed 2 Nov]: raised land on the arc for the single detent (flush with the rib top, so the ball path crosses the rib),
+    the webs that carry the three ball-track grooves (joined to the rib, the lever-side one also to the lever) and a spoke from
+    the dial tube to the free end of the encoder-side web."""
+    s = sector(D["ad_land_r0"], D["ad_land_r1"], D["ad_land_half"], D["fan_top"] - 0.01, D["ad_z_land"] - D["fan_top"] + 0.01, D["ad_ang"], n=48)
+    z0, z1 = D["tk_web_z0"], D["tk_web_z1"]
+    for r0, r1, a0, a1 in D["tk_webs"]:
+        s += sector(r0, r1, (a1 - a0) / 2, z0, z1 - z0, (a0 + a1) / 2, n=48)
+    if D["tk_spoke_ang"] is not None:
+        r_hub, r_step, zc = D["ha_rib_r_hub"], D["ha_rib_r_step"], D["ha_rib_z_cage"]
+        a, r1 = D["tk_spoke_ang"], D["tk_spoke_r1"]
+        s += _trap(r_hub, min(r_step, r1), D["sl_w"], D["sl_w"], zc, z1 - zc, a)   # over the (old) thrust cage the spoke stays high
+        if r1 > r_step:
+            s += _trap(r_step, r1, D["sl_w"], D["sl_w"], z0, z1 - z0, a)
+    return s
+
+def track_groove(D, t, z):
+    """One ball-track groove (torus ∩ sector): the same span in the arm underside and in the cradle plate (the balls roll θ/2)."""
+    r = t["r"]
+    return (Pos(0, 0, z) * Torus(r, D["bt_groove_r"])) & sector(r - 1.0, r + 1.0, t["half"], z - 1, 2, t["ang"])
+
+def arc_cuts(D):
+    """Track grooves in the web undersides + the three latch dimples (0, ±det_deg) in the land top."""
+    out = None
+    for t in D["tk"]:
+        g = track_groove(D, t, D["bt_z"])
+        out = g if out is None else out + g
+    rb = D["det_ball"] / 2; r = D["ad_r"]
+    for th in (-D["det_deg"], 0.0, D["det_deg"]):
+        a = math.radians(D["ad_ang"] - th)
+        out += Pos(r * math.cos(a), r * math.sin(a), D["ad_z_land"] + rb - D["det_dimple"]) * Sphere(rb)
+    return out
 
 def lever(D):
     """Radial lever on the dial tube at sl_ang: bar above the thrust cage, end block, spring pin on top.

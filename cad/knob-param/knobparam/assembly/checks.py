@@ -121,10 +121,13 @@ def cross(D, parts):
     spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
     row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
         f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
-    roll_left = min(D["bt_half"] - abs(th) / 2 for th in TR)
-    row("track balls stay in the groove across ±travel (deg of groove left)", roll_left,
-        math.degrees((D["bt_ball"] / 2) / min(D["bt_rs"])),
-        "ball rolls at θ/2 between the plate groove and the ear; end detents at ±%.2f°, hard stop ±%.2f°" % (D["det_deg"], D["travel_deg"]))
+    if D.get("arm_det") == "arc" and D.get("tk"):
+        _arc_cross(D, parts, row, TR, ARM)
+    else:
+        roll_left = min(D["bt_half"] - abs(th) / 2 for th in TR)
+        row("track balls stay in the groove across ±travel (deg of groove left)", roll_left,
+            math.degrees((D["bt_ball"] / 2) / min(D["bt_rs"])),
+            "ball rolls at θ/2 between the plate groove and the ear; end detents at ±%.2f°, hard stop ±%.2f°" % (D["det_deg"], D["travel_deg"]))
     gear = parts[f"feel compound gear {D['fg_z_gear']}T"]
     tb_d = min(b.distance_to(gear) for th in TR for b in track_balls_at(D, th))
     row("track balls vs compound gear across ±travel", tb_d, D["feel"]["clear"],
@@ -245,6 +248,46 @@ def cross(D, parts):
         if omin < 1e9:
             row("clear OLED vs the knob base and nearby parts", omin, 0.3, f"nearest: {owho}")
     return r
+
+def _arc_cross(D, parts, row, TR, ARM):
+    """v0.21 [Ed 2 Nov] swept checks for the detent on the arc and the three ball tracks. Balls roll θ/2 (both races move θ
+    apart), the arm turns θ, everything else is fixed. Samples: ±travel (hard stops), ±det_deg (end detents), 0."""
+    from ..base_drive.parts.mech import track_ball_list, arc_bridge
+    T = D["tgt"]
+    cr = parts["base cradle"]
+    seat = D["bt_groove_r"] - D["bt_ball"] / 2
+    balls = {th: track_ball_list(D, th) for th in TR}
+    for t in D["tk"]:
+        dmin, who = 1e9, ""
+        for th in TR:
+            bs = Compound(children=[Pos(x, y, z) * Sphere(d / 2) for n, d, x, y, z in balls[th] if n.startswith(f"track {t['k']} ")])
+            for nm, s in (("plate", cr), ("arm web", ARM[th])):
+                d = bs.distance_to(s)
+                if d < dmin: dmin, who = d, f"{nm} at {th:+.2f}°"
+        row(f"ball track {t['k']}: balls stay inside both grooves across ±travel (ball to race, mm)", dmin, seat - 0.01,
+            f"nearest: {who}; balls posed at θ/2, arm at θ; seat gap {seat:.2f} all round in the groove")
+    # every fixed neighbour (moving Hall magnets posed with the arm)
+    fixed = {n: s for n, s in parts.items() if not n.startswith(("base cradle", "control dial", "track ", "detent ", "hall magnet"))}
+    allb = Compound(children=[Pos(x, y, z) * Sphere(d / 2) for th in TR for n, d, x, y, z in balls[th]])
+    bb = allb.bounding_box()
+    near = {n: s for n, s in fixed.items() if not (lambda q: q.max.X < bb.min.X - 3 or q.min.X > bb.max.X + 3 or q.max.Y < bb.min.Y - 3
+                                                       or q.min.Y > bb.max.Y + 3 or q.max.Z < bb.min.Z - 3 or q.min.Z > bb.max.Z + 3)(s.bounding_box())}
+    dmin, who = 1e9, ""
+    for th in TR:
+        bs = Compound(children=[Pos(x, y, z) * Sphere(d / 2) for n, d, x, y, z in balls[th]])
+        for n, s in near.items():
+            d = bs.distance_to(s)
+            if d < dmin: dmin, who = d, n
+        for n in [n for n in parts if n.startswith("hall magnet")]:
+            d = bs.distance_to(Rot(0, 0, th) * parts[n])
+            if d < dmin: dmin, who = d, n
+    row("ball tracks vs every other part across ±travel (mm)", dmin, T["arm_vs_cradle"], f"nearest: {who} (Hall magnets posed with the arm)")
+    br = arc_bridge(model.view(D, "base_drive"))
+    bd = min(ARM[th].distance_to(br) for th in TR)
+    row("arc detent bridge (columns, links, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
+        f"links from z {D['ad_z_link']:.2f} over the land / rib top {D['ad_z_land']:.2f}; columns r " +
+        ", ".join(f"{math.hypot(x, y):.2f}" for x, y in D["ad_col_xy"]))
+
 
 def ring_field(D):
     """Field of the diametric ring (dipole sum, Br from hv_br) at the dial TMAG5273 element, over a full knob turn."""

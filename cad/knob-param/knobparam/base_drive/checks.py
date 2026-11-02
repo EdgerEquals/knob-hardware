@@ -4,6 +4,29 @@ from ..common.checks import Rows
 def _one(parts, prefix):
     return parts[[n for n in parts if n.startswith(prefix)][0]]
 
+def _arc_rows(D, parts, r):
+    """v0.21 [Ed 2 Nov]: detent on the arc (boss on a two-column bridge) and the three ball tracks' plate grooves."""
+    import math
+    from .parts import mech, hall_slot
+    from ..common.util import cyl
+    r.row("arc detent: bridge lift under the spring, grub fully in, ball on a dimple rim (mm)", D["ad_defl"], D["ad_defl_max"],
+          f"{D['det_force_max']:.2f} N at {D['det_spring_k']:g} N/mm [A]; two Ø{2 * D['ad_col_r']:g} columns, links "
+          + ", ".join(f"{L:.1f}" for L in D["ad_link_len"]) + f" × {D['ad_link_w']:g} × {D['det_z1'] - D['ad_z_link']:.1f}; E {D['ad_E'] / 1000:g} GPa [A]",
+          higher_ok=False)
+    cols = [cyl(D["ad_col_r"], D["plate_t"] - 0.01, 1.0, x, y) for x, y in D["ad_col_xy"]]
+    sl = hall_slot.window(D)
+    r.row("arc detent: bridge columns stand on the plate (column to the Hall slot, mm)", min(c.distance_to(sl) for c in cols), D["ad_col_need"],
+          "columns at " + ", ".join(f"r {math.hypot(x, y):.2f} {math.degrees(math.atan2(y, x)) % 360:.1f}°" for x, y in D["ad_col_xy"]))
+    g = list(mech.track_grooves(D).solids())
+    def mine(t):   # the groove solid nearest this track's mid point
+        x, y = t["r"] * math.cos(math.radians(t["ang"])), t["r"] * math.sin(math.radians(t["ang"]))
+        return min(g, key=lambda q: math.hypot(q.center().X - x, q.center().Y - y))
+    lands = [mine(t).distance_to(sl) for t in D["tk"]]
+    r.row("ball tracks: plate left between a track groove and the Hall slot (mm)", min(lands), D["tk_slot_land"],
+          "; ".join(f"track {t['k']} r {t['r']:.2f} at {t['ang']:.1f}° ±{t['half']:.1f}°" for t in D["tk"])
+          + "; lands " + ", ".join(f"{v:.2f}" for v in lands))
+    return r
+
 def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
@@ -25,8 +48,11 @@ def checks(D, parts):
           f"open saddle: 2 bands × {D['fm_band_h']:g} over {D['fm_grip']:.1f} of the Ø{F['can_d']:g}×{F['can_len']:g} can, ears at ±{D['fm_split']:g}°")
     r.row("detent ball guided in its bore when latched (centre above the boss underside)", D["det_z_ball"] - D["det_dimple"] - D["det_z0"], 0.1,
           f"Ø{D['det_ball']:g} ball, spring {D['det_spring'][0]:g}×{D['det_spring'][1]:g} preload {D['det_preload']:g}, M{D['det_thread_d']:g}×{D['det_grub_len']:g} grub ±{D['det_grub_adj']:g}")
-    r.row("detent angle margin inside its window (min of both sides, deg)" if D["det_n"] != 1 else "detent angle margin inside its window (one detent, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,
-          f"detents at ±{D['det_off']:.1f}° from the Hall arm, r {D['det_r']:.2f}; latch ±{D['det_deg']:g}°")
+    if D["arm_det"] == "arc" and D["ad_r"] is not None:   # v0.21: the inboard window no longer applies; the detent is on the arc
+        _arc_rows(D, parts, r)
+    else:
+        r.row("detent angle margin inside its window (min of both sides, deg)" if D["det_n"] != 1 else "detent angle margin inside its window (one detent, deg)", min(D["det_off"] - D["det_lo"], D["det_hi"] - D["det_off"]), 0.0,
+              f"detents at ±{D['det_off']:.1f}° from the Hall arm, r {D['det_r']:.2f}; latch ±{D['det_deg']:g}°")
     r.row("feel mount rib (radial depth)", D["fm_rib_r1"] - D["fm_rib_r0"], F["clear"],
           f"r {D['fm_rib_r0']:.2f}-{D['fm_rib_r1']:.2f}, under the saddle seat")
     can = _one(parts, "feel motor " + F["part"])
