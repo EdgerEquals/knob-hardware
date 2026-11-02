@@ -1,0 +1,128 @@
+part,sub,kind,material,process,volume_mm3,size_mm,step
+PCB,electronics,board,FR-4 main PCB (KiCad),PCBWay PCBA,6717.13,44.30 x 100.90 x 1.60,
+"PCB back parts (Hall decouplers, J10, DRV8837, passives)",electronics,board,FR-4 main PCB (KiCad),PCBWay PCBA,23.92,30.08 x 73.00 x 0.80,
+PCB rod pad VBUS Ø9.8 (B.Cu),electronics,board,FR-4 main PCB (KiCad),PCBWay PCBA,2.54,9.77 x 9.77 x 0.04,
+emitter VCSEL 1,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.70 x 3.06 x 0.80,
+emitter RGB 1,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.45 x 2.45 x 0.90,
+emitter VCSEL 2,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.45 x 4.23 x 0.80,
+emitter RGB 2,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.83 x 2.83 x 0.90,
+emitter VCSEL 3,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.22 x 4.45 x 0.80,
+emitter RGB 3,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.58 x 2.58 x 0.90,
+emitter VCSEL 4,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.03 x 3.68 x 0.80,
+emitter RGB 4,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.23 x 2.23 x 0.90,
+emitter VCSEL 5,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.93 x 4.31 x 0.80,
+emitter RGB 5,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.68 x 2.68 x 0.90,
+emitter VCSEL 6,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.96 x 3.40 x 0.80,
+emitter RGB 6,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.01 x 2.01 x 0.90,
+emitter VCSEL 7,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.17 x 3.71 x 0.80,
+emitter RGB 7,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.76 x 2.76 x 0.90,
+emitter VCSEL 8,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.47 x 4.44 x 0.80,
+emitter RGB 8,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.73 x 2.73 x 0.90,
+emitter VCSEL 9,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.78 x 4.21 x 0.80,
+emitter RGB 9,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.11 x 2.11 x 0.90,
+emitter VCSEL 10,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,3.24 x 3.84 x 0.80,
+emitter RGB 10,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.65 x 2.65 x 0.90,
+emitter VCSEL 11,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.31 x 4.47 x 0.80,
+emitter RGB 11,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.81 x 2.81 x 0.90,
+emitter VCSEL 12,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,7.84,4.41 x 4.12 x 0.80,
+emitter RGB 12,electronics,buy,VCSEL / RGB LED (LCSC),on the PCBA,3.6,2.35 x 2.35 x 0.90,
+motor,base_drive,buy,motor,buy,4207.1,12.00 x 12.00 x 46.00,
+pinion,base_drive,print,PA-12,MJF,135.11,9.22 x 9.35 x 3.00,parts/pinion.step
+brass tube,base_drive,buy,brass 5x3 tube,buy,622.39,5.00 x 5.00 x 49.60,
+rod M1.6 (VBUS_DATA),base_drive,buy,steel / brass hardware,buy,111.26,1.60 x 1.60 x 55.34,
+rod sleeve,base_drive,buy,steel / brass hardware,buy,150.76,2.60 x 2.60 x 49.60,
+rod nut top,base_drive,buy,steel / brass hardware,buy,8.91,3.20 x 3.70 x 1.30,
+rod nut bottom,base_drive,buy,steel / brass hardware,buy,8.91,3.20 x 3.70 x 1.30,
+base cradle,base_drive,print,PA-12,MJF,2459.7,41.79 x 41.79 x 13.00,parts/base-cradle.step
+outer thrust blank,base_drive,print,UTR-8100 clear resin,SLA,11.43,4.27 x 4.57 x 1.80,parts/outer-thrust-blank.step
+outer thrust load balls 28 x Ø2,base_drive,buy,steel / glass / ruby balls,buy,117.29,41.54 x 41.52 x 2.00,
+outer thrust spacer balls 32 x Ø1.55 glass,base_drive,buy,steel / glass / ruby balls,buy,62.39,41.04 x 41.11 x 1.55,
+outer thrust ruby 4 x Ø2,base_drive,buy,steel / glass / ruby balls,buy,16.76,12.13 x 6.47 x 2.00,
+thrust carrier,control_dial,print,UTR-8100 clear resin,SLA,9.74,8.58 x 8.58 x 0.40,parts/thrust-carrier.step
+thrust balls 12 x Ø1,control_dial,buy,steel / glass / ruby balls,buy,6.28,7.80 x 7.80 x 1.00,
+knob upper-cap,main_knob,print,UTR-8100 clear resin,SLA,4069.93,36.80 x 36.80 x 12.90,parts/knob-upper-cap.step
+knob glass sleeve,main_knob,buy,borosilicate tube,buy,10467.26,42.00 x 42.00 x 38.95,
+bottom internal ring (lower half),main_knob,print,PA-12,MJF,170.66,39.25 x 39.25 x 1.30,parts/bottom-internal-ring-lower-half.step
+bottom internal ring (upper half),main_knob,print,PA-12,MJF,806.66,39.25 x 39.25 x 5.60,parts/bottom-internal-ring-upper-half.step
+knob lower-cap land,main_knob,print,UTR-8100 clear resin,SLA,386.41,42.00 x 42.00 x 2.98,parts/knob-lower-cap-land.step
+knob balls 38 x Ø1 (45° cones),main_knob,buy,steel / glass / ruby balls,buy,19.9,13.97 x 14.01 x 1.00,
+control dial,control_dial,print,PA-12,MJF,7056.57,42.00 x 42.00 x 55.05,parts/control-dial.step
+hall magnet 1 N-down,control_dial,buy,N52 magnet,buy,1.77,1.50 x 1.50 x 1.00,
+hall magnet 2 S-down,control_dial,buy,N52 magnet,buy,1.77,1.50 x 1.50 x 1.00,
+hall magnet 3 N-down,control_dial,buy,N52 magnet,buy,1.77,1.50 x 1.50 x 1.00,
+hall magnet 4 S-down,control_dial,buy,N52 magnet,buy,1.77,1.50 x 1.50 x 1.00,
+hall magnet 5 N-down,control_dial,buy,N52 magnet,buy,1.77,1.50 x 1.50 x 1.00,
+hall sensor H1 TMAG5253BA3,electronics,board,PCBA parts,PCBWay PCBA,0.62,1.58 x 1.73 x 0.40,
+hall sensor H2 TMAG5253BA3,electronics,board,PCBA parts,PCBWay PCBA,0.62,1.62 x 1.75 x 0.40,
+hall sensor H3 TMAG5273A2,electronics,board,PCBA parts,PCBWay PCBA,8.19,3.77 x 3.74 x 1.45,
+hall sensor H4 TMAG5253BA3,electronics,board,PCBA parts,PCBWay PCBA,0.62,1.68 x 1.77 x 0.40,
+hall sensor H5 TMAG5253BA3,electronics,board,PCBA parts,PCBWay PCBA,0.62,1.71 x 1.78 x 0.40,
+encoder bearing 1 (cradle+PCB),under_pcb,buy,F682ZZ bearing,buy,43.69,6.10 x 6.10 x 2.30,
+encoder pinion,under_pcb,print,PA-12,MJF,112.3,8.90 x 8.90 x 3.85,parts/encoder-pinion.step
+encoder pinion cap,under_pcb,print,UTR-8100 clear resin,SLA,10.49,5.94 x 5.94 x 0.56,parts/encoder-pinion-cap.step
+encoder shaft,under_pcb,buy,steel / brass hardware,buy,57.65,2.00 x 2.00 x 18.35,
+encoder bearing 2 (seat on the PCB back),under_pcb,buy,F682ZZ bearing,buy,43.69,6.10 x 6.10 x 2.30,
+"encoder bearing 2 seat (printed, glued)",under_pcb,print,PA-12,MJF,76.48,8.50 x 8.50 x 2.88,parts/encoder-bearing-2-seat-printed-glued.step
+encoder disc + slotted rim,under_pcb,print,PA-12,MJF,964.18,41.60 x 41.60 x 5.50,parts/encoder-disc-slotted-rim.step
+encoder sensor EE-SX1321,under_pcb,board,encoder daughterboard (EE-SX1321),PCBWay PCBA,60.4,4.00 x 5.50 x 4.00,
+encoder daughterboard,under_pcb,board,encoder daughterboard (EE-SX1321),PCBWay PCBA,26.21,5.20 x 6.30 x 0.80,
+encoder header,under_pcb,board,encoder daughterboard (EE-SX1321),PCBWay PCBA,7.24,13.34 x 0.64 x 3.75,
+encoder standoff,under_pcb,print,PA-12,MJF,34.4,2.50 x 7.96 x 3.75,parts/encoder-standoff.step
+idler pinion 1,base_drive,print,PA-12,MJF,113.36,8.90 x 8.90 x 3.10,parts/idler-pinion-1.step
+idler pinion 1 cap,base_drive,print,UTR-8100 clear resin,SLA,8.05,5.94 x 5.94 x 0.56,parts/idler-pinion-1-cap.step
+feel compound gear 40T,base_drive,print,PA-12,MJF,476.86,20.80 x 20.80 x 5.00,parts/feel-compound-gear-40t.step
+idler pin 1,base_drive,buy,steel / brass hardware,buy,27.16,3.50 x 3.50 x 13.15,
+idler pinion 2,base_drive,print,PA-12,MJF,113.36,8.90 x 8.90 x 3.10,parts/idler-pinion-2.step
+idler pinion 2 cap,base_drive,print,UTR-8100 clear resin,SLA,8.05,5.94 x 5.94 x 0.56,parts/idler-pinion-2-cap.step
+idler pin 2,base_drive,buy,steel / brass hardware,buy,13.56,3.50 x 3.50 x 5.45,
+feel motor coreless Ø2 [A],base_drive,buy,motor,buy,628.32,7.00 x 7.00 x 17.00,
+feel motor shaft Ø2 [A],base_drive,buy,steel / brass hardware,buy,25.92,2.00 x 2.00 x 8.25,
+feel motor pinion nylon 0.5M-12T 12T,base_drive,print,PA-12,MJF,113.52,6.79 x 6.79 x 5.55,parts/feel-motor-pinion-nylon-0-5m-12t-12t.step
+feel motor pinion cap,base_drive,print,UTR-8100 clear resin,SLA,4.88,4.35 x 4.35 x 0.56,parts/feel-motor-pinion-cap.step
+feel motor saddle seat [A],base_drive,print,PA-12,MJF,75.77,9.19 x 13.19 x 8.00,parts/feel-motor-saddle-seat-a.step
+feel motor saddle strap [A],base_drive,print,PA-12,MJF,45.61,9.62 x 13.90 x 7.00,parts/feel-motor-saddle-strap-a.step
+feel motor saddle screw,base_drive,buy,steel / brass hardware,buy,29.69,10.94 x 13.42 x 7.96,
+detent 1 ball Ø1.5,base_drive,buy,steel / glass / ruby balls,buy,1.77,1.50 x 1.50 x 1.50,
+detent 1 spring,base_drive,buy,stainless 316 / phosphor bronze spring,buy,1.47,1.40 x 1.40 x 1.95,
+detent 1 grub M2x2,base_drive,buy,steel / brass hardware,buy,6.16,1.98 x 1.98 x 2.00,
+track ball 1.1 Ø1,base_drive,buy,steel / glass / ruby balls,buy,0.52,1.00 x 1.00 x 1.00,
+track ball 1.2 Ø1,base_drive,buy,steel / glass / ruby balls,buy,0.52,1.00 x 1.00 x 1.00,
+centring spring 1 (non-magnetic),base_drive,buy,N52 magnet,buy,0.3,1.34 x 1.07 x 1.20,
+centring spring 2 (non-magnetic),base_drive,buy,N52 magnet,buy,0.3,1.34 x 1.07 x 1.20,
+spring anchor pin 1,base_drive,buy,steel / brass hardware,buy,0.78,0.80 x 0.80 x 1.55,
+spring anchor pin 2,base_drive,buy,steel / brass hardware,buy,0.78,0.80 x 0.80 x 1.55,
+screen rm69330-1.39 panel,control_dial,buy,display,buy,753.82,38.21 x 38.83 x 0.66,
+screen rm69330-1.39 FPC + B2B,control_dial,buy,flex / connector,buy,402.33,14.00 x 27.52 x 2.53,
+screen FPC service strap [A],control_dial,buy,flex / connector,buy,2.59,7.52 x 4.00 x 2.54,
+screen carrier (on dial),control_dial,print,PA-12,MJF,937.28,38.21 x 37.33 x 1.24,parts/screen-carrier-on-dial.step
+screen carrier magnet (carrier) 3x1,control_dial,buy,N52 magnet,buy,7.07,3.00 x 3.00 x 1.00,
+screen carrier magnet (dial base) 3x1,control_dial,buy,N52 magnet,buy,7.07,3.00 x 3.00 x 1.00,
+screen carrier locating pin,control_dial,buy,steel dowel,buy,1.81,1.00 x 1.00 x 2.30,
+adapter board,electronics,board,PCBA parts,PCBWay PCBA,186.15,15.50 x 15.50 x 1.00,
+adapter part J1,electronics,board,PCBA parts,PCBWay PCBA,38.16,3.60 x 10.60 x 1.00,
+adapter part U1,electronics,board,PCBA parts,PCBWay PCBA,6.75,3.00 x 3.00 x 0.75,
+adapter part C2,electronics,board,PCBA parts,PCBWay PCBA,0.25,1.00 x 0.50 x 0.50,
+case,case,print,"UTR-8100 clear resin, front face polished",SLA,40915.34,50.50 x 128.50 x 41.40,parts/case.step
+back cover (PETG),case,print,"PETG, smoky/black",FDM,25513.66,50.50 x 108.50 x 16.46,parts/back-cover-petg.step
+glow coat (inside walls),case,ref,"Shimicoat strontium aluminate, brushed",Ed,1979.03,44.90 x 102.70 x 35.55,
+"back AMOLED upper (rear, on the cover floor)",case,buy,display,buy,958.27,38.72 x 51.56 x 0.48,
+"back AMOLED lower (front, on a 1 mm pad)",case,buy,display,buy,998.2,38.72 x 51.56 x 0.50,
+lower screen pad (PETG),case,print,"PETG, smoky/black",FDM,1112.16,38.72 x 29.92 x 0.96,parts/lower-screen-pad-petg.step
+corner screw 1,case,buy,steel / brass hardware,buy,109.94,5.50 x 5.50 x 13.06,
+corner screw 2,case,buy,steel / brass hardware,buy,109.94,5.50 x 5.50 x 13.06,
+corner screw 3,case,buy,steel / brass hardware,buy,109.94,5.50 x 5.50 x 13.06,
+corner screw 4,case,buy,steel / brass hardware,buy,109.94,5.50 x 5.50 x 13.06,
+jack 1 PJ366ST body + pins [S],case,buy,PJ366ST jack / USB-C,buy,1131.9,10.00 x 10.50 x 13.48,
+jack 1 bushing,case,buy,PJ366ST jack / USB-C,buy,127.23,6.00 x 6.00 x 4.50,
+jack 1 nut,case,buy,PJ366ST jack / USB-C,buy,43.17,8.00 x 8.00 x 1.98,
+jack 2 PJ366ST body + pins [S],case,buy,PJ366ST jack / USB-C,buy,1131.9,10.00 x 10.50 x 13.48,
+jack 2 bushing,case,buy,PJ366ST jack / USB-C,buy,127.23,6.00 x 6.00 x 4.50,
+jack 2 nut,case,buy,PJ366ST jack / USB-C,buy,43.17,8.00 x 8.00 x 1.98,
+jack 3 PJ366ST body + pins [S],case,buy,PJ366ST jack / USB-C,buy,1131.9,10.00 x 10.50 x 13.48,
+jack 3 bushing,case,buy,PJ366ST jack / USB-C,buy,127.23,6.00 x 6.00 x 4.50,
+jack 3 nut,case,buy,PJ366ST jack / USB-C,buy,43.17,8.00 x 8.00 x 1.98,
+jack 4 PJ366ST body + pins [S],case,buy,PJ366ST jack / USB-C,buy,1131.9,10.00 x 10.50 x 13.48,
+jack 4 bushing,case,buy,PJ366ST jack / USB-C,buy,127.23,6.00 x 6.00 x 4.50,
+jack 4 nut,case,buy,PJ366ST jack / USB-C,buy,43.17,8.00 x 8.00 x 1.98,
+USB-C receptacle [S],case,buy,PJ366ST jack / USB-C,buy,213.63,8.94 x 3.26 x 7.33,
+USB-C PD board,case,board,USB-C PD board,PCBWay PCBA,72.0,12.00 x 6.00 x 1.00,

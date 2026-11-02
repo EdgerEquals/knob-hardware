@@ -8,6 +8,11 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
+    (r"magnet", "buy", "N52 magnet", "buy"),
+    (r"locating pin|dowel", "buy", "steel dowel", "buy"),
+    (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
+    (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
+    (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"^PCB$|^PCB back parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),
     (r"^emitter ", "buy", "VCSEL / RGB LED (LCSC)", "on the PCBA"),
     (r"^hall sensor|^adapter part|^adapter board", "board", "PCBA parts", "PCBWay PCBA"),
@@ -27,7 +32,8 @@ RULES = [
     (r"bearing 2 seat", "print", "PA-12", "MJF"),
     (r"brass tube|brass", "buy", "brass 5x3 tube", "buy"),
     (r"rod|nut|screw|grub|insert|pin\b|pins\b|dowel|shaft", "buy", "steel / brass hardware", "buy"),
-    (r"ball", "buy", "steel / glass / ruby balls", "buy"),
+    (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
+    (r"thrust blank", "print", "UTR-8100 clear resin", "SLA"),
     (r"spring", "buy", "stainless 316 / phosphor bronze spring", "buy"),
     (r"magnet|cushion", "buy", "N52 magnet", "buy"),
     (r"FPC|jumper|strap|B2B", "buy", "flex / connector", "buy"),
