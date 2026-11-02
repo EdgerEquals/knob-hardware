@@ -19,7 +19,7 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] v0.18 only: PCB back to the back panel inner face (bearing 2 seat)
-    sens_dir=180.0,   # [A] v0.19: sensor direction from the wheel centre, mechanism frame (180 + mech_rot -90 = panel up, under the joystick). v0.18: 270
+    sens_dir=135.0,   # [A] v0.19: sensor direction from the wheel centre, mechanism frame (135 + mech_rot -90 = panel 45 deg, upper right: clear of the joystick rear spring anchor and its cross pins, and of the top-right corner tube). v0.18: 270
     brg2_on_pcb=True,   # [Ed] 2 Nov: the back screens sit behind the wheel, so bearing 2 moves up to a printed seat on the PCB back
     brg2_seat_wall=1.2,   # [A] printed seat wall round bearing 2 (glued to the PCB back round H2)
     brg2_seat_floor=0.6,   # [A] seat floor under bearing 2
