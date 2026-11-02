@@ -50,6 +50,7 @@ def checks(D, parts):
           f"smaller body Ø{D['em_pkg_min']:.2f}; pin hole Ø{D['em_hole_d']:.2f}; open hole Ø{D['em_ap']:.2f}; reverse mount")
     r.row("race web beside a pin hole", D["em_web"], D["ot_seat_gap"],
           f"annulus each side of Ø{D['em_hole_d']:.2f} at r {D['ot_r']:.2f}; SLA feature floor is {PROCESS['sla']['feature']:.2f} and does not fit")
-    r.row("emitter hole centre clears the nearest ball", D["em_ball_clear"], 0.0,
-          f"holes sit in the ball gaps; pins in VCSEL holes {D['em_pin_i'][0]} and {D['em_pin_i'][1]}")
+    if D["ot_keep_ang"]:   # v0.19b: with the closed ring the emitters are evenly spaced; the cageless balls roll past them anyway
+        r.row("emitter hole centre clears the nearest ball", D["em_ball_clear"], 0.0,
+              f"holes sit in the ball gaps; pins in VCSEL holes {D['em_pin_i'][0]} and {D['em_pin_i'][1]}")
     return r

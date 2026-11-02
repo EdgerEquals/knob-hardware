@@ -19,10 +19,14 @@ P = dict(
     spoke_w=2.4,
     boss_r=3.0,
     back_panel=25.0,   # [A] v0.18 only: PCB back to the back panel inner face (bearing 2 seat)
-    sens_dir=135.0,   # [A] v0.19: sensor direction from the wheel centre, mechanism frame (135 + mech_rot -90 = panel 45 deg, upper right: clear of the joystick rear spring anchor and its cross pins, and of the top-right corner tube). v0.18: 270
+    sens_dir=130.0,   # [A] v0.19b: 130 (panel 40°) so the 6-pin header clears the joystick rear anchor / cross pin 2 by 0.4. v0.19: 135 (panel 45 deg, upper right: clear of the joystick rear spring anchor and its cross pins, and of the top-right corner tube). v0.18: 270
     brg2_on_pcb=True,   # [Ed] 2 Nov: the back screens sit behind the wheel, so bearing 2 moves up to a printed seat on the PCB back
     brg2_seat_wall=1.2,   # [A] printed seat wall round bearing 2 (glued to the PCB back round H2)
     brg2_seat_floor=0.6,   # [A] seat floor under bearing 2
+    brg2_h2_engage=0.8,   # [Ed 2 Nov] bearing 2 rises this far into the empty part of the H2 press bore, so both bearings sit in the
+                          # same bore and are coaxial by construction; the printed seat only backs it. No bearing bridge: forces are low
+                          # and a bridge adds parts and cover depth. 0 = v0.19 (bearing 2 below the board, seat glued flat)
+    brg2_h2_gap=0.10,   # [A] bearing 2 top under bearing 1 inside H2
     # ---- v0.17 encoder daughterboard [Ed]: the EE-SX1321 moves off the main PCB so its slot meets the rim at the new depth ----
     enc_db_t=0.8,   # [A] daughterboard thickness
     enc_db_clear=0.6,   # [A] board margin past the sensor body
@@ -67,7 +71,9 @@ def derive(D):
     D["h_panel"] = D["z_pcb_back"] - D["back_panel"]
     if D["brg2_on_pcb"]:
         # bearing 2 straight under bearing 1, flange down, in a seat on the PCB back; the shaft stops in the disc hub
-        D["h_b2_top"] = D["z_pcb_back"]; D["h_b2_bot"] = D["h_b2_top"] - B["B"]
+        D["h_b2_top"] = min(D["z_pcb_back"] + D["brg2_h2_engage"], D["h_brg_bot"] - D["brg2_h2_gap"])
+        D["h_b2_bot"] = D["h_b2_top"] - B["B"]
+        D["brg2_in_h2"] = D["h_b2_top"] - D["z_pcb_back"]
         D["brg2_seat_z0"] = D["h_b2_bot"] - D["brg2_seat_floor"]
         D["enc_shaft_bot"] = D["h_hub_bot"]
     else:

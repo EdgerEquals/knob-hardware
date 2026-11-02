@@ -102,3 +102,32 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 ### Build plan approved (2 Nov, 05:20)
 - [Ed] Claude may pick: sleeves, cartridge magnets, and materials from the existing recipe (MJF PA-12 gears and structure, SLA UTR-8100 clear parts, PETG cover), flagging any part without one.
 - [Ed] Done means: STEP per part with material and process, a BOM, an assembly drawing, a pass/fail report, and a fresh-eyes review by a second agent. Claude may push to sub branches and `param-dev`; `main` only on Danny's sign-off.
+
+## 2 Nov mid-morning (v0.19b)
+
+### Knob glass and upper cap
+- [Ed] The glass runs **right up under the dial** (top z 52.5, knob_run 0.3 under the dial lip). Both top edges get a **ground 45° chamfer**: inner 0.8 (the cap's cone seats on it, so the cap cannot go further down) and outer 0.6 (finished look). The **dial lip underside carries the same 0.6 chamfer** on its outer edge. Flat top face left: 0.75 nominal, 0.6 at the thin wall. The face stays open into the dial lip, so the emitter light still goes up the glass.
+- [Ed] The upper cap is now a **thin dished web**: flat top under the dial web, underside tapering from 2.2 at the hub gear to 1.5 at the dial cup wall, then a flare (1.14 normal wall, 40°) out to the plug in the bore. It replaces the solid cone you could see through the glass.
+- [C] The cap's height now follows the glass length and bore, through the chamfer seat. Print the caps to the measured tube (as already planned for the bore fit). The glass-to-dial gap is 0.3; a long or wide tube eats it.
+- [C] Supplier: no glass supplier is recorded in the repo. Chinese borosilicate 3.3 makers (e.g. Fuxinag) cut to length and fire-polish (MOQ ~200, samples ~7 days, price on request). Ground inner/outer chamfers are a standard glass-machining step but are quoted separately. Fire polishing alone rounds the end and cannot make a crisp seat. Ask for: OD 42, wall 2.15 (2.0–2.3), length 47.45, one end ground with 0.8 × 45° inside and 0.6 × 45° outside (polished or frosted), other end fire-polished.
+- Superseded the same morning: a 2 mm cap shoulder on a glass that stopped 2 mm short (still selectable: main_knob `cap_top="shoulder"`).
+
+### Dial
+- [Ed] **No thrust bearing under the dial tube**, just air (0.6 over the cradle). The 45° race on the knob carries the dial and the adapter board stops it lifting; the bottom bearing only fought the tolerance stack.
+
+### Encoder bearings
+- [Ed] Bearing bridge considered and dropped for now: forces are low and a bridge adds parts and probably cover depth (the wheel already sits 1 mm off the rear screen). Instead, bearing 2's printed seat gets a **locating spigot in the empty part of the H2 hole** (0.8 tall, between the bearings), so both bearings are coaxial with H2 by construction.
+
+### Emitters and the thrust ring
+- [Ed] The 716 driver (U20 DRV8837 + C20–C22) moves **inboard of the emitter ring** (mechanism frame U20 at (-8.5, 12.0), turned 45°, 3.6 mm from the 716 pads). The keep-out is gone: the outer thrust ring is a **closed cageless ring of 34 Ø2 load balls + 34 glass spacers**, and the **24 emitters sit every 15°** (pins in VCSELs 1 and 13, opposite). The balls roll past the emitters, so the old "emitter in a ball gap" rule no longer applies. KiCad: cad_constraints `drv` carries the new placement; design.py reads it.
+
+### PCB windows
+- [Ed] Cut now: **A, B** (rear screen, beside the knob top, ~5 × 5), **C, E** (front screen, beside the knob bottom, ~6 × 6) and **D** (38.4 × 23.5 under the clear OLED). Polygons are in electronics `pcb_windows` (panel frame; generator scratchpad `calc/windows.py`: 1.5 board rail, 1.0 round every obstacle). A 1.6 mm strip stays between C/E and D for the OLED ledge.
+- [Ed] The **clear OLED** (42.04 × 27.22 × 1.25) sits on the PCB front over D, 1.6 mm ledge all round.
+- [C] KiCad to follow: R20–R22 (I2C / INT pull-ups) and R30–R32 (encoder LED and pull-downs, which move to the top with the sensor anyway) sit inside D on the stale board and must move. Through A/B you will see the encoder wheel rim; through C, part of the feel compound gear.
+
+### Labyrinth seal
+- [Ed] An **opaque PETG ring bonded on the glass OD** closes the labyrinth: flange over the faceplate ring, skirt down outside it to the case's shoulder line (bore 22.05, 0.7 overlap). [C] It does not fit at the joystick: see the open question.
+
+### Joystick in the knob assembly
+- The joystick (cad/joystick-param) is now in the knob clash run and the section sheet. Its main-PCB holes (4 standoff screws, 4 hold-down springs) flow from the joystick build's geom.json into the PCB proxy and cad_constraints.

@@ -13,11 +13,16 @@ def profile(D):
         top = [(rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well_top"])]
         bore = [(rb, D["z_well"]), (rb, D["z_bore0"]), (ri, D["z_bore0"])] if D["adapter_cup"] else [(ri, D["z_well_top"])]   # no cup: plain tube ID
         return ([(ri, D["dial_z_base"]), (rt, D["dial_z_base"])] + hub + [(rh + g, D["z_web0"]),
-                (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"]), (rl, D["z_lip0"]), (rl, D["z_top"]), (rc, D["z_top"])] + top + bore)
+                (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"])] + _lip_edge(D, rl) + [(rl, D["z_top"]), (rc, D["z_top"])] + top + bore)
     return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"]), (rt, D["z_hub0"]), (D["dial_collar_d"] / 2, D["z_hub0"]),
             (D["dial_collar_d"] / 2, D["z_hubf"]), (rh, D["z_hubf"]), (rh, D["z_web0"] - g), (rh + g, D["z_web0"]),
             (rw, D["z_web0"]), (rw, D["z_lip0"] - f), (rw + f, D["z_lip0"]), (rl, D["z_lip0"]), (rl, D["z_top"]), (rc, D["z_top"]),
             (rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well"]), (rb, D["z_well"]), (rb, D["z_bore0"]), (ri, D["z_bore0"])]
+
+def _lip_edge(D, rl):
+    """v0.19b [Ed 2 Nov]: the lip underside outer edge gets the same 45° chamfer as the glass top outer edge."""
+    c = D.get("sleeve_top_cout", 0.0)
+    return [(rl - c, D["z_lip0"]), (rl, D["z_lip0"] + c)] if c > 0 else [(rl, D["z_lip0"])]
 
 def seat_groove(D):   # v0.15 ball seating groove (torus, tube radius kb_seat_r, centre on the 45 deg line through the ball centre)
     cr, cz = D["kb_seat_c"]
@@ -62,7 +67,8 @@ def bend_pocket(D):   # v0.16 closed lip: blind pocket in the lip ID for the led
     return Pos(-o * math.cos(a), -o * math.sin(a), 0) * Rot(0, 0, D["tail_ang"]) * led
 
 def build(D):
-    d = rev(profile(D)) - thrust.groove(D)
+    d = rev(profile(D))
+    if D["tb_on"]: d -= thrust.groove(D)   # v0.19b [Ed]: no thrust ring, the tube end is plain over an air gap
     if D["rel_sensor"]: d -= tm_pocket(D)   # v0.16b [Ed]: relative sensor removed -> no pocket
     if D["kb_race"] != "chamfer": d += race_add(D)
     if D["kb_groove_h"] > 0: d -= seat_groove(D)

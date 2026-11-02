@@ -27,6 +27,10 @@ P = dict(
     tm_board=(4.0, 6.0, 0.6),   # [A] dial sensor board: radial, tangential, thickness (TMAG5273 face-down on its underside)
     tm_pocket_clear=0.6,   # [Ed/A] generous room round the sensor board for easy assembly (drops in from the top, carrier off)
     # ---- thrust bearing under the dial ----
+    tb_on=False,   # [Ed] 2 Nov: no bearing under the dial tube, just an air gap. The 45° race on the knob carries the dial and the
+                   # adapter board stops it lifting; a second axial support here only fought the tolerance stack.
+                   # The tb_* numbers below stay as the height datum (dial tube end, Hall spoke) so nothing else moves.
+    dial_air_min=0.5,   # [A] tube end over the cradle top with no thrust bearing: room for the stack (printed hub, glued glass, race)
     tb_ball_d=1.0,
     tb_pcd=6.8,
     tb_groove_r=0.55,
@@ -83,7 +87,7 @@ P = dict(
 
 IMPORTS = {"electronics": ["adapter_d", "adapter_fps", "adapter_env"]}
 EXPORTS = ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # -> main_knob
-           "tb_pcd", "tb_groove_r", "tb_z_ball",                                                     # -> base_drive (cradle groove)
+           "tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",                                                   # -> base_drive (cradle groove)
            "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # -> main_knob (ball circle + faces)
            "kb_seat_c_knob", "kb_groove_h"]                                                  # -> base_drive (cradle groove)
 

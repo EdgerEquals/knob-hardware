@@ -82,7 +82,7 @@ P = dict(
     fg_web_land=0.2,   # [A] web disk stops this far inside the tooth root
 )
 
-IMPORTS = {"control_dial": ["tb_pcd", "tb_groove_r", "tb_z_ball"],
+IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball"],
            "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
 

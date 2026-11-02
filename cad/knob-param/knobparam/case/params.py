@@ -107,15 +107,22 @@ P = dict(
     # 1.5 mm under the head plus the seat gap) and stays inside the 3×d thread.
     # Flat-bottom counterbore, head just below the face. No 90° countersink.
     # Bosses are tapped in the resin. No inserts. The knob bolts are not these screws.
-    screw_d=3.0,           # [Ed] M3
-    screw_p=0.5,           # [S] ISO coarse pitch for M3
-    screw_dk=5.50,         # [S] ISO 4762 M3 head diameter
-    head_k=3.0,            # [Ed][S] ISO 4762 M3 head height
-    screw_hex=2.5,         # [S] ISO 4762 M3 hex socket across flats
-    screw_socket=1.3,      # [S] ISO 4762 M3 socket depth t min
+    # v0.19b [Ed 2 Nov]: M2.5 Torx cheese head (ISO 14580), in from the BACK of the cover, head in a counterbore in the floor
+    # under a slim corner column, so nothing round the head reaches the screens. v0.19 was M3 ISO 4762 on a pad inside each tube.
+    cover_screw="back",    # [Ed] "back" = through the cover floor; "pad" = v0.19 head on a pad up inside the corner tube
+    screw_d=2.5,           # [Ed] M2.5 (v0.19: M3)
+    screw_p=0.45,          # [S] ISO coarse pitch for M2.5
+    screw_dk=4.5,          # [S] ISO 14580 M2.5 head diameter (max)
+    head_k=1.85,           # [S] ISO 14580 M2.5 head height (max)
+    screw_drive="T8",      # [Ed][S] Torx (hexalobular) T8; modelled as a round-ish recess
+    screw_hex=2.3,         # [S] T8 point-to-point, stands in for the recess in the model
+    screw_socket=0.8,      # [A] T8 recess depth
+    screw_lens=(3, 4, 5, 6, 8, 10, 12, 16, 20, 25),   # [S] ISO 14580 M2.5 stock lengths
+    col_wall=1.2,          # [A] PETG round the clearance hole in the slim corner column (screen layer)
+    col_screen_air=0.5,    # [A] screen edge to a corner column, and column flare above the screen tops
     screw_len=10.0,        # [S] standard length, mm under the head
     screw_b=18.0,          # [S] ISO 4762 M3 reference thread length, used when l > screw_full_to
-    screw_full_to=20.0,    # [S] M3 is threaded to the head up to this length
+    screw_full_to=25.0,    # [S] ISO 14580 M2.5 is threaded to the head up to this length
     screw_mat="A2",        # [Ed] stainless
     head_below=0.10,       # [A] head sits this far below the cover face
     bolt_head_k=2.0,       # [A] knob-bolt head, not the cover screw
@@ -142,8 +149,8 @@ P = dict(
     # ---- v0.3 case [Ed, 2 Nov] ----
     knob_drop=4.0,         # [Ed] knob, joystick and clear OLED sit this much lower on the panel so all four rail screws fit
     top_corners=True,      # [Ed] top bolts at the top corners, mirroring the bottom pair (v0.2: between the knob and the joystick)
-    insert_od=4.6,         # [A] stock M3 knurled brass insert, epoxied in the resin boss (Claude's pick, 2 Nov): OD
-    insert_len=5.7,        # [A] insert length
+    insert_od=3.5,         # [A] stock M2.5 knurled brass insert, epoxied in the resin boss (v0.19: M3, Ø4.6 × 5.7)
+    insert_len=4.0,        # [A] insert length (1.6 d of thread)
     insert_glue=0.1,       # [A] radial epoxy gap round the insert
     tip_hole=0.5,          # [A] clearance hole runs this far past the screw tip
     insert_engage_min=1.5, # [A] steel M3 in a brass insert: 1.5 x d (the printed-resin rule was 2 x d)
@@ -222,7 +229,7 @@ P = dict(
     scan_clear=0.50,       # [A] swept beam to the knob and to the joystick envelope
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy"],
            "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
@@ -402,6 +409,9 @@ def derive(D):
     D["pad_h"] = max(0.0, D["cover_under"] + D["cbore_depth"] - D["clamp_t"])
     D["z_pad_out"] = D["z_flange_out"] - D["pad_h"]
     D["cover_skin"] = D["clamp_t"] + D["pad_h"] - D["cbore_depth"]
+    if D["cover_screw"] == "back":   # v0.19b: no pad; the head sits in the floor, the column above it is the material over the head
+        D["pad_h"] = 0.0
+        D["z_pad_out"] = D["z_flange_out"]
     D["z_foot"] = min(D["z_pad_out"], D["z_cover_out"])
     D["z_wall0"] = D["z_rim"]
     avail = (D["z_fp0"] - D["tip_clear"]) - D["z_rim"]
@@ -667,6 +677,26 @@ def derive(D):
     # ISO 4762 length is under the head. M3×10 is fully threaded, so the thread
     # starts at the bearing face and the tip lands inside the printed tap.
     D["z_screw_under"] = D["z_pad_out"] + D["cbore_depth"]
+    if D["cover_screw"] == "back":
+        D["z_screw_under"] = D["z_cover_out"] + D["cbore_depth"]
+        need = D["z_rim"] + D["insert_engage_min"] * D["screw_d"] - D["z_screw_under"]
+        top = D["z_post_top"] - D["wall"] - D["tip_hole"] - D["z_screw_under"]
+        fits = [L for L in D["screw_lens"] if need <= L <= top]
+        D["screw_len"] = float(fits[0] if fits else max(L for L in D["screw_lens"] if L <= top))
+        # slim column through the screen layer, then a 45° flare to the ring that bears on the board round its notch
+        D["col_r"] = max(D["hole_r"] + D["col_wall"], D["cbore_r"] + 0.3)
+        D["col_ring_r"] = D["notch_r"] + D["tube_press"]
+        scr_top = max(D["amo_lower_z"][1], D["amo_upper_z"][1]) if D["back_screens"] == "amoled2" else D["z_cover_in"]
+        D["col_z1"] = scr_top + D["col_screen_air"]
+        D["col_z2"] = D["col_z1"] + max(0.0, D["col_ring_r"] - D["col_r"])
+        D["cover_skin"] = D["col_z1"] - D["z_screw_under"]   # solid PETG over the head before the flare
+        if D["back_screens"] == "amoled2":   # how far each screen could still move toward its end before a column
+            ra, half = D["col_r"] + D["col_screen_air"], D["amo_w"] / 2
+            dx = min(abs(x) for x, _ in D["corners"]) - half
+            dy = math.sqrt(max(ra * ra - dx * dx, 0.0)) if dx < ra else 0.0
+            yb = min(y for _, y in D["corners"]); yt = max(y for _, y in D["corners"])
+            D["amo_room_lower"] = D["amo_lower"][2] - (yb + dy)
+            D["amo_room_upper"] = (yt - dy) - D["amo_upper"][3]
     D["screw_grip"] = D["z_thread0"] - D["z_screw_under"]
     D["screw_thread"] = D["screw_len"] if D["screw_len"] <= D["screw_full_to"] else D["screw_b"]
     D["screw_engage"] = D["screw_thread"] - D["screw_grip"]

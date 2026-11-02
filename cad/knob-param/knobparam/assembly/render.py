@@ -16,6 +16,8 @@ GROUPS = [  # (legend, colour, match)
     ("M1.6 rod + sleeve, nuts, washer", "#5c6bc0", lambda n: n.startswith("rod")),
     ("base cradle", "#8d6e63", lambda n: n == "base cradle"),
     ("borosilicate sleeve (3.3)", "#e1f5fe", lambda n: n.startswith("knob glass")),
+    ("knob seal ring (PETG, opaque)", "#37474f", lambda n: n.startswith("knob seal ring")),
+    ("clear OLED 1.51\" (over window D)", "#4fc3f7", lambda n: n.startswith("clear OLED")),
     ("knob upper cap (inside the bore)", "#1e88e5", lambda n: n.startswith("knob upper-cap")),
     ("knob lower cap, clear land", "#b2dfdb", lambda n: n.startswith("knob lower-cap")),
     ("bottom internal ring", "#42a5f5", lambda n: n.startswith("bottom internal ring")),

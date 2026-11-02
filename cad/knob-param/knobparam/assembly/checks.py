@@ -182,14 +182,21 @@ def cross(D, parts):
     # The glass top end face stays bare so the wall can shine up into the dial. A wafer of that annulus must miss every printed part.
     zi, ch = D["sleeve_z1"], D["sleeve_chamfer"]
     ri, ro = D["sleeve_id"] / 2 + ch, D["knob_od"] / 2 - ch
-    rim = cyl(ro, zi, 0.2) - cyl(ri, zi - 0.05, 0.3)
+    sh = D.get("glass_to_dial", False)
+    cham = sh and D.get("cap_top") == "chamfer"
+    if cham:   # the flat face sits between the two ground chamfers
+        ri, ro = D["sleeve_id"] / 2 + D["sleeve_top_cin"], D["knob_od"] / 2 - D["sleeve_top_cout"]
+    rim = cyl(ro, zi, 0.01) - cyl(ri, zi - 0.05, 0.11)   # v0.19b: thin wafer, so the 0.3 running gap to the dial lip reads as 0.3
     rb = rim.bounding_box()
     def _hits(bb):
         return not (bb.max.X < rb.min.X or bb.min.X > rb.max.X or bb.max.Y < rb.min.Y or bb.min.Y > rb.max.Y or bb.max.Z < rb.min.Z or bb.min.Z > rb.max.Z)
-    near = [(n, s) for n, s in parts.items() if not n.startswith("knob glass") and _hits(s.bounding_box())]
+    # v0.19b [Ed 2 Nov]: the upper cap is bonded on the glass (shoulder on the face, or cone on the inner chamfer), so it is left out.
+    near = [(n, s) for n, s in parts.items() if not n.startswith("knob glass") and not (sh and n.startswith("knob upper-cap"))
+            and _hits(s.bounding_box())]
     rim_d, rim_who = min(((s.distance_to(rim), n) for n, s in near), default=(1e9, ""))
-    row("printed parts clear the glass top rim", rim_d, ch,
-        f"nearest {rim_who}; end face r {ri:.2f}–{ro:.2f} at z {zi:.2f} stays open into the dial")
+    row("printed parts clear the glass top rim" + ((" (cap seated on the inner chamfer)" if cham else " (cap shoulder bonded on it)") if sh else ""),
+        rim_d, ch, f"nearest {rim_who}; end face r {ri:.2f}–{ro:.2f} at z {zi:.2f} " +
+        ("stays open into the dial lip" if (cham or not sh) else f"under the {D['cap_shoulder_t']:g} mm cap shoulder (bond {D['cap_shoulder_glue']:g})"))
     entry = min(D["ot_r"] - D["sleeve_id"] / 2, D["knob_od"] / 2 - D["ot_r"])
     row("light path through the emitter holes, the race and into the glass", min(D["em_ap"] / 2, entry), D["ot_seat_gap"],
         f"{2 * D['em_n']} reverse-mount holes on r {D['ot_r']:.2f}; aperture Ø{D['em_ap']:.2f}; "

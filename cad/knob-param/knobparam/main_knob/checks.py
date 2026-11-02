@@ -46,4 +46,18 @@ def checks(D, parts):
     r.row("sleeve length is the visible band", D["sleeve_len"], 1.0,
           f"z {D['sleeve_z0']:.2f} to {D['sleeve_z1']:.2f}; insert {D['sleeve_insert']:.2f} each end; chamfer {D['sleeve_chamfer']:.2f}")
     r.row("cap engagement leaves an open bore between the plugs", D["sleeve_len"] - 2 * D["sleeve_insert"], D["sleeve_insert"])
+    if D["glass_to_dial"]:
+        from ..common.process import PROCESS
+        r.row("upper cap: dished web / flare wall (normal) vs MJF wall", D["cap_flare_wall"], PROCESS["mjf"]["wall"],
+              f"web {D['z_under_web'] - D['h_band1']:.2f} at the hub gear to {D['cap_web_rim']:.2f} at r {D['cap_r_s']:.2f}; "
+              f"flare {D['cap_flare_slope']:.0f}° up to the plug foot z {D['cap_z_plug0']:.2f}")
+        if D["cap_top"] == "chamfer":
+            r.row("glass top: flat face left between the two ground chamfers", D["glass_top_flat"], 0.4,
+                  f"wall {D['sleeve_wall']:.2f} − inner {D['sleeve_top_cin']:g} − outer {D['sleeve_top_cout']:g} (45°); thin wall {D['sleeve_wall_lo']:g} leaves {D['sleeve_wall_lo'] - D['sleeve_top_cin'] - D['sleeve_top_cout']:.2f}")
+            r.row("glass top under the dial lip (running gap)", D["z_lip0"] - D["sleeve_z1"], D["knob_run"] - 0.01,
+                  f"glass top z {D['sleeve_z1']:.2f}; cap cone seats on the {D['sleeve_top_cin']:g} inner chamfer (bond {D['sleeve_seat_glue']:g} along z); "
+                  "the cap position now follows the glass length and its bore: print the cap to the measured tube")
+        else:
+            r.row("upper cap: shoulder on the glass top (thickness)", D["cap_sh_z1"] - D["cap_sh_z0"], PROCESS["mjf"]["wall"],
+                  f"OD Ø{D['knob_od']:.2f} = glass OD; z {D['cap_sh_z0']:.2f}–{D['cap_sh_z1']:.2f}, bond {D['cap_shoulder_glue']:.2f} on the glass top z {D['sleeve_z1']:.2f}")
     return r

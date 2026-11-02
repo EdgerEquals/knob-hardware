@@ -50,6 +50,8 @@ def _thrust_track(D):
 
 def _thrust_blank(D):
     """Keep-out filler, only the air inside the groove. A smaller torus keeps it off both races."""
+    if not D["ot_keep_ang"]:   # v0.19b: closed ring, no blank
+        return None
     a0, a1 = D["ot_keep_ang"]
     g = D["ot_blank_clear"]
     rg = D["ot_rg"] - g
@@ -86,7 +88,7 @@ def build(D):
     h = D["motor_collar_top"] - pt
     c -= cyl(D["dial_clear_d"] / 2, pt, h)
     c -= Pos(0, 0, pt) * Box(mx - D["motor_bore_d"] / 2 + 1.0, D["dial_clear_d"], h, align=(Align.MIN, Align.CENTER, Align.MIN))
-    c -= thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"])   # control_dial export: thrust-ball ring
+    if D["tb_on"]: c -= thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"])   # control_dial export: thrust-ball ring
     c -= Pos(mx + D["collar_trim"], 0, 0) * Box(20, 40, D["motor_collar_top"], align=(Align.MIN, Align.CENTER, Align.MIN))
     c -= hall_slot.window(D)
     c += mech.cradle_add(D)     # detent blocks, hard stops, spring posts
@@ -108,7 +110,7 @@ def build(D):
             continue
         c += (cyl(D["em_pin_od"] / 2, -D["em_pin_len"], D["em_pin_len"], h["x"], h["y"])
               - cyl(D["em_ap"] / 2, -D["em_pin_len"] - 0.01, D["em_pin_len"] + 0.02, h["x"], h["y"]))
-    out = {"base cradle": c, "outer thrust blank": blank}
+    out = {"base cradle": c} | ({"outer thrust blank": blank} if blank is not None else {})
     ruby = set(D["ot_ruby_idx"])
     load, gems = [], []
     for i, a in enumerate(D["ot_angs"]):

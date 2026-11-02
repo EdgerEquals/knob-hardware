@@ -110,12 +110,12 @@
   },
   {
    "name": "light path from the bottom race up through the glass",
-   "value": 0.148,
+   "value": 0.168,
    "target": ">= 0.05",
    "ok": true,
-   "note": "glass end r 18.85\u201321.00 on the clear land r 19.64\u201321.00; race r 19.79; sleeve 38.95 mm",
+   "note": "glass end r 18.85\u201321.00 on the clear land r 19.64\u201321.00; race r 19.81; sleeve 47.45 mm",
    "owner": "main_knob",
-   "slack": 0.098
+   "slack": 0.118
   },
   {
    "name": "glass ID clears the ring tips",
@@ -141,21 +141,48 @@
   },
   {
    "name": "sleeve length is the visible band",
-   "value": 38.95,
+   "value": 47.45,
    "target": ">= 1",
    "ok": true,
-   "note": "z 5.05 to 44.00; insert 4.30 each end; chamfer 0.26",
+   "note": "z 5.05 to 52.50; insert 4.30 each end; chamfer 0.26",
    "owner": "main_knob",
-   "slack": 37.95
+   "slack": 46.45
   },
   {
    "name": "cap engagement leaves an open bore between the plugs",
-   "value": 30.35,
+   "value": 38.85,
    "target": ">= 4.3",
    "ok": true,
    "note": "",
    "owner": "main_knob",
-   "slack": 26.05
+   "slack": 34.55
+  },
+  {
+   "name": "upper cap: dished web / flare wall (normal) vs MJF wall",
+   "value": 1.141,
+   "target": ">= 1",
+   "ok": true,
+   "note": "web 2.20 at the hub gear to 1.50 at r 14.30; flare 40\u00b0 up to the plug foot z 48.20",
+   "owner": "main_knob",
+   "slack": 0.141
+  },
+  {
+   "name": "glass top: flat face left between the two ground chamfers",
+   "value": 0.75,
+   "target": ">= 0.4",
+   "ok": true,
+   "note": "wall 2.15 \u2212 inner 0.8 \u2212 outer 0.6 (45\u00b0); thin wall 2 leaves 0.60",
+   "owner": "main_knob",
+   "slack": 0.35
+  },
+  {
+   "name": "glass top under the dial lip (running gap)",
+   "value": 0.3,
+   "target": ">= 0.29",
+   "ok": true,
+   "note": "glass top z 52.50; cap cone seats on the 0.8 inner chamfer (bond 0.07 along z); the cap position now follows the glass length and its bore: print the cap to the measured tube",
+   "owner": "main_knob",
+   "slack": 0.01
   },
   {
    "name": "knob OD vs screen (R - outermost screen point)",
@@ -257,13 +284,13 @@
    "slack": 0.2
   },
   {
-   "name": "Hall spoke vs thrust balls / cage (\u00b1travel)",
-   "value": 0.305,
-   "target": ">= 0.3",
+   "name": "dial tube end: air gap over the cradle (no thrust bearing)",
+   "value": 0.6,
+   "target": ">= 0.5",
    "ok": true,
-   "note": "",
+   "note": "tube end z 4.10 over the cradle top 3.50; the 45\u00b0 race on the knob carries the dial, the adapter board stops the lift (0.30)",
    "owner": "control_dial",
-   "slack": 0.005
+   "slack": 0.1
   },
   {
    "name": "Hall arm rib tip deflection at the load radius (mm)",
@@ -459,18 +486,9 @@
    "value": 0.244,
    "target": ">= 0.05",
    "ok": true,
-   "note": "annulus each side of \u00d81.71 at r 19.79; SLA feature floor is 0.50 and does not fit",
+   "note": "annulus each side of \u00d81.71 at r 19.81; SLA feature floor is 0.50 and does not fit",
    "owner": "base_drive",
    "slack": 0.194
-  },
-  {
-   "name": "emitter hole centre clears the nearest ball",
-   "value": 0.048,
-   "target": ">= 0",
-   "ok": true,
-   "note": "holes sit in the ball gaps; pins in VCSEL holes 6 and 18",
-   "owner": "base_drive",
-   "slack": 0.048
   },
   {
    "name": "big gear vs sensor (axial)",
@@ -491,6 +509,15 @@
    "slack": 14.1
   },
   {
+   "name": "bearing 2 located in the H2 bore (engagement)",
+   "value": 0.8,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "bearing 2 top z -0.80, 0.10 under bearing 1; centres 2.40 apart; wheel 8.9 below bearing 2",
+   "owner": "under_pcb",
+   "slack": 0.3
+  },
+  {
    "name": "Hall sensor body spacing on the PCB",
    "value": 0.503,
    "target": ">= 0.2",
@@ -498,6 +525,33 @@
    "note": "5 sensors at pitch 2.5: H1 TMAG5253BA3, H2 TMAG5253BA3, H3 TMAG5273A2, H4 TMAG5253BA3, H5 TMAG5253BA3",
    "owner": "electronics",
    "slack": 0.303
+  },
+  {
+   "name": "emitter bodies vs back-side parts (716 driver moved inboard)",
+   "value": 0.92,
+   "target": ">= 0.5",
+   "ok": true,
+   "note": "24 emitters every 15\u00b0; U20 at (-8.5, 12.0) turned 45\u00b0 (mechanism frame)",
+   "owner": "electronics",
+   "slack": 0.42
+  },
+  {
+   "name": "PCB windows: smallest window (mm\u00b2)",
+   "value": 17.781,
+   "target": ">= 10",
+   "ok": true,
+   "note": "A 18, B 18, C 25, D 901, E 25; KiCad back parts to move off the windows: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
+   "owner": "electronics",
+   "slack": 7.781
+  },
+  {
+   "name": "clear OLED rests on the board round window D (narrowest ledge)",
+   "value": 1.61,
+   "target": ">= 1",
+   "ok": true,
+   "note": "42.04 x 27.22 on the PCB front at (0, -36.6)",
+   "owner": "electronics",
+   "slack": 0.61
   },
   {
    "name": "rod VBUS pad (B.Cu) vs back-side parts / pads",
@@ -549,7 +603,7 @@
    "value": 1.5,
    "target": ">= 1.2",
    "ok": true,
-   "note": "M3 insert \u00d84.6 in a \u00d87.6 boss",
+   "note": "M2.5 insert \u00d83.5 in a \u00d86.5 boss",
    "owner": "case",
    "slack": 0.3
   },
@@ -753,21 +807,21 @@
   },
   {
    "name": "boss axis inside the PCB",
-   "value": 1.5,
+   "value": 0.95,
    "target": ">= 0",
    "ok": true,
-   "note": "boss x \u00b120.65, PCB edge \u00b122.15, notch \u00d88.20",
+   "note": "boss x \u00b121.20, PCB edge \u00b122.15, notch \u00d87.10",
    "owner": "case",
-   "slack": 1.5
+   "slack": 0.95
   },
   {
    "name": "boss clears the knob hole",
-   "value": 19.661,
+   "value": 20.953,
    "target": ">= 0.4",
    "ok": true,
-   "note": "upper bosses y 39.60, room between knob and joystick 3.86",
+   "note": "upper bosses y 40.15, room between knob and joystick 6.24",
    "owner": "case",
-   "slack": 19.261
+   "slack": 20.553
   },
   {
    "name": "top rail screws omitted",
@@ -932,92 +986,110 @@
    "slack": 0.0
   },
   {
-   "name": "M3 thread engaged in the brass insert / diameter",
-   "value": 1.9,
+   "name": "M2.5 thread engaged in the brass insert / diameter",
+   "value": 1.6,
    "target": ">= 1.5",
    "ok": true,
-   "note": "insert \u00d84.6\u00d75.7 at z -1.60..4.10; screw engages 5.70",
+   "note": "insert \u00d83.5\u00d74.0 at z -1.60..2.40; screw engages 4.00",
    "owner": "case",
-   "slack": 0.4
+   "slack": 0.1
   },
   {
    "name": "screw tip clearance hole stays under the post top",
-   "value": 14.566,
+   "value": 16.49,
    "target": ">= 2.5",
    "ok": true,
-   "note": "tip z 6.73, hole to 7.23, post top 21.80",
+   "note": "tip z 4.81, hole to 5.31, post top 21.80",
    "owner": "case",
-   "slack": 12.066
+   "slack": 13.99
   },
   {
-   "name": "PETG under the screw head",
-   "value": 1.5,
-   "target": ">= 1.5",
+   "name": "PETG over the screw head",
+   "value": 2.19,
+   "target": ">= 1.25",
    "ok": true,
-   "note": "ISO 4762 head \u00d85.5\u00d73.00, hex 2.5; counterbore 3.10 (head 0.10 below the face); pad 3.64 on the 0.96 tongue; left under the head 1.50",
+   "note": "ISO 14580 head \u00d84.5\u00d71.85, T8; counterbore 1.95 (head 0.10 below the face); in from the back, under a \u00d85.5 column; solid over the head 2.19",
    "owner": "case",
-   "slack": -0.0
+   "slack": 0.94
   },
   {
    "name": "counterbore sinks the head",
    "value": 0.1,
    "target": ">= 0.1",
    "ok": true,
-   "note": "flat bottom, the \u00d85.5 \u00d7 3.0 knurled head is fully below the cover face",
+   "note": "flat bottom, the \u00d84.5 \u00d7 1.85 head is fully below the cover face",
    "owner": "case",
    "slack": 0.0
   },
   {
-   "name": "ISO 4762 thread past the grip",
-   "value": 2.778,
+   "name": "ISO 14580 thread past the grip",
+   "value": 2.564,
    "target": ">= 2",
    "ok": true,
-   "note": "M3\u00d710 A2, thread 10 (to the head); grip 1.67, in the resin 8.33",
+   "note": "M2.5\u00d720 A2, thread 20 (to the head); grip 13.59, in the resin 6.41",
    "owner": "case",
-   "slack": 0.778
+   "slack": 0.564
   },
   {
-   "name": "pad does not set the depth",
-   "value": 10.774,
+   "name": "head counterbore stays inside the cover floor",
+   "value": 0.19,
+   "target": ">= 0.15",
+   "ok": true,
+   "note": "floor 2.14, counterbore \u00d84.90 \u00d7 1.95 under the \u00d85.50 column",
+   "owner": "case",
+   "slack": 0.04
+  },
+  {
+   "name": "column clears the screen layer (column r + air vs the column ring)",
+   "value": 1.8,
    "target": ">= 0",
    "ok": true,
-   "note": "pad face -6.37, cover back -17.14; the 3 mm head fits in the local pad",
+   "note": "slim to z -13.00, 45\u00b0 flare to the \u00d89.10 ring at z -11.20",
    "owner": "case",
-   "slack": 10.774
+   "slack": 1.8
+  },
+  {
+   "name": "back screens: room left toward the ends before a corner column",
+   "value": 4.071,
+   "target": ">= 0",
+   "ok": true,
+   "note": "lower screen could drop 4.07, upper rise 4.07 (column r 2.75 + 0.5 air)",
+   "owner": "case",
+   "slack": 4.071
   },
   {
    "name": "corner screw through the notch",
-   "value": 2.6,
+   "value": 2.3,
    "target": ">= 0.3",
    "ok": true,
-   "note": "notch \u00d88.20 at x 20.65, y -54.30",
+   "note": "notch \u00d87.10 at x 21.20, y -54.85",
    "owner": "case",
-   "slack": 2.3
+   "slack": 2.0
   },
   {
    "name": "corner screw tip vs faceplate",
-   "value": 29.566,
-   "target": ">= 1.5",
+   "value": 31.49,
+   "target": ">= 1.25",
    "ok": true,
-   "note": "tip z 6.73, plate underside 36.30",
+   "note": "tip z 4.81, plate underside 36.30",
    "owner": "case",
-   "slack": 28.066
+   "slack": 30.24
   },
   {
    "name": "knob bolt tip vs front skin",
-   "value": 3.0,
+   "value": 2.95,
    "target": ">= 2.5",
    "ok": true,
-   "note": "0 bolts up into the shell, tip z 35.80",
+   "note": "0 bolts up into the shell, tip z 35.85",
    "owner": "case",
-   "slack": 0.5
+   "slack": 0.45
   },
   {
    "name": "corner boss is resin",
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "M3 brass insert \u00d84.6\u00d75.7 epoxied in a \u00d87.6 boss",
+   "note": "M2.5 brass insert \u00d83.5\u00d74.0 epoxied in a \u00d86.5 boss",
    "owner": "case",
    "slack": 0.0
   },
@@ -1032,21 +1104,21 @@
   },
   {
    "name": "post stands above the thread",
-   "value": 14.9,
+   "value": 16.35,
    "target": ">= 2.5",
    "ok": true,
-   "note": "post top z 21.80, tap ends z 6.90",
+   "note": "post top z 21.80, tap ends z 5.45",
    "owner": "case",
-   "slack": 12.4
+   "slack": 13.85
   },
   {
    "name": "case mass",
-   "value": 52.919,
+   "value": 51.667,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 40707 mm\u00b3 (40.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 39744 mm\u00b3 (39.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case",
-   "slack": 87.081
+   "slack": 88.333
   },
   {
    "name": "one hollow shell",
@@ -1305,7 +1377,7 @@
    "value": 0.375,
    "target": ">= 0.3",
    "ok": true,
-   "note": "nearest encoder pinion cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "note": "nearest idler pinion 1 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
    "slack": 0.075
   },
@@ -1325,7 +1397,7 @@
    "value": 0.05,
    "target": ">= 0",
    "ok": true,
-   "note": "\u00d82 load \u00d7 32, glass 1.5\u20131.6 \u00d7 32, ruby 4 on r 19.79",
+   "note": "\u00d82 load \u00d7 34, glass 1.5\u20131.6 \u00d7 34, ruby 4 on r 19.81",
    "owner": "assembly",
    "slack": 0.05,
    "tol_need": 0.251,
@@ -1342,55 +1414,55 @@
   },
   {
    "name": "spacer gap at the large end (no jam)",
-   "value": 0.07,
+   "value": 0.03,
    "target": "<= 0.12",
    "ok": true,
-   "note": "chord 1.870; ring play 4.46",
-   "owner": "assembly",
-   "slack": 0.05
-  },
-  {
-   "name": "spacer still touches at the small end (gap)",
-   "value": 0.12,
-   "target": "<= 0.12",
-   "ok": true,
-   "note": "1.588 mm gap 0.076",
-   "owner": "assembly",
-   "slack": 0.0
-  },
-  {
-   "name": "spacer gap stays positive at the small end",
-   "value": 0.12,
-   "target": ">= 0.03",
-   "ok": true,
-   "note": "",
+   "note": "chord 1.830; ring play 2.04",
    "owner": "assembly",
    "slack": 0.09
   },
   {
-   "name": "light path between a load ball and a spacer",
-   "value": 0.07,
-   "target": ">= 0.03",
+   "name": "spacer still touches at the small end (gap)",
+   "value": 0.08,
+   "target": "<= 0.12",
    "ok": true,
-   "note": "axial window beside a 1.6 spacer 0.200",
+   "note": "1.588 mm gap 0.036",
    "owner": "assembly",
    "slack": 0.04
   },
   {
-   "name": "printed parts clear the glass top rim",
-   "value": 0.708,
+   "name": "spacer gap stays positive at the small end",
+   "value": 0.08,
+   "target": ">= 0.03",
+   "ok": true,
+   "note": "",
+   "owner": "assembly",
+   "slack": 0.05
+  },
+  {
+   "name": "light path between a load ball and a spacer",
+   "value": 0.03,
+   "target": ">= 0.03",
+   "ok": true,
+   "note": "axial window beside a 1.6 spacer 0.200",
+   "owner": "assembly",
+   "slack": 0.0
+  },
+  {
+   "name": "printed parts clear the glass top rim (cap seated on the inner chamfer)",
+   "value": 0.29,
    "target": ">= 0.258",
    "ok": true,
-   "note": "nearest knob upper-cap; end face r 19.11\u201320.74 at z 44.00 stays open into the dial",
+   "note": "nearest control dial; end face r 19.65\u201320.40 at z 52.50 stays open into the dial lip",
    "owner": "assembly",
-   "slack": 0.45
+   "slack": 0.032
   },
   {
    "name": "light path through the emitter holes, the race and into the glass",
    "value": 0.308,
    "target": ">= 0.05",
    "ok": true,
-   "note": "24 reverse-mount holes on r 19.79; aperture \u00d80.62; hollow pins in VCSEL 4 (round) and 10 (radial slot); land 1.00 mm",
+   "note": "24 reverse-mount holes on r 19.81; aperture \u00d80.62; hollow pins in VCSEL 1 (round) and 7 (radial slot); land 1.00 mm",
    "owner": "assembly",
    "slack": 0.258
   },
@@ -1512,7 +1584,11 @@
    "slack": 0.01
   }
  ],
- "clashes": {},
+ "clashes": {
+  "joystick: joystick carrier (printed) / case": 0.04075742380833739,
+  "joystick: screen carrier (printed) / knob seal ring (PETG, bonded on the glass)": 10.694548803060243,
+  "joystick: top screen DWO DO0164FMST05 1.64\" 456x280 AMOLED / knob seal ring (PETG, bonded on the glass)": 0.42525217180739977
+ },
  "set": [],
  "sub": null
 }

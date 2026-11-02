@@ -7,6 +7,8 @@ def groove(D): return thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"
 def ball_xy(D, i): a = 2 * math.pi * i / D["tb_n"]; return (D["tb_pcd"] / 2 * math.cos(a), D["tb_pcd"] / 2 * math.sin(a))
 
 def build(D):
+    if not D["tb_on"]:   # v0.19b [Ed]: air gap, no bearing
+        return {}
     ci, co, ct = D["tb_cage"]; z0 = D["tb_cage_z0"]
     c = tube(ci / 2, co / 2, z0, ct)
     for i in range(D["tb_n"]): c -= cyl(D["tb_pocket_d"] / 2, z0, ct, *ball_xy(D, i))

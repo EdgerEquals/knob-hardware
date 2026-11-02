@@ -34,6 +34,8 @@ RULES = [
     (r"rod|nut|screw|grub|insert|pin\b|pins\b|dowel|shaft", "buy", "steel / brass hardware", "buy"),
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"thrust blank", "print", "UTR-8100 clear resin", "SLA"),
+    (r"seal ring", "print", "PETG, opaque", "FDM"),
+    (r"clear OLED", "buy", "EastRising ER-OLED1.51-1B (SSD1309, transparent)", "-"),
     (r"spring", "buy", "stainless 316 / phosphor bronze spring", "buy"),
     (r"magnet|cushion", "buy", "N52 magnet", "buy"),
     (r"FPC|jumper|strap|B2B", "buy", "flex / connector", "buy"),

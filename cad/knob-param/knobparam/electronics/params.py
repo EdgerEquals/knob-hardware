@@ -13,6 +13,24 @@ P = dict(
     adapter_d=15.5,   # [K]/[A] (cord room over the nut [Ed])
     adapter_fps={"J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0), "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", -2.55, -5.2, 90)},   # [K] KiCad screen-adapter v0.4 (U3/R1/R2 removed)
     adapter_env={"FPC_14P_0.5mm_Top": (10.6, 3.6, 1.0), "QFN-20_3x3": (3.0, 3.0, 0.75), "SOT-23-6_TMAG5273": (1.6, 2.9, 1.45), "C_0402": (1.0, 0.5, 0.5), "R_0402": (1.0, 0.5, 0.35)},   # [A] envelopes
+    # ---- v0.19b [Ed 2 Nov] 716 driver moved off the emitter radius (U20 DRV8837 + C20–C22, B.Cu), mechanism frame ----
+    drv_xy=(-8.5, 12.0),   # [A] U20 centre: 3.6 mm from the 716 lead pads, 0.8 clear of the pads, pegs, Hall decouplers and compound gear plan
+    drv_rot=45.0,   # [A] cluster turn (deg). v0.19 was U20 at (-10.25, 12.96), 0°, which reached the emitter band (keep-out 124–137°)
+    drv_cluster=(("U20", "WSON-8_2x2_DRV8837", 0.0, 0.0, 0, 2.95, 2.55, 0.8),   # [K] design.py offsets: ref, fp, dx, dy, rot, w, l, h
+                 ("C20", "C_0402", 0.0, 2.2, 0, 1.91, 0.99, 0.5),
+                 ("C21", "C_0402", -2.9, 1.0, 90, 0.99, 1.91, 0.5),
+                 ("C22", "C_0603", -4.7, 1.0, 90, 1.55, 3.05, 0.8)),
+    pcb_windows={   # [Ed 2 Nov] see-through windows, PANEL frame (scratchpad calc/windows.py: screen behind, 1.5 rail, 1.0 round every
+                    # obstacle, 1.5 round the encoder daughterboard/header;
+                    # obstacle: knob r 24.1, joystick carrier, corner posts, J10, bearing 2 seat). A, B: rear AMOLED; C, E: front AMOLED; D: clear OLED
+        "A": [(-17.63, 16.38), (-18.04, 16.11), (-18.53, 16.07), (-18.98, 16.28), (-19.28, 16.67), (-19.36, 17.06), (-19.36, 19.95), (-19.19, 20.51), (-18.83, 20.83), (-18.46, 20.95), (-15.17, 20.95), (-14.61, 20.78), (-14.33, 20.49), (-14.18, 20.12), (-14.19, 19.73), (-14.36, 19.37), (-16.16, 17.83)],
+        "B": [(14.57, 19.15), (14.22, 19.63), (14.18, 20.12), (14.39, 20.57), (14.78, 20.87), (15.17, 20.95), (18.36, 20.95), (18.83, 20.83), (19.19, 20.51), (19.36, 20.05), (19.36, 17.06), (19.24, 16.58), (18.99, 16.28), (18.63, 16.1), (18.24, 16.07), (17.87, 16.19), (16.16, 17.83)],
+        "C": [(13.98, -21.8), (13.43, -21.63), (13.06, -21.19), (13.0, -20.61), (13.27, -20.1), (15.71, -18.22), (17.78, -16.25), (18.14, -16.08), (18.44, -16.06), (18.73, -16.13), (19.06, -16.34), (19.28, -16.67), (19.36, -17.06), (19.36, -20.9), (19.24, -21.27), (19.07, -21.51), (18.74, -21.72), (18.46, -21.8)],
+        "D": [(18.2, -24.6), (18.58, -24.68), (18.91, -24.89), (19.12, -25.22), (19.2, -25.6), (19.2, -47.1), (19.08, -47.57), (18.76, -47.93), (18.2, -48.1), (-18.2, -48.1), (-18.67, -47.98), (-19.03, -47.66), (-19.2, -47.1), (-19.2, -25.6), (-19.08, -25.13), (-18.76, -24.77), (-18.2, -24.6)],
+        "E": [(-19.36, -17.06), (-19.19, -16.5), (-18.82, -16.17), (-18.24, -16.07), (-17.78, -16.25), (-15.71, -18.22), (-13.27, -20.1), (-13.1, -20.33), (-12.99, -20.71), (-13.0, -21.0), (-13.15, -21.36), (-13.51, -21.68), (-13.98, -21.8), (-18.36, -21.8), (-18.92, -21.63), (-19.24, -21.27), (-19.36, -20.9)],
+    },
+    clear_oled=(42.04, 27.22, 1.25),   # [S] EastRising ER-OLED1.51-1B / Waveshare 1.51" SSD1309 transparent, on the PCB front over window D
+    clear_oled_xy=(0.0, -36.6),   # [Ed] centre of the 38.4 x 24 cut-away (zone sketch, +4 mm into this frame); 1.8 / 1.6 mm ledge all round
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side
     hall_z=0.65,   # [A] TMAG5273 element above the adapter top
@@ -25,6 +43,7 @@ P = dict(
 
 IMPORTS = {"under_pcb": ["d_big_tip"]}
 EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> under_pcb (big-gear size from the board outline)
+           "clear_oled", "clear_oled_xy",                 # -> case (ledge relief round the clear OLED)
            "adapter_d", "adapter_fps", "adapter_env"]   # -> control_dial (cup pocket, J1/U3 positions, strap height)
 
 
@@ -44,4 +63,8 @@ def derive(D):
     # Read here (not in parts/pcb.py) so the part cache key follows the JSON.
     pj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "knob-main-pcb", "pcb_proxy.json")
     D["pcb_kicad"] = json.load(open(pj)) if os.path.exists(pj) else {}
+    gj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "joystick-daughterboard", "geom.json")
+    D["js_pcb_holes"] = json.load(open(gj)).get("main_pcb_holes", []) if os.path.exists(gj) else []   # joystick build output
+    from .parts import pcb as _pcb   # v0.19b: KiCad back parts that now sit in a window (move them when the board is regenerated)
+    D["pcb_win_displaced"] = _pcb.window_hits(D, D["pcb_kicad"])
     return D

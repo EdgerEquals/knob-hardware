@@ -202,8 +202,10 @@ P = dict(
     ot_blank_clear=0.15,   # [A] keep-out blank stays this far off the ball, top and bottom
     ot_track_extra=0.4,   # [A] bottom track annulus past the groove, each side
     ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
-    ot_keep_ang=(124.0, 137.0),   # [Ed] C20–C22 / U20. A cageless ring cannot skip this; a printed blank fills it
+    ot_keep_ang=None,   # [Ed 2 Nov] no keep-out: the 716 driver (U20, C20–C22) moved inboard, so the ball ring closes and the
+                        # 24 emitters sit every 15°. v0.19: (124.0, 137.0) with a printed blank in the gap
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
+    em_phase=0.0,   # [A] angle of emitter 1 when the ring is even (mechanism frame)
     em_n=12,   # [Ed] VCSELs, and the same count of RGB, alternating, reverse-mounted under the race
     em_vcsel=(2.8, 3.5, 0.8),   # [S] JNJ 2835 body, mm. On the PCB back.
     em_rgb=(2.0, 2.0, 0.9),   # [A] addressable 2020 body until a catalogue part is locked
@@ -242,6 +244,9 @@ P = dict(
     sleeve_glue_lo=0.2,   # [Ed]
     sleeve_glue_hi=0.3,   # [Ed]
     sleeve_chamfer_k=0.12,   # [A] fire-polished end, chamfer as a fraction of the wall
+    sleeve_top_cin=0.8,   # [Ed 2 Nov] ground 45° chamfer on the glass top INNER edge: the upper cap's cone seats on it (the axial stop)
+    sleeve_top_cout=0.6,   # [Ed 2 Nov] ground 45° chamfer on the top OUTER edge (looks finished); the dial lip underside carries the same chamfer
+    sleeve_seat_glue=0.07,   # [A] cap cone above the inner chamfer, along z (0.05 normal bond line)
     sleeve_insert_k=2.0,   # [A] cap engagement into the bore, in wall-thicknesses
     rel_sensor=False,   # [Ed] v0.16b: knob ring magnet + dial TMAG5273 REMOVED (duplicate of the encoder + Hall row). True = v0.16
     # ---- v0.16 relative knob-vs-dial angle [Ed] (only when rel_sensor): diametric ring magnet in the knob (blue), 3D TMAG5273 on a sensor board in the
@@ -546,19 +551,19 @@ def _ot_solution(D, root_r, R):
     lo, hi = root_r + half_w, R - half_w
     if hi < lo - 1e-9:
         return None
-    a0, a1 = D["ot_keep_ang"]
-    free = 360.0 - ((a1 - a0) % 360.0)
+    keep = D["ot_keep_ang"]
+    free = 360.0 - ((keep[1] - keep[0]) % 360.0) if keep else 360.0
     mid = (lo + hi) / 2
     steps = max(1, int(round((hi - lo) / 0.01)))
     best = None
     for s in range(steps + 1):
         r = lo + (hi - lo) * s / steps
-        margin = math.degrees(math.asin(min(0.999, rb / r))) + D["ot_seat_gap"]
+        margin = math.degrees(math.asin(min(0.999, rb / r))) + D["ot_seat_gap"] if keep else 0.0
         usable = free - 2 * margin
         if usable <= 0:
             continue
         for n in range(6, 90):
-            ang = usable / (2 * n - 1)
+            ang = usable / (2 * n - 1) if keep else 360.0 / (2 * n)   # open arc (both ends a ball) or a closed ring
             chord = 2 * r * math.sin(math.radians(ang) / 2.0)
             gap_max = chord - (d_load + dmax) / 2.0
             gap_min = chord - (d_load + dmin) / 2.0
@@ -599,10 +604,10 @@ def _place_outer_thrust(D):
     if solved is None:
         raise ValueError("no cageless ball count fits the spacer window")
     r, n, ang, chord, gap_max, gap_min, margin = solved
-    a0, a1 = D["ot_keep_ang"]
+    keep = D["ot_keep_ang"]
     land_in, land_out = r - half_w - root_r, R - (r + half_w)
     angs = []
-    a = (a1 + margin) % 360.0
+    a = ((keep[1] + margin) if keep else D["em_phase"] + ang / 2) % 360.0   # closed ring: emitters fall between balls at rest
     for _i in range(2 * n):
         angs.append(a % 360.0)
         a += ang
@@ -644,13 +649,14 @@ def _place_emitters(D):
     for a in D["ot_spacer_angs"]:
         kind_r[a] = (D["ot_spacer_min"] + D["ot_spacer_max"]) / 4.0
     angs = sorted(kind_r)
-    k0, k1 = D["ot_keep_ang"]
+    keep_ang = D["ot_keep_ang"]
+    k0, k1 = keep_ang if keep_ang else (0.0, 0.0)
     keep = (k1 - k0) % 360.0
     mids = []
     for i, a in enumerate(angs):
         b = angs[(i + 1) % len(angs)]
         span = (b - a) % 360.0
-        if span > keep + 1.0:                         # the empty keep-out, not a ball gap
+        if keep_ang and span > keep + 1.0:            # the empty keep-out, not a ball gap
             continue
         chord = 2.0 * D["ot_r"] * math.sin(math.radians(span) / 2.0)
         gap = chord - kind_r[a] - kind_r[b]
@@ -665,14 +671,17 @@ def _place_emitters(D):
         margin = math.degrees(reach / D["ot_r"])
         da = min((mid - k0) % 360.0, (k0 - mid) % 360.0, (mid - k1) % 360.0, (k1 - mid) % 360.0)
         inside = k0 < mid < k1
-        if inside or da < margin:
+        if keep_ang and (inside or da < margin):
             continue
         mids.append(mid)
     mids.sort()
-    if len(mids) < 2 * n:
-        raise ValueError("not enough ball gaps for the emitter ring")
-    step = len(mids) / (2 * n)
-    chosen = sorted(mids[int(i * step)] for i in range(2 * n))
+    if not keep_ang:   # v0.19b [Ed 2 Nov]: closed cageless ring, the balls roll round anyway, so the emitters go exactly even
+        chosen = [(D["em_phase"] + i * 360.0 / (2 * n)) % 360.0 for i in range(2 * n)]
+    else:
+        if len(mids) < 2 * n:
+            raise ValueError("not enough ball gaps for the emitter ring")
+        step = len(mids) / (2 * n)
+        chosen = sorted(mids[int(i * step)] for i in range(2 * n))
     vx, vy, vh = D["em_vcsel"]
     rx, ry, rh = D["em_rgb"]
     ap = D["em_ap_k"] * min(vx, vy)

@@ -10,7 +10,14 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib.patches import Patch
 
+_J = "joystick: "
 CASE_COLS = [  # (legend, colour, match) for parts the main render palette does not know
+    ("joystick screen + jumper FPC", "#5e35b1", lambda n: n.startswith(_J) and ("screen DWO" in n or "FPC" in n)),
+    ("joystick carriers, seat plate, rear anchor (printed)", "#9fa8da", lambda n: n.startswith(_J) and any(k in n for k in ("carrier", "seat plate", "anchor"))),
+    ("joystick daughterboard, headers, sockets, switch", "#66bb6a", lambda n: n.startswith(_J) and any(k in n for k in ("daughterboard", "header", "socket 1x3", "SW1"))),
+    ("joystick standoffs, screws, springs, balls, pins", "#a1887f", lambda n: n.startswith(_J)),
+    ("knob seal ring (PETG, opaque)", "#37474f", lambda n: n.startswith("knob seal ring")),
+    ("clear OLED 1.51\" (over window D)", "#4fc3f7", lambda n: n.startswith("clear OLED")),
     ("case (UTR-8100 clear resin)", "#b0bec5", lambda n: n == "case"),
     ("back cover + screen pad (PETG)", "#455a64", lambda n: n.startswith(("back cover", "lower screen pad"))),
     ("glow coat", "#c5e1a5", lambda n: n.startswith("glow coat")),
@@ -114,6 +121,8 @@ def main():
     D = model.derive(model.default_params())
     parts, stats, keys, owner = build_all(D)
     parts, keys = view(parts, keys, D, "panel")
+    from knobparam.assembly import joystick as js   # v0.19b: the joystick stack sits in the sheet too
+    jp, JD = js.placed(); parts = dict(parts); parts.update(jp)
     zfp = (D["z_fp0"] + D["z_fp1"]) / 2
     levels = [
         (zfp, "faceplate: knob, joystick opening, jack bushings, USB-C"),
@@ -122,8 +131,8 @@ def main():
         (12.0, "inside the knob: 1220 and 716 cans, brass tube"),
         (D["hb_mid"], "ring band: herringbone ring, encoder and idler pinions"),
         (5.0, "Hall arm, single detent, lever"),
-        (0.5, "PCB front: Hall sensors, cradle plate, motor tabs"),
-        (D["z_pcb_back"] / 2, "main PCB (corner notches, holes)"),
+        (0.5, "PCB front: Hall sensors, cradle plate, motor tabs, clear OLED over window D"),
+        (D["z_pcb_back"] / 2, "main PCB: windows A B C E + D (clear OLED), corner notches, holes"),
         (D["z_pcb_back"] - 0.6, "PCB back: emitters, bearing 2 seat"),
         ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear (under the PCB)"),
         ((D["h_big_top"] + D["h_big_bot"]) / 2 if "h_big_top" in D else -11.2, "encoder disc, sensor (top, under the joystick)"),
@@ -157,8 +166,8 @@ def main():
     ex, ey = D["enc_xy"]; a = math.radians(D["mech_rot"]); py = math.sin(a) * ex + math.cos(a) * ey
     axv3 = fig.add_subplot(gs[2, 5:7])
     lay = cut(parts, "y", py)
-    draw(axv3, lay, f"vertical cut y = {py:.1f} (across, through the encoder wheel at the top)", xl, zl, xlabel="x (mm)", ylabel="z (mm)")
-    fig.suptitle(f"Knob stack {D['version']}: section sheet, panel frame (looking at the panel face for the plan cuts). "
+    draw(axv3, lay, f"vertical cut y = {py:.1f} (across, through the encoder wheel; glass, cap and seal ring at the sides)", xl, zl, xlabel="x (mm)", ylabel="z (mm)")
+    fig.suptitle(f"Knob stack {D['version']}b: section sheet, panel frame (looking at the panel face for the plan cuts). "
                  f"1220 at the bottom, encoder at the top, cover depth {D['cover_depth']:.1f} mm.", fontsize=13, x=0.01, ha="left")
     out = os.path.join(os.path.dirname(here), "assemblies", f"knob-stack-{D['version']}", f"knob-stack-{D['version']}-section-sheet.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)

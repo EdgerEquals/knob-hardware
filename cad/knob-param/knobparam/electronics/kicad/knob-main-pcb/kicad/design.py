@@ -90,12 +90,17 @@ def comps():
     passive("R32", "R", "10k", "R_0402", "ENC_B", "GND", (sx + 3.6, sy + 5.6, 90))
     # ---- 716 feel motor driver DRV8837 (B.Cu, next to the M2 lead pads) ----
     fx, fy = B(*C["fm_xy"])
+    drv = C.get("drv")   # v0.19b: cad_constraints carries the cluster (off the emitter radius); older constraints fall back below
+    if drv:
+        DP = {k: (*B(v[0], v[1]), v[2]) for k, v in drv.items()}
+    else:
+        DP = {"U20": (fx - 7.5, fy, 0), "C20": (fx - 7.5, fy - 2.2, 0), "C21": (fx - 10.4, fy - 1.0, 90), "C22": (fx - 12.2, fy - 1.0, 90)}
     add("U20", "DRV8837", "DRV8837DSGR", "WSON-8_2x2_DRV8837",
         {"8": "+3V3", "1": "VM_FEEL", "6": "FEEL_IN1", "5": "FEEL_IN2", "7": "FEEL_nSLEEP", "2": "FEEL_A", "3": "FEEL_B", "4": "GND", "9": "GND"},
-        (fx - 7.5, fy, 0), {"MPN": "DRV8837DSGR", "Manufacturer": "TI", "LCSC": "C39159", "Datasheet": DS["DRV8837"]}, side="B")
-    passive("C20", "C", "100n", "C_0402", "+3V3", "GND", (fx - 7.5, fy - 2.2, 0))
-    passive("C21", "C", "100n", "C_0402", "VM_FEEL", "GND", (fx - 10.4, fy - 1.0, 90))
-    passive("C22", "C", "10u", "C_0603", "VM_FEEL", "GND", (fx - 12.2, fy - 1.0, 90))
+        DP["U20"], {"MPN": "DRV8837DSGR", "Manufacturer": "TI", "LCSC": "C39159", "Datasheet": DS["DRV8837"]}, side="B")
+    passive("C20", "C", "100n", "C_0402", "+3V3", "GND", DP["C20"])
+    passive("C21", "C", "100n", "C_0402", "VM_FEEL", "GND", DP["C21"])
+    passive("C22", "C", "10u", "C_0603", "VM_FEEL", "GND", DP["C22"])
     # ---- connectors ----
     add("J10", "J10", "MCU link (placeholder)", "Pads_2x14_P2.00_SMD", {str(i + 1): n for i, n in enumerate(J10_PINS)}, (AX, 108.0, 0), bom=False, side="B",
         fields={"Note": "PLACEHOLDER until the MCU section is drawn; pin-out [A]"})

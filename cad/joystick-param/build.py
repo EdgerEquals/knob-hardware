@@ -56,7 +56,13 @@ def main():
                 sw_xy=list(D["sw_xy"]), sw_rot=D["sw_rot"],
                 headers=[list(p) for p in D["hdr_xy"]], standoffs=[list(p) for p in D["standoff_xy"]],
                 drill_m2=D["drill_m2"], pad_m2=D["pad_m2"],
-                hdr=D["hdr"], sock=D["sock"], standoff=D["standoff"])
+                hdr=D["hdr"], sock=D["sock"], standoff=D["standoff"],
+                # v0.5: holes the joystick needs in the MAIN PCB, knob panel frame (joystick axis at (0, place_y))
+                place_y=D["place_y"],
+                main_pcb_holes=[dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["drill_m2"], what="standoff screw M2")
+                                for x, y in D["standoff_xy"]] +
+                               [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["spr_bore"], what="hold-down spring")
+                                for x, y in D["springs"]])
     gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
     json.dump(geom, open(gpath, "w"), indent=1)
     print("geom:", gpath)

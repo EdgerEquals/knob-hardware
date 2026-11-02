@@ -27,7 +27,7 @@ def checks(D, parts):
     if D["top_corners"]:
         row("top posts stop under the joystick board", D["joy_board_z"] - D["z_post_top"], 1.0,
             f"post top z {D['z_post_top']:.2f}; joystick daughterboard about z {D['joy_board_z']:.1f} [A]")
-    row("resin wall round the insert", D["insert_wall"], 1.2, f"M3 insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
+    row("resin wall round the insert", D["insert_wall"], 1.2, f"M{D['screw_d']:g} insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
     if D["back_screens"] == "amoled2":
         x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]
         row("back AMOLEDs overlap behind the knob", D["amo_overlap"], 15.0,
@@ -173,7 +173,7 @@ def checks(D, parts):
 
     if D["insert_od"]:
         eng = min(D["screw_engage"], D["insert_len"])
-        row("M3 thread engaged in the brass insert / diameter", eng / D["screw_d"], D["insert_engage_min"],
+        row(f"M{D['screw_d']:g} thread engaged in the brass insert / diameter", eng / D["screw_d"], D["insert_engage_min"],
             f"insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} at z {D['z_rim']:.2f}..{D['z_insert1']:.2f}; screw engages {eng:.2f}")
         row("screw tip clearance hole stays under the post top", D["z_post_top"] - (D["z_tip"] + D["tip_hole"]), D["wall"],
             f"tip z {D['z_tip']:.2f}, hole to {D['z_tip'] + D['tip_hole']:.2f}, post top {D['z_post_top']:.2f}")
@@ -183,21 +183,33 @@ def checks(D, parts):
     if False:  # v0.19: brass insert; see "resin wall round the insert"
         row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
             f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
-    row("PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
-        f"ISO 4762 head Ø{D['screw_dk']:.1f}×{D['head_k']:.2f}, hex {D['screw_hex']:.1f}; "
-        f"counterbore {D['cbore_depth']:.2f} (head {D['head_below']:.2f} below the face); "
-        f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; left under the head {D['cover_skin']:.2f}")
+    back = D.get("cover_screw") == "back"
+    std = "ISO 14580" if back else "ISO 4762"
+    row("PETG over the screw head" if back else "PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
+        f"{std} head Ø{D['screw_dk']:.1f}×{D['head_k']:.2f}, {D.get('screw_drive', 'hex')}; counterbore {D['cbore_depth']:.2f} "
+        f"(head {D['head_below']:.2f} below the face); " +
+        (f"in from the back, under a Ø{2 * D.get('col_r', 0):.1f} column; solid over the head {D['cover_skin']:.2f}" if back else
+         f"pad {D['pad_h']:.2f} on the {D['clamp_t']:.2f} tongue; left under the head {D['cover_skin']:.2f}"))
     row("counterbore sinks the head", D["cbore_depth"] - D["head_k"], D["head_below"],
-        "flat bottom, the Ø5.5 × 3.0 knurled head is fully below the cover face")
-    row("ISO 4762 thread past the grip", D["screw_engage"] / D["screw_d"], D["engage_min"],
-        f"M{D['screw_d']:.0f}×{D['screw_len']:.0f} {D['screw_mat']}, thread {D['screw_thread']:.0f} "
+        f"flat bottom, the Ø{D['screw_dk']:g} × {D['head_k']:g} head is fully below the cover face")
+    row(f"{std} thread past the grip", D["screw_engage"] / D["screw_d"], D["engage_min"],
+        f"M{D['screw_d']:g}×{D['screw_len']:.0f} {D['screw_mat']}, thread {D['screw_thread']:.0f} "
         f"({'to the head' if D['screw_len'] <= D['screw_full_to'] else 'partial, b=' + format(D['screw_b'], '.0f')}); "
         f"grip {D['screw_grip']:.2f}, in the resin {D['screw_engage']:.2f}")
     if not D["insert_od"]:
         row("screw tip inside the printed tap", D["z_thread1"] - D["z_tip"], 0.0,
             f"tip z {D['z_tip']:.2f}, tap ends {D['z_thread1']:.2f}")
-    row("pad does not set the depth", D["z_pad_out"] - D["z_cover_out"], 0.0,
-        f"pad face {D['z_pad_out']:.2f}, cover back {D['z_cover_out']:.2f}; the 3 mm head fits in the local pad")
+    if back:   # v0.19b [Ed 2 Nov]: head in the floor, under the column; the cover depth is unchanged
+        row("head counterbore stays inside the cover floor", D["cover_t"] - D["cbore_depth"], 0.15,
+            f"floor {D['cover_t']:.2f}, counterbore Ø{2 * D['cbore_r']:.2f} × {D['cbore_depth']:.2f} under the Ø{2 * D['col_r']:.2f} column")
+        row("column clears the screen layer (column r + air vs the column ring)", D["col_ring_r"] - D["col_r"], 0.0,
+            f"slim to z {D['col_z1']:.2f}, 45° flare to the Ø{2 * D['col_ring_r']:.2f} ring at z {D['col_z2']:.2f}")
+        if "amo_room_lower" in D:
+            row("back screens: room left toward the ends before a corner column", min(D["amo_room_lower"], D["amo_room_upper"]), 0.0,
+                f"lower screen could drop {D['amo_room_lower']:.2f}, upper rise {D['amo_room_upper']:.2f} (column r {D['col_r']:.2f} + {D['col_screen_air']:g} air)")
+    else:
+        row("pad does not set the depth", D["z_pad_out"] - D["z_cover_out"], 0.0,
+            f"pad face {D['z_pad_out']:.2f}, cover back {D['z_cover_out']:.2f}; the 3 mm head fits in the local pad")
     row("corner screw through the notch", D["notch_r"] - D["screw_d"] / 2, D["notch_gap"],
         f"notch Ø{2 * D['notch_r']:.2f} at x {D['corners'][1][0]:.2f}, y {D['corners'][1][1]:.2f}")
     row("corner screw tip vs faceplate", D["z_fp0"] - D["z_tip"], D["tip_clear"],
@@ -210,7 +222,7 @@ def checks(D, parts):
     # a point in the boss wall (outside the thread) is resin
     cx, cy = D["corners"][0]
     row("corner boss is resin", 1.0 if _inside(case, cx + D["screw_boss_r"] * 0.7, cy, (D["z_thread0"] + D["z_tip"]) / 2) else 0.0, 1.0,
-        f"M3 brass insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} epoxied in a Ø{2 * D['screw_boss_r']:.1f} boss")
+        f"M{D['screw_d']:g} brass insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} epoxied in a Ø{2 * D['screw_boss_r']:.1f} boss")
     row("corner post top vs jack pins", D["z_jack_pins"] - D["z_post_top"], D["post_jack_clear"],
         f"post top z {D['z_post_top']:.2f}, PJ366ST pin tips z {D['z_jack_pins']:.2f} (body {D['jack_depth']:.1f} + pins {D['jack_pin_len']:.1f} behind the plate)")
     row("post stands above the thread", D["z_post_top"] - D["z_thread1"], D["wall"],

@@ -62,6 +62,9 @@ def checks(D, parts):
     if D["hall_layout"] == "vernier":
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]
+        if not D["tb_on"]:   # v0.19b [Ed 2 Nov]: no thrust bearing under the dial tube, just air
+            row("dial tube end: air gap over the cradle (no thrust bearing)", D["dial_z_base"] - D["plate_t"], D["dial_air_min"],
+                f"tube end z {D['dial_z_base']:.2f} over the cradle top {D['plate_t']:.2f}; the 45° race on the knob carries the dial, the adapter board stops the lift ({D['dial_lift']:.2f})")
         if tc:
             row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],

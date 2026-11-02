@@ -27,27 +27,27 @@
  "standoffs": [
   [
    13.905652750607063,
-   3.8300000000000014
+   3.680000000000003
   ],
   [
    13.905652750607063,
-   -3.8300000000000014
+   -3.680000000000003
   ],
   [
    -13.905652750607063,
-   3.8300000000000014
+   3.680000000000003
   ],
   [
    -13.905652750607063,
-   -3.8300000000000014
+   -3.680000000000003
   ]
  ],
  "drill_m2": 2.4,
  "pad_m2": 3.2,
  "hdr": {
-  "part": "Samtec TSW-103-17-T-S",
+  "part": "Samtec TSW-103 long-post header, post about 19 mm for the 28 mm riser (exact -xx code to pick)",
   "lcsc": "consigned",
-  "mate": 15.74,
+  "mate": 19.0,
   "ins": 2.54,
   "tail": 2.79,
   "n": 3
@@ -60,10 +60,61 @@
   "n": 3
  },
  "standoff": {
-  "part": "XHHD STTZ1022",
-  "lcsc": "C50378470",
-  "length": 25.0,
+  "part": "M2x28 female-female brass standoff (stock size; part number to source)",
+  "lcsc": "TBC",
+  "length": 28.0,
   "od": 3.2,
   "kind": "female-female"
- }
+ },
+ "place_y": 36.519999999999996,
+ "main_pcb_holes": [
+  {
+   "x": 13.906,
+   "y": 40.2,
+   "d": 2.4,
+   "what": "standoff screw M2"
+  },
+  {
+   "x": 13.906,
+   "y": 32.84,
+   "d": 2.4,
+   "what": "standoff screw M2"
+  },
+  {
+   "x": -13.906,
+   "y": 40.2,
+   "d": 2.4,
+   "what": "standoff screw M2"
+  },
+  {
+   "x": -13.906,
+   "y": 32.84,
+   "d": 2.4,
+   "what": "standoff screw M2"
+  },
+  {
+   "x": 6.5,
+   "y": 40.02,
+   "d": 3.4,
+   "what": "hold-down spring"
+  },
+  {
+   "x": 6.5,
+   "y": 33.02,
+   "d": 3.4,
+   "what": "hold-down spring"
+  },
+  {
+   "x": -6.5,
+   "y": 40.02,
+   "d": 3.4,
+   "what": "hold-down spring"
+  },
+  {
+   "x": -6.5,
+   "y": 33.02,
+   "d": 3.4,
+   "what": "hold-down spring"
+  }
+ ]
 }

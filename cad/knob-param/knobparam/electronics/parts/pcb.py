@@ -47,6 +47,10 @@ def build(D):
     for sl in K.get("slots", []):                                                                       # joystick FPC slot (oval)
         dx, dy = sl["dx"], sl["dy"]; r = min(dx, dy) / 2
         b -= Pos(sl["x"], sl["y"], -t - 1) * extrude(SlotOverall(max(dx, dy), 2 * r, rotation=0 if dx >= dy else 90), t + 2)
+    for h in D.get("js_pcb_holes", []):   # v0.19b: joystick standoff screws + hold-down springs (cad/joystick-param geom.json)
+        b -= cyl(h["d"] / 2, -t - 1, t + 2, h["x"], h["y"])
+    for k, poly in D["pcb_windows"].items():   # v0.19b [Ed 2 Nov]: see-through windows (panel frame, not turned)
+        b -= Pos(0, 0, -t - 1) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in poly], close=True)), t + 2, dir=(0, 0, 1))
     # back-side parts: Hall decouplers behind each sensor [K positions follow the params]; the rest from KiCad (pcb_proxy.json)
     comps = []
     if D["hall_layout"] == "vernier":   # one 0402 decoupler behind each Hall sensor [A]
@@ -57,8 +61,13 @@ def build(D):
     for x, y, a in pts:
         cl, cw, ch = D["adapter_env"]["C_0402"]
         mcomps.append(Pos(x, y, -t - ch) * Rot(0, 0, a) * Box(cw, cl, ch, align=A))
+    drv_refs = {c[0] for c in D["drv_cluster"]}
+    for x, y, w, l, h, a in drv_boxes(D):   # v0.19b: the 716 driver cluster follows drv_xy / drv_rot (KiCad to follow)
+        mcomps.append(Pos(x, y, -t - h) * Rot(0, 0, a) * Box(w, l, h, align=A))
     for p in K.get("back_parts", []):
         if p["ref"].startswith("C1") and len(p["ref"]) == 3: continue   # C11..C15 = the Hall decouplers above
+        if p["ref"] in drv_refs: continue
+        if p["ref"] in D["pcb_win_displaced"]: continue   # stale KiCad position inside a window: moves on regeneration
         box = Pos(p["x"], p["y"], -t - p["h"]) * Box(p["w"], p["l"], p["h"], align=A)
         (comps.append(_mr(D) * box) if _is_mech(D, p["x"], p["y"]) else comps.append(box))
     for px, py in D["fm_pad_xy"]:   # B.Cu pads [A] under the lead holes; wires drop from the 716's rear via the cradle pocket
@@ -69,6 +78,27 @@ def build(D):
     out = {"PCB": b, "PCB back parts (Hall decouplers, J10, DRV8837, passives)": Compound(children=comps),
            f"PCB rod pad VBUS Ø{2 * D['rod_pad_r']:.1f} (B.Cu)": pad}
     out.update({k: _mr(D) * v for k, v in emitters(D).items()})
+    w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]
+    out['clear OLED 1.51" SSD1309 (PCB front, over window D)'] = Pos(cx, cy, 0) * Box(w, h, th, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return out
+
+def _in_poly(x, y, poly):
+    inside = False
+    for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]):
+        if (y0 > y) != (y1 > y) and x < x0 + (y - y0) * (x1 - x0) / (y1 - y0):
+            inside = not inside
+    return inside
+
+def window_hits(D, K):
+    """KiCad back parts (panel-frame ones) whose footprint box touches a window."""
+    out = []
+    for p in K.get("back_parts", []):
+        if _is_mech(D, p["x"], p["y"]):
+            continue
+        hw, hl = p["w"] / 2, p["l"] / 2
+        pts = [(p["x"] + sx * hw, p["y"] + sy * hl) for sx in (-1, 0, 1) for sy in (-1, 0, 1)]
+        if any(_in_poly(x, y, poly) for poly in D["pcb_windows"].values() for x, y in pts):
+            out.append(p["ref"])
     return out
 
 STEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad", "knob-main-pcb", "knob-main-pcb.step")
@@ -109,6 +139,17 @@ def emitters(D):
             Pos(h["x"], h["y"], -D["pcb_t"] - bh - gap) * Rot(0, 0, h["ang"])
             * Box(bx, by, bh, align=(Align.CENTER, Align.CENTER, Align.MIN)))
     return out
+
+def drv_boxes(D):
+    """716 driver cluster (U20 + C20–C22) on B.Cu: (x, y, w, l, h, angle) in the mechanism frame."""
+    X, Y = D["drv_xy"]; a = math.radians(D["drv_rot"]); c, s = math.cos(a), math.sin(a)
+    return [(X + c * dx - s * dy, Y + s * dx + c * dy, w, l, h, D["drv_rot"]) for _r, _fp, dx, dy, _rot, w, l, h in D["drv_cluster"]]
+
+def drv_place(D):
+    """Same cluster for the KiCad generator: ref -> (x, y, rot) in the mechanism frame (footprint rot + cluster turn)."""
+    X, Y = D["drv_xy"]; a = math.radians(D["drv_rot"]); c, s = math.cos(a), math.sin(a)
+    return {ref: (round(X + c * dx - s * dy, 3), round(Y + s * dx + c * dy, 3), (rot + D["drv_rot"]) % 360)
+            for ref, _fp, dx, dy, rot, _w, _l, _h in D["drv_cluster"]}
 
 def kicad_step_path():
     return STEP

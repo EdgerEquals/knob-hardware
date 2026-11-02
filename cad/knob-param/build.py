@@ -93,6 +93,12 @@ def main():
         t = time.time(); cl, cand, ran, dtc = check.clashes(pm, km, D["tgt"]["clash_mm3"]); t_clash = time.time() - t
         clash_lines = [f"PAIRWISE CLASHES ({len(parts)} parts, {cand} bbox pairs, {ran} recomputed):"] + \
                       ([f"  {'KNOWN' if k in check.KNOWN else 'CLASH'} {k}: {v:.2f} mm³" for k, v in sorted(cl.items(), key=lambda kv: -kv[1])] or ["  none"])
+        if not a.sub:   # v0.19b: the joystick stack (cad/joystick-param, read as data) against the knob stack, panel frame
+            from knobparam.assembly import joystick as js
+            t = time.time(); jp, JD = js.placed(); pp, _ = view(parts, keys, D, "panel")
+            jcl, jcand = js.clashes(jp, pp, D["tgt"]["clash_mm3"]); cl.update(jcl); t_clash += time.time() - t
+            clash_lines += [f"JOYSTICK vs KNOB ({len(jp)} parts at (0, {JD['place_y']:.2f}), {jcand} bbox pairs):"] + \
+                           ([f"  CLASH {k}: {v:.2f} mm³" for k, v in sorted(jcl.items(), key=lambda kv: -kv[1])] or ["  none"])
     tm = None
     def pv():   # v0.19: renders and exports in the panel frame (mechanism turned by mech_rot)
         from knobparam.assembly.build import view

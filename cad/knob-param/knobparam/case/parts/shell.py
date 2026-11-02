@@ -176,6 +176,9 @@ def build(D):
     case = _add(case, _box(-D["pcb_x1"], D["pcb_x1"], D["pcb_y1"] - lw, D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["x_in0"], -D["pcb_x1"] + lw, D["pcb_y0"], D["pcb_y1"], z0, z1))
     case = _add(case, _box(D["pcb_x1"] - lw, D["x_in1"], D["pcb_y0"], D["pcb_y1"], z0, z1))
+    if D.get("clear_oled"):   # v0.19b: the 42.04 clear OLED is wider than the gap between the side ledges; relieve them where it sits
+        w, h, t = D["clear_oled"]; cx, cy = D["clear_oled_xy"]; g = 0.2
+        case = _sub(case, _box(cx - w / 2 - g, cx + w / 2 + g, cy - h / 2 - g, cy + h / 2 + g, z0 - sl, t + 0.3))
     # v0.19: the v0.18 knob base (cradle r 20.9, knob land r 21.0) is wider than the gap between the side ledges.
     # The ledge is cut back round the knob; the PCB is still seated above and below it.
     case = _sub(case, _cyl_z(D["knob_hole_r"] + D["ledge_knob_clear"], z0 - sl, z1 + sl, D["ox"], D["oy"]))
@@ -280,7 +283,20 @@ def build(D):
     a = math.radians(D["mech_rot"]); fx, fy = D["fg_xy"]
     gx, gy = math.cos(a) * fx - math.sin(a) * fy, math.sin(a) * fx + math.cos(a) * fy
     cover = _sub(cover, _cyl_z(D["fg_tip"] + 0.3, D["z_cover_in"] + 0.5, D["z_rim_seat"] + sl, gx, gy))
-    if tubes:
+    if tubes and D["cover_screw"] == "back":
+        # v0.19b: slim solid column (clearance hole only) through the screen layer, 45° flare to the ring that bears on the board
+        # round its notch; the screw head sits in a counterbore in the floor, right under the column
+        for x, y in D["corners"]:
+            t = _cyl_z(D["col_r"], D["z_cover_in"] - fu, D["col_z1"], x, y)
+            if D["col_z2"] > D["col_z1"]:
+                t = _add(t, Pos(x, y, D["col_z1"]) * Cone(D["col_r"], D["col_ring_r"], D["col_z2"] - D["col_z1"], align=A))
+            t = _add(t, _cyl_z(D["col_ring_r"], D["col_z2"] - fu, D["z_pcb_land"], x, y))
+            t = t & _box(D["void_x0"] - fu, D["void_x1"] + fu, D["void_y0"] - fu, D["void_y1"] + fu, D["z_cover_in"] - 2 * fu, D["z_pcb_land"] + fu)
+            t = _sub(t, _cyl_z(D["notch_r"], D["z_pcb_land"] - 0.3, D["z_pcb_land"] + sl, x, y))   # relief: bears on the board only
+            cover = _add(cover, t)
+            cover = _sub(cover, _cyl_z(D["hole_r"], D["z_cover_out"] - sl, D["z_pcb_land"] + sl, x, y))
+            cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_cover_out"] - sl, D["z_cover_out"] + D["cbore_depth"], x, y))
+    elif tubes:
         # PETG corner tubes from the cover floor up to the PCB back; each bears on the board round its corner notch
         for x, y in D["corners"]:
             t = _cyl_z(D["notch_r"] + D["tube_press"], D["z_cover_in"] - fu, D["z_pcb_land"], x, y)
@@ -292,7 +308,7 @@ def build(D):
         land = _sub(land, _box(-D["pcb_x1"] + ov, D["pcb_x1"] - ov, D["pcb_y0"] + ov, D["pcb_y1"] - ov,
                                D["z_rim_seat"] - sl, D["z_pcb_land"] + sl))
         cover = _add(cover, land)
-    for x, y in D["corners"]:
+    for x, y in (D["corners"] if D["cover_screw"] != "back" else ()):
         cover = _add(cover, _cyl_z(D["pad_r"], D["z_pad_out"], D["z_flange_out"] + fu, x, y))
         cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_pad_out"] - sl, D["z_pad_out"] + D["cbore_depth"], x, y))
         cover = _sub(cover, _cyl_z(D["hole_r"], D["z_pad_out"] - sl, D["z_rim_seat"] + sl, x, y))
@@ -301,7 +317,7 @@ def build(D):
                                  D["z_cover_out"] - sl, D["z_cover_in"] + sl))
     screws = {}
     for i, (x, y) in enumerate(D["corners"]):
-        z_head = D["z_pad_out"] + D["head_below"]
+        z_head = (D["z_cover_out"] if D["cover_screw"] == "back" else D["z_pad_out"]) + D["head_below"]
         screws[f"corner screw {i + 1}"] = _at(x, y, _screw(D, z_head, D["z_screw_under"], D["z_screw_under"], D["screw_thread"]))
     for i, (x, y) in enumerate(D["knob_bolts"]):
         screws[f"knob bolt {i + 1}"] = _at(x, y, _screw(
@@ -372,7 +388,7 @@ def build(D):
     out.update(screws)
     if D["insert_od"]:
         for i, (x, y) in enumerate(D["corners"], 1):
-            out[f"corner insert {i} M3 brass"] = _sub(_cyl_z(D["insert_od"] / 2, D["z_rim"] + 0.02, D["z_insert1"], x, y),
+            out[f"corner insert {i} M{D['screw_d']:g} brass"] = _sub(_cyl_z(D["insert_od"] / 2, D["z_rim"] + 0.02, D["z_insert1"], x, y),
                                                      _cyl_z(D["screw_d"] / 2, D["z_rim"] - 0.1, D["z_insert1"] + 0.1, x, y))
     out.update(jacks)
     return out

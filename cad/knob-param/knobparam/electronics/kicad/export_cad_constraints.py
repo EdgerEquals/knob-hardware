@@ -40,6 +40,10 @@ def main():
         hall=[dict(r=r, ang=a, part=(g("hv_parts") or [D["hv_sensor"]["part"]] * D["hv_n"])[i],
                    pol=(g("hv_pol") or [1, -1, 1, -1, 1])[i]) for i, (r, a) in enumerate(zip(D["hv_r"], D["hv_phi_s"]))],
         hall_mid_idx=(g("hv_mid") or {}).get("idx", 2), hall_slot=(D["hv_slot_r0"], D["hv_slot_r1"], D["hv_slot_half"]),
+        pcb_windows={k: [list(p) for p in v] for k, v in D.get("pcb_windows", {}).items()},   # v0.19b Edge.Cuts cut-outs, PANEL frame
+        js_pcb_holes=D.get("js_pcb_holes", []),   # v0.19b joystick standoff screws + hold-down springs, PANEL frame
+        clear_oled=dict(size=D.get("clear_oled"), xy=D.get("clear_oled_xy")),
+        drv=__import__("knobparam.electronics.parts.pcb", fromlist=["drv_place"]).drv_place(D),   # v0.19b U20, C20–C22 (B.Cu)
         fm_pad_xy=D["fm_pad_xy"], fm_xy=D["fm_xy"], fm_ang=D["fm_ang"], fm_cd=D["fm_cd"], feel=D["feel"],
         rod_pad_r=D["rod_pad_r"], rod_pad_clear=D["rod_pad_clear"], h1_hole=D["h1_hole"],
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},

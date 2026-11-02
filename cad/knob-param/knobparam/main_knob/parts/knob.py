@@ -20,6 +20,27 @@ def profile(D):
     z_l = zl - o + (r_s - rw)
     r_l = rw + f + o - (D["z_lip0"] - D["z_knob_top"])
     z0, zt = D["knob_hub_z0"], D["knob_hub_top"]
+    if D["glass_to_dial"] and D["kb_race"] == "chamfer" and D["cap_top"] == "chamfer":
+        # v0.19b [Ed 2 Nov, later]: the glass runs right up under the dial. Its top inner edge is ground to a 45° chamfer and the cap's
+        # cone seats on it, so the cap cannot go down past it; the cap top is flush with the glass top face.
+        rk = D["r_knob_bore"]; z1 = D["sleeve_z1"]
+        return [(rk, z0), (rh, z0), (rh, D["h_band1"]),
+                (D["cap_r_s"], D["cap_z_rim_bot"]), (sp, D["cap_z_plug0"]),           # web underside, flare underside
+                (sp, D["cap_seat_z_foot"]), (D["cap_seat_r_top"], z1),               # plug OD in the bore, cone on the inner chamfer
+                (spi, z1), (spi, D["cap_z_flare_top"]),                              # cap top, plug ID
+                (D["cap_r_s"], D["z_under_web"]), (r_w, D["z_under_web"]),           # flare top, web top under the dial
+                (D["r_chamfer0"], zt), (rk, zt)]
+    if D["glass_to_dial"] and D["kb_race"] == "chamfer":
+        # v0.19b [Ed 2 Nov]: the glass runs up under the dial. The cap is a thin dished web: flat top under the dial web,
+        # bottom tapering from the hub-gear top to cap_web_rim at the dial cup wall, a flare of the same wall out to the
+        # plug foot, the plug glued in the bore, and a shoulder of the glass OD bonded on the glass top face.
+        rk, ro = D["r_knob_bore"], D["knob_od"] / 2
+        return [(rk, z0), (rh, z0), (rh, D["h_band1"]),
+                (D["cap_r_s"], D["cap_z_rim_bot"]), (sp, D["cap_z_plug0"]),        # web underside, then the flare underside
+                (sp, D["cap_sh_z0"]), (ro, D["cap_sh_z0"]), (ro, D["cap_sh_z1"]),  # plug OD in the bore, shoulder on the glass
+                (spi, D["cap_sh_z1"]), (spi, D["cap_z_flare_top"]),                 # shoulder top, plug ID
+                (D["cap_r_s"], D["z_under_web"]), (r_w, D["z_under_web"]),          # flare top, web top under the dial
+                (D["r_chamfer0"], zt), (rk, zt)]
     # The plug stops on the bore. Nothing printed lies on the glass top face, so the rim stays open into the dial.
     plug = [(rh, D["h_band1"]), (spi, D["h_band1"]), (spi, z_ins), (sp, z_ins), (sp, D["h_band1"])]
     lip = [(min(r, sp), z) for r, z in ((r_l, D["z_knob_top"]), (r_s, z_l), (r_s, D["z_under_web"]), (r_w, D["z_under_web"]))]
@@ -32,8 +53,23 @@ def glass_sleeve(D):
     """Bought borosilicate 3.3 tube. Ends chamfered for the fire polish. Caps locate on the bore, not on this OD."""
     ro, ri, ch = D["knob_od"] / 2, D["sleeve_id"] / 2, D["sleeve_chamfer"]
     z0, z1 = D["sleeve_z0"], D["sleeve_z1"]
+    if D["glass_to_dial"] and D["cap_top"] == "chamfer":   # v0.19b: ground top chamfers, inner (cap seat) and outer
+        ci, co = D["sleeve_top_cin"], D["sleeve_top_cout"]
+        return rev([(ri + ch, z0), (ro - ch, z0), (ro, z0 + ch), (ro, z1 - co),
+                    (ro - co, z1), (ri + ci, z1), (ri, z1 - ci), (ri, z0 + ch)])
     return rev([(ri + ch, z0), (ro - ch, z0), (ro, z0 + ch), (ro, z1 - ch),
                 (ro - ch, z1), (ri + ch, z1), (ri, z1 - ch), (ri, z0 + ch)])
+
+def seal_ring(D):
+    """v0.19b [Ed 2 Nov]: labyrinth seal. Bonded on the glass OD, flange over the faceplate ring (case lab_ring_*), skirt down
+    outside it to the case's shoulder line (lab_shoulder_*). Turns with the knob; running gaps are the case's lab_gap."""
+    if not D.get("seal_ring") or "lab_ring_r" not in D:
+        return None
+    rb = D["knob_od"] / 2 + D["seal_glue"]
+    z0 = D["lab_ring_z1"] + D["lab_gap"]; z1 = z0 + D["seal_top_t"]
+    rs0 = D["lab_shoulder_r"]; rs1 = rs0 + D["seal_wall"]; zs = D["lab_shoulder_z0"]
+    c = min(0.4, D["seal_top_t"] / 2)
+    return rev([(rb, z0), (rs0, z0), (rs0, zs), (rs1, zs), (rs1, z1 - c), (rs1 - c, z1), (rb, z1)])
 
 def race_cut(D):
     z0, zt = D["knob_hub_z0"], D["knob_hub_top"]
@@ -74,10 +110,12 @@ def build(D):
     land -= groove
     R = D["kb_ball_d"] / 2; n = D["kb_n"]
     balls = Compound(children=[Pos(D["kb_rc"] * math.cos(2 * math.pi * i / n), D["kb_rc"] * math.sin(2 * math.pi * i / n), D["kb_zc"]) * Sphere(R) for i in range(n)])
+    seal = seal_ring(D)
     out = {"knob upper-cap": body,
            "knob glass sleeve": glass_sleeve(D),
            "bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper,
            "knob lower-cap land": land,
            f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
+    if seal is not None: out["knob seal ring (PETG, bonded on the glass)"] = seal
     if D["rel_sensor"]: out[f"knob ring magnet Ø{ro_:g}/Ø{ri_:g}×{th_:g} diametric"] = ring_mag
     return out
