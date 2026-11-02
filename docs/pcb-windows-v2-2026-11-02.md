@@ -92,3 +92,11 @@ its flex is taken to leave the bottom edge [A]. Picture: `docs/img/lqfp100-in-wi
 | D left end, full height | 498 | 55% |
 
 A and B take part of the bottom strip, where the 14-way and power plugs (and probably the clear OLED's connector) were going [C].
+
+## [Ed 18:13] LQFP100 confirmed (stock and board cost; see the 18:12 notes); top middle of D asked about
+- [S] 2 Nov: STM32H7B0VBT6 (LQFP100) 916 in stock at LCSC from US$5.38; STM32H7B0ABI6Q (UFBGA169) out of stock at LCSC, ST eStore
+  lists US$12.83; STM32H7B0IBK6Q (UFBGA176+25) out of stock at the broker checked. The 0.5 mm BGA also needs via-in-pad and X-ray.
+- Top middle (highest fit near x 0: chip centre (−2.0, −30.15), its top at y −21.55 under the emitter ring): D 625 mm², see-through
+  behind the OLED's lit area **50%** with the OLED's flex at the bottom, **70%** with the OLED turned over (flex at the top, which then
+  runs into the knob's emitter ring and cradle: no connector room there [C]). Low middle (A): 698 mm², **83%**.
+  Picture: `docs/img/lqfp100-top-vs-low.png`.
