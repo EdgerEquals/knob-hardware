@@ -78,3 +78,17 @@ KiCad (later job): R20–R22 and R30–R32 still sit inside D on the stale board
   - Picture: `docs/img/h7b0-site-options.png`.
 - [S] STM32H7B0 packages: LQFP64, LQFP100, LQFP144, LQFP176, UFBGA169 (7 × 7), UFBGA176+25 (10 × 10). The UFBGA169 part
   (STM32H7B0ABI6Q) lists 121 I/O (LQFP100: 80); LCSC shows it out of stock on 2 Nov.
+
+## [Ed 17:37] H7B0 stays LQFP100; it takes part of window D
+Where in D (search: a 17.2 □ for the LQFP100 + decoupling [A] inside the free board back, 0.3 round parts, clear of the corner
+columns; D keeps 0.5 round the chip). The OLED's lit area is 35.05 × 15.32, 3.0 in from the long edge away from its flex [S];
+its flex is taken to leave the bottom edge [A]. Picture: `docs/img/lqfp100-in-window-d.png`.
+
+| Chip site (centre) | D left (now 917 mm²) | See-through behind the OLED's lit area |
+|---|---|---|
+| A low centre (−0.15, −43.95): bottom strip + lower D | 698 | 83% |
+| B low left (−12.9, −39.2): as low as the corner column allows | 656 | 75% |
+| C centre, full height (two windows) | 486 | 48% |
+| D left end, full height | 498 | 55% |
+
+A and B take part of the bottom strip, where the 14-way and power plugs (and probably the clear OLED's connector) were going [C].
