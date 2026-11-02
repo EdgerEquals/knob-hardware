@@ -12,7 +12,7 @@
    "value": 0.5,
    "target": ">= 0.2",
    "ok": true,
-   "note": "cup z 29.80-32.35, ref z 30.30, stem top 31.00"
+   "note": "cup z 32.80-35.10, ref z 33.30, stem top 34.00"
   },
   {
    "name": "slide is the switch tilt, no extra overtravel",
@@ -23,7 +23,7 @@
   },
   {
    "name": "peg tip to stem top (rest)",
-   "value": 0.1999999999999993,
+   "value": 0.20000000000000284,
    "target": "0.20",
    "ok": true,
    "note": "one SLA tolerance. The peg is part of the bezel, not a separate plunger"
@@ -103,7 +103,7 @@
    "value": 0.20000000000000284,
    "target": ">= 0.20",
    "ok": true,
-   "note": "faceplate 2.50 mm assumed (UTR-8100 wall). Carrier top z 33.35, faceplate bottom z 33.55"
+   "note": "faceplate 2.50 mm assumed (UTR-8100 wall). Carrier top z 36.10, faceplate bottom z 36.30"
   },
   {
    "name": "carrier drops through the faceplate hole",
@@ -152,7 +152,7 @@
    "value": 1.1599999999999966,
    "target": "0.5-3.0",
    "ok": true,
-   "note": "insert bottom z 31.19, carrier underside z 32.35. Modelled as a slip fit"
+   "note": "insert bottom z 33.94, carrier underside z 35.10. Modelled as a slip fit"
   },
   {
    "name": "grub screw modelled clear of the insert",
@@ -163,9 +163,9 @@
   },
   {
    "name": "FPC vs carrier and bezel",
-   "value": 0.5499999999999989,
+   "value": 0.0,
    "target": ">= 0.25",
-   "ok": true,
+   "ok": false,
    "note": "FPC 8 wide [A], slot 2.30 x 8.50"
   },
   {
@@ -177,23 +177,23 @@
   },
   {
    "name": "FPC vs PCB slot at full slide",
-   "value": 0.5000000000000011,
+   "value": 29.75,
    "target": ">= 0.2",
    "ok": true,
    "note": "hole x 16.4-20.1, \u00b14.95"
   },
   {
    "name": "FPC vs daughterboard",
-   "value": 2.3443472493929356,
+   "value": 1.1999999999999993,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
   },
   {
    "name": "FPC vs seat plate",
-   "value": 2.3443472493929356,
+   "value": 0.1999999999999993,
    "target": ">= 1.0",
-   "ok": true,
+   "ok": false,
    "note": ""
   },
   {
@@ -201,7 +201,7 @@
    "value": 0.24999999999999994,
    "target": ">= 0.1",
    "ok": true,
-   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, installed 35.5 mm (was 56.0 to the back panel). Free 27.5, stretch 8.0"
+   "note": "\u00d82 in \u00d83.4; 4 x 0.5 N, installed 38.3 mm (was 58.8 to the back panel). Free 30.3, stretch 8.0"
   },
   {
    "name": "hold-down spring vs plate (rest)",
@@ -219,7 +219,7 @@
   },
   {
    "name": "compression spring clear of the plate",
-   "value": 7.945644445185327,
+   "value": 7.745370594703939,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -289,7 +289,7 @@
   },
   {
    "name": "bottom screw clear of the hold-downs",
-   "value": 4.513001596018575,
+   "value": 4.5078399457989065,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -320,7 +320,7 @@
    "value": 0.5,
    "target": "0.50",
    "ok": true,
-   "note": "rate 0.062 N/mm over 8.0 mm stretch. Length 56.0 \u2192 35.5 mm"
+   "note": "rate 0.062 N/mm over 8.0 mm stretch. Length 58.8 \u2192 38.3 mm"
   },
   {
    "name": "two pins, each through a pair",
@@ -366,38 +366,38 @@
   },
   {
    "name": "standoff vs switch body",
-   "value": 7.89162457911416,
+   "value": 7.832462782852667,
    "target": ">= 0.8",
    "ok": true,
    "note": ""
   },
   {
    "name": "standoff vs header",
-   "value": 0.9838150088580269,
+   "value": 0.8352823244954602,
    "target": ">= 0.6",
    "ok": true,
    "note": ""
   },
   {
    "name": "stock standoff is the riser",
-   "value": 25.0,
-   "target": "25.00",
+   "value": 28.0,
+   "target": "28.00",
    "ok": true,
-   "note": "XHHD STTZ1022 (C50378470), \u00d83.2 female-female brass"
+   "note": "M2x28 female-female brass standoff (stock size; part number to source) (TBC), \u00d83.2 female-female brass"
   },
   {
-   "name": "knob_proud in the accepted window",
-   "value": 16.449999999999996,
+   "name": "knob_proud (to the glass) in the accepted window",
+   "value": 17.999999999999993,
    "target": "16-20",
    "ok": true,
-   "note": "faceplate front z 36.05 = knob top 52.50 \u2212 16.45. Parameter was 16.45"
+   "note": "faceplate front z 38.80 = knob top 52.50 \u2212 13.70. Parameter was 18.00 from knob-param"
   },
   {
    "name": "header mates the H11 socket",
-   "value": 4.279999999999999,
+   "value": 4.539999999999999,
    "target": "3.5-6.5",
    "ok": true,
-   "note": "Samtec TSW-103-17-T-S pin 15.74 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 11.46, derived riser 25.00 mm, pin tip z 6.72. Catalog XHHD STTZ1022 body is 25 mm"
+   "note": "Samtec TSW-103 long-post header, post about 19 mm for the 28 mm riser (exact -xx code to pick) pin 19.00 into hanxia HX PM2.54-1x3P ZC H11 (C41427518); air 14.46, derived riser 28.00 mm, pin tip z 6.46. Catalog M2x28 female-female brass standoff (stock size; part number to source) body is 28 mm"
   },
   {
    "name": "socket count matches the headers",
@@ -418,7 +418,7 @@
    "value": 1.0,
    "target": "mirror",
    "ok": true,
-   "note": "standoffs (\u00b113.91, \u00b13.83), compression springs (\u00b119.14, \u00b111.70)"
+   "note": "standoffs (\u00b113.91, \u00b13.68), compression springs (\u00b119.14, \u00b111.70)"
   },
   {
    "name": "ball seated in the upper cup",
@@ -457,14 +457,14 @@
   },
   {
    "name": "bezel (full slide toward the knob) vs live knob-param",
-   "value": 0.9249999999999965,
+   "value": 0.4999999999999957,
    "target": ">= 0.5",
    "ok": true,
-   "note": "\u00d840.85. Bezel lip 1.20 mm, outer \u00b114.57"
+   "note": "\u00d842.00. Bezel lip 1.20 mm, outer \u00b114.57"
   },
   {
    "name": "bezel (full slide toward the knob) vs design \u00d841.7",
-   "value": 0.4999999999999957,
+   "value": 0.6499999999999944,
    "target": ">= 0.5",
    "ok": true,
    "note": "\u00d841.70. Bezel lip 1.20 mm, outer \u00b114.57"
@@ -481,14 +481,14 @@
    "value": 1.0,
    "target": "on",
    "ok": true,
-   "note": "head \u00d83.8 needs the screws at y \u00b13.83 (the pad alone would have allowed \u00b14.13)"
+   "note": "head \u00d83.8 needs the screws at y \u00b13.68 (the pad alone would have allowed \u00b13.98)"
   },
   {
    "name": "carrier skirt above the rail",
-   "value": 15.25,
+   "value": 18.25,
    "target": ">= 0",
    "ok": true,
-   "note": "skirt bottom z 25.25, rail z 10 [A]"
+   "note": "skirt bottom z 28.25, rail z 10 [A]"
   },
   {
    "name": "bezel lip",
@@ -502,7 +502,7 @@
    "value": 1.0,
    "target": ">= 1.0",
    "ok": true,
-   "note": "floor is the print minimum. Derived riser 25.00 mm. Screen top 37.87"
+   "note": "floor is the print minimum. Derived riser 28.00 mm. Screen top 40.62"
   },
   {
    "name": "plate frame outside the switch opening",
@@ -523,18 +523,18 @@
    "value": 1.0,
    "target": "solid",
    "ok": true,
-   "note": "wall probe y 14.07 at z 36.82; pocket probe y 13.47"
+   "note": "wall probe y 14.07 at z 39.57; pocket probe y 13.47"
   },
   {
    "name": "carrier volume",
-   "value": 1.834362140184575,
+   "value": 1.8065818968543446,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
   },
   {
    "name": "screen-carrier volume",
-   "value": 0.4959392872930749,
+   "value": 0.495303114780723,
    "target": "< 8",
    "ok": true,
    "note": "cm3, the bezel the screen is glued to"
@@ -544,7 +544,7 @@
    "value": 0.020000000000003126,
    "target": "0.01-0.30",
    "ok": true,
-   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 37.87"
+   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 40.62"
   },
   {
    "name": "no printed base, spider or round stop",
@@ -554,26 +554,32 @@
    "note": "removed from v0.3: spider, plunger, round stop. Hold-down springs stay"
   }
  ],
- "clashes": {},
+ "clashes": {
+  "M2 socket screw top 1 / screen jumper FPC [A]": 0.6910717123658847,
+  "M2 socket screw top 2 / screen jumper FPC [A]": 0.6910717123658845,
+  "seat plate (printed, glued) / screen FPC socket AXE530127 (daughterboard)": 19.007999999999974,
+  "joystick carrier (printed) / screen FPC socket AXE530127 (daughterboard)": 1.3199999999999985,
+  "joystick carrier (printed) / screen jumper FPC [A]": 0.960000000000008
+ },
  "set": [],
  "key": {
   "version": "v0.4",
-  "riser_h": 25.0,
-  "stack_h": 37.870000000000005,
-  "scr_top": 37.870000000000005,
+  "riser_h": 28.0,
+  "stack_h": 40.620000000000005,
+  "scr_top": 40.620000000000005,
   "z_knob_top": 52.5,
-  "z_db0": 25.0,
-  "z_db1": 26.0,
-  "z_stem_top": 31.0,
-  "z_c0": 32.35,
-  "z_ball": 31.35,
-  "z_scr0": 36.370000000000005,
-  "z_bz0": 36.07000000000001,
-  "z_bz1": 37.27000000000001,
-  "z_roof": 36.370000000000005,
-  "z_seat": 33.190000000000005,
-  "z_tip": 33.39000000000001,
-  "z_skirt0": 25.25,
+  "z_db0": 28.0,
+  "z_db1": 29.0,
+  "z_stem_top": 34.0,
+  "z_c0": 35.1,
+  "z_ball": 34.1,
+  "z_scr0": 39.120000000000005,
+  "z_bz0": 38.82000000000001,
+  "z_bz1": 40.02000000000001,
+  "z_roof": 39.120000000000005,
+  "z_seat": 35.940000000000005,
+  "z_tip": 36.14000000000001,
+  "z_skirt0": 28.25,
   "slide": 0.45,
   "slide_need": 0.45,
   "press_gap": 0.2,
@@ -608,14 +614,14 @@
    0.0,
    0.0
   ],
-  "place_y": 36.37,
+  "place_y": 36.519999999999996,
   "board_xy": [
    25.25,
-   16.53
+   16.380000000000003
   ],
-  "spr_len": 35.52,
+  "spr_len": 38.27,
   "back_panel": 22.65,
-  "knob_od_live": 40.85,
+  "knob_od_live": 42.0,
   "knob_od_design": 41.7,
   "fpc_x": 18.209999999999997,
   "slot_x": [
@@ -682,19 +688,19 @@
   "standoff_xy": [
    [
     13.905652750607063,
-    3.8300000000000014
+    3.680000000000003
    ],
    [
     13.905652750607063,
-    -3.8300000000000014
+    -3.680000000000003
    ],
    [
     -13.905652750607063,
-    3.8300000000000014
+    3.680000000000003
    ],
    [
     -13.905652750607063,
-    -3.8300000000000014
+    -3.680000000000003
    ]
   ],
   "sw_xy": [
@@ -711,9 +717,9 @@
     0.0
    ]
   ],
-  "mate_in": 4.279999999999999,
+  "mate_in": 4.539999999999999,
   "sx": 13.905652750607063,
-  "sy": 3.8300000000000014,
+  "sy": 3.680000000000003,
   "hx": 9.745652750607062,
   "bx": 9.509055542604287,
   "by": 4.139055542604285,
@@ -726,9 +732,9 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "seat plate (printed, glued)": 0.47881265718294036,
-   "joystick carrier (printed)": 1.834362140184575,
-   "screen carrier (printed)": 0.4959392872930749
+   "seat plate (printed, glued)": 0.46553805071836896,
+   "joystick carrier (printed)": 1.8065818968543446,
+   "screen carrier (printed)": 0.495303114780723
   }
  }
 }
