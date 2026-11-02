@@ -24,7 +24,7 @@ GROUPS = [
     ("M2 grub screws + brass inserts", "#8d6e63", lambda n: n.startswith("grub ") or n.startswith("brass insert")),
     ("compression springs (Lee CI 008B)", "#546e7a", lambda n: n.startswith("compression spring")),
     ("top screen 1.64\" AMOLED", "#101828", lambda n: n.startswith("top screen")),
-    ("screen FPC [A]", "#ffb300", lambda n: n.startswith("screen FPC")),
+    ("screen FPC [A]", "#ffb300", lambda n: n.startswith(("screen FPC", "screen jumper FPC"))),
     ("rear spring anchor (glued to PCB back)", "#26a69a", lambda n: n.startswith("rear spring")),
     ("cross pins (two, side entry)", "#455a64", lambda n: n.startswith("cross pin")),
     ("hold-down extension springs", "#fdd835", lambda n: n.startswith("hold-down")),

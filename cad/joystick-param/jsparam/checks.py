@@ -22,7 +22,7 @@ def run(D, P):
     stem = P["SW1 SKRHADE010 stem"]
     db = P["joystick daughterboard"]
     pcb = P["main PCB (proxy, local patch)"]
-    fpc = P["screen FPC [A]"]
+    fpc = P["screen FPC [A]"] if "screen FPC [A]" in P else P["screen jumper FPC [A]"]
     scr = [P[n] for n in P if n.startswith("top screen")][0]
     hdrs = [P[n] for n in P if n.startswith("header 1x3")]
     socks = [P[n] for n in P if n.startswith("socket ")]
@@ -202,8 +202,9 @@ def run(D, P):
     row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
         abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
         f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
-    row("knob_proud in the accepted window", D["knob_proud"], "16-20",
-        16.0 - 1e-6 <= D["knob_proud"] <= 20.0 + 1e-6,
+    pg = D["z_glass"] - D["z_fp1"]   # v0.18 knob_proud is measured to the knob screen glass
+    row("knob_proud (to the glass) in the accepted window", pg, "16-20",
+        16.0 - 1e-6 <= pg <= 20.0 + 1e-6,
         f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − {D['knob_proud']:.2f}. "
         f"Parameter was {D['knob_proud_in']:.2f}"
         f"{'' if not D['knob_proud_live'] else ' from knob-param'}")

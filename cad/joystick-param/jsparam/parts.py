@@ -212,10 +212,20 @@ def build(D):
     t = D["fpc_t"]
     fx = D["fpc_x"]
     z_run = D["z_scr0"] - 0.55 + D["tol_mjf"]
-    out["screen FPC [A]"] = (
-        box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, -D["pcb_t"] - 3.0, z_run + t)
-        + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
-    )
+    if D["fpc_to_db"]:
+        # [Ed] 2 Nov: short jumper flex from the screen edge down to a socket on the daughterboard (service loop not drawn)
+        sx = D["db_sock_x"]; sw_, sh_, sz_ = D["db_fpc_sock"]
+        z_db_top = D["z_db1"]
+        out["screen FPC socket AXE530127 (daughterboard)"] = box(sx - sw_ / 2, sx + sw_ / 2, -sh_ / 2, sh_ / 2, z_db_top + 0.02, z_db_top + sz_)
+        out["screen jumper FPC [A]"] = (
+            box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, z_db_top + sz_ + 0.3, z_run + t)
+            + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
+            + box(sx, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, z_db_top + sz_ + 0.3, z_db_top + sz_ + 0.3 + t))
+    else:
+        out["screen FPC [A]"] = (
+            box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, -D["pcb_t"] - 3.0, z_run + t)
+            + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
+        )
     out["rear spring anchor (printed)"] = rear_anchor(D)
     for i, y in enumerate(D["pin_y"]):
         out[f"cross pin {i + 1}"] = cross_pin(D, y)

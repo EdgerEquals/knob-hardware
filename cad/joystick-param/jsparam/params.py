@@ -65,7 +65,11 @@ P = dict(
     # ---- cup. The bore is derived: stem diameter plus one SLA tolerance per side ----
     cup_od=5.0,             # [A]
     cup_engage=1.2,         # [A]
-    stem_below=1.35,        # [A] carrier underside above the stem top. The riser length is derived to keep this
+    stem_below=1.10,        # [Ed] 2 Nov: the 28 mm riser's 0.25 mm over the v0.18 plate (38.8) is taken out of this air (was 1.35)
+    fpc_to_db=True,         # [Ed] 2 Nov: the screen flex plugs into a socket on the joystick daughterboard (no slot in the main PCB;
+                            # the old drop landed on the top-right corner bolt post). Signals go down through the board-to-board headers.
+    db_fpc_sock=(8.4, 3.0, 0.9),   # [S/A] AXE530127 30-pin 0.4 mm socket footprint on the daughterboard: x, y, mated height
+    db_fpc_x_in=3.0,        # [A] socket centre this far inboard of the daughterboard edge        # [A] carrier underside above the stem top. The riser length is derived to keep this
     # ---- switch ----
     sw=dict(part="Alps SKRHADE010", w=7.45, d=7.5, h=1.85, stem_d=3.0, stem_top=5.0, pivot=0.49, ref_h=4.3,
             tilt_travel=0.25, push_travel=0.15, tilt_f=1.2, push_f=2.35, f_tol=0.69,   # [S]
@@ -78,13 +82,13 @@ P = dict(
     # male header, plastic on the UNDERSIDE, pin down into the socket. Lead style -17 is the
     # straight-pin post that mates a 25 mm riser (Samtec TSW chart: tail 2.79, post 15.74).
     # The -20 post (25.91) went through the main PCB. The 1x3 is consigned; LCSC's -20 line is 2-row.
-    hdr=dict(part="Samtec TSW-103-17-T-S", lcsc="consigned", mate=15.74, ins=2.54, tail=2.79, n=3),  # [S]
+    hdr=dict(part="Samtec TSW-103 long-post header, post about 19 mm for the 28 mm riser (exact -xx code to pick)", lcsc="consigned", mate=19.0, ins=2.54, tail=2.79, n=3),  # [A] 2 Nov (was TSW-103-17-T-S, post 15.74, for the 25 mm riser)
     # female socket on the main PCB. Same hanxia H11 family as the v0.2 2x3, split into two 1x3s.
     sock=dict(part="hanxia HX PM2.54-1x3P ZC H11", lcsc="C41427518", h=11.0, tail=3.2, n=3),  # [S]
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
     # Hex H3×M2×25 (STTZ2022) and the male-female 25 mm parts were out of stock on LCSC, 1 Nov 2026.
     # OD 3.2 is the usual knurled round M2 pillar; LCSC does not publish it. [A]
-    standoff=dict(part="XHHD STTZ1022", lcsc="C50378470", length=25.0, od=3.2, kind="female-female"),  # [S] M2*25 brass
+    standoff=dict(part="M2x28 female-female brass standoff (stock size; part number to source)", lcsc="TBC", length=28.0, od=3.2, kind="female-female"),  # [Ed] 2 Nov: 28 mm so the stack meets the v0.18 faceplate (was XHHD STTZ1022, 25 mm)
     shcs=dict(part="ISO 4762 M2 A2", head_d=3.8, head_h=2.0, socket=1.5, top=6.0, bot=4.0),  # [S] DIN 912. Top through plate+board, bottom through the PCB
     pad_m2=3.2,             # [A] Ø pad on the Ø2.4 M2 clearance (annular ring 0.4)
     drill_m2=2.4,           # [A]
@@ -238,6 +242,7 @@ def derive(P_):
     D["scr_drop"] = D["z_knob_top"] - D["scr_top"]
     D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
     D["knob_proud"] = D["z_knob_top"] - D["z_fp1"]
+    D["z_glass"] = D["z_knob_top"] + 4.3   # [A] v0.18: glass 56.8 = knob shell top 52.5 + 4.3
     D["riser_h"] = D["z_db0"]
     D["riser_catalog"] = so["length"]
     D["z_hdr_tip"] = D["z_db0"] - hd["ins"] - hd["mate"]
@@ -393,6 +398,8 @@ def derive(P_):
     edge = S["w"] / 2
     skirt_outer = D["db_half_w"] + D["skirt_gap"] + D["car_skirt"]
     D["fpc_x"] = max(edge - D["fpc_bend"], skirt_outer + D["tgt"]["cable_min"] + D["fpc_t"] / 2 + sla)
+    if D["fpc_to_db"]:
+        D["db_sock_x"] = D["db_half_w"] - D["db_fpc_x_in"] if "db_half_w" in D else D["fpc_x"] - 4.0
     D["slot_x"] = (D["fpc_x"] - D["fpc_slot_l"] / 2, D["fpc_x"] + D["fpc_slot_l"] / 2)
     D["slot_hy"] = D["fpc_w"] / 2 + D["fpc_slot_side"]
     D["hole_x0"] = D["slot_x"][0] - D["slide"] - D["hole_extra"]
