@@ -104,7 +104,8 @@ P = dict(
     pin_above_skirt=0.2,
     brg=dict(d=2.0, D=5.0, B=2.3, fd=6.1, ft=0.6),   # [S] F682ZZ envelope
     # ---- Hall array on the dial [Ed/A] ----
-    ha_ang0=240.0,   # [A] v0.19: Hall arm between the encoder (180) and idler 300; 120 hit the 1220 collar (v0.18: 210)
+    ha_ang0=224.0,   # [Ed 2 Nov 15:27] v0.22 split arm: the Hall spoke turned 240 -> 224 so the detent gets its own spoke over solid plate
+                     # (v0.19-v0.21: 240, between the encoder (180) and idler 300; 120 hit the 1220 collar; v0.18: 210)
     ha_ring_clear=0.5,
     ha_n=5,
     ha_mag=(2.0, 1.0),
@@ -160,7 +161,7 @@ P = dict(
     fan_clear=0.3,   # [A] fan wing (swept) to the pinion tips / detent legs
     det_ball=1.5,   # [Ed/A] detent ball (a bit bigger than the Ø1 race balls)
     det_dimple=0.25,   # [A] dimple depth in the wing top (spherical seat) at ±det_deg
-    det_gap=0.3,   # [A] detent block underside above the fan top
+    det_gap=0.35,   # [A] detent boss underside above the land it rides on (v0.22: 0.35, was 0.3; the dial lift to the adapter board is 0.3)
     det_r_frac=0.5,   # [A] detent radius at this fraction across the wing (0 = inner edge, 1 = outer)
     bt_ball=1.0,   # [Ed] Ø1 balls in the track under each detent
     bt_up=0.3,   # [A] ball centre above the cradle plate (fan underside another bt_up above it)
@@ -183,7 +184,8 @@ P = dict(
     # ---- v0.17 Hall-arm rib [Ed]: tapered spine on the sweeping arm, PA12 ----
     ha_rib_w0=3.0,   # [Ed] rib width at the hub
     ha_rib_w1=5.2,   # [Ed] rib width at the hammerhead (fan_r0) and on out to ha_rib_r1
-    ha_rib_r1=17.0,   # [Ed] rib continues to this radius
+    ha_rib_r1=16.7,   # [Ed] rib continues to this radius (v0.22: 16.7, was 17.0; the swept corner was 0.05 off the knob ring)
+    ha_rib_top_min=9.0,   # [A] v0.22: rib top raised to this z (was the lever top, 6.8) for a 2x margin on the rib deflection [Ed: 2x rule]
     ha_rib_load=2.0,   # [Ed] N, tangential (in-plane) tip load for the deflection check
     ha_rib_rload=15.5,   # [Ed] radius of that load
     ha_rib_E=1700.0,   # [Ed] PA12 Young's modulus, N/mm² (1.7 GPa)
@@ -857,7 +859,7 @@ def _place_mech(D):
     # rib section (shared with the deflection check and the arm solid)
     D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
     D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
-    D["ha_rib_z_top"] = D["sl_top"]                                         # up to the lever top
+    D["ha_rib_z_top"] = max(D["sl_top"], D["ha_rib_top_min"])             # v0.22: raised (was up to the lever top)
     D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"] + 0.05                  # just over the plate so the swept corner stays ≥ 0.3
     # ha_rib_z_cage (over the thrust cage) is hv_spoke_z0, set by control_dial once the cage is known
     _place_det_columns(D)

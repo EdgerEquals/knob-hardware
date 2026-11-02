@@ -80,9 +80,26 @@ P = dict(
     fg_tip_relief=0.9,   # [A] idler tooth-tip underside opened this far in
     fg_web_pocket=0.3,   # [A] web pocket stops this far inside the tooth root
     fg_web_land=0.2,   # [A] web disk stops this far inside the tooth root
+    # ---- v0.21 [Ed 2 Nov] detent out on the arc: the boss hangs from a bridge on two columns, one each side of the arm sweep ----
+    ad_col_r=1.2,   # [A] bridge column radius (Ø2.4: Ø1.6 lifted the boss ~0.09 under the spring)
+    ad_col_need=0.4,   # [A] column to the swept arm, pinion tips, pockets and the feel saddle (plan)
+    ad_link_w=2.0,   # [A] bridge link width; height = boss top - link bottom
+    ad_E=2500.0,   # [A] UTR-8100 Young's modulus, N/mm² (clear SLA resin ~2.5 GPa; the cradle is printed in it)
+    det_spring_k=0.8,   # [A] detent spring rate N/mm (Ø1.4 × 0.2 phosphor bronze, ~6 active coils, G 41 GPa): replace with the bought spring
+    ad_defl_max=0.05,   # [A] boss lift under the spring (grub fully in, ball at a dimple rim): 20% of the dimple depth
+    tk_slot_land=0.4,   # [A] cradle plate left between a track groove and the Hall slot
+    # ---- v0.22 [Ed 2 Nov 15:27] split arm: the detent boss on a short bracket into a wall just outboard of the flange sweep;
+    # the ball train on a pedestal under the detent ball (study: docs/img/dial-split-study.png) ----
+    sp_wall_gap=0.35,   # [A] wall inner face to the flange's swept outer edge (0.3 + rounding)
+    sp_wall_r1=16.89,   # [A] wall outer face: 0.35 inside the knob ring's upper half (r 17.24, turns with the knob)
+    sp_wall_a=(246.5, 281.0),   # [A] wall from the Hall spoke's sweep (+ gap) to short of the lever's (mechanism frame)
+    sp_brk_w=3.0,   # [A] bracket width, boss to wall
+    sp_lift_max=0.010,   # [Ed 2x rule] boss lift under the detent spring: 0.01 (was 0.05 for the v0.21 bridge)
 )
 
-IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball"],
+IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
+                            "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs",   # v0.21 arc detent + tracks
+                            "sp_ped", "sp_hw", "ad_land_half"],   # v0.22 split arm: pedestal, flange half-width / half-angle
            "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
 
@@ -114,6 +131,102 @@ def _place_pegs(D):
     D["peg_xy"] = [xy(a), xy(b)]
     D["peg_ang"] = [a, b]
     D["peg_r"] = peg_r
+
+
+def _pol(r, a): return r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
+
+
+def _ad(a, b): return min((a - b) % 360.0, (b - a) % 360.0)
+
+
+def _arm_swept_hit(D, x, y, rr):
+    """True if a disk (x, y, rr) comes within ad_col_need of the dial arm swept ±travel (fan, land, rib, lever, track webs)
+    or stands over the Hall slot. Plan only; the bridge links run above the arm, the columns go down to the plate."""
+    R2D = math.degrees; T = D["travel_deg"]; c = D["ad_col_need"]
+    r = math.hypot(x, y); a = math.degrees(math.atan2(y, x)) % 360.0
+    if r < 1e-6: return True
+    def in_sector(r0, r1, a0, a1):   # disk within c of a sector swept ±T
+        if r + rr + c < r0 or r - rr - c > r1: return False
+        mid, half = (a0 + a1) / 2, (a1 - a0) / 2 + T + R2D((rr + c) / max(r, 0.5))
+        return _ad(a, mid) < half
+    if in_sector(D["fan_r0"], D["fan_r1"], D["ha_ang0"] - D["fan_half"], D["ha_ang0"] + D["fan_half"]): return True
+    for r0, r1, a0, a1 in D["tk_webs"]:
+        if in_sector(r0, r1, a0, a1): return True
+    # rib: trapezoid along ha_ang0, width w0 at the hub to w1 at the hammerhead and on to ha_rib_r1
+    if r - rr - c < D["ha_rib_r1"]:
+        r0, rh = D["ha_rib_r_hub"], D["ha_rib_r_head"]
+        rr_ = min(max(r, r0), D["ha_rib_r1"])
+        w = D["ha_rib_w0"] + (D["ha_rib_w1"] - D["ha_rib_w0"]) * (rr_ - r0) / max(rh - r0, 1e-6) if rr_ <= rh else D["ha_rib_w1"]
+        if _ad(a, D["ha_ang0"]) < T + R2D(math.asin(min(1.0, (w / 2 + rr + c) / max(r, 0.5)))): return True
+    # lever, stop blocks, spring anchors: everything near the lever inside sl_r + 2
+    if r - rr - c < D["sl_r"] + 2.0 and _ad(a, D["sl_ang"]) < T + 30.0: return True
+    # Hall slot (the plate must be under the column): bar samples, pad + slot clearance, swept ±T
+    pr = D["hv_pad_r"] + D["hv_slot_clear"]
+    rs, ps = D["hv_r"], D["hv_phi_m"]
+    for i in range(len(rs)):
+        for k in range(9 if i else 1):
+            t = k / 8
+            r_s = rs[i - 1] + (rs[i] - rs[i - 1]) * t if i else rs[0]
+            a_s = ps[i - 1] + (ps[i] - ps[i - 1]) * t if i else ps[0]
+            for th in range(-int(T) - 1, int(T) + 2):
+                th = max(-T, min(T, th))
+                bx, by = _pol(r_s, a_s + th)
+                if math.hypot(x - bx, y - by) < pr + rr + c: return True
+    return False
+
+
+def _place_arc_bridge(D):
+    """v0.21: two columns, one each side of the arm sweep (encoder side, lever side), each the nearest site to the detent
+    boss that stands on the plate clear of the arm sweep, the pinions and pockets, the feel saddle, the dial tube and the ring.
+    Links at det_z0 (over the land, the rib top and the webs) run from each column to the boss."""
+    rr, c = D["ad_col_r"], D["ad_col_need"]
+    bx, by = D["det_xy"][0]
+    can = D["feel"]["can_d"] / 2 + D["feel"]["saddle_rad"]
+    holes = [(*D["enc_xy"], D["enc_pocket_d"] / 2), *[(x, y, D["enc_pocket_d"] / 2) for x, y in D["idler_xy"]],
+             (*D["fm_xy"], can), (*D["fm_xy"], D["fm_shaft_hole"] / 2), *[(x, y, D["fm_lead_r"]) for x, y in D["fm_pad_xy"]]]
+    def seg_clear(x0, y0, x1, y1, px, py):
+        vx, vy = x1 - x0, y1 - y0; L2 = vx * vx + vy * vy
+        t = 0.0 if L2 < 1e-9 else max(0.0, min(1.0, ((px - x0) * vx + (py - y0) * vy) / L2))
+        return math.hypot(x0 + t * vx - px, y0 + t * vy - py)
+    best = {}
+    for ir in range(int((D["dial_tube_od"] / 2 + 1) * 10), int(D["r_out"] * 10)):
+        r = ir / 10.0
+        if r + rr > D["r_out"] - 0.3 or r - rr < D["dial_clear_d"] / 2 + c: continue
+        for ia in range(0, 720):
+            a = ia / 2.0
+            side = -1 if ((a - D["ha_ang0"]) % 360.0) > 180.0 else 1
+            if _ad(a, D["ha_ang0"]) > 90.0: continue
+            x, y = _pol(r, a)
+            if any(math.hypot(x - hx, y - hy) < hr + rr + c for hx, hy, hr in holes): continue
+            if _arm_swept_hit(D, x, y, rr): continue
+            if seg_clear(x, y, bx, by, *D["fm_xy"]) < can + D["ad_link_w"] / 2 + c: continue
+            L = math.hypot(x - bx, y - by)
+            if side not in best or L < best[side][0]:
+                best[side] = (L, x, y)
+    if set(best) != {-1, 1}:
+        raise ValueError("no site for the arc detent bridge columns on both sides of the arm")
+    D["ad_col_xy"] = [best[-1][1:], best[1][1:]]
+    D["ad_link_len"] = [best[-1][0], best[1][0]]
+    D["ad_z_link"] = D["det_z0"]                                             # links over the land / rib top (+ det_gap)
+    # bridge lift under the spring: two L frames (column + link) in parallel, plate taken as rigid
+    E = D["ad_E"]; h = D["ad_z_link"] - D["plate_t"]; hl = D["det_z1"] - D["ad_z_link"]
+    Ic = math.pi * (2 * rr) ** 4 / 64; Il = D["ad_link_w"] * hl ** 3 / 12
+    k = sum(1.0 / (L * L * h / (E * Ic) + L ** 3 / (3 * E * Il)) for L in D["ad_link_len"])
+    D["det_force_max"] = D["det_spring_k"] * (D["det_preload"] + D["det_grub_adj"] + D["det_dimple"])
+    D["ad_defl"] = D["det_force_max"] / k
+
+
+def _place_split_mount(D):
+    """v0.22: wall sector outboard of the flange sweep (plate to boss top), a radial bracket from the boss to the wall, and the
+    boss lift under the full spring force: the wall bends as a cantilever from the plate under the moment F·e (e = boss to the
+    wall's mid radius), lift at the boss = F e² h / (E I), I of the wall's plan section about its tangential axis."""
+    r0 = D["ad_r"] + D["sp_hw"] + D["sp_wall_gap"]; r1 = D["sp_wall_r1"]; a0, a1 = D["sp_wall_a"]
+    D["sp_wall_r0"] = r0
+    rm = (r0 + r1) / 2; t = r1 - r0; L = rm * math.radians(a1 - a0)
+    D["det_force_max"] = D["det_spring_k"] * (D["det_preload"] + D["det_grub_adj"] + D["det_dimple"])
+    e = rm - D["ad_r"]; h = D["det_z1"] - D["plate_t"]; I = L * t ** 3 / 12
+    D["sp_wall_e"], D["sp_wall_I"], D["sp_wall_h"] = e, I, h
+    D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
 
 
 def derive(D):
@@ -150,10 +263,12 @@ def derive(D):
         D["hv_slot_r1"] = D["skirt_id"] / 2 + 0.5
         dev = max(abs(a - D["ha_ang0"]) for a in D["hv_phi_m"] + D["hv_phi_s"])
         D["hv_slot_half"] = dev + D["travel_deg"] + R2D((D["hv_pad_r"] + D["hv_slot_clear"]) / D["hv_slot_r0"])
-    # ---- v0.16 detents ----
+    # ---- v0.16 detents (v0.21: one detent on the arc, riding a land flush with the rib top) ----
     db = D["det_ball"]
-    D["det_z0"] = D["fan_top"] + D["det_gap"]                               # boss underside
-    D["det_z_ball"] = D["fan_top"] + db / 2                                 # ball centre riding on the flat wing top
+    arc = D["arm_det"] in ("arc", "split") and D["ad_r"] is not None   # v0.22: split shares the arc keys
+    z_ride = D["ad_z_land"] if arc else D["fan_top"]                         # the surface the ball rides on
+    D["det_z0"] = z_ride + D["det_gap"]                                     # boss underside
+    D["det_z_ball"] = z_ride + db / 2                                       # ball centre riding on the flat land / wing top
     D["det_bore_d"] = db + D["det_bore_clear"]
     D["det_spring_inst"] = D["det_spring"][1] - D["det_preload"]
     D["det_z_grub0"] = D["det_z_ball"] + db / 2 + D["det_spring_inst"]
@@ -165,6 +280,7 @@ def derive(D):
     D["det_leg_r1"] = max(D["dial_tube_od"] / 2 + D["det_leg_len"], ear_r0 - D["fan_clear"])
     D["det_leg_r0"] = D["det_leg_r1"] - D["det_leg_len"]
     D["det_foot_z1"] = D["fan_z0"] - D["fan_clear"]
+    D["det_xy"] = [_pol(D["ad_r"], D["ad_ang"])] if arc else [_pol(D["det_r"], a) for a in D["det_angs"]]
     # ---- v0.16 centring springs: anchors tangential from the lever pin, one hook-to-hook length each way ----
     a = math.radians(D["sl_ang"]); L = D["sl_spring"][1]
     px, py = D["sl_pin_r"] * math.cos(a), D["sl_pin_r"] * math.sin(a); tx, ty = -math.sin(a), math.cos(a)
@@ -183,4 +299,8 @@ def derive(D):
     D["fm_rib_w"] = F["can_d"] / 2                                      # [A] tangential width, half the can
     D["fm_z_rib1"] = D["fm_z_can0"] - D["motor_glue"]                    # glue gap under the clip foot
     D["fm_lead_r"] = F["pad_hole"] / 2 + D["motor_glue"]
+    if arc and D["arm_det"] == "split":
+        _place_split_mount(D)
+    elif arc:
+        _place_arc_bridge(D)   # v0.21: needs the feel lead holes above
     return D

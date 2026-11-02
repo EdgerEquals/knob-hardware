@@ -233,3 +233,23 @@ A fresh-eyes review of v0.20 found real faults; all fixed:
 - Model: `control_dial` `dial_shape="cone"`, `cone_deg`, `race_out`, `cone_well_clear`, `carr_seat_wall`; `main_knob`
   `cap_shape="cone"`, `cap_cone_t`. New checks for the neck, both walls, the running gap (0.32 normal), the plug and the seat.
   Full build v0.21: 189/189, 0 clashes, joystick vs knob none. Section: `cad/assemblies/knob-stack-v0.21/knob-stack-v0.21-knob-top.png`.
+
+### Dial arm split into two spokes, v0.22 (2 Nov, 14:13–15:27)
+- [Ed 14:13] The detent load must sit on a ball train **directly under the spring**, not on arm bending near its limit; Hall
+  sensors may move. [Ed 14:20] Option 1: split the arm. [Ed 15:27] Build it. Study: `docs/img/dial-split-study.png`.
+- **Hall spoke turned 240° → 224°** (`ha_ang0`); its slot through the cradle plate now sits only under the Hall spoke. The Hall row
+  on the PCB rotates 16° with it (sensors follow `hv_phi_s`; the vernier is unchanged, a pure rotation).
+- **Detent on its own spoke at 263°, r 13.5**: low spoke at fan level, a step, a high spoke and a flange (z 5.75–7.25) that passes
+  0.32 over the idler-pinion caps. Three dimples (0, ±10°) on the flange top: **1.24 mm flat** between rims (0.22 at the v0.20 r 7.65).
+- **Ball train Ø1 / Ø0.8 / Ø1** between a fixed **pedestal** (plate to z 5.15) and the flange underside, centred under the detent ball:
+  spring → ball → flange → train → pedestal → plate, no bending. Separators non-magnetic (316, ZrO2 or ruby) [A].
+- **Detent mount**: boss on a radial bracket into a wall just outboard of the flange sweep (r 15.00–16.89, 246.5–281°, plate to
+  z 13.6). Boss lift under the full 1.32 N: about 6 µm against a 10 µm target (the physical limit, 20% of the dimple depth, is 50 µm: 8×).
+  Boss 0.35 over the flange top; the wall 0.35 outside the flange sweep and 0.36 inside the knob ring.
+- **Hall rib raised** to z 9.0 and trimmed to r 16.7: deflection 0.032 under the 2 N rule load, **2.2× margin** (was 0.059 of 0.07).
+- Full build v0.22: **203/203, 0 clashes**, joystick vs knob none.
+- No fan wings any more (they carried the old ear detents). The v0.21 study's other two hub tracks are not built: the train under the
+  spring closes the load path on its own [A: Danny to confirm].
+- [C] **Height match**: the train is a second axial support besides the 45° knob race. The detent spoke is about 16 N/mm vertically, so a
+  0.1 mm height mismatch between the pedestal and the race stack is about 1.6 N on the train. Print the pedestal to the measured
+  stack, or make it adjustable.
