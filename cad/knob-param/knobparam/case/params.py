@@ -146,6 +146,7 @@ P = dict(
     insert_len=5.7,        # [A] insert length
     insert_glue=0.1,       # [A] radial epoxy gap round the insert
     tip_hole=0.5,          # [A] clearance hole runs this far past the screw tip
+    insert_engage_min=1.5, # [A] steel M3 in a brass insert: 1.5 x d (the printed-resin rule was 2 x d)
     insert_wall=1.5,       # [A] resin round the insert; boss radius = insert_od/2 + this (was Ø9 printed-thread boss)
     back_screens="amoled2",   # [Ed] two 2.4" AMOLEDs facing forward on the cover floor, overlapped behind the knob (v0.2: 2.0" TFT on the back)
     amo_w=38.72,           # [S] 2.4" 450x600 RM690B0 panel outline (TOH240XVT-01 / Gesight B024JMV-N50-6DP0)
@@ -222,7 +223,7 @@ P = dict(
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
-           "under_pcb": ["d_big_tip", "z_rear_min"]}
+           "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
            "lab_ring_r", "lab_ring_z0", "lab_ring_z1",
@@ -377,7 +378,10 @@ def derive(D):
         em_h = 1.0   # [A] emitter bodies on the PCB back (VCSEL 0.8, RGB 0.9) + gap
         D["z_rear_parts"] = min(D["z_rear_min"], D["fg_z_bot"], D["z_pcb_back"] - em_h)
         D["amo_stack"] = D["amo_pad"] + D["amo_t"]
-        D["z_cover_in"] = D["z_rear_parts"] - D["screen_air"] - D["amo_stack"]
+        # Per screen: the encoder hub/shaft (deepest) sits over the upper screen only (encoder at the top); over the lower
+        # screen the deepest parts are the disc face, the compound gear and the emitters. The 3D check confirms it.
+        z_lower = min(D["h_big_bot"], D["fg_z_bot"], D["z_pcb_back"] - em_h)
+        D["z_cover_in"] = min(D["z_rear_parts"] - D["screen_air"] - D["amo_t"], z_lower - D["screen_air"] - D["amo_stack"])
         D["cover_depth"] = D["z_pcb_back"] - D["z_cover_in"]
     else:
         D["cover_depth"] = D["rear_stack"] * (1.0 + D["cover_clear_ratio"])

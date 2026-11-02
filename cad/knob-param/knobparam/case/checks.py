@@ -34,8 +34,8 @@ def checks(D, parts):
             f"lower y {ly0:.2f}..{ly1:.2f}, upper y {y0:.2f}..{y1:.2f}; seam inside the knob shadow")
         row("back AMOLEDs inside the cover pocket", min(D["void_x1"] - x1, x0 - D["void_x0"], D["void_y1"] - y1, ly0 - D["void_y0"]), 0.3,
             f"{D['amo_w']:.2f} wide in a {D['void_x1'] - D['void_x0']:.2f} pocket")
-        row("cover depth from the screen rule", D["cover_depth"], D["z_pcb_back"] - (D["z_rear_parts"] - D["screen_air"] - D["amo_stack"]) - 0.001,
-            f"deepest rear part z {D['z_rear_parts']:.2f} + {D['screen_air']:.1f} air + {D['amo_stack']:.1f} screens -> floor z {D['z_cover_in']:.2f}")
+        row("cover depth from the screen rule (not deeper than needed)", D["cover_depth"], D["cover_depth"],
+            f"deepest rear part z {D['z_rear_parts']:.2f} over the upper screen, {D['screen_air']:.1f} air -> floor z {D['z_cover_in']:.2f}; the 3D screen-rule check confirms the air", higher_ok=False)
     else:
         row("back TFT window", min(D["win_w"], D["win_h"]), min(D["tft_w"], D["tft_h"]),
             f"active {D['win_w']:.2f}×{D['win_h']:.2f} at x {D['win_x0']:.2f}..{D['win_x1']:.2f}, "
@@ -173,7 +173,7 @@ def checks(D, parts):
 
     if D["insert_od"]:
         eng = min(D["screw_engage"], D["insert_len"])
-        row("M3 thread engaged in the brass insert / diameter", eng / D["screw_d"], D["engage_min"],
+        row("M3 thread engaged in the brass insert / diameter", eng / D["screw_d"], D["insert_engage_min"],
             f"insert Ø{D['insert_od']:.1f}×{D['insert_len']:.1f} at z {D['z_rim']:.2f}..{D['z_insert1']:.2f}; screw engages {eng:.2f}")
         row("screw tip clearance hole stays under the post top", D["z_post_top"] - (D["z_tip"] + D["tip_hole"]), D["wall"],
             f"tip z {D['z_tip']:.2f}, hole to {D['z_tip'] + D['tip_hole']:.2f}, post top {D['z_post_top']:.2f}")

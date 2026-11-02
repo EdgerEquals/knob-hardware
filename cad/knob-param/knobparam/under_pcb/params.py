@@ -38,7 +38,7 @@ P = dict(
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "main_knob": ["hb_mid"]}
-EXPORTS = ["d_big_tip", "z_rear_min"]   # -> electronics (J2 pads below the wheel)
+EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot"]   # -> electronics (J2 pads below the wheel)
 
 
 def derive(D):

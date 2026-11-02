@@ -357,21 +357,21 @@
   },
   {
    "name": "feel placement (worst plan clearance)",
-   "value": 1.599,
+   "value": 1.733,
    "target": ">= 0.5",
    "ok": true,
-   "note": "nylon 0.5M-12T 12T \u00d7 40T on the 60\u00b0 idler, then 12T into the 54T herringbone, overall 15.00:1, can at 120.9\u00b0; knob \u00d842.00; det_ear 1.60, skirt 1.80, dial_can 3.84, hall 7.78, body_can 9.77, gear 1000000000.00",
+   "note": "nylon 0.5M-12T 11T \u00d7 40T on the 60\u00b0 idler, then 12T into the 54T herringbone, overall 16.36:1, can at 119.7\u00b0; knob \u00d842.00; det_ear 1.73, skirt 1.88, dial_can 3.75, hall 7.77, body_can 9.58, gear 1000000000.00",
    "owner": "base_drive",
-   "slack": 1.099
+   "slack": 1.233
   },
   {
    "name": "feel saddle strap vs skirt ID (radial)",
-   "value": 1.796,
+   "value": 1.883,
    "target": ">= 0.5",
    "ok": true,
    "note": "open saddle: 2 bands \u00d7 1.2 over 8.0 of the \u00d87\u00d716 can, ears at \u00b1100\u00b0",
    "owner": "base_drive",
-   "slack": 1.296
+   "slack": 1.383
   },
   {
    "name": "detent ball guided in its bore when latched (centre above the boss underside)",
@@ -393,39 +393,39 @@
   },
   {
    "name": "feel mount rib (radial depth)",
-   "value": 5.689,
+   "value": 5.602,
    "target": ">= 0.5",
    "ok": true,
-   "note": "r 4.56-10.25, under the saddle seat",
+   "note": "r 4.56-10.16, under the saddle seat",
    "owner": "base_drive",
-   "slack": 5.189
+   "slack": 5.102
   },
   {
    "name": "feel can vs 1220 motor",
-   "value": 9.769,
+   "value": 9.58,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": 9.269
+   "slack": 9.08
   },
   {
    "name": "feel pinion vs compound gear (centre-distance error, mm)",
    "value": 0.0,
    "target": "<= 0.12",
    "ok": true,
-   "note": "CD 13.000, nominal 13.000 (nylon 0.5M-12T, PA-12 MJF, bore \u00d82.04); shaft stick-out 13.2 mm",
+   "note": "CD 12.750, nominal 12.750 (nylon 0.5M-12T, PA-12 MJF, bore \u00d82.04); shaft stick-out 13.2 mm",
    "owner": "base_drive",
    "slack": 0.12
   },
   {
    "name": "feel pinion vs idler 2",
-   "value": 18.296,
+   "value": 18.45,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "base_drive",
-   "slack": 17.796
+   "slack": 17.95
   },
   {
    "name": "cradle web left round a support after the bridge cut",
@@ -482,13 +482,13 @@
    "slack": 0.0
   },
   {
-   "name": "deepest under-PCB part (cover depth driver)",
-   "value": 13.5,
+   "name": "deepest under-PCB part behind the PCB back (cover depth driver)",
+   "value": 11.9,
    "target": "<= 26",
    "ok": true,
    "note": "z -13.50; bearing 2 on the PCB back",
    "owner": "under_pcb",
-   "slack": 12.5
+   "slack": 14.1
   },
   {
    "name": "Hall sensor body spacing on the PCB",
@@ -932,13 +932,22 @@
    "slack": 0.0
   },
   {
-   "name": "thread engagement / diameter",
-   "value": 2.833,
+   "name": "M3 thread engaged in the brass insert / diameter",
+   "value": 1.9,
    "target": ">= 2",
-   "ok": true,
-   "note": "printed M3\u00d70.50, engagement 8.50 (asked 9.00)",
+   "ok": false,
+   "note": "insert \u00d84.6\u00d75.7 at z -1.60..4.10; screw engages 5.70",
    "owner": "case",
-   "slack": 0.833
+   "slack": -0.1
+  },
+  {
+   "name": "screw tip clearance hole stays under the post top",
+   "value": 14.566,
+   "target": ">= 2.5",
+   "ok": true,
+   "note": "tip z 6.73, hole to 7.23, post top 21.80",
+   "owner": "case",
+   "slack": 12.066
   },
   {
    "name": "PETG under the screw head",
@@ -959,22 +968,13 @@
    "slack": 0.0
   },
   {
-   "name": "ISO 4762 engagement",
+   "name": "ISO 4762 thread past the grip",
    "value": 2.778,
    "target": ">= 2",
    "ok": true,
    "note": "M3\u00d710 A2, thread 10 (to the head); grip 1.67, in the resin 8.33",
    "owner": "case",
    "slack": 0.778
-  },
-  {
-   "name": "screw tip inside the printed tap",
-   "value": 0.166,
-   "target": ">= 0",
-   "ok": true,
-   "note": "tip z 6.73, tap ends 6.90",
-   "owner": "case",
-   "slack": 0.166
   },
   {
    "name": "pad does not set the depth",
@@ -1041,12 +1041,12 @@
   },
   {
    "name": "case mass",
-   "value": 53.19,
+   "value": 52.919,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 40915 mm\u00b3 (40.9 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 40707 mm\u00b3 (40.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case",
-   "slack": 86.81
+   "slack": 87.081
   },
   {
    "name": "one hollow shell",
@@ -1203,30 +1203,30 @@
   },
   {
    "name": "feel saddle vs knob skirt",
-   "value": 3.251,
+   "value": 3.338,
    "target": ">= 0.5",
    "ok": true,
-   "note": "can 3.95 inside the skirt; nylon 0.5M-12T at 120.9\u00b0, overall 15.00:1, knob \u00d842.00",
+   "note": "can 4.04 inside the skirt; nylon 0.5M-12T at 119.7\u00b0, overall 16.36:1, knob \u00d842.00",
    "owner": "assembly",
-   "slack": 2.751
+   "slack": 2.838
   },
   {
    "name": "feel can/saddle vs bottom ring",
-   "value": 1.651,
+   "value": 1.738,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 1.151
+   "slack": 1.238
   },
   {
    "name": "feel pinion vs encoder pinion",
-   "value": 7.393,
+   "value": 7.688,
    "target": ">= 0.5",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 6.893
+   "slack": 7.188
   },
   {
    "name": "feel motor vs dial tube",
@@ -1239,12 +1239,12 @@
   },
   {
    "name": "feel motor vs Hall arm (\u00b1travel)",
-   "value": 1.176,
+   "value": 1.195,
    "target": ">= 0.3",
    "ok": true,
    "note": "",
    "owner": "assembly",
-   "slack": 0.876
+   "slack": 0.895
   },
   {
    "name": "centring springs vs motor / encoder / ring across \u00b1travel",
@@ -1266,12 +1266,12 @@
   },
   {
    "name": "track balls vs compound gear across \u00b1travel",
-   "value": 10.148,
+   "value": 10.147,
    "target": ">= 0.5",
    "ok": true,
    "note": "balls posed at \u03b8/2 for each sample",
    "owner": "assembly",
-   "slack": 9.648
+   "slack": 9.647
   },
   {
    "name": "printed spur stays on the feel side of the centre tube",
@@ -1284,12 +1284,12 @@
   },
   {
    "name": "printed spur tooth tip vs MJF short-feature floor",
-   "value": 0.384,
+   "value": 0.38,
    "target": ">= 0.3",
    "ok": true,
    "note": "thinnest nylon spur (hub, motor pinion, 40T, feel pinion); preferred 0.50",
    "owner": "assembly",
-   "slack": 0.084
+   "slack": 0.08
   },
   {
    "name": "compound gear vs encoder rim (axial)",
@@ -1305,7 +1305,7 @@
    "value": 0.375,
    "target": ">= 0.3",
    "ok": true,
-   "note": "nearest encoder pinion cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "note": "nearest idler pinion 2 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
    "slack": 0.075
   },
@@ -1477,19 +1477,19 @@
   },
   {
    "name": "feel pinion / compound gear: effective contact ratio",
-   "value": 1.288,
+   "value": 1.22,
    "target": ">= 1.2",
    "ok": true,
-   "note": "12/40T m0.500, ha 0.800, alpha_w 20.00\u00b0, geometric 1.29; non-conjugate 0.01 mm; pinion under the 13.7T undercut limit",
+   "note": "11/40T m0.500, ha 0.800, alpha_w 20.00\u00b0, geometric 1.28; non-conjugate 0.10 mm; pinion under the 13.7T undercut limit",
    "owner": "assembly",
-   "slack": 0.088
+   "slack": 0.02
   },
   {
    "name": "feel pinion / compound gear: circular backlash (mm)",
    "value": 0.1,
    "target": ">= 0.05",
    "ok": true,
-   "note": "cd 13.000 vs nominal 13.000",
+   "note": "cd 12.750 vs nominal 12.750",
    "owner": "assembly",
    "slack": 0.05
   },
