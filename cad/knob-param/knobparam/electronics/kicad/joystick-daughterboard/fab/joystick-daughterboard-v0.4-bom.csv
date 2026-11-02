@@ -1,0 +1,4 @@
+Item,Designator,Qty,Value,Footprint,Manufacturer,MPN,LCSC
+1,"J1,J2",2,TSW-103-17-T-S,PinHeader_1x03_P2.54mm_Vertical_Long,Samtec,TSW-103-17-T-S,
+2,"MH1,MH2,MH3,MH4",4,STTZ1022,Mount_M2x35_Standoff,XHHD,STTZ1022,C50378470
+3,SW1,1,SKRHADE010,Alps_SKRHADE010,Alps Alpine,SKRHADE010,C202415

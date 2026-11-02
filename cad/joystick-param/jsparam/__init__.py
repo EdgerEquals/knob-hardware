@@ -1,1 +1,1 @@
-"""jsparam: parametric top-screen joystick stack (Alps SKRHADE010 daughterboard on risers, ball-slide carrier, spider)."""
+"""jsparam: parametric top-screen joystick stack (Alps SKRHADE010, thin carrier, screen-carrier bezel on compression springs)."""

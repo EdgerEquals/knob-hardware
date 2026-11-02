@@ -1,98 +1,303 @@
-"""Joystick stack checks: rows of (name, value, target, ok, note). Geometry distances on the built parts + param sums."""
-import math, itertools, os, sys
-from build123d import Pos
+"""Joystick v0.4 checks. The switch is the only stop. The bezel floats on four compression
+springs, preloaded by grub screws that are reached on the sub-assembly. The four hold-down
+springs are unchanged in kind from v0.3."""
+import math, itertools
+from build123d import Pos, Rot
+
+def _mirror_ok(pts, tol=1e-6):
+    s = {(round(x, 4), round(y, 4)) for x, y in pts}
+    return all((round(-x, 4), round(y, 4)) in s and (round(x, 4), round(-y, 4)) in s for x, y in s)
+
+def _gap_at(D, od, x, y_edge):
+    """Gap from a carrier-frame silhouette point to the knob, after the carrier has slid toward it."""
+    return math.hypot(x, D["place_y"] + y_edge) - od / 2 - D["slide"]
 
 def run(D, P):
     T = D["tgt"]; sw = D["sw"]; rows = []
-    def row(name, v, tgt, ok, note=""): rows.append(dict(name=name, value=float(v), target=tgt, ok=bool(ok), note=note))
-    car, base, stem = P["joystick carrier (printed)"], P["joystick base (printed, glued)"], P["SW1 SKRHADE010 stem"]
-    spid, db, fpc, pcb = P["screen spider + plunger (printed)"], P["joystick daughterboard"], P["screen FPC [A]"], P["main PCB (proxy, local patch)"]
+    def row(name, v, tgt, ok, note=""):
+        rows.append(dict(name=name, value=float(v), target=tgt, ok=bool(ok), note=note))
+    car = P["joystick carrier (printed)"]
+    bez = P["screen carrier (printed)"]
+    plate = P["seat plate (printed, glued)"]
+    stem = P["SW1 SKRHADE010 stem"]
+    db = P["joystick daughterboard"]
+    pcb = P["main PCB (proxy, local patch)"]
+    fpc = P["screen FPC [A]"]
+    scr = [P[n] for n in P if n.startswith("top screen")][0]
+    hdrs = [P[n] for n in P if n.startswith("header 1x3")]
+    socks = [P[n] for n in P if n.startswith("socket ")]
+    body = P["SW1 SKRHADE010 body (45°)"]
     sprs = [P[n] for n in P if n.startswith("hold-down spring")]
-    # 1 stem / cup
-    row("screen top is the faceplate front", D["scr_top"] - D["faceplate_z"], "0", abs(D["scr_top"] - D["faceplate_z"]) < 1e-9,
-        f"faceplate front z {D['faceplate_z']:.2f} above the PCB front, plate {D['faceplate_t']:.2f} thick")
-    row("printed riser above the 8.5 mm socket", D["riser_ext"], "> 0", D["riser_ext"] > 0,
-        f"daughterboard at z {D['z_db0']:.2f}; socket stays {D['sock_h']:.1f} on the PCB; extender {D['riser_ext']:.2f}")
+    css = [P[n] for n in P if n.startswith("compression spring")]
+    grubs = [P[n] for n in P if n.startswith("grub screw")]
+    inserts = [P[n] for n in P if n.startswith("brass insert")]
+    balls = [P[n] for n in P if n.startswith("ball ")]
+    stands = [P[n] for n in P if n.startswith("brass standoff")]
+    # 1 stem / cup. The switch end of tilt is the stop
     g = stem.distance_to(car)
-    row("stem vs cup bore, radial (rest)", g, f">= {T['stem_cup_min']}", g >= T["stem_cup_min"] - 1e-6, f"cup Ø{D['cup_bore']:g} over the Ø{sw['stem_d']:g} stem, engaged {D['cup_engage']:g}")
-    row("cup engagement covers the 4.3 mm tilt reference height", D["z_ref"] - D["z_cup0"], ">= 0.2", D["z_cup0"] + 0.2 <= D["z_ref"] <= D["z_stem_top"],
-        f"cup z {D['z_cup0']:.2f}-{D['z_stem_top']:.2f}, ref z {D['z_ref']:.2f}, stem pivot z {D['z_pivot']:.2f}")
-    # 2 plunger
-    pg = stem.distance_to(spid)
-    row("plunger tip to stem top (rest)", pg, "0.02-0.10", 0.02 <= pg <= 0.10, "screen + spider weight only; no preload on the switch")
-    # 3 spider travel
-    row("spider free travel under the pad", D["sp_gap"], "0.30-0.50", 0.3 - 1e-9 <= D["sp_gap"] <= 0.5 + 1e-9, "Ed: ~0.3-0.5")
-    m = D["sp_gap"] - D["sp_defl_click"]
-    row("spider margin past the centre click (pad never bottoms)", m, ">= 0.1", m >= 0.1,
-        f"used {D['sp_defl_click']:.2f} (gap {D['plunger_gap']:g} + push {sw['push_travel']:g}); the switch's own stop takes the full press")
-    row("spider force at the click / switch push force", D["sp_f_click"] / sw["push_f"], "<= 0.4", D["sp_f_click"] / sw["push_f"] <= 0.4,
-        f"k ≈ {D['sp_k']:.2f} N/mm (4 arms, t {D['sp_t']:g}, PA12) -> +{D['sp_f_click']:.2f} N on {sw['push_f']:g} N = {D['press_f']:.2f} N press [estimate]")
-    # 4 slide range vs tilt travel
-    row("slide to stop vs slide needed to actuate (cup clear + 0.25 tilt)", D["slide"] - D["slide_need"], ">= 0", D["slide"] >= D["slide_need"],
-        f"stop {D['slide']:g} per axis, needed {D['slide_need']:.3f} ({D['cup_rad_clear']:.3f} + {sw['tilt_travel']:g} at z {D['z_ref']:.2f})")
-    ot = D["slide"] - D["slide_need"]
-    row("overtravel onto the stem past actuation (per axis)", ot, f"<= {T['overtravel_max']}", ot <= T["overtravel_max"],
-        f"diagonal stop is {D['slide'] * math.sqrt(2):.2f} radial: diagonals over-tilt the stem by {D['slide'] * math.sqrt(2) - D['slide_need']:.2f} [flag]")
-    gs = car.distance_to(base)
-    row("carrier vs base at rest (skirt stop gap)", gs, f">= {T['gap_min']}", gs >= T["gap_min"] - 1e-6, "= slide stop")
-    cs = (Pos(D["slide"] - 0.01, D["slide"] - 0.01, 0) * car).distance_to(base)
-    row("carrier vs base at full diagonal slide (-0.01)", cs, "> 0", cs > 0, "skirt reaches the base wall only at the stop")
-    # 5 cable hole
-    fc = fpc.distance_to(car)
-    row("FPC vs carrier slot walls", fc, f">= {T['cable_min']}", fc >= T["cable_min"] - 1e-6, f"FPC {D['fpc_w']:g} wide [A], slot {D['slot_x'][1] - D['slot_x'][0]:g} × {2 * D['slot_hy']:g}")
-    fb = min(fpc.distance_to(base), fpc.distance_to(pcb))
-    row("FPC vs base notch / PCB slot (carrier at full slide)", fb - D["slide"], ">= 0.2", fb - D["slide"] >= 0.2 - 1e-6,
-        f"hole x {D['hole_x0']:.1f}-{D['hole_x1']:.1f}, ±{D['hole_hy']:.2f}; FPC loop follows the carrier")
-    fd = fpc.distance_to(db)
-    row("FPC vs daughterboard", fd, ">= 1.0", fd >= 1.0)
-    # 6 springs
-    sm = D["spr_bore"] / 2 - D["spr_d"] / 2 - D["slide"] * math.sqrt(2)
-    row("spring vs base bore / PCB hole at full diagonal slide", sm, f">= {T['spring_min']}", sm >= T["spring_min"],
-        f"Ø{D['spr_d']:g} spring in Ø{D['spr_bore']:g}; {len(sprs)} × {D['spr_f']:g} N hold-down, length ≈ {D['spr_len']:.0f} to the back panel [A]")
-    sg = min(s.distance_to(base) for s in sprs)
-    row("spring vs base (rest)", sg, ">= 0.3", sg >= 0.3 - 1e-6)
-    # 7 daughterboard
-    dbm = db.distance_to(base - _post_region(D))
-    row("daughterboard vs base walls / spring pillars / window", dbm, f">= {T['board_min']}", dbm >= T["board_min"] - 1e-6,
-        f"board {D['db'][0]:g} × {D['db'][1]:g}, window {D['win'][0]:g} × {D['win'][1]:g}")
-    hb = P["J1 header 2x3 2.54 male (body on top)"].distance_to(car)
-    row("J1 header body vs carrier (cup / underside)", hb, ">= 1.0", hb >= 1.0, "trim the header's top pin tails flush with the plastic")
-    sb = P["SW1 SKRHADE010 body (45°)"].distance_to(P["J1 header 2x3 2.54 male (body on top)"])
-    row("switch body vs J1 header body", sb, ">= 0.3", sb >= 0.3)
-    # 8 ball seats
-    bt = min(P[n].distance_to(car) for n in P if n.startswith("ball "))
-    row("balls touch the carrier underside", bt, "<= 0.01", bt <= 0.01)
-    # 9 knob clearance (cross-check with knob-param)
-    kod = _knob_od()
-    if kod:
-        y_edge = D["place_y"] - D["car"][1] / 2 - D["slide"]
-        corner = min(math.hypot(x, y_edge) for x in (0.0,))
-        kg = corner - kod / 2
-        row("carrier (slid toward the knob) vs knob OD", kg, f">= {T['knob_min']}", kg >= T["knob_min"], f"knob Ø{kod:.2f} (knob-param), carrier edge at frame y {y_edge:.2f}")
+    row("stem vs cup bore, radial (rest)", g, f">= {T['stem_cup_min']}", g >= T["stem_cup_min"] - 1e-6,
+        f"cup Ø{D['cup_bore']:.2f} over the Ø{sw['stem_d']:g} stem, SLA clearance {D['cup_rad_clear']:.2f}")
+    row("cup covers the tilt reference height", D["z_ref"] - D["z_cup0"], ">= 0.2",
+        D["z_cup0"] + 0.2 <= D["z_ref"] <= D["z_stem_top"] and D["z_ref"] <= D["z_c0"],
+        f"cup z {D['z_cup0']:.2f}-{D['z_c0']:.2f}, ref z {D['z_ref']:.2f}, stem top {D['z_stem_top']:.2f}")
+    row("slide is the switch tilt, no extra overtravel", D["slide"] - D["slide_need"], "0",
+        abs(D["slide"] - D["slide_need"]) < 1e-9,
+        f"slide {D['slide']:.2f} = cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}")
+    # 2 press peg and the compression springs
+    pg = stem.distance_to(bez)
+    row("peg tip to stem top (rest)", pg, f"{D['press_gap']:.2f}", abs(pg - D["press_gap"]) <= 0.03,
+        "one SLA tolerance. The peg is part of the bezel, not a separate plunger")
+    row("preload vs 5x screen weight", D["cs_f_preload"] / D["scr_weight"], ">= 5",
+        D["cs_f_preload"] >= 5 * D["scr_weight"] - 1e-9,
+        f"preload {D['cs_f_preload']:.3f} N, screen {D['scr']['mass_g']:g} g = {D['scr_weight']:.3f} N [A]")
+    row("preload under the centre-push minimum", D["cs_f_preload"], f"< {D['push_lo']:.2f}",
+        D["cs_f_preload"] < D["push_lo"],
+        "rest is not already a click")
+    row("force at switch bottom", D["cs_f_press"], f"{D['push_lo']:.2f}-{D['push_hi']:.2f}",
+        D["push_lo"] - 1e-6 <= D["cs_f_press"] <= D["push_hi"] + 1e-6,
+        f"{D['cs_turns']:g} turn, {D['cs_defl_press']:.2f} mm on {D['cs_n']} x {D['cs']['part']} "
+        f"({D['cs_rate']:.3f} N/mm). Centre push {sw['push_f']:g} ± {sw['f_tol']:g} N")
+    row("spring not solid at full press", D["cs_solid_room"], ">= 0.40", D["cs_solid_room"] >= 0.40,
+        f"free {D['cs']['free']:.2f}, solid {D['cs']['solid']:.2f}, used {D['cs_defl_press']:.2f}")
+    row("newtons per turn, one spring", D["cs_f_turn_1"], "> 0", D["cs_f_turn_1"] > 0,
+        f"{D['cs_f_turn_1']:.3f} N/turn each, {D['cs_f_turn']:.3f} N/turn for all four. Pitch {D['grub']['pitch']:.2f} mm")
+    row("nominal turns inside the useful window", D["cs_turns"], f"{D['turns_lo']:.2f}-{D['turns_hi']:.2f}",
+        D["turns_lo"] - 1e-6 <= D["cs_turns"] <= D["turns_hi"] + 1e-6,
+        f"window keeps the press inside the band and the preload under a click. "
+        f"Hex stays proud out to {D['turns_hex']:.2f} turns")
+    row("compression spring count", len(css), "4", len(css) == 4 and len(grubs) == 4 and len(inserts) == 4,
+        "one grub and one insert under each spring")
+    # 3 captive bezel, and the skirt is not the tilt stop
+    fp = P["faceplate (case proxy, UTR-8100)"]
+    gap_fp = bez.distance_to(fp)
+    row("bezel lip above the faceplate", D["z_bz0"] - D["z_fp1"], "0.02",
+        abs(D["z_bz0"] - D["z_fp1"] - D["up_gap"]) < 1e-6 and gap_fp > 0.05,
+        f"vertical gap {D['up_gap']:.2f}. The rebate is wider than the lip by {D['tol_sla']:.2f}, "
+        f"so the closest solid is {gap_fp:.2f} mm. Overlap {D['fp_overlap']:.2f} mm")
+    row("bezel thickness", D["bz_t"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_t"] <= 1.5 + 1e-9,
+        f"lip {D['bz_lip']:.2f} mm, same band as the other bezel. Outer {2*D['half_w']:.2f} x {2*D['half_h']:.2f}")
+    row("press rebate clears the switch travel", D["fp_rebate"] - D["press_travel"], f">= {D['tol_sla']:.2f}",
+        D["fp_rebate"] - D["press_travel"] >= D["tol_sla"] - 1e-9,
+        "the lip drops into the rebate. The switch bottoms before the rebate floor")
+    row("carrier below the faceplate", D["z_fp0"] - D["z_floor1"], f">= {D['tol_sla']:.2f}",
+        D["z_fp0"] - D["z_floor1"] >= D["tol_sla"] - 1e-9,
+        f"faceplate {D['fp_t']:.2f} mm assumed (UTR-8100 wall). Carrier top z {D['z_floor1']:.2f}, faceplate bottom z {D['z_fp0']:.2f}")
+    fits = (D["car_hw"] + D["slide"] + D["tol_sla"] <= D["hole_hw"] + 1e-9
+            and D["car_hh"] + D["slide"] + D["tol_sla"] <= D["hole_hh"] + 1e-9)
+    row("carrier drops through the faceplate hole", 1.0 if fits else 0.0, "fits", fits,
+        f"carrier ±{D['car_hw']:.2f} x ±{D['car_hh']:.2f}, hole ±{D['hole_hw']:.2f} x ±{D['hole_hh']:.2f}, slide {D['slide']:.2f}")
+    row("bezel lip bigger than the hole", D["half_w"] - D["hole_hw"], ">= 0.6",
+        D["half_w"] - D["hole_hw"] >= 0.6, "the lip cannot fall through. It is fitted from the front")
+    gaps = []
+    for deg in (0, 45, 90, 135):
+        a = math.radians(deg)
+        dx = D["slide"] * math.cos(a); dy = D["slide"] * math.sin(a)
+        gaps.append((Pos(dx, dy, 0) * car).distance_to(plate))
+    gmin = min(gaps)
+    row("skirt clear at switch end of travel", gmin, f">= {D['tol_mjf']:.2f}", gmin >= D["tol_mjf"] - 1e-4,
+        f"skirt gap {D['skirt_gap']:.2f}, slide {D['slide']:.2f}, remaining {D['tol_mjf']:.2f}. "
+        "gaps " + ", ".join(f"{v:.3f}" for v in gaps))
+    rot = (Rot(0, 0, 3) * car).distance_to(plate)
+    row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
+        "the skirt is the anti-rotation stop. It is not the tilt stop")
+    # 4 grub screws: on the sub-assembly only. No hole in the plate or the daughterboard
+    outside = all(abs(x) - D["cs_bore_r"] > D["board_x1"] or abs(y) - D["cs_bore_r"] > D["board_y1"] for x, y in D["cs_xy"])
+    row("spring pilots outside the plate", 1.0 if outside else 0.0, "outside", outside,
+        "no access hole and no keep-out. The hex is reached before the plate is fitted")
+    row("hex proud of the insert", D["hex_proud"], ">= 0.40", D["hex_proud"] >= 0.40,
+        f"{D['grub']['part']} in {D['ins']['part']}. {D['hex_proud']:.2f} mm of screw below the insert at {D['cs_turns']:g} turn")
+    row("insert hangs in free air under the floor", D["z_c0"] - D["z_ins0"], "0.5-3.0",
+        0.5 <= D["z_c0"] - D["z_ins0"] <= 3.0,
+        f"insert bottom z {D['z_ins0']:.2f}, carrier underside z {D['z_c0']:.2f}. Modelled as a slip fit")
+    row("grub screw modelled clear of the insert", min(g.distance_to(i) for g, i in zip(grubs, inserts)),
+        ">= 0.05", min(g.distance_to(i) for g, i in zip(grubs, inserts)) >= 0.05,
+        "real thread engages; the solid is the clearance pin")
+    # 5 cable
+    fc = min(fpc.distance_to(car), fpc.distance_to(bez))
+    row("FPC vs carrier and bezel", fc, f">= {T['cable_min']}", fc >= T["cable_min"] - 1e-4,
+        f"FPC {D['fpc_w']:g} wide [A], slot {D['slot_x'][1] - D['slot_x'][0]:.2f} x {2 * D['slot_hy']:.2f}")
+    bend = D["scr"]["w"] / 2 - D["slot_x"][1]
+    row("FPC bend room under the glass", bend, ">= 1.2", bend >= 1.2,
+        f"screen +x edge to the slot end. Exit side and pin-out are still open")
+    fb = fpc.distance_to(pcb)
+    row("FPC vs PCB slot at full slide", fb - D["slide"], ">= 0.2", fb - D["slide"] >= 0.2 - 1e-6,
+        f"hole x {D['hole_x0']:.1f}-{D['hole_x1']:.1f}, ±{D['hole_hy']:.2f}")
+    row("FPC vs daughterboard", fpc.distance_to(db), ">= 1.0", fpc.distance_to(db) >= 1.0)
+    row("FPC vs seat plate", fpc.distance_to(plate), ">= 1.0", fpc.distance_to(plate) >= 1.0)
+    # 6 hold-down springs, kept
+    sm = D["spr_bore"] / 2 - D["spr_d"] / 2 - D["slide"]
+    row("hold-down spring vs bore at full slide", sm, f">= {T['spring_min']}", sm >= T["spring_min"],
+        f"Ø{D['spr_d']:g} in Ø{D['spr_bore']:g}; {len(sprs)} x {D['spr_f']:g} N, installed {D['spr_len']:.1f} mm "
+        f"(was {D['spr_len_was']:.1f} to the back panel). Free {D['spr_free']:.1f}, stretch {D['spr_ext']:.1f}")
+    sg = min(s.distance_to(plate) for s in sprs)
+    row("hold-down spring vs plate (rest)", sg, ">= 0.3", sg >= 0.3 - 1e-6, "hook boss is slotted so the eye can be swapped")
+    row("compression spring clear of the hold-downs", min(c.distance_to(s) for c in css for s in sprs),
+        ">= 1.0", min(c.distance_to(s) for c in css for s in sprs) >= 1.0,
+        "the two spring sets do not share a job")
+    row("compression spring clear of the plate", min(c.distance_to(plate) for c in css), ">= 1.0",
+        min(c.distance_to(plate) for c in css) >= 1.0)
+    # 7 daughterboard, headers, standoffs, plate
+    row("daughterboard vs plate (glued, faces touch)", db.distance_to(plate), "<= 0.02",
+        db.distance_to(plate) <= 0.02,
+        f"board {D['db'][0]:.2f} x {D['db'][1]:.2f} x {D['db_t']:g}. The v0.3 -y stop tab is gone")
+    row("switch opening in the plate", body.distance_to(plate), f">= {T['board_min']}",
+        body.distance_to(plate) >= T["board_min"] - 1e-6,
+        f"opening Ø{2 * D['cut_r']:.2f} over the land extent {D['sw_ext']:.2f}")
+    hb = min(h.distance_to(car) for h in hdrs)
+    row("header body vs carrier", hb, ">= 1.0", hb >= 1.0, "headers are on the underside; trim the 2.79 mm tails flush")
+    row("switch body vs headers", min(body.distance_to(h) for h in hdrs), ">= 0.3",
+        min(body.distance_to(h) for h in hdrs) >= 0.3, "the switch is on top, the headers underneath")
+    row("standoff count", len(stands), "4", len(stands) == 4, "one in each quadrant, all GND")
+    sd = min(s.distance_to(db) for s in stands)
+    row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05,
+        "round body 0.02 short of the daughterboard. An M2 socket screw passes through the plate")
+    bots = [P[n] for n in P if n.startswith("M2 socket screw bottom")]
+    tops = [P[n] for n in P if n.startswith("M2 socket screw top")]
+    row("bottom screw head under the PCB", min(s.distance_to(pcb) for s in bots), "0.005-0.05",
+        0.005 <= min(s.distance_to(pcb) for s in bots) <= 0.05,
+        f"{D['shcs']['part']} M2×{D['shcs']['bot']:.0f}, head Ø{D['shcs']['head_d']:.1f} × {D['shcs']['head_h']:.1f}. "
+        f"{D['engage_bot']:.2f} mm of thread in the pillar")
+    row("top screw head on the plate", min(s.distance_to(plate) for s in tops), "0.005-0.05",
+        0.005 <= min(s.distance_to(plate) for s in tops) <= 0.05,
+        f"M2×{D['shcs']['top']:.0f} through the plate and the board, {D['engage_top']:.2f} mm in the pillar")
+    row("screw thread engagement", min(D["engage_bot"], D["engage_top"]), ">= 2.0",
+        D["engage_bot"] >= 2.0 and D["engage_top"] >= 2.0, "both ends, female-female pillar")
+    row("bottom screw clear of the hold-downs", min(s.distance_to(h) for s in bots for h in sprs), ">= 1.0",
+        min(s.distance_to(h) for s in bots for h in sprs) >= 1.0)
+    ra = P["rear spring anchor (printed)"]
+    pins = [P[n] for n in P if n.startswith("cross pin")]
+    row("rear anchor glued to the PCB back", ra.distance_to(pcb), "0.01-0.05",
+        0.01 <= ra.distance_to(pcb) <= 0.05,
+        f"bond outline {D['ra_bond']:.0f} mm², wall {D['ra_wall']:.1f}, volume {ra.volume/1000:.2f} cm³")
+    row("rear anchor clear of the bottom screws", min(ra.distance_to(s) for s in bots), ">= 1.0",
+        min(ra.distance_to(s) for s in bots) >= 1.0,
+        "the anchor stops inboard of the screws. The heads stay reachable")
+    row("lower hooks just behind the PCB", -D["pcb_t"] - D["z_pin"], "1.5-4.0",
+        1.5 <= -D["pcb_t"] - D["z_pin"] <= 4.0,
+        f"pin axis z {D['z_pin']:.2f}, PCB back z {-D['pcb_t']:.2f}")
+    row("hold-down force unchanged", D["spr_f"], "0.50", abs(D["spr_f"] - 0.5) < 1e-9,
+        f"rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch. "
+        f"Length {D['spr_len_was']:.1f} → {D['spr_len']:.1f} mm")
+    row("two pins, each through a pair", len(pins), "2", len(pins) == 2 and len(sprs) == 4,
+        f"Ø{D['pin_d']:.2f} x {D['pin_x1'] - D['pin_x0']:.1f} mm, along X, at y ±{D['spr_y']:.2f}")
+    row("pin slides in the bore", min(p.distance_to(ra) for p in pins), ">= 0.10",
+        min(p.distance_to(ra) for p in pins) >= 0.10,
+        f"bore Ø{D['pin_bore']:.2f} over pin Ø{D['pin_d']:.2f}")
+    row("pin clears the hook eye", min(p.distance_to(s) for p in pins for s in sprs), ">= 0.10",
+        min(p.distance_to(s) for p in pins for s in sprs) >= 0.10,
+        f"eye wire Ø{D['eye_wire']:.2f}, radial gap {D['eye_clear']:.2f}. Pull the hook on, then push the pin")
+    mouth_open = not ra.is_inside((D["ra_x1"] - 0.15, D["spr_y"], D["z_pin"]))
+    blind = ra.is_inside((D["ra_x0"] + 0.4, D["spr_y"], D["z_pin"]))
+    row("pin mouth open, far end stopped", 1.0 if mouth_open and blind else 0.0, "open",
+        mouth_open and blind, "push in from +x. The -x end is a 1 mm wall")
+    row("screw clears the PCB hole", (D["drill_m2"] - D["screw_d_model"]) / 2, ">= 0.15",
+        (D["drill_m2"] - D["screw_d_model"]) / 2 >= 0.15,
+        f"Ø{D['screw_d_model']:.2f} screw in the Ø{D['drill_m2']:.1f} hole")
+    row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",
+        min(s.distance_to(plate) for s in stands) >= 0.5, "the screw, not the standoff, passes through the plate")
+    row("standoff vs switch body", min(s.distance_to(body) for s in stands), ">= 0.8",
+        min(s.distance_to(body) for s in stands) >= 0.8)
+    row("standoff vs header", min(min(s.distance_to(h) for h in hdrs) for s in stands), ">= 0.6",
+        min(min(s.distance_to(h) for h in hdrs) for s in stands) >= 0.6)
+    row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
+        abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
+        f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
+    row("knob_proud in the accepted window", D["knob_proud"], "16-20",
+        16.0 - 1e-6 <= D["knob_proud"] <= 20.0 + 1e-6,
+        f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − {D['knob_proud']:.2f}. "
+        f"Parameter was {D['knob_proud_in']:.2f}"
+        f"{'' if not D['knob_proud_live'] else ' from knob-param'}")
+    row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
+        T["mate_min"] <= D["mate_in"] <= T["mate_max"],
+        f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
+        f"air {D['mate_air']:.2f}, derived riser {D['riser_h']:.2f} mm, pin tip z {D['z_hdr_tip']:.2f}. "
+        f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm")
+    row("socket count matches the headers", len(socks), "2", len(socks) == 2 and len(hdrs) == 2,
+        "1x3 each side of the switch, not one 2x3 beside it")
+    # 8 centring and symmetry
+    off = math.hypot(*D["sw_xy"])
+    row("switch on the carrier axis", off, "0", off <= 1e-6, "dead centre")
+    sym = (_mirror_ok(D["standoff_xy"]) and _mirror_ok(D["hdr_xy"]) and _mirror_ok(D["balls"])
+           and _mirror_ok(D["springs"]) and _mirror_ok(D["cs_xy"]))
+    row("standoffs, headers, balls and both spring sets symmetric", 1.0 if sym else 0.0, "mirror", sym,
+        f"standoffs (±{D['sx']:.2f}, ±{D['sy']:.2f}), compression springs (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f})")
+    # 9 balls
+    bt = min(b.distance_to(car) for b in balls)
+    bp = min(b.distance_to(plate) for b in balls)
+    row("ball seated in the upper cup", bt, "<= 0.02", bt <= 0.02, f"four Ø{D['ball_d']:g}, cup Ø{2*D['cup_r']:.2f}")
+    row("ball seated in the lower cup", bp, "<= 0.02", bp <= 0.02, "matching cup in the seat post")
+    row("cup radius / ball radius", D["cup_ratio"], "1.05-2.0", 1.05 <= D["cup_ratio"] <= 2.0,
+        f"Rc {D['cup_r']:.3f} mm, rim radius {D['cup_rim_r']:.3f} mm")
+    row("cup depth / ball diameter", D["cup_depth_frac"], "0.15-0.40", 0.15 <= D["cup_depth_frac"] <= 0.40,
+        f"depth {D['cup_depth']:.3f} mm on Ø{D['ball_d']:g}")
+    row("full slide stays inside the cups", D["cup_travel_margin"], f">= {D['cup_margin']:.2f}",
+        D["cup_travel_margin"] + 1e-6 >= D["cup_margin"],
+        f"slide {D['slide']:.2f} mm, cups still hold to {D['cup_s_max']:.2f} mm. "
+        f"Ball centres move to (±{D['bx']:.2f}, ±{D['by']:.2f})")
+    # 10 knob clearance — both faces are MJF, so the gap is 2 x 0.25
+    for name, od in (("live knob-param", D["knob_od_live"]), ("design Ø41.7", D["knob_od_design"])):
+        kg = min(_gap_at(D, od, x, y) for x, y in ((0.0, -D["half_h"]), (D["half_w"], -D["half_h"])))
+        row(f"bezel (full slide toward the knob) vs {name}", kg, f">= {T['knob_min']}", kg >= T["knob_min"] - 1e-6,
+            f"Ø{od:.2f}. Bezel lip {D['bz_lip']:.2f} mm, outer ±{D['half_h']:.2f}")
+    # 11 screws and sockets on the main PCB
+    def on_board(x, y, pad=0.0):
+        fy = D["place_y"] + y
+        return (abs(x) + pad <= D["pcb_w"] / 2 - D["pcb_edge"]) and (fy + pad <= D["pcb_above"] - D["pcb_edge"])
+    holes = D["standoff_xy"] + D["hdr_xy"] + D["springs"]
+    holes_ok = all(on_board(x, y, D["pad_m2"] / 2 if (x, y) in D["standoff_xy"] or (x, y) in D["hdr_xy"] else D["spr_bore"] / 2)
+                   for x, y in holes)
+    nuts_on = all(on_board(x, y, D["shcs"]["head_d"] / 2) for x, y in D["standoff_xy"])
+    row("standoff, socket and spring holes on the main PCB", 1.0 if holes_ok else 0.0, "on", holes_ok,
+        f"hold-down hooks at x ±{D['spr_x']:.2f} (the corner formula wanted ±{D['spr_x_raw']:.2f}, past the PCB)")
+    row("socket-screw head on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
+        f"head Ø{D['shcs']['head_d']:.1f} needs the screws at y ±{D['sy']:.2f} "
+        f"(the pad alone would have allowed ±{D['sy_pad']:.2f})")
+    row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
+        f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
+    # 12 walls, floor, volumes
+    row("bezel lip", D["bz_lip"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_lip"] <= 1.5 + 1e-9,
+        f"matches the other bezel. Glue gap around the glass is {D['glue']:.2f}")
+    row("carrier floor", D["car_floor"], f">= {D['print_min']}", D["car_floor"] >= D["print_min"] - 1e-9,
+        f"floor is the print minimum. Derived riser {D['riser_h']:.2f} mm. Screen top {D['scr_top']:.2f}")
+    row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
+        D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
+    row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],
+        "anti-rotation skirt")
+    z_well = (D["z_roof"] + D["z_bz1"]) / 2
+    x_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
+    y_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
+    y_void = D["pocket"][1] / 2 - D["glue"] * 0.5
+    wall_solid = bez.is_inside((0.0, y_wall, z_well))
+    void_empty = not bez.is_inside((0.0, y_void, z_well))
+    row("bezel well wall is solid and the pocket is open", 1.0 if wall_solid and void_empty else 0.0, "solid",
+        wall_solid and void_empty,
+        f"wall probe y {y_wall:.2f} at z {z_well:.2f}; pocket probe y {y_void:.2f}")
+    row("carrier volume", car.volume / 1000.0, "< 12", car.volume / 1000.0 < 12.0,
+        "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53")
+    row("screen-carrier volume", bez.volume / 1000.0, "< 8", bez.volume / 1000.0 < 8.0,
+        "cm3, the bezel the screen is glued to")
+    row("screen in the bezel", scr.distance_to(bez), "0.01-0.30",
+        0.01 <= scr.distance_to(bez) <= 0.30,
+        f"side glue gap {D['glue']:.2f}. Glass sits 0.02 above the spring pads. Top z {D['scr_top']:.2f}")
+    row("no printed base, spider or round stop", 0.0, "0 parts",
+        not any(n.startswith("joystick base") or n.startswith("screen spider") for n in P),
+        "removed from v0.3: spider, plunger, round stop. Hold-down springs stay")
+    # silence a lint-level unused local if the wall probe x is kept only as documentation
+    _ = x_wall
     return rows
-
-def _post_region(D):
-    from .parts import cyl
-    return cyl(D["post_d"] + 0.02, -1, D["z_db0"] + 0.01, D["sw_x"], 0)   # the riser post supports the board (contact by design)
-
-def _knob_od():
-    here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    kp = os.path.join(here, "knob-param")
-    if not os.path.isdir(kp): return None
-    sys.path.insert(0, kp)
-    try:
-        from knobparam.common import model
-        return model.derive(model.default_params())["knob_od"]
-    except Exception:
-        return None
 
 def clashes(P, tol=1e-3):
     names = list(P); out = {}
     bb = {n: P[n].bounding_box() for n in names}
-    def ov(a, b): return all(getattr(a.min, k) < getattr(b.max, k) - 1e-6 and getattr(b.min, k) < getattr(a.max, k) - 1e-6 for k in "XYZ")
+    def ov(a, b):
+        return all(getattr(a.min, k) < getattr(b.max, k) - 1e-6 and getattr(b.min, k) < getattr(a.max, k) - 1e-6 for k in "XYZ")
     for a, b in itertools.combinations(names, 2):
-        if not ov(bb[a], bb[b]): continue
-        try: v = (P[a] & P[b]).volume
-        except Exception: v = 0.0
-        if v > tol: out[f"{a} / {b}"] = v
+        if not ov(bb[a], bb[b]):
+            continue
+        try:
+            v = (P[a] & P[b]).volume
+        except Exception:
+            v = 0.0
+        if v > tol:
+            out[f"{a} / {b}"] = v
     return out
