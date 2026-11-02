@@ -38,6 +38,7 @@ def key(name):
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if "o-ring" in low: return "silicone"
     if "foam pad" in low: return "foam"                       # v0.6 joystick screen pads
+    if low.startswith("mcu "): return "ic"                     # [Ed 18:34] H7B0 LQFP100 on the main PCB back
     if "jumper" in low and ("b2b socket" in low or "plug end" in low): return "ic"   # v0.6 jumper connectors
     if "seal ring" in low: return "petg"
     if "clear oled" in low: return "oled"

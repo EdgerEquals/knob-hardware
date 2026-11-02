@@ -26,6 +26,7 @@ def _parts():
     parts, keys = view(parts, keys, D, "panel")
     jp, JD = js.placed()
     parts = dict(parts); parts.update(jp)
+    # [Ed 18:34] the H7B0 (LQFP100) is an electronics part now: board back at the low middle, D notched round it
     return D, JD, parts
 
 
@@ -153,7 +154,9 @@ def sheet_across(D, JD, parts, out):
     cuts = [(py + JD["by_top"], "joystick top balls and cradle towers"), (py + 5.6, "joystick press springs (top pair)"),
             (py, "joystick axis: switch, guides, peg, headers"), (py - JD["by_bot"], "joystick knob-side balls and dowels"),
             (enc_y, "encoder wheel"), (0.0, "knob axis"), (-10.0, "1220 motor and lower knob"),
-            (D["clear_oled_xy"][1], "clear OLED centre"), (D["jack_y"], "jacks"), (D["usb_xy"][1], "USB-C"),
+            (D["clear_oled_xy"][1], "clear OLED centre, window D over the top of the H7B0"),
+            (D["mcu"]["xy"][1], "the H7B0 (LQFP100), low middle, under the notch in D"),
+            (D["jack_y"], "jacks"), (D["usb_xy"][1], "USB-C"),
             (D["corners"][0][1], "bottom corner posts")]
     ncol = 4
     nrow = math.ceil((len(cuts) + 1) / ncol)
@@ -183,7 +186,11 @@ def sheet_oblique(D, JD, parts, out):
             ("t", 0.0, 20.0, 25, "tilted plane through the knob axis at z 20, leaning 25° toward the joystick\n"
                                   "as it comes out of the panel"),
             ("t", py, JD["z_ball"], -30, "tilted plane through the joystick axis at the ball height, leaning 30°\n"
-                                         "toward the knob as it comes out of the panel")]
+                                         "toward the knob as it comes out of the panel"),
+            ("v", D["mcu"]["xy"][0], D["mcu"]["xy"][1], 25, "through the H7B0 (LQFP100), 25°"),
+            ("v", D["mcu"]["xy"][0], D["mcu"]["xy"][1], 155, "through the H7B0 (LQFP100), 155°"),
+            ("t", D["mcu"]["xy"][1], -1.0, 35, f"tilted plane through the board back at y {D['mcu']['xy'][1]:g} (the H7B0), leaning 35°\n"
+                                              "toward the knob as it comes out of the panel")]
     ncol = 3
     nrow = math.ceil(len(jobs) / ncol)
     fig = plt.figure(figsize=(ncol * 7.6, nrow * 5.8 + 1.6), dpi=100)
@@ -267,7 +274,8 @@ def sheet_overall(D, parts, out, tol=0.08):
         l, _c = colour(n); legend.setdefault(l, _c)
     fig.legend(handles=[Patch(fc=c, ec="k", lw=0.3, label=l) for l, c in sorted(legend.items())], loc="lower center", ncol=4,
                fontsize=11, frameon=False)
-    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.5). Resin case drawn see-through.",
+    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.6; H7B0 LQFP100 on the board back, low middle). "
+                 "Resin case drawn see-through.",
                  fontsize=16, x=0.01, ha="left")
     fig.subplots_adjust(bottom=0.08, left=0.01, right=0.99)
     _save(fig, out)
