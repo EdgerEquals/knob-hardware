@@ -59,3 +59,28 @@ for xv, ys, x2 in ((18.5, -3.0, 14.5), (18.5, -6.0, 14.7), (18.5, 3.0, 14.5), (1
     print(f"   nearest at the full slide: {w[1]} {w[0]:.2f} (need >= {cm})")
     for r in rows:
         print("   " + r)
+
+
+# ---- [Ed 17:13] fewer conductors (no touch): a narrow flex lets the legs run low under the carrier, where there is length ----
+# R under the roof, V1 down the slot (faces x), S1 on edge along y (faces x), S2 on edge along -x at y2 (faces y),
+# a 180° crease, S3 back along +x at y3 (faces y), lead down onto the plug. Legs sit just over the plug (z band from plug top + cm).
+print("\n==== narrow flex, low legs ====")
+z_lo = D["z_db1"] + D["db_fpc_sock"][2] + 0.3 + cm
+for w, xv, y2, y3, xa, xb in ((2.2, 18.5, -4.0, -3.2, 9.0, 14.0), (2.5, 18.5, -4.0, -3.2, 9.0, 14.0), (3.0, 18.5, -4.0, -3.2, 9.0, 14.0)):
+    zb, zt = z_lo, z_lo + w
+    R = box(xe, xv, -w / 2, w / 2, z_run, z_run + T)
+    V1 = box(xv - T / 2, xv + T / 2, -w / 2, w / 2, zt, z_run)
+    S1 = box(xv - T / 2, xv + T / 2, y2, w / 2, zb, zt)
+    S2 = box(xa, xv, y2 - T / 2, y2 + T / 2, zb, zt)
+    S3 = box(xa, xb, y3 - T / 2, y3 + T / 2, zb, zt)
+    wc = clear([R, V1, S1, S2, S3])
+    L = dict(R=xv - xe - BEND, V1=z_run - zt - 2 * BEND, S1=(w / 2 - y2) - 2 * BEND, S2=xv - xa - 2 * BEND, S3=xb - xa - 2 * BEND)
+    print(f"\nwidth {w} (lines at 0.2 pitch: {int((w - 0.5) / 0.2) + 1}), legs z {zb:.2f}-{zt:.2f}: R {L['R']:.2f}, V1 {L['V1']:.2f}, "
+          f"S1 {L['S1']:.2f}, S2 {L['S2']:.2f}, S3 {L['S3']:.2f}")
+    print(f"   nearest at the full slide: {wc[1]} {wc[0]:.2f} (need >= {cm})")
+    for c in C_CU:
+        kx = L["V1"] ** 3 + L["S1"] ** 3; ky = L["S2"] ** 3 + L["S3"] ** 3
+        ex = max(eps(slide * L[k] ** 3 / kx, L[k], c) for k in ("V1", "S1"))
+        ey = max(eps(slide * L[k] ** 3 / ky, L[k], c) for k in ("S2", "S3"))
+        ez = eps(press, L["R"], c)
+        print(f"   c {c * 1000:.0f} µm: x {100 * ex:.3f}% ({FAT / ex:.1f}×), y {100 * ey:.3f}% ({FAT / ey:.1f}×), press {100 * ez:.3f}% ({FAT / ez:.1f}×)")
