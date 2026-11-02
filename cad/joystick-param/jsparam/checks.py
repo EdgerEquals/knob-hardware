@@ -154,9 +154,10 @@ def run(D, P):
     fc = min(fpc.distance_to(car), fpc.distance_to(bez))
     row("FPC vs carrier and bezel", fc, f">= {T['cable_min']}", fc >= T["cable_min"] - 1e-4,
         f"FPC {D['fpc_w']:g} wide [A], slot {D['slot_x'][1] - D['slot_x'][0]:.2f} x {2 * D['slot_hy']:.2f}")
-    bend = D["scr"]["w"] / 2 - D["slot_x"][1]
-    row("FPC bend room under the glass", bend, ">= 1.2", bend >= 1.2,
-        f"screen +x edge to the slot end. Exit side and pin-out are still open")
+    if "win_x" not in D:   # v0.5: the panel's own tail bent round the glass edge
+        bend = D["scr"]["w"] / 2 - D["slot_x"][1]
+        row("FPC bend room under the glass", bend, ">= 1.2", bend >= 1.2,
+            f"screen +x edge to the slot end. Exit side and pin-out are still open")
     fb = fpc.distance_to(pcb)
     row("FPC vs PCB slot at full slide", fb - D["slide"], ">= 0.2", fb - D["slide"] >= 0.2 - 1e-6,
         f"hole x {D['hole_x0']:.1f}-{D['hole_x1']:.1f}, ±{D['hole_hy']:.2f}")
@@ -413,6 +414,49 @@ def run(D, P):
                   for a in range(0, 360, 45))
         row("screen socket clear of the carrier at full slide", sc_, f">= {D['tol_mjf']:.2f}", sc_ >= D["tol_mjf"] - 1e-6,
             "skirt notched over the tab")
+    if "win_x" in D:   # v0.6: the DO0164FMST02 in the roof, and the custom jumper [Ed 16:14-16:31]
+        from build123d import Box, Align
+        pm = D["print_min"]
+        back = scr & (Pos(0, 0, D["z_scr0"] - 5.0) * Box(80, 60, 5.0 - 0.005, align=(Align.CENTER, Align.CENTER, Align.MIN)))
+        bk = back.distance_to(bez)
+        row("screen back clear of its roof pockets (mm)", bk, ">= 0.10", bk >= 0.10 - 1e-6,
+            f"[S] FMST02 back from Waveshare's STEP: sheet 0.20, flex 0.45, fold 0.70, parts to 1.20, connector plate 1.50, "
+            f"B2B header 2.15; pockets {D['back_side']:g} round, {D['back_clear']:g} under")
+        pads = [P[n] for n in P if n.startswith("screen foam pad")]
+        if pads:
+            pa = sum(f.area for f in pads[0].faces() if f.normal_at().Z > 0.99)
+            ok = pads[0].distance_to(scr) <= 0.02 and pads[0].distance_to(bez) <= 0.02
+            fz = sorted({round(D["z_scr0"] - b_[5], 2) for b_ in D["scr_back"] if b_[0] not in D["scr_window"]})
+            row("foam pads under the panel's back (press goes into the roof), mm²", pa, ">= 300", ok and pa >= 300,
+                f"{D['foam_t']:g} thick [A] at {len(fz)} levels, touching the panel and the pocket floors; the connector is windowed")
+        land = bez & (Pos(0, 0, D["z_scr0"] - 0.01) * Box(D["scr"]["w"], D["scr"]["h"], 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN)))
+        la = sum(f.area for f in land.faces() if f.normal_at().Z > 0.99)
+        row("glass glue land on the roof top (mm²)", la, ">= 200", la >= 200,
+            "the glass margin clear of the back: mostly the +x end, plus strips along both long edges")
+        rk = D["roof_t"] - D["back_deep"]
+        row("roof under the deepest back pocket", rk, f">= {pm:g}", rk >= pm - 1e-6,
+            f"roof {D['roof_t']:.2f} thick (v0.5 {D['roof_t_in']:g}); deepest pocket {D['back_deep']:.2f}; underside z {D['z_roof']:.2f}")
+        st = D["z_plate_floor"] - D["z_step"]
+        row("roof step under the connector plate", st, f">= {pm:g}", st >= pm - 1e-6,
+            f"x {D['step_x'][0]:.2f}-{D['step_x'][1]:.2f}, ±{D['step_hy']:.2f}; carries the +x guide boss; no jumper there")
+        js = P["screen jumper B2B socket (top, on the panel header) [A]"]
+        jf = P["screen jumper FPC [A]"]
+        near = [(js.distance_to(P[n]), n) for n in P if n.startswith(("compression spring", "guide insert", "guide screw", "press peg"))]
+        near += [(min(js.distance_to(bez), jf.distance_to(bez)), "screen carrier (window, step, roof)")]
+        dmin, who = min(near)
+        row("jumper top end clear of the springs, guides, peg and roof (mm)", dmin, f">= {D['tol_mjf']:.2f}", dmin >= D["tol_mjf"] - 1e-6,
+            f"socket {D['db_fpc_sock'][0]:g} x {D['db_fpc_sock'][1]:g} [A] at x {D['jmp_x']:g} (all move together with the block); nearest: {who}")
+        seat = (D["cs_y"] - D["cs"]["od"] / 2) - D["win_hy"]
+        row("press-spring seats on solid roof beside the socket window", seat, ">= 0", seat >= -1e-6,
+            f"coil inner edge y {D['cs_y'] - D['cs']['od'] / 2:.2f}, window ±{D['win_hy']:.2f}. [C] decided on the real socket length: "
+            "if it is longer than 8.4, all four springs go to y ±6.0 [Ed 16:31]")
+        sm = min((D["slot_x"][1] - D["slot_x"][0] - D["jmp_stiff"][0]) / 2, D["slot_hy"] - D["db_fpc_sock"][0] / 2)
+        row("carrier slot passes the jumper's bottom plug (assembly)", sm, ">= 0.2", sm >= 0.2 - 1e-6,
+            f"slot x {D['slot_x'][0]:.2f}-{D['slot_x'][1]:.2f}, ±{D['slot_hy']:.2f}; plug end {D['jmp_stiff'][0]:g} x {D['db_fpc_sock'][0]:g} [A]")
+        e = D["jmp_strain"]
+        row("jumper drop: bending strain at the full slide (x), %", 100 * e, f"<= {100 * D['jmp_flex_e']:.2f}", e <= D["jmp_flex_e"] + 1e-9,
+            f"[C] open: drop free length {D['jmp_free']:.2f} (carrier to the daughterboard plug), flex {D['fpc_t']:g} [A], slide "
+            f"±{D['slide']:.2f}; y slide is in the flex plane and is not taken by this drop at all. v0.5 had the same drop")
     # silence a lint-level unused local if the wall probe x is kept only as documentation
     _ = x_wall
     return rows

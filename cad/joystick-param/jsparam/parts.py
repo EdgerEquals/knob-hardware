@@ -1,4 +1,5 @@
-"""Top-screen joystick stack parts, v0.4: build(D) -> {name: solid}. Reads D only.
+"""Top-screen joystick stack parts, v0.4-v0.6: build(D) -> {name: solid}. Reads D only.
+v0.6: the DO0164FMST02 with its back in roof pockets, a foam pad, the roof window and step at the connector, the custom jumper.
 
 The carrier is a thin shell. The screen is glued to a separate bezel that floats on four catalog
 compression springs. Each spring sits on an M2 grub screw in the carrier, set before the stack is
@@ -133,7 +134,8 @@ def carrier(D):
     for x, y in D["springs"]:
         c += cyl(D["spr_boss"][0], D["spr_z1"], D["z_c0"] + 0.01, x, y)
         c -= box(x - hook_w, x + hook_w, y - hook_reach, y + D["spr_boss"][1], D["spr_z1"] - 0.01, D["z_c0"] + 0.02)
-    c -= box(D["slot_x"][0] - 0.5, D["slot_x"][1] + 0.5, -(D["slot_hy"] + 0.4), D["slot_hy"] + 0.4,
+    m_, my_ = (D["slot_cut"], D["slot_cut"]) if "slot_cut" in D else (0.5, 0.4)   # v0.6: the slot is sized to pass the jumper plug
+    c -= box(D["slot_x"][0] - m_, D["slot_x"][1] + m_, -(D["slot_hy"] + my_), D["slot_hy"] + my_,
              D["z_c0"] - 0.5, D["z_floor1"] + 0.5)
     g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
@@ -178,6 +180,22 @@ def screen_carrier(D):
     else:
         b += cyl(D["peg_d"], D["z_peg"], D["z_roof"] + 0.01)
     gi = D["guide"]["ins"]
+    if D.get("back_pk") and "win_x" in D:
+        # v0.6: roof step under the connector plate (it carries the +x guide boss), then the pockets for the FMST02's back,
+        # the window round the jumper socket, and the insert holes last
+        b += box(D["step_x"][0], D["step_x"][1], -D["step_hy"], D["step_hy"], D["z_step"], D["z_roof"] + 0.01)
+        for x, y in D["g_xy"]:
+            b += cyl(2 * D["g_rboss_r"], D["g_ins_bot"], D["z_roof"] + 0.01, x, y)
+        for n, x0, x1, y0, y1, d in D["back_pk"]:
+            if n == "B2B header":
+                continue
+            b -= box(x0, x1, y0, y1, D["z_scr0"] - d, D["z_scr0"] + 0.05)
+        b -= box(D["win_x"][0], D["win_x"][1], -D["win_hy"], D["win_hy"], D["z_roof"] - 0.05, D["z_scr0"] + 0.05)
+        if "peg" in D:
+            b -= cyl(D["peg"]["ins"]["hole"], D["p_ins_bot"] - 0.02, D["p_ins_top"] + 0.01)
+        for x, y in D["g_xy"]:
+            b -= cyl(gi["hole"], D["g_ins_bot"] - 0.02, D["g_ins_top"] + 0.01, x, y)
+        return b
     for x, y in D["g_xy"]:
         b += cyl(2 * D["g_rboss_r"], D["g_ins_bot"], D["z_roof"] + 0.01, x, y)
         b -= cyl(gi["hole"], D["g_ins_bot"] - 0.02, D["g_ins_top"], x, y)
@@ -296,11 +314,44 @@ def build(D):
     if D["z_roof"] >= D["z_scr0"] - 1e-6:   # v0.4: the spring pads stood level with the glass underside
         for x, y in D["cs_xy"]:
             glass -= cyl(2 * D["cs_bore_r"] + 1.4, D["z_scr0"] - 0.05, D["z_roof"] + 0.05, x, y)
+    for n, x0, x1, y0, y1, d in D.get("scr_back", ()):   # v0.6 [S] the FMST02's back (folded flex, parts, connector plate, B2B header)
+        glass += box(x0, x1, y0, y1, D["z_scr0"] - d, D["z_scr0"] + 0.03)
     out["top screen " + S["part"]] = glass
     t = D["fpc_t"]
     fx = D["fpc_x"]
     z_run = D["z_scr0"] - 0.55 + D["tol_mjf"]
-    if D["fpc_to_db"]:
+    if D.get("back_pk") and "win_x" in D:
+        # v0.6 foam pads: under every part of the panel's back except the connector (windowed), so a press anywhere on the glass
+        # goes through the panel's back into the roof, never through a part into a pocket floor. Each pad is cut round anything
+        # deeper; 0.01 short of the panel so the model shows no overlap.
+        win = set(D["scr_window"]); pad = None
+        feats = [b_ for b_ in D["scr_back"] if b_[0] not in win]
+        for n, x0, x1, y0, y1, d in feats:
+            z1 = D["z_scr0"] - d - 0.01
+            p_ = box(x0, x1, y0, y1, z1 - D["foam_t"] + 0.01, z1)
+            for m, a0, a1, b0, b1, dd in D["back_pk"]:
+                if dd - D["back_clear"] > d + 1e-6 or (m in win):
+                    p_ -= box(a0, a1, b0, b1, z1 - 2.0, z1 + 0.1)
+            pad = p_ if pad is None else pad + p_
+        out[f"screen foam pads {D['foam_t']:g} (foam tape) [A]"] = pad
+        # v0.6 [Ed 16:22] the custom jumper: socket on the panel header, flex on a stiffener, run under the roof, drop, plug
+        sl_, ss_, sz_ = D["db_fpc_sock"]; stw, stt = D["jmp_stiff"]; jx = D["jmp_x"]
+        hdr = next(b_ for b_ in D["scr_back"] if b_[0] == "B2B header")
+        out["screen jumper B2B socket (top, on the panel header) [A]"] = (
+            box(jx - ss_ / 2, jx + ss_ / 2, -sl_ / 2, sl_ / 2, D["z_js0"], D["z_js1"])
+            - box(hdr[1] - 0.02, hdr[2] + 0.02, hdr[3] - 0.02, hdr[4] + 0.02, D["z_scr0"] - hdr[5] - 0.02, D["z_js1"] + 0.1))   # the plug sits in it
+        sx = D["db_sock_x"]; z_db_top = D["z_db1"]; zr = D["z_run"]; hw = D["fpc_w"] / 2
+        xe = jx + stw / 2
+        out["screen FPC socket AXE530127 (daughterboard)"] = box(sx - ss_ / 2, sx + ss_ / 2, -sl_ / 2, sl_ / 2, z_db_top + 0.02, z_db_top + sz_)
+        out["screen jumper FPC [A]"] = (
+            box(jx - stw / 2, xe, -sl_ / 2, sl_ / 2, D["z_jst0"], D["z_js0"])               # flex + stiffener under the socket
+            + box(xe - t, xe, -hw, hw, min(zr, D["z_jst0"]), D["z_js0"])                     # step down out of the window
+            + box(xe - t, fx + t / 2, -hw, hw, zr, zr + t)                                    # run under the roof
+            + box(fx - t / 2, fx + t / 2, -hw, hw, z_db_top + sz_ + 0.3, zr + t)               # drop through the carrier slot
+            + box(sx - stw / 2, fx + t / 2, -hw, hw, z_db_top + sz_ + 0.3, z_db_top + sz_ + 0.3 + t))   # foot over the plug
+        out["screen jumper plug end (bottom, in the daughterboard socket) [A]"] = box(
+            sx - stw / 2, sx + stw / 2, -sl_ / 2, sl_ / 2, z_db_top + sz_ + 0.02, z_db_top + sz_ + 0.3 - 0.01)
+    elif D["fpc_to_db"]:
         # [Ed] 2 Nov: short jumper flex from the screen edge down to a socket on the daughterboard (service loop not drawn)
         sx = D["db_sock_x"]; sl_, ss_, sz_ = D["db_fpc_sock"]   # v0.5: long side along y (the flex width)
         z_db_top = D["z_db1"]
