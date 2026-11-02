@@ -4,7 +4,7 @@ Part: borosilicate 3.3 tube, OD 42.0, wall 2.15 (2.0–2.3), length 47.45; end A
 (the inside one is the cap seat), end B fire-polished. Samples 2–10, then 50–200.
 
 [Ed 14:30] Gmail drafts made (not sent; Danny attaches `docs/img/glass-tube-drawing.pdf` and sends): UQG Optics (adds an OD-grinding
-price), Fuxinag, UQ Glassblowing, Elemental Scientific. Sinoptix has only a web RFQ form: paste the text below. Sender: MMICO,
+price), Fuxinag, UQ Glassblowing, Elemental Scientific. Sinoptix has only a web RFQ form: paste the text below. Sender: EMMICo,
 Unit 4, 62 Manning Road, Wilson WA 6107. v0.21 did not change the tube (length still 47.45).
 
 ## Candidates (best first; none states every step, the quotes must confirm)
