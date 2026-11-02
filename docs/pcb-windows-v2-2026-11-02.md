@@ -65,3 +65,16 @@ Seen straight on, 74 mm² of A and 51 of B sit behind the opaque grip block (PA-
 
 KiCad (later job): R20–R22 and R30–R32 still sit inside D on the stale board. The v0.16 MH1 joystick holes and FPC slot in
 `pcb_proxy.json` are stale.
+
+## Rechecked 2 Nov, 17:40, against knob v0.22b and joystick v0.6
+- The windows regenerate identically (A 202.9, B 159.1, C 45.1, D 917.4, E 45.2 mm² with the 6 mm web): the cone top, split arm,
+  pedestal key hole (inside the keep-out) and joystick v0.6 change nothing the windows see.
+- Board back, room for the H7B0 (parts within 1.7 mm behind the PCB; 0.3 round them):
+  - 6 mm web: largest clear square **10.0** at (−9.65, −7.3) (was 10.3 in v0.20; the Hall row turned 16°). UFBGA169 + caps (9 □):
+    one spot, under the knob at (−7.6, −9.8). LQFP100 (17.2 □): none.
+  - 14 mm web (A 160.8, B 116.5): largest square **12.7** at (−0.15, 28.2); UFBGA169 at (−1.6, 26.2) or (−7.6, −9.8);
+    UFBGA176+25 + caps (12 □) at (−0.1, 27.7). LQFP100: none.
+  - No A/B at all: 14.3 □; still no LQFP100. Only window D's area takes an LQFP100.
+  - Picture: `docs/img/h7b0-site-options.png`.
+- [S] STM32H7B0 packages: LQFP64, LQFP100, LQFP144, LQFP176, UFBGA169 (7 × 7), UFBGA176+25 (10 × 10). The UFBGA169 part
+  (STM32H7B0ABI6Q) lists 121 I/O (LQFP100: 80); LCSC shows it out of stock on 2 Nov.
