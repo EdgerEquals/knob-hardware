@@ -19,7 +19,14 @@ P = dict(
     dial_bore_floor=0.5,   # [A] dial material kept under the cup-boss bore, above the hub bottom
     dial_collar_d=9.2,   # [A] "tube" race only (v0.15c chamfer race: no collar)
     dial_collar_h=0.3,   # [A] "tube" race only
-    r_web=14.0,   # [A] web/lip junction radius
+    r_web=14.0,   # [A] web/lip junction radius ("stepped" dial only)
+    # ---- v0.21 [Ed 2 Nov 13:31-13:51]: the top of the knob as straight cones, no steps ----
+    dial_shape="cone",   # [Ed] "cone": dial underside and top are parallel cones at cone_deg; "stepped": v0.20 web + cup + well
+    cone_deg=30.0,   # [Ed] cone angle from the panel plane. Dial underside, dial top, cap top and cap underside are all parallel.
+    race_out=2.5,   # [Ed 13:51] the gap and the ball race moved out this far, and up race_out*tan(cone_deg), along the cone, so the
+                    # cone faces stay put while the cap neck and the dial under the adapter-board corner both grow to ~2.1
+    cone_well_clear=0.3,   # [A] dial well wall round the adapter board edge ("cone" dial)
+    carr_seat_wall=0.6,   # [A] the flat carrier seat starts this far inside the carrier-magnet pocket ("cone" dial)
     boss_bore_clear=0.15,   # [A] dial bore round the holder boss
     cup_clear=0.2,   # [A] dial round the holder cup
     dial_screen_gap=0.3,   # [A] dial below the holder plate
@@ -89,7 +96,8 @@ IMPORTS = {"electronics": ["adapter_d", "adapter_fps", "adapter_env"]}
 EXPORTS = ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # -> main_knob
            "tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",                                                   # -> base_drive (cradle groove)
            "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # -> main_knob (ball circle + faces)
-           "kb_seat_c_knob", "kb_groove_h"]                                                  # -> base_drive (cradle groove)
+           "kb_seat_c_knob", "kb_groove_h",                                                  # -> base_drive (cradle groove)
+           "dial_shape", "cone_deg", "cone_under_r0", "cone_lip_r"]                          # -> main_knob (v0.21 cone top)
 
 
 def derive(D):
@@ -111,6 +119,10 @@ def derive(D):
     D["z_web0"] = D["z_well"] - D["web_in_t"]
     D["dial_bore_d"] = D["boss_d"] + 2 * D["boss_bore_clear"]
     D["dial_hub_od"] = D["dial_bore_d"] + 2 * D["dial_hub_wall"]
+    if D["dial_shape"] == "cone":   # v0.21 [Ed 13:51]: gap + race slide out and up along the cone (the cone faces stay where they were)
+        D["race_up"] = D["race_out"] * math.tan(math.radians(D["cone_deg"]))
+        D["z_web0"] += D["race_up"]
+        D["dial_hub_od"] += 2 * D["race_out"]
     if D["kb_race"] == "chamfer":   # v0.15d: hub bottom at the gusset start (no straight hub face under the race)
         D["z_hub0"] = D["z_web0"] - D["gusset"] - D["dial_hub_below_gusset"]
         D["hold_z0"] = max(D["z_floor"] - D["hold_z0_socket"], D["z_hub0"] + D["knob_run"] + D["dial_bore_floor"])   # boss stays above the hub
@@ -193,6 +205,22 @@ def derive(D):
         W = S["fold"][1]; rlim = D["lip_id"] / 2 - D["fpc_clear"]           # fold corners inside the lip ID
         D["fold_x_outer"] = math.sqrt(max(rlim ** 2 - (W / 2) ** 2, 0))      # from the axis toward the tail
         D["z_cup_top"] = D["z_holder0"]
+    # ---- v0.21 cone dial [Ed]: underside from the race top up at cone_deg to the lip; top parallel, from the well round the adapter
+    # board up to a flat carrier seat that starts carr_seat_wall inside the carrier-magnet pocket ----
+    T = math.tan(math.radians(D["cone_deg"])); c = math.cos(math.radians(D["cone_deg"]))
+    D["cone_under_r0"] = D["dial_hub_od"] / 2 + D["gusset"]                 # race top (dial side), z_web0
+    D["cone_lip_r"] = D["cone_under_r0"] + (D["z_lip0"] - D["z_web0"]) / T   # underside meets the flat lip underside
+    D["cone_well_r"] = D["adapter_d"] / 2 + D["cone_well_clear"]
+    D["cone_seat_r"] = D["carr_r"] - D["carr_mag"][0] / 2 - D["carr_seat_wall"]
+    D["cone_top_z_well"] = D["z_screen_cut"] - (D["cone_seat_r"] - D["cone_well_r"]) * T
+    D["cone_dial_wall"] = (D["cone_top_z_well"] - (D["z_web0"] + (D["cone_well_r"] - D["cone_under_r0"]) * T)) * c   # normal, everywhere
+    def _seg(p, a, b):
+        (px, py), (ax, ay), (bx, by) = p, a, b; dx, dy = bx - ax, by - ay
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+        return math.hypot(px - ax - t * dx, py - ay - t * dy)
+    under = [(D["dial_tube_od"] / 2, D["z_hub0"]), (D["dial_hub_od"] / 2, D["z_hub0"]), (D["cone_under_r0"], D["z_web0"]),
+             (D["cone_lip_r"], D["z_lip0"])]
+    D["cone_dial_corner"] = min(_seg((D["cone_well_r"], D["z_well_top"]), under[i], under[i + 1]) for i in range(3))   # under the board edge
     ad = D["adapter_fps"][D["b2b_at"]]
     D["j1_xy"] = (ad[1], ad[2])
     D["b2b_xy"] = (-ad[1], -ad[2]) if (D["screen_on_dial"] and D["b2b_flip"]) else (ad[1], ad[2])

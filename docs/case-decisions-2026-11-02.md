@@ -218,3 +218,18 @@ A fresh-eyes review of v0.20 found real faults; all fixed:
   press springs moved to (±11.5, ±5.6) (was ±7.5), the hold-downs to (±12.5, ±1.5) (was ±3.0) and the guides to (±8.5, 0) (was ±9).
   The skirt walls no longer need a split. Tipping safety unchanged (1.32 / 1.61 / 2.78). Joystick checks 90/90, 0 clashes.
   `geom.json` lists the holes as "press-spring grub access (NPTH)".
+
+### Knob top as straight cones, v0.21 (2 Nov, 13:31–13:51)
+- [Ed 13:31] The control dial and the knob upper-cap had stepped profiles (left over from the old flat web and the old carrier cup).
+  Now **every sloping face is one straight 30° cone, and they are parallel** [Ed 13:44]: dial underside, dial top, cap top, cap underside.
+- [Ed 13:44] **Cap thicker**: 3.5 mm wall (was a 1.35–1.5 dished web). Underside flat at the hub-gear top (z 44.0, 0.5 over the 1220
+  pinion) until the parallel cone rises off it at r 10.46, then up to a 2.74 mm plug in the glass bore and the 45° seat on the
+  ground inner chamfer. Flat ring flush with the glass top from r 18.19 to the seat.
+- [Ed 13:51] **Gap and ball race moved up and out** along the cone (out 2.5, up 1.44), so the cone faces stay put: the cap neck at
+  the hub goes from 0.70 to 2.14 and the dial keeps 2.09 under the adapter-board corner (the board is the dial up-stop and does not
+  move). The ball circle goes from r 6.51 to r 9.01: 53 × Ø1 balls (was 38).
+- Dial: 4.40 wall (normal); the adapter board sits in a Ø16.10 well (floor z 49.30, as before); the flat carrier seat starts at
+  r 12.90, 0.6 inside the carrier-magnet pocket (magnet and pin unchanged at r 15).
+- Model: `control_dial` `dial_shape="cone"`, `cone_deg`, `race_out`, `cone_well_clear`, `carr_seat_wall`; `main_knob`
+  `cap_shape="cone"`, `cap_cone_t`. New checks for the neck, both walls, the running gap (0.32 normal), the plug and the seat.
+  Full build v0.21: 189/189, 0 clashes, joystick vs knob none. Section: `cad/assemblies/knob-stack-v0.21/knob-stack-v0.21-knob-top.png`.
