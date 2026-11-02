@@ -230,3 +230,34 @@ Decisions and reasons: `docs/case-decisions-2026-11-02.md`, "2 Nov midday (v0.20
 - Open: flex tail length [C]; the fold pocket leaves 0.6 of the +x wall (MJF minimum 1.0) [C]; parts to pick (2×5 header code, 2×5
   sockets, M2×8 low-head, M2×6 grub, inserts, brass tube 3.0/2.1, 0.9 N Ø2 extension springs, dowels, epoxy); the daughterboard
   KiCad generator (`make_project.py`) does not read the new `geom.json` keys yet (rows, axis, hdr_pins, tab).
+
+## v0.6 build (2 Nov 2026): DO0164FMST02 and its jumper [Ed 16:14–16:33]
+Model: `cad/joystick-param/` (v0.6). Images: `cad/assemblies/joystick-v0.6/joystick-v0.6.png`, `-plan.png`, `-clean.png`,
+`-connector-sections.png`. Decisions and studies: `docs/screens-2026-11-02.md` (16:14, 16:18, 16:22, 16:31).
+- **Screen** [Ed 16:14]: DO0164FMST02, flex out at the −x end [Ed 16:18]. Its back is modelled from Waveshare's STEP as ten boxes
+  (`scr_back`): a 0.20 sheet over 25.8 × 22.8, the folded flex (0.45) and its fold at −x (0.70), parts to 1.20, the connector plate
+  (1.50) and the B2B header (2.15 deep, x +11.75).
+- **Roof**: 2.35 thick (was 1.6) so the deepest pocket (1.35) keeps the 1.0 MJF wall; the cavity under it is 1.75 (was 2.5). Pockets
+  0.2 round each feature and 0.15 under it, filled by **0.15 foam pads** [A] under every part of the back except the connector
+  (583 mm²), so a press anywhere on the glass goes into the roof and the peg, not through a part. Glass glued on the clear margin
+  (395 mm²: the +x end and the long-edge strips). The roof is **windowed** round the jumper socket and **stepped** 1.0 under the
+  connector plate, where the +x guide boss hangs.
+- **Guides** [Ed 16:31] at (+6.5, +3.0) / (−6.5, −3.0), ISO 7984 M2×6: the head stays low (1.12 from the switch's real 45° outline,
+  1.25 over the board at full press), bore 3.30 in the carrier (1.1 × the sleeve OD). Inserts flush with the deepest pocket over them
+  (z 41.80); roof bosses 0.35 over the carrier floor at full press.
+- **Peg**: insert under the centre pocket, M2×5 grub, 0.40 of adjustment each way.
+- **Jumper** [Ed 16:22] [A until the B2B family is known]: socket (8.4 × 3.0, the daughterboard socket's part) on the panel header,
+  flex on a 4.0 stiffener, run 0.25 under the roof to x 16, drop through the carrier slot (now 4.5 × 8.9, it passes the plug end),
+  plug into the daughterboard socket (unchanged; the board's geometry is unchanged).
+- **Press springs** stay at (±11.5, ±5.6): the coil sits 0.03 outside the socket window [C: the real socket length decides].
+- **Assembly order (corrected)**: (1) on the bench, plug the jumper's socket onto the panel's header, panel face down; (2) feed the
+  jumper's tail down through the roof window and out of the open bottom of the grip block, lay the foam pads, glue the panel on;
+  (3) fit the block to the carrier with the guides, tail through the carrier slot; (4) set the sub-assembly on the cradle balls,
+  hook the hold-downs; (5) press the jumper's plug into the daughterboard socket from the +x side, under the carrier. (The order
+  given at 16:22, panel folded over last, needs ~20 mm of slack in the 1.75 cavity: it does not fit.)
+- Checks **97/98**, 0 clashes; full knob build 207/207, joystick vs knob none.
+- **Open, FAIL [C]: the jumper drop under the slide.** The carrier moves ±0.45 in x and y against the fixed daughterboard; the drop has
+  4.90 of free length between them. Bending in x strains the flex 0.68% (target 0.15% for > 10⁶ cycles, [A]); the y slide is across
+  the flex's width and is not taken at all. v0.5's drop had the same gap. Free room found: a column 4 × 10 × 30 just outside the
+  cradle ring at the +x end (only a case corner insert grazes it), long enough for an x-facing and a y-facing section of ~12 each
+  (~0.11%). Decision for Danny.

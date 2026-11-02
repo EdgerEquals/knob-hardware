@@ -232,7 +232,8 @@ def render(D, P, rows, png):
            f"Guides: {D['guide']['part']} (M2×{D['g_len']:.0f}); heads are the up-stop. "
            f"Finger gap to the knob {D['finger_gap']:.2f} mm.\n"
            f"Checks: {len(rows) - nf}/{len(rows)} PASS. Switch on the carrier axis. Footprint −45°: a/b/c/d → UP/RIGHT/LEFT/DOWN, confirmed at first-power calibration. "
-           f"FPC exit, pitch and pin-out are still open [A].")
+           + ("Screen DO0164FMST02, flex out at -x; custom jumper [A] from its B2B header to the daughterboard socket (B2B family [C])."
+              if "win_x" in D else "FPC exit, pitch and pin-out are still open [A]."))
     fig.text(0.01, 0.235, key, fontsize=12, va="top")
     shown = sorted({group_of(n) for n in P})
     fig.legend(handles=[Patch(facecolor=GROUPS[i][1], edgecolor="#222", label=GROUPS[i][0]) for i in shown], loc="lower center", ncol=4, fontsize=11, frameon=True,

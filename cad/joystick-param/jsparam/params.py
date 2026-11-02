@@ -1,4 +1,11 @@
-"""Top-screen joystick stack v0.5 — params + derive.
+"""Top-screen joystick stack v0.6 — params + derive.
+
+v0.6 (2 Nov 2026, Ed 16:14–16:33): the screen is the DWO DO0164FMST02 (geometry from Waveshare's STEP of the ESP32-S3-Touch-
+AMOLED-1.64). Its flex leaves the -x end [Ed 16:18] and folds under the panel; a 30-pin 0.4 mm B2B header sits 2.15 behind the
+glass at x +11.75. The roof is pocketed to the panel's back (and thickened so the deepest pocket keeps the print minimum), windowed
+at the connector, with a foam pad over the back sheet so a press on the glass goes into the roof. A short custom jumper [Ed 16:22]:
+a B2B socket on the panel header, a flex run under the roof to the existing drop at x 16, a plug into the daughterboard socket.
+The guides turn to (+6.5, +3.0) / (-6.5, -3.0) [Ed 16:31]; their heads stay low (the switch test uses its real 45° outline).
 
 v0.5 (2 Nov 2026, Ed): the bezel is a 5 mm grip block with the glass on top; the switch stack is lifted 2 mm on
 M2x30 standoffs so the carrier rises into the faceplate hole; two guide screws in brass sleeves tie the bezel to the
@@ -35,7 +42,7 @@ import os
 import sys
 
 P = dict(
-    version="v0.5",
+    version="v0.6",
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
     knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
@@ -48,30 +55,52 @@ P = dict(
     tol_sla=0.20,           # [S] SLA resin, the wide end of PCBWay's ±0.1–0.2 mm
     tol_mjf=0.25,           # [S] MJF/SLS nylon
     tol_fdm=0.20,           # [S] FDM, if a jig or a trial part is printed that way
-    # ---- screen (DWO DO0164FMST05, landscape: datasheet portrait 26.74 W x 41.62 H) ----
-    scr=dict(part="DWO DO0164FMST05 1.64\" 456x280 AMOLED", w=41.62, h=26.74, t=1.5, active=(35.57, 21.84),
-             mass_g=8.0),  # [S] outline/thickness; mass [A] until the module is weighed
+    # ---- screen (landscape: datasheet portrait 26.74 W x 41.62 H) ----
+    scr=dict(part="DWO DO0164FMST02 1.64\" 456x280 AMOLED", w=41.62, h=26.74, t=1.5, active=(35.57, 21.84),
+             mass_g=8.0),  # [Ed 16:14] FMST02 (was FMST05: no drawing found). [S] outline/thickness; mass [A] until weighed
+    # v0.6 [S] the FMST02's back, from Waveshare's STEP (esp32-s3-touch-amoled-1_64.stp, read with cad/joystick-param/fmst02_fit.py):
+    # boxes (name, x0, x1, y0, y1, depth behind the glass back) in this frame, flex leaving -x [Ed 16:18]. Depths to ±0.025.
+    scr_back=(("back sheet", -13.9, 11.9, -11.4, 11.4, 0.20),
+              ("flex layer", -12.0, 3.4, -6.5, 11.3, 0.45),
+              ("flex fold at the -x edge", -19.8, -12.1, -6.5, 8.8, 0.70),
+              ("connector flex", -6.6, 11.8, -9.2, 3.6, 0.80),
+              ("part B", -6.6, 5.4, -9.2, -0.2, 0.90),
+              ("part A", -9.6, -4.6, 5.0, 10.0, 1.20),
+              ("part C", -0.6, 3.4, 5.8, 10.0, 1.20),
+              ("part D", 0.4, 4.1, -8.9, -5.2, 1.20),
+              ("connector plate", 4.9, 13.7, -4.3, 4.3, 1.50),
+              ("B2B header", 10.5, 13.0, -4.0, 4.0, 2.15)),
+    scr_window=("connector plate", "B2B header"),   # the roof is windowed / stepped under these, not pocketed
+    hdr_x=11.75,            # [S] B2B header centre (x); centred across the width
+    back_side=0.20,         # [A] pocket margin round each back feature, in plan
+    back_clear=0.15,        # [A] pocket floor below each back feature
+    foam_t=0.15,            # [A] foam pad (PET-carrier foam tape) between the back sheet and its pocket floor: a press on the glass
+                            # goes into the roof and the peg, not into bending the panel
+    step_t=1.0,             # [A] roof step under the connector plate (no jumper there), carries the +x guide boss
     scr_below_knob=5.0,     # [Ed] old screen target. knob_proud now places the faceplate; the screen follows the bezel
     knob_proud=16.45,       # [Ed] adopted value. derive() recomputes it from the 25 mm riser; 16–20 is the accepted window
     print_min=1.0,          # [S] PCBWay SLS nylon minimum wall (SLA resin is 0.8). Structural walls use this
-    # FPC: exit side, width, pitch and pin-out are OPEN. Model is [A].
+    # FPC: v0.6 the custom jumper [Ed 16:22]. Width / thickness [A] until it is drawn.
     fpc_w=8.0,              # [A]
     fpc_t=0.12,             # [A]
-    fpc_bend=2.6,           # [A] screen +x edge to the slot centre, when the skirt allows it
-    fpc_slot_l=2.3,         # [A]
+    fpc_bend=2.6,           # [A] screen +x edge to the slot centre, when the skirt allows it (v0.4)
+    fpc_slot_l=2.3,         # [A] v0.5; v0.6 derives the slot from the jumper's bottom plug (it must pass on assembly)
+    jmp_stiff=(4.0, 0.25),  # [A] jumper top end: stiffener (x) width and stiffener + flex thickness under the socket; its y length = the socket
+    jmp_flex_e=0.0015,      # [A] allowable cyclic bending strain in the jumper copper (rolled-annealed, dynamic flex, > 1e6 cycles)
     # ---- carrier / bezel ----
     car_top_below=0.3,      # [A] glass stands this far proud of the bezel top
     bz_lip=1.2,             # [Ed] bezel lip (side wall of the grip block), same as the other bezel. 1.5 mm is the maximum
     bz_t=1.2,               # [Ed] v0.4 bezel thickness; v0.5 uses grip_h for the height (kept so old overrides parse)
     grip_h=5.0,             # [Ed] 2 Nov v0.5: the bezel is a grip block at least 5 mm tall, glass on top; the faceplate tucks in behind its edge
     glass_proud=0.6,        # [A] glass top above the block rim (as v0.4: 1.5 glass on 0.3 pads in a 1.2 bezel)
-    roof_t=1.6,             # [A] roof plate under the glass: the springs push on its underside, the glass is glued on top
+    roof_t=1.6,             # [A] roof plate under the glass: the springs push on its underside, the glass is glued on top.
+                            # v0.6: derive() raises it so the deepest back pocket keeps print_min of roof
     # guides (v0.5, Ed 2 Nov): two screws through brass sleeves tie the bezel to the carrier. The sleeve slides in a reamed
     # bore in the carrier; the screw head under the carrier boss is the up-stop (v0.4 had none).
     guide=dict(part="ISO 7984 M2 A2 low-head socket screw (length from derive) + brass tube sleeve OD 3.0 / ID 2.1, cut to length",
                d=2.0, sleeve_od=3.0, head_d=3.8, head_k=1.6, bore_fit=0.03, boss_wall=1.0,
                ins=dict(part="M2x3x3.2 brass heat-set (bezel roof)", od=3.2, length=3.0, hole=3.0)),   # [S] DIN 7984 M2 head Ø3.8 × 1.6 max [A]
-    guide_xy=(8.5, 0.0),    # [A] review fix: guides on the long axis at (±8.5, 0), so an off-centre press slides instead of jamming
+    guide_xy=(6.5, 3.0),    # [Ed 16:31] turned pair (+6.5, +3.0) / (-6.5, -3.0): clear of the FMST02 header window (v0.5: (±8.5, 0))
     solder_h=0.6,           # [A] header solder joints / trimmed tails above the joystick board top
     # press peg (review fix): an M2 grub in a roof insert at the centre, set to the press gap with a feeler before the glass goes on
     peg=dict(part="ISO 4026 M2 A2 flat-point grub (press peg, set with a 0.2 feeler, threadlocker)", d=2.0,
@@ -205,6 +234,25 @@ def _land_extent(sw, deg):
     return max(math.hypot(x, y) for x, y in pts)
 
 
+def _box_circle(x0, x1, y0, y1, x, y, r):
+    """True if the box [x0,x1]x[y0,y1] and the circle (x, y, r) overlap."""
+    dx = max(x0 - x, 0.0, x - x1); dy = max(y0 - y, 0.0, y - y1)
+    return dx * dx + dy * dy < r * r
+
+
+def _pk_depth(D, x, y, r):
+    """v0.6: deepest roof pocket (below the glass back) over the circle (x, y, r); 0 if none."""
+    return max([pk[5] for pk in D["back_pk"] if _box_circle(pk[1], pk[2], pk[3], pk[4], x, y, r)] + [0.0])
+
+
+def _rect_dist(px, py, w, d, deg):
+    """Plan distance from point (px, py) to a w x d rectangle centred on the origin and turned deg (build123d sense)."""
+    a = math.radians(-deg); c, s_ = math.cos(a), math.sin(a)
+    x, y = px * c - py * s_, px * s_ + py * c
+    dx = max(abs(x) - w / 2, 0.0); dy = max(abs(y) - d / 2, 0.0)
+    return math.hypot(dx, dy)
+
+
 def _place_for(x, y_edge, rc):
     """place_y that puts carrier-frame point (x, y_edge) exactly on a circle of radius rc about the knob."""
     if abs(x) >= rc - 1e-9:
@@ -298,6 +346,14 @@ def derive(P_):
     D["z_bz1"] = D["z_bz0"] + D["grip_h"]
     D["scr_top"] = D["z_bz1"] + D["glass_proud"]
     D["z_scr0"] = D["scr_top"] - S["t"]
+    # v0.6: the FMST02's back sits in pockets in the roof (plan margin back_side; floor back_clear under each feature, or the foam pad
+    # under the back sheet). The roof is thick enough that the deepest pocket keeps print_min; under the connector it is windowed.
+    win = set(D.get("scr_window", ()))
+    D["back_pk"] = [(n, x0 - D["back_side"], x1 + D["back_side"], y0 - D["back_side"], y1 + D["back_side"],
+                     d + (D["foam_t"] if n == "back sheet" else D["back_clear"])) for n, x0, x1, y0, y1, d in D.get("scr_back", ())]
+    D["back_deep"] = max([pk[5] for pk in D["back_pk"] if pk[0] not in win] + [0.0])
+    D["roof_t_in"] = D["roof_t"]
+    D["roof_t"] = max(D["roof_t"], D["back_deep"] + pm)
     D["z_roof"] = D["z_scr0"] - D["roof_t"]          # roof plate underside: the press springs and the guide bosses hang from it
     D["scr_drop"] = D["z_knob_top"] - D["scr_top"]
     D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
@@ -514,6 +570,35 @@ def derive(P_):
         D["fpc_bend"] = edge - D["fpc_x"]
     D["slot_x"] = (D["fpc_x"] - D["fpc_slot_l"] / 2, D["fpc_x"] + D["fpc_slot_l"] / 2)
     D["slot_hy"] = D["fpc_w"] / 2 + D["fpc_slot_side"]
+    if D["back_pk"] and D["fpc_to_db"]:
+        # v0.6 [Ed 16:22] jumper: a B2B socket on the panel's header (same part as the daughterboard socket), the flex on a stiffener
+        # behind it, a run under the roof to the drop at fpc_x, and a plug into the daughterboard socket. The roof is windowed
+        # round the socket; a step of roof under the connector plate (where there is no jumper) carries the +x guide boss.
+        sl_, ss_, sz_ = D["db_fpc_sock"]
+        stw, stt = D["jmp_stiff"]
+        plate = next(b for b in D["scr_back"] if b[0] == "connector plate")
+        D["jmp_x"] = D["hdr_x"]
+        D["z_js1"] = D["z_scr0"] - plate[5] - 0.05                  # socket top, just under the connector plate
+        D["z_js0"] = D["z_scr0"] - plate[5] - sz_                   # socket base = jumper flex top face (mated height from the plate)
+        D["z_jst0"] = D["z_js0"] - D["fpc_t"] - stt                  # stiffener underside
+        D["jmp_hw"] = max(ss_, stw) / 2                              # half width (x) of socket + stiffener
+        D["win_x"] = (D["jmp_x"] - D["jmp_hw"] - mjf, D["jmp_x"] + D["jmp_hw"] + mjf)
+        D["win_hy"] = sl_ / 2 + mjf
+        ppk = next(pk for pk in D["back_pk"] if pk[0] == "connector plate")
+        D["plate_pk"] = ppk
+        D["z_plate_floor"] = D["z_scr0"] - ppk[5]
+        D["step_x"] = (ppk[1], D["win_x"][0])
+        D["step_hy"] = ppk[4]
+        D["z_step"] = D["z_plate_floor"] - D["step_t"]
+        D["z_run"] = D["z_roof"] - D["tgt"]["cable_min"] - D["fpc_t"]   # flex run under the roof, one MJF tolerance below it
+        # carrier slot: passes the jumper's bottom plug (stiffener stw x sl_) on assembly, and keeps clear of the hold-down hook boss
+        x0 = max(D["fpc_x"] - stw / 2 - mjf, D["spr_xy"][0] + D["spr_boss"][0] / 2 + 1.0)
+        D["slot_x"] = (x0, x0 + stw + 2 * mjf)
+        D["slot_hy"] = sl_ / 2 + mjf
+        D["slot_cut"] = 0.0                                          # v0.6: the carrier cut is the slot itself
+        # free length of the drop between the carrier (moves with the slide) and the daughterboard plug (fixed)
+        D["jmp_free"] = D["z_c0"] - (D["z_db1"] + sz_ + 0.3)
+        D["jmp_strain"] = 3 * D["fpc_t"] * D["slide"] / D["jmp_free"] ** 2
     D["hole_x0"] = D["slot_x"][0] - D["slide"] - D["hole_extra"]
     D["hole_x1"] = D["slot_x"][1] + D["slide"] + D["hole_extra"]
     D["hole_hy"] = D["slot_hy"] + D["slide"] + D["hole_extra"]
@@ -576,10 +661,16 @@ def derive(P_):
     D["g_boss_r"] = G["sleeve_od"] / 2 + G["boss_wall"]
     D["g_bore"] = G["sleeve_od"] + 2 * G["bore_fit"]
     D["g_ins_top"] = D["z_scr0"] - 0.6                    # [A] 0.6 of roof left under the glass over the insert
+    if D["back_pk"]:   # v0.6: insert top flush with the deepest back pocket over either guide (brass flush with the pocket floor)
+        D["g_pk"] = max(_pk_depth(D, x, y, gi["od"] / 2 + 0.3) for x, y in D["g_xy"])
+        D["g_ins_top"] = D["z_scr0"] - max(D["g_pk"], 0.6)
     D["g_ins_bot"] = D["g_ins_top"] - gi["length"]
     D["g_rboss_r"] = gi["od"] / 2 + 1.0
-    # head clears what is under it at full press: the switch body on the axis, the board top + solder off it
-    under = D["z_sw1"] if abs(gx_) < D["sw_ext"] + G["head_d"] / 2 else D["z_db1"] + D["solder_h"]
+    # head clears what is under it at full press: the switch body, the board top + solder off it.
+    # v0.6: tested on the switch's real 45° outline (v0.5 used its land radius, which pushed any head inside x ±7.2 over the body)
+    D["g_sw_dist"] = min(_rect_dist(x, y, sw["w"], sw["d"], D["sw_rot"]) for x, y in D["g_xy"])
+    over_sw = D["g_sw_dist"] < G["head_d"] / 2 + mjf if D["back_pk"] else abs(gx_) < D["sw_ext"] + G["head_d"] / 2
+    under = D["z_sw1"] if over_sw else D["z_db1"] + D["solder_h"]
     D["g_under"] = under
     zmin = under + D["press_travel"] + mjf + G["head_k"]
     best = None
@@ -631,6 +722,11 @@ def derive(P_):
     # ---- review fix: the press peg is an M2 grub in a roof insert at the centre, set to the press gap with a feeler
     pg = D["peg"]; pi = pg["ins"]
     D["p_ins_top"] = D["z_scr0"] - 0.6
+    if D["back_pk"]:   # v0.6: under the deepest back pocket at the centre; the highest stock-grub height with >= 0.3 both ways
+        lim = D["z_scr0"] - _pk_depth(D, 0.0, 0.0, pi["od"] / 2 + 0.3)
+        tops = [D["z_peg"] + L + 0.6 for L in (3.0, 4.0, 5.0, 6.0, 8.0, 10.0) if D["z_peg"] + L + 0.6 <= lim + 1e-9]
+        D["p_ins_top"] = max(tops) if tops else lim
+        D["p_lim"] = lim
     D["p_ins_bot"] = D["p_ins_top"] - pi["length"]
     D["p_rboss_r"] = pi["od"] / 2 + 1.0
     lo_, hi_ = D["p_ins_bot"] + 2.0, D["p_ins_top"] - 0.2

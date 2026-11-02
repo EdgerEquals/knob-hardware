@@ -11,6 +11,7 @@ RULES = [
     (r"magnet", "buy", "N52 magnet", "buy"),
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
     (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
+    (r"foam pad", "buy", "foam tape (PET carrier), cut to shape", "buy"),   # v0.6 joystick screen pads
     (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
     (r"O-ring", "buy", "silicone O-ring (metric)", "buy"),
     (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
