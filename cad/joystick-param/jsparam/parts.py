@@ -341,14 +341,21 @@ def build(D):
             box(jx - ss_ / 2, jx + ss_ / 2, -sl_ / 2, sl_ / 2, D["z_js0"], D["z_js1"])
             - box(hdr[1] - 0.02, hdr[2] + 0.02, hdr[3] - 0.02, hdr[4] + 0.02, D["z_scr0"] - hdr[5] - 0.02, D["z_js1"] + 0.1))   # the plug sits in it
         sx = D["db_sock_x"]; z_db_top = D["z_db1"]; zr = D["z_run"]; hw = D["fpc_w"] / 2
-        xe = jx + stw / 2
+        xe = jx + stw / 2; t = D["jmp_t"]
+        xv, y2, y3, xa, xb = D["jmp_xv"], D["jmp_y2"], D["jmp_y3"], D["jmp_xa"], D["jmp_xb"]
+        zb, zt = D["z_leg"]; zp = z_db_top + sz_ + 0.3                                      # plug flex top
         out["screen FPC socket AXE530127 (daughterboard)"] = box(sx - ss_ / 2, sx + ss_ / 2, -sl_ / 2, sl_ / 2, z_db_top + 0.02, z_db_top + sz_)
-        out["screen jumper FPC [A]"] = (
+        out["screen jumper FPC [A]"] = (   # [Ed 17:16] 3 mm, 13 lines, a loose loop under the carrier (legs as envelopes)
             box(jx - stw / 2, xe, -sl_ / 2, sl_ / 2, D["z_jst0"], D["z_js0"])               # flex + stiffener under the socket
             + box(xe - t, xe, -hw, hw, min(zr, D["z_jst0"]), D["z_js0"])                     # step down out of the window
-            + box(xe - t, fx + t / 2, -hw, hw, zr, zr + t)                                    # run under the roof
-            + box(fx - t / 2, fx + t / 2, -hw, hw, z_db_top + sz_ + 0.3, zr + t)               # drop through the carrier slot
-            + box(sx - stw / 2, fx + t / 2, -hw, hw, z_db_top + sz_ + 0.3, z_db_top + sz_ + 0.3 + t))   # foot over the plug
+            + box(xe - t, xv + t / 2, -hw, hw, zr, zr + t)                                    # R: under the roof (takes the press)
+            + box(xv - t / 2, xv + t / 2, -hw, hw, zt, zr + t)                                # V1: down the carrier slot (x)
+            + box(xv - t / 2, xv + t / 2, y2 - t / 2, hw, zb, zt)                              # S1: on edge along y (x)
+            + box(xa, xv + t / 2, y2 - t / 2, y2 + t / 2, zb, zt)                              # S2: on edge along -x (y)
+            + box(xa - t, xa, y2 - t / 2, y3 + t / 2, zb, zt)                                  # 180° crease
+            + box(xa - t / 2, xb, y3 - t / 2, y3 + t / 2, zb, zt)                              # S3: on edge back along +x (y)
+            + box(xb, xb + t, y3 - t / 2, y3 + t / 2, zp, zt)                                  # down to the plug
+            + box(xb, sx - stw / 2 + 0.01, y3 - hw, y3 + hw, zp, zp + t))                       # onto the plug end
         out["screen jumper plug end (bottom, in the daughterboard socket) [A]"] = box(
             sx - stw / 2, sx + stw / 2, -sl_ / 2, sl_ / 2, z_db_top + sz_ + 0.02, z_db_top + sz_ + 0.3 - 0.01)
     elif D["fpc_to_db"]:

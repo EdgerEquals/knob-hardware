@@ -453,10 +453,27 @@ def run(D, P):
         sm = min((D["slot_x"][1] - D["slot_x"][0] - D["jmp_stiff"][0]) / 2, D["slot_hy"] - D["db_fpc_sock"][0] / 2)
         row("carrier slot passes the jumper's bottom plug (assembly)", sm, ">= 0.2", sm >= 0.2 - 1e-6,
             f"slot x {D['slot_x'][0]:.2f}-{D['slot_x'][1]:.2f}, ±{D['slot_hy']:.2f}; plug end {D['jmp_stiff'][0]:g} x {D['db_fpc_sock'][0]:g} [A]")
-        e = D["jmp_strain"]
-        row("jumper drop: bending strain at the full slide (x), %", 100 * e, f"<= {100 * D['jmp_flex_e']:.2f}", e <= D["jmp_flex_e"] + 1e-9,
-            f"[C] open: drop free length {D['jmp_free']:.2f} (carrier to the daughterboard plug), flex {D['fpc_t']:g} [A], slide "
-            f"±{D['slide']:.2f}; y slide is in the flex plane and is not taken by this drop at all. v0.5 had the same drop")
+        mg, fat = D["jmp_margin"], D["jmp_fatigue"]
+        L = D["jmp_L"]
+        for k, legs, what in (("x", "V1 + S1", f"slide ±{D['slide']:.2f}"), ("y", "S2 + S3", f"slide ±{D['slide']:.2f}"),
+                              ("z", "R", f"press {D['press_travel']:.2f}")):
+            e = D["jmp_eps"][k]
+            row(f"jumper copper strain, {'press' if k == 'z' else k + ' slide'} (%)", 100 * e, f"<= {100 * fat / mg:.2f}", e <= fat / mg + 1e-9,
+                f"{fat / e:.1f}x under {100 * fat:.1f}% [A]; legs {legs} " + ", ".join(f"{g} {L[g]:.2f}" for g in legs.split(" + "))
+                + f"; {what}; copper {1000 * D['jmp_cu_c']:.0f} µm off the neutral axis [A]")
+        from build123d import Pos as _Pos
+        mv = [n for n in P if n.startswith(("joystick carrier", "brass insert", "grub screw", "guide screw", "guide sleeve",
+                                            "compression spring", "screen carrier"))]
+        fx_ = [n for n in P if n.startswith(("joystick daughterboard", "joystick cradle", "hold-down spring", "screen FPC socket",
+                                             "SW1", "header", "cradle locating"))]
+        low = jf & (_Pos(0, 0, D["z_c0"] - 0.01) * Box(80, 60, 30, align=(Align.CENTER, Align.CENTER, Align.MAX)))   # the loop under the carrier
+        worst = min([(low.distance_to(P[n]), n) for n in fx_]
+                    + [(low.distance_to(_Pos(dx, dy, 0) * P[n]), n + f" at ({dx:+.2f},{dy:+.2f})") for n in mv
+                       for dx, dy in ((D["slide"], 0), (-D["slide"], 0), (0, D["slide"]), (0, -D["slide"]))])
+        row("jumper loop clear at the full slide (carrier moved, loop at rest)", worst[0], f">= {D['tgt']['cable_min']:.2f}",
+            worst[0] >= D["tgt"]["cable_min"] - 1e-6,
+            f"loop z {D['z_leg'][0]:.2f}-{D['z_leg'][1]:.2f}, {D['fpc_w']:g} wide, about {D['jmp_len']:.0f} mm long; nearest: {worst[1]}. "
+            "Daughterboard parts under it must stay under 0.6 mm [C]")
     # silence a lint-level unused local if the wall probe x is kept only as documentation
     _ = x_wall
     return rows

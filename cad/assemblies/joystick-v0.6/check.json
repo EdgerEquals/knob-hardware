@@ -187,7 +187,7 @@
    "value": 0.25,
    "target": ">= 0.25",
    "ok": true,
-   "note": "FPC 8 wide [A], slot 4.50 x 8.90"
+   "note": "FPC 3 wide [A], slot 4.50 x 8.90"
   },
   {
    "name": "FPC vs PCB slot at full slide",
@@ -205,7 +205,7 @@
   },
   {
    "name": "FPC vs seat plate",
-   "value": 2.1488004673757164,
+   "value": 2.255748212899653,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -680,11 +680,32 @@
    "note": "slot x 14.80-19.30, \u00b14.45; plug end 4 x 8.4 [A]"
   },
   {
-   "name": "jumper drop: bending strain at the full slide (x), %",
-   "value": 0.6747188671386908,
+   "name": "jumper copper strain, x slide (%)",
+   "value": 0.06571033810143047,
    "target": "<= 0.15",
-   "ok": false,
-   "note": "[C] open: drop free length 4.90 (carrier to the daughterboard plug), flex 0.12 [A], slide \u00b10.45; y slide is in the flex plane and is not taken by this drop at all. v0.5 had the same drop"
+   "ok": true,
+   "note": "4.6x under 0.3% [A]; legs V1 + S1 V1 4.70, S1 4.90; slide \u00b10.45; copper 11 \u00b5m off the neutral axis [A]"
+  },
+  {
+   "name": "jumper copper strain, y slide (%)",
+   "value": 0.03345301479586864,
+   "target": "<= 0.15",
+   "ok": true,
+   "note": "9.0x under 0.3% [A]; legs S2 + S3 S2 8.90, S3 4.40; slide \u00b10.45; copper 11 \u00b5m off the neutral axis [A]"
+  },
+  {
+   "name": "jumper copper strain, press (%)",
+   "value": 0.11665193788663045,
+   "target": "<= 0.15",
+   "ok": true,
+   "note": "2.6x under 0.3% [A]; legs R R 4.45; press 0.35; copper 11 \u00b5m off the neutral axis [A]"
+  },
+  {
+   "name": "jumper loop clear at the full slide (carrier moved, loop at rest)",
+   "value": 0.3001666203960698,
+   "target": ">= 0.25",
+   "ok": true,
+   "note": "loop z 32.45-35.45, 3 wide, about 30 mm long; nearest: joystick carrier (printed) at (-0.45,+0.00). Daughterboard parts under it must stay under 0.6 mm [C]"
   }
  ],
  "clashes": {},

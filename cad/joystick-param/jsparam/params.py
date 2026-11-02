@@ -81,12 +81,22 @@ P = dict(
     knob_proud=16.45,       # [Ed] adopted value. derive() recomputes it from the 25 mm riser; 16–20 is the accepted window
     print_min=1.0,          # [S] PCBWay SLS nylon minimum wall (SLA resin is 0.8). Structural walls use this
     # FPC: v0.6 the custom jumper [Ed 16:22]. Width / thickness [A] until it is drawn.
-    fpc_w=8.0,              # [A]
+    fpc_w=3.0,              # [Ed 17:13] no touch: 13 lines (QSPI CLK, CS, D0-D3, RESET, TE, PWR_EN, 3V3, three GND) at 0.2 pitch [A]
     fpc_t=0.12,             # [A]
     fpc_bend=2.6,           # [A] screen +x edge to the slot centre, when the skirt allows it (v0.4)
     fpc_slot_l=2.3,         # [A] v0.5; v0.6 derives the slot from the jumper's bottom plug (it must pass on assembly)
     jmp_stiff=(4.0, 0.25),  # [A] jumper top end: stiffener (x) width and stiffener + flex thickness under the socket; its y length = the socket
-    jmp_flex_e=0.0015,      # [A] allowable cyclic bending strain in the jumper copper (rolled-annealed, dynamic flex, > 1e6 cycles)
+    # [Ed 17:13-17:16] the jumper is narrow and long enough to flex: a loose loop under the carrier. Legs (envelopes): R under the
+    # roof (takes the press), V1 down the carrier slot and S1 on edge along y (take x), S2 on edge along -x and, past a 180° crease,
+    # S3 back along +x (take y), then down onto the plug. They run low, just over the plug, where there is length.
+    jmp_t=0.10,             # [A] single-layer flex: PI 25 + RA copper 12 µm + coverlay 25 + adhesive
+    jmp_cu_c=0.011,         # [A] copper distance from the neutral axis (12 µm centred, ±5 µm build tolerance: the cautious case)
+    jmp_fatigue=0.003,      # [A] RA copper strain amplitude for ~1e6-1e7 cycles (switch: 1e6 per direction, Alps SKRH)
+    jmp_margin=2.0,         # [A] working margin on that (Claude's number for Ed's "nothing close to its threshold")
+    jmp_bend=0.3,           # [A] length taken by each fold or crease
+    jmp_xv=18.5,            # [A] plane of V1 and S1 (inside the carrier slot, 0.8 from its edge)
+    jmp_y2=-4.0, jmp_y3=-3.2,   # [A] planes of S2 and S3 (clear of the hold-down spring at y -1.5 and the grub key line at y -5.6)
+    jmp_xa=9.0, jmp_xb=14.0,    # [A] S2 runs from jmp_xv to jmp_xa; S3 back from jmp_xa to jmp_xb, then down onto the plug
     # ---- carrier / bezel ----
     car_top_below=0.3,      # [A] glass stands this far proud of the bezel top
     bz_lip=1.2,             # [Ed] bezel lip (side wall of the grip block), same as the other bezel. 1.5 mm is the maximum
@@ -580,7 +590,7 @@ def derive(P_):
         D["jmp_x"] = D["hdr_x"]
         D["z_js1"] = D["z_scr0"] - plate[5] - 0.05                  # socket top, just under the connector plate
         D["z_js0"] = D["z_scr0"] - plate[5] - sz_                   # socket base = jumper flex top face (mated height from the plate)
-        D["z_jst0"] = D["z_js0"] - D["fpc_t"] - stt                  # stiffener underside
+        D["z_jst0"] = D["z_js0"] - D["jmp_t"] - stt                  # stiffener underside
         D["jmp_hw"] = max(ss_, stw) / 2                              # half width (x) of socket + stiffener
         D["win_x"] = (D["jmp_x"] - D["jmp_hw"] - mjf, D["jmp_x"] + D["jmp_hw"] + mjf)
         D["win_hy"] = sl_ / 2 + mjf
@@ -590,15 +600,26 @@ def derive(P_):
         D["step_x"] = (ppk[1], D["win_x"][0])
         D["step_hy"] = ppk[4]
         D["z_step"] = D["z_plate_floor"] - D["step_t"]
-        D["z_run"] = D["z_roof"] - D["tgt"]["cable_min"] - D["fpc_t"]   # flex run under the roof, one MJF tolerance below it
+        D["z_run"] = D["z_roof"] - D["tgt"]["cable_min"] - D["jmp_t"]   # flex run under the roof, one MJF tolerance below it
         # carrier slot: passes the jumper's bottom plug (stiffener stw x sl_) on assembly, and keeps clear of the hold-down hook boss
         x0 = max(D["fpc_x"] - stw / 2 - mjf, D["spr_xy"][0] + D["spr_boss"][0] / 2 + 1.0)
         D["slot_x"] = (x0, x0 + stw + 2 * mjf)
         D["slot_hy"] = sl_ / 2 + mjf
         D["slot_cut"] = 0.0                                          # v0.6: the carrier cut is the slot itself
-        # free length of the drop between the carrier (moves with the slide) and the daughterboard plug (fixed)
-        D["jmp_free"] = D["z_c0"] - (D["z_db1"] + sz_ + 0.3)
-        D["jmp_strain"] = 3 * D["fpc_t"] * D["slide"] / D["jmp_free"] ** 2
+        # [Ed 17:16] the loop: legs just over the plug; free lengths, and the copper strain each direction puts on the legs that
+        # face it (legs in series share the movement by compliance, L^3; fixed-guided ends: curvature 6δ/L²)
+        cm, b, w = D["tgt"]["cable_min"], D["jmp_bend"], D["fpc_w"]
+        D["z_leg"] = (D["z_db1"] + sz_ + 0.3 + cm, D["z_db1"] + sz_ + 0.3 + cm + w)
+        xe = D["jmp_x"] + stw / 2
+        L = dict(R=D["jmp_xv"] - xe - b, V1=D["z_run"] - D["z_leg"][1] - 2 * b, S1=(w / 2 - D["jmp_y2"]) - 2 * b,
+                 S2=D["jmp_xv"] - D["jmp_xa"] - 2 * b, S3=D["jmp_xb"] - D["jmp_xa"] - 2 * b)
+        D["jmp_L"] = L
+        c = D["jmp_cu_c"]
+        def _eps(legs, d):
+            k = sum(L[g] ** 3 for g in legs)
+            return max(6 * (d * L[g] ** 3 / k) / L[g] ** 2 * c for g in legs)
+        D["jmp_eps"] = dict(x=_eps(("V1", "S1"), D["slide"]), y=_eps(("S2", "S3"), D["slide"]), z=_eps(("R",), D["press_travel"]))
+        D["jmp_len"] = sum(L.values()) + 7 * b + (D["z_leg"][0] - D["z_db1"] - sz_)
     D["hole_x0"] = D["slot_x"][0] - D["slide"] - D["hole_extra"]
     D["hole_x1"] = D["slot_x"][1] + D["slide"] + D["hole_extra"]
     D["hole_hy"] = D["slot_hy"] + D["slide"] + D["hole_extra"]

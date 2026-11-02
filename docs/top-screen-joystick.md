@@ -255,9 +255,13 @@ Model: `cad/joystick-param/` (v0.6). Images: `cad/assemblies/joystick-v0.6/joyst
   (3) fit the block to the carrier with the guides, tail through the carrier slot; (4) set the sub-assembly on the cradle balls,
   hook the hold-downs; (5) press the jumper's plug into the daughterboard socket from the +x side, under the carrier. (The order
   given at 16:22, panel folded over last, needs ~20 mm of slack in the 1.75 cavity: it does not fit.)
-- Checks **97/98**, 0 clashes; full knob build 207/207, joystick vs knob none.
-- **Open, FAIL [C]: the jumper drop under the slide.** The carrier moves ±0.45 in x and y against the fixed daughterboard; the drop has
-  4.90 of free length between them. Bending in x strains the flex 0.68% (target 0.15% for > 10⁶ cycles, [A]); the y slide is across
-  the flex's width and is not taken at all. v0.5's drop had the same gap. Free room found: a column 4 × 10 × 30 just outside the
-  cradle ring at the +x end (only a case corner insert grazes it), long enough for an x-facing and a y-facing section of ~12 each
-  (~0.11%). Decision for Danny.
+- **Jumper loop [Ed 17:13–17:16].** The first drop (4.9 mm straight down, 8 wide) strained 0.68% in x and could not take y at all.
+  Options studied (`jumper_lfold_study.py`, `docs/img/joystick-jumper-options.png`): a long flex beside the cradle to the main PCB, a
+  CH32V003 on the moving side with three wires, an L-folded 4 mm flex (y leg only 3.4 mm: 1.2–2.1×). [Ed 17:13] no touch, so the
+  jumper is **3 mm, 13 lines** (QSPI CLK, CS, D0–D3, RESET, TE, PWR_EN, 3V3, three GND; IM straps on the jumper). [Ed 17:15] "just
+  have the cable long enough": about **30 mm in a loose loop** under the carrier, legs low over the daughterboard (z 32.45–35.45):
+  R under the roof 4.45 (press), V1 down the slot 4.70 + S1 on edge along y 4.90 (x), S2 on edge along −x 8.90 + S3 back 4.40 (y).
+  Copper strain, cautious case (12 µm RA copper 5 µm off the neutral axis [A]) against 0.3% [A]: **x 4.6×, y 9.0×, press 2.6×**.
+  Loop 0.30 clear at the full slide. No microcontroller, no main-PCB change, the daughterboard keeps its socket.
+  [C] daughterboard parts under the loop (x 9–18.5, y −4.5..−2.7) stay under 0.6 mm. View: `joystick-v0.6-jumper-loop.png`.
+- Checks **101/101**, 0 clashes; joystick vs knob none.
