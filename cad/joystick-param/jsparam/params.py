@@ -117,8 +117,8 @@ P = dict(
     base="cradle",
     cradle=dict(part="joystick cradle, MJF PA-12, glued to the main PCB and to the joystick board", h=30.0, wall=1.5, wall_top=1.0,
                 land=0.7, tower_z0=22.5, pin=dict(part="ISO 8734 1.5x5 stainless dowel", d=1.5, len=5.0, in_pcb=1.6)),   # [A]
-    ball_x=17.5,            # [Ed 2 Nov 12:22] balls at the extreme corners: x as far out as the carrier allows
-    ball_y_bot=10.5,        # [Ed] knob-side row; the carrier outline (±13.02) is the limit. The top row is set by the rail strip
+    ball_x=17.8,            # [Ed 2 Nov 12:22] balls at the extreme corners: x as far out as the carrier allows (cup boss inside it)
+    ball_y_bot=10.3,        # [Ed] knob-side row; the carrier outline (±13.02) less the cup boss is the limit. The top row: rail strip
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
     # Hex H3×M2×25 (STTZ2022) and the male-female 25 mm parts were out of stock on LCSC, 1 Nov 2026.
     # OD 3.2 is the usual knurled round M2 pillar; LCSC does not publish it. [A]
@@ -135,8 +135,10 @@ P = dict(
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
     spr_xy=(12.5, 3.0),     # [A] v0.5 hold-down springs at (±x, ±y): inside the balls, outboard of the 2x5 headers
-    spr_f=0.65,             # [Ed 2 Nov 12:25] N each (v0.4 0.5). With the balls at the corners a sideways push on the glass top
-                            # then tips the carrier only above ~1.3x the switch's worst-case tilt force
+    spr_f=0.90,             # [Ed 2 Nov 13:08] N each (option B; v0.4 0.5). Sized so a sideways push on the glass top that clicks the
+                            # worst-case switch against the cup spring-back still has a 1.3 tipping safety
+    cup_ratio_set=2.5,      # [Ed 2 Nov 13:08] option B: gentle ball cups, radius 2.5 × the ball radius (v0.4 1.4: 35° at the full
+                            # slide, 1.8 N of push-back). 8.6° at the full slide; ~0.5 N spring-back to centre
     cs_xy_v05=(11.5, 7.5),  # [Ed 2 Nov 12:22] press springs inside the balls (v0.4 had them at the carrier corners)
     tip_margin=1.3,         # [A] tipping force / worst-case switch tilt force
     spr_ext=8.0,            # [A] extension at rest, mm. Free length is installed length minus this

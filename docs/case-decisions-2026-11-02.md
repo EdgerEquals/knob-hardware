@@ -151,7 +151,7 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
     the corner screws come in from the back. OLED to post 0.31.
   - **Joystick as high as the top rail screws allow** (case `joy_rule="rail"`): bezel at full slide clears the washer keep-out by
     one SLA tolerance. It sits 0.84 lower on the panel than in v0.19b.
-  - Finger gap (knob glass to the bezel, plan, at rest) **0.95 → 5.31 mm** (rule ≥ 5.0).
+  - Finger gap (knob glass to the bezel, plan, at rest) **0.95 → 5.06 mm** (rule ≥ 5.0; 5.31 before the washer float, below).
   - Accepted costs: about 3.5 mm more of the clear OLED behind the jack nuts; the board strip below window D (14-way and power plugs)
     is about 6 mm [C: fit the plugs in KiCad]; windows C and E shrank to 11.6 mm² (the bigger-windows job is next anyway).
 - [Ed 11:52] **Rail screw washers**: ISO 7092 M3 small-series nylon, Ø6 × 0.5, under an ISO 7045 M3 pan head. Keep-out Ø6
@@ -162,18 +162,18 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 ### Joystick grip block (joystick v0.5)
 - [Ed 11:43–11:46] The bezel becomes a **grip block at least 5 mm tall** with the glass on top; the faceplate opening tucks in
   behind its edge (0.9 overlap, as before). Replaces the 1.5 mm bezel cap. Glass top 5.62 above the faceplate, **12.38 below the
-  knob screen** (was 16.2). Inside, the stack stays; the bezel grows upward.
+  knob screen** (was 16.2; 11.85 after the review fix below). Inside, the stack stays; the bezel grows upward.
 - [Ed 11:52] **Lift the switch 2 mm** (30 mm riser). The carrier rises into the faceplate hole.
-- [Ed 11:52] **Guide pins**: two ISO 7984 M2×6 low-head screws through brass tube sleeves (OD 3.0 / ID 2.1, cut to 4.0) tie the
+- [Ed 11:52] **Guide pins** (positions and length superseded in "Review fixes" below): two ISO 7984 M2×6 low-head screws through brass tube sleeves (OD 3.0 / ID 2.1, cut to 4.0) tie the
   bezel to the carrier at (0, ±5). The sleeve slides in a reamed Ø3.06 bore in a carrier boss; the screw runs into an M2 heat-set
   insert in the bezel roof. The **heads under the carrier bosses are the up-stop** (v0.4 had none: the springs pushed the bezel off).
 - [Ed 12:17–12:25] **Printed cradle instead of standoffs** (MJF PA-12, 30 mm), glued to the main PCB and located by two ISO 8734
   1.5×5 dowels; the joystick board is glued on its rim (0.7 land). The seat plate is gone.
-- [Ed 12:22] **Balls at the extreme corners**, on cradle towers: (±17.5, +8.67 / −10.5) local. The top row is set by the rail strip
+- [Ed 12:22] **Balls at the extreme corners**, on cradle towers: (±17.5, +8.67 / −10.5) local (final (±17.8, +8.45 / −10.3), below). The top row is set by the rail strip
   (seats are behind the panel); the knob-side row by the carrier outline. v0.4 had them on the small board at (±9.5, ±4.1).
 - [Ed 12:22] **Press springs inside the balls**, at (±11.5, ±7.5) (v0.4 had them at the carrier corners). Grubs still reached from
   underneath on the carrier-and-bezel sub-assembly; the skirt walls are split to leave them open.
-- [Ed 12:25] **Hold-down springs 0.65 N each** (was 0.5), inside the balls at (±12.5, ±3.0). A sideways push on the glass top then
+- [Ed 12:25] (superseded at 13:08 by option B, 0.9 N, below) **Hold-down springs 0.65 N each** (was 0.5), inside the balls at (±12.5, ±3.0). A sideways push on the glass top then
   tips the carrier only above 2.47 N up the panel, 2.99 N toward the knob, 4.99 N left/right: at least 1.3 × the switch's worst
   tilt force (1.2 + 0.69 N). With 0.5 N and the v0.4 ball spacing it tipped at about 1.0 N, before the switch clicked.
 - [Ed] **Two 2×5 board-to-board headers** (Samtec TSW-105 long post, ~21.5 mm, code to pick) into 2×5 H11 sockets on the main PCB:
@@ -194,3 +194,20 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 - [C] Parts: 2×5 long-post header code and 2×5 H11 socket; ISO 7984 M2×6; brass tube 3.0/2.1; 0.65 N extension spring (Ø2, ~32 mm free);
   cradle glue (epoxy) and the dowel NPTHs in the main-PCB KiCad (geom.json `main_pcb_holes`).
 - [C] KiCad: the board under the knob shifted 5.2 mm against the case outline (regeneration was pending anyway).
+
+### Review fixes and the ball seats (2 Nov, 13:08)
+A fresh-eyes review of v0.20 found real faults; all fixed:
+- **Centre press was blocked** (old fault): the case face never had the rebate the joystick model assumed. The face stays one flat
+  plane; the grip block floats **0.55** above it (press 0.35 + 0.2) and closes to 0.2 at full press. Glass top now 6.15 above the
+  faceplate, **11.85 under the knob screen**.
+- **Press peg adjustable**: an ISO 4026 M2×6 grub in a centre roof insert, set to the 0.2 press gap with a feeler before the glass
+  goes on (2.35 of thread, −0.35/+0.45 of adjustment). Takes out the printed-part and glue stack.
+- **Guides on the long axis**, (±9, 0): ISO 7984 **M2×8**, sleeves 6.0 long, reamed Ø3.06 bores 4.25 long. Off-centre presses slide.
+- **Carrier floor corners R1.2**, like the faceplate opening, so a diagonal slide does not catch.
+- **Rail washers**: 0.2 of screw/washer float and the MJF bezel tolerance added; the joystick sits 0.25 lower. Finger gap **5.06**.
+- **Tipping now counts the ball cups**: at the full 0.45 slide the v0.4 cups (radius 1.4 × the ball's) pushed back 1.8 N, so the
+  carrier tipped before the switch clicked whatever the springs.
+- [Ed 13:08] **Option B: gentle ball cups**, radius 2.5 × the ball's (8.6° at the full slide, ~0.55 N spring-back), and **hold-down
+  springs 0.9 N** each (replaces the 0.65 above). Push to click 1.75 N nominal, 2.44 N worst. Tipping safety at the worst-case click:
+  1.32 up the panel, 1.61 toward the knob, 2.78 left/right (rule ≥ 1.3). Balls at (±17.8, +8.45 / −10.3).
+- No silent fallbacks: the joystick model now stops if the case values are missing; a failed rail-strip intersection fails.

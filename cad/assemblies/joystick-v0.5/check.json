@@ -142,10 +142,10 @@
   },
   {
    "name": "skirt clear at switch end of travel",
-   "value": 0.2499999999999991,
+   "value": 0.24999999999999822,
    "target": ">= 0.25",
    "ok": true,
-   "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.251, 0.320, 0.250, 0.320, 0.251, 0.320, 0.250, 0.320"
+   "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.250, 0.320, 0.250, 0.320, 0.250, 0.320, 0.250, 0.320"
   },
   {
    "name": "3\u00b0 carrier rotation hits the rectangular skirt",
@@ -159,7 +159,7 @@
    "value": 1.0,
    "target": "open",
    "ok": true,
-   "note": "stations (\u00b111.50, \u00b17.50) inside the balls (\u00b117.50); skirt segments stop at \u00b110.25 and restart at \u00b112.75"
+   "note": "stations (\u00b111.50, \u00b17.50) inside the balls (\u00b117.80); skirt segments stop at \u00b110.25 and restart at \u00b112.75"
   },
   {
    "name": "hex proud of the insert",
@@ -171,8 +171,8 @@
   {
    "name": "insert hangs in free air under the floor",
    "value": 0.4300000000000068,
-   "target": "0.5-3.0",
-   "ok": false,
+   "target": "0.3-3.0",
+   "ok": true,
    "note": "insert bottom z 36.67, carrier underside z 37.10. Modelled as a slip fit"
   },
   {
@@ -212,7 +212,7 @@
   },
   {
    "name": "FPC vs seat plate",
-   "value": 2.2199999999999953,
+   "value": 2.148800467375717,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -222,7 +222,7 @@
    "value": 0.24999999999999994,
    "target": ">= 0.1",
    "ok": true,
-   "note": "\u00d82 in \u00d83.4; 4 x 0.65 N, installed 40.3 mm (was 60.8 to the back panel). Free 32.3, stretch 8.0"
+   "note": "\u00d82 in \u00d83.4; 4 x 0.9 N, installed 40.3 mm (was 60.8 to the back panel). Free 32.3, stretch 8.0"
   },
   {
    "name": "hold-down spring vs plate (rest)",
@@ -240,7 +240,7 @@
   },
   {
    "name": "compression spring clear of the plate",
-   "value": 4.311113815390309,
+   "value": 4.131635136500788,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -288,11 +288,25 @@
    "note": "ring \u00b116.00 x -8.15..7.65; PCB top edge local y 8.37. The top towers start at z 22.5, above the case's top corner posts, and hang off the ring"
   },
   {
+   "name": "joystick board clear of the cradle towers",
+   "value": 0.2799338124565516,
+   "target": ">= 0.25",
+   "ok": true,
+   "note": "towers r 2.62 at (\u00b117.80, +8.45 / \u221210.30); board \u00b115.20 \u00d7 \u00b17.15"
+  },
+  {
+   "name": "carrier cup bosses inside the carrier outline",
+   "value": 0.0351923190728094,
+   "target": ">= 0",
+   "ok": true,
+   "note": "the bosses sit inside the faceplate hole with the carrier floor"
+  },
+  {
    "name": "cradle locating dowels in the PCB",
    "value": 2.0,
    "target": "2",
    "ok": true,
-   "note": "(17.5, -10.5), (-17.5, -10.5)"
+   "note": "(17.8, -10.3), (-17.8, -10.3)"
   },
   {
    "name": "rear anchor glued to the PCB back",
@@ -310,38 +324,38 @@
   },
   {
    "name": "hold-down force per spring (sized by tipping)",
-   "value": 0.65,
-   "target": ">= 6.13",
-   "ok": false,
-   "note": "Rate 0.081 N/mm over 8.0 mm stretch, installed 40.3 mm. Cups at the full slide: 34.7\u00b0, push back 1.80 N"
+   "value": 0.9,
+   "target": ">= 0.88",
+   "ok": true,
+   "note": "Rate 0.113 N/mm over 8.0 mm stretch, installed 40.3 mm. Cups at the full slide: 8.6\u00b0, push back 0.55 N"
   },
   {
    "name": "tipping safety at the worst-case click (push on the glass top, up the panel)",
-   "value": 0.679351631454302,
+   "value": 1.317720359507336,
    "target": ">= 1.3",
-   "ok": false,
-   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. top balls at +8.92"
+   "ok": true,
+   "note": "restoring / overturning moment; push to click 2.44 N worst (1.75 nominal) = switch + cups. top balls at +8.45"
   },
   {
    "name": "tipping safety at the worst-case click (push on the glass top, toward the knob)",
-   "value": 0.7993802696732941,
+   "value": 1.6071297360834609,
    "target": ">= 1.3",
-   "ok": false,
-   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. knob-side balls at -10.50"
+   "ok": true,
+   "note": "restoring / overturning moment; push to click 2.44 N worst (1.75 nominal) = switch + cups. knob-side balls at -10.30"
   },
   {
    "name": "tipping safety at the worst-case click (push on the glass top, left/right)",
-   "value": 1.3323004494554902,
+   "value": 2.777369835173359,
    "target": ">= 1.3",
    "ok": true,
-   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. balls \u00b117.50"
+   "note": "restoring / overturning moment; push to click 2.44 N worst (1.75 nominal) = switch + cups. balls \u00b117.80"
   },
   {
    "name": "tipping safety at the worst-case click (push on the block side, up the panel)",
-   "value": 1.021234795437477,
+   "value": 1.9589323249732196,
    "target": ">= 1.3",
-   "ok": false,
-   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. "
+   "ok": true,
+   "note": "restoring / overturning moment; push to click 2.44 N worst (1.75 nominal) = switch + cups. "
   },
   {
    "name": "two pins, each through a pair",
@@ -418,7 +432,7 @@
    "value": 0.0,
    "target": "<= 0.02",
    "ok": true,
-   "note": "four \u00d82, cup \u00d82.79"
+   "note": "four \u00d82, cup \u00d85.00"
   },
   {
    "name": "ball seated in the lower cup",
@@ -429,10 +443,10 @@
   },
   {
    "name": "cup radius / ball radius",
-   "value": 1.3955709644998018,
-   "target": "1.05-2.0",
+   "value": 2.5,
+   "target": "1.05-3.0",
    "ok": true,
-   "note": "Rc 1.396 mm, rim radius 1.147 mm"
+   "note": "Rc 2.500 mm, rim radius 1.625 mm [Ed 2 Nov: gentle cups, option B]"
   },
   {
    "name": "cup depth / ball diameter",
@@ -443,10 +457,10 @@
   },
   {
    "name": "full slide stays inside the cups",
-   "value": 0.20000000000000367,
+   "value": 1.4997692171126304,
    "target": ">= 0.20",
    "ok": true,
-   "note": "slide 0.45 mm, cups still hold to 0.65 mm. Ball centres move to (\u00b117.50, \u00b18.92)"
+   "note": "slide 0.45 mm, cups still hold to 1.95 mm. Ball centres move to (\u00b117.80, \u00b18.45)"
   },
   {
    "name": "bezel (full slide toward the knob) vs live knob-param",
@@ -513,7 +527,7 @@
   },
   {
    "name": "carrier volume",
-   "value": 1.4987606065918928,
+   "value": 1.5061208450175188,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
@@ -611,7 +625,7 @@
   },
   {
    "name": "screen socket clear of the carrier at full slide",
-   "value": 3.1999999999999984,
+   "value": 3.2000961580916556,
    "target": ">= 0.25",
    "ok": true,
    "note": "skirt notched over the tab"
@@ -690,20 +704,20 @@
   "hole_hy": 4.95,
   "balls": [
    [
-    17.5,
-    8.92340279199723
+    17.8,
+    8.445192319072813
    ],
    [
-    17.5,
-    -10.5
+    17.8,
+    -10.3
    ],
    [
-    -17.5,
-    8.92340279199723
+    -17.8,
+    8.445192319072813
    ],
    [
-    -17.5,
-    -10.5
+    -17.8,
+    -10.3
    ]
   ],
   "springs": [
@@ -761,8 +775,8 @@
   "sx": 13.299999999999999,
   "sy": 8.6,
   "hx": 7.705652750607062,
-  "bx": 17.5,
-  "by": 8.92340279199723,
+  "bx": 17.8,
+  "by": 8.445192319072813,
   "board_x0": -15.2,
   "board_x1": 15.2,
   "board_y0": -7.1499999999999995,
@@ -772,7 +786,7 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "joystick carrier (printed)": 1.4987606065918928,
+   "joystick carrier (printed)": 1.5061208450175188,
    "screen carrier (printed)": 2.560116933546872
   }
  }

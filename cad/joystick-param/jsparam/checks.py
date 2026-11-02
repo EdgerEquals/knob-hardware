@@ -181,6 +181,14 @@ def run(D, P):
         row("cradle ring glued inside the main-PCB outline", D["y_pcb"] - D["pcb_edge"] - D["cr_out_y1"], ">= 0", foot,
             f"ring ±{D['cr_out_x']:.2f} x {D['cr_out_y0']:.2f}..{D['cr_out_y1']:.2f}; PCB top edge local y {D['y_pcb']:.2f}. "
             f"The top towers start at z {C['tower_z0']:g}, above the case's top corner posts, and hang off the ring")
+        bt_ = min(math.hypot(abs(x) - D["board_x1"] if abs(x) > D["board_x1"] else 0.0,
+                             abs(y) - D["board_y1"] if abs(y) > D["board_y1"] else 0.0) - D["boss_r"] for x, y in D["balls"])
+        row("joystick board clear of the cradle towers", bt_, f">= {D['tol_mjf']:.2f}", bt_ >= D["tol_mjf"] - 1e-6,
+            f"towers r {D['boss_r']:.2f} at (±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}); board ±{D['board_x1']:.2f} × ±{D['board_y1']:.2f}")
+        cb_ = min(D["car_hw"] - (abs(x) + D["boss_r"]) for x, _ in D["balls"])
+        cby = min(D["car_hh"] - (abs(y) + D["boss_r"]) for _, y in D["balls"])
+        row("carrier cup bosses inside the carrier outline", min(cb_, cby), ">= 0", min(cb_, cby) >= -1e-6,
+            f"the bosses sit inside the faceplate hole with the carrier floor")
         pins = [P[n] for n in P if n.startswith("cradle locating dowel")]
         row("cradle locating dowels in the PCB", len(pins), "2", len(pins) == 2 and all(p_.distance_to(plate) <= 0.06 for p_ in pins),
             ", ".join(f"({x:.1f}, {y:.1f})" for x, y in D["cr_pins"]))
@@ -276,8 +284,8 @@ def run(D, P):
     bp = min(b.distance_to(plate) for b in balls)
     row("ball seated in the upper cup", bt, "<= 0.02", bt <= 0.02, f"four Ø{D['ball_d']:g}, cup Ø{2*D['cup_r']:.2f}")
     row("ball seated in the lower cup", bp, "<= 0.02", bp <= 0.02, "matching cup in the seat post")
-    row("cup radius / ball radius", D["cup_ratio"], "1.05-2.0", 1.05 <= D["cup_ratio"] <= 2.0,
-        f"Rc {D['cup_r']:.3f} mm, rim radius {D['cup_rim_r']:.3f} mm")
+    row("cup radius / ball radius", D["cup_ratio"], "1.05-3.0", 1.05 <= D["cup_ratio"] <= 3.0,
+        f"Rc {D['cup_r']:.3f} mm, rim radius {D['cup_rim_r']:.3f} mm" + (" [Ed 2 Nov: gentle cups, option B]" if D.get("cup_ratio_set") else ""))
     row("cup depth / ball diameter", D["cup_depth_frac"], "0.15-0.40", 0.15 <= D["cup_depth_frac"] <= 0.40,
         f"depth {D['cup_depth']:.3f} mm on Ø{D['ball_d']:g}")
     row("full slide stays inside the cups", D["cup_travel_margin"], f">= {D['cup_margin']:.2f}",

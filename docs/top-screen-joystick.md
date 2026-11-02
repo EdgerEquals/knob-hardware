@@ -197,32 +197,32 @@ The riser is that 25 mm body. With the knob top still at z 52.50, the faceplate 
 The header is Samtec **TSW-103-17-T-S** (mating pin 15.74 mm, consigned). It engages the H11 socket by 4.28 mm and the tip stops at z 6.72. Checks 79/79, 0 clashes. Daughterboard outline is now 31.61 × 13.87. ERC 0, DRC 0. Section preview only.
 
 ## v0.5 build (2 Nov 2026)
-Model: `cad/joystick-param/` on `asm/v020-layout`. Images: `cad/assemblies/joystick-v0.5/joystick-v0.5.png`, `-plan.png`, `-clean.png`.
-**85/85 checks PASS, 0 clashes**; in the knob build (v0.20) the joystick has no clash with the knob, the case or the PCB.
-Decisions and their reasons: `docs/case-decisions-2026-11-02.md`, "2 Nov midday (v0.20)".
+Model: `cad/joystick-param/`. Images: `cad/assemblies/joystick-v0.5/joystick-v0.5.png`, `-plan.png`, `-clean.png`.
+**90/90 checks PASS, 0 clashes**; in the knob build (v0.20, 180/180) the joystick has no clash with the knob, the case or the PCB.
+Decisions and reasons: `docs/case-decisions-2026-11-02.md`, "2 Nov midday (v0.20)" and "Review fixes and the ball seats".
 
-- **Placement.** The case owns it now: the joystick sits as high as the top rail screws (ISO 7092 Ø6 washers) allow, and the knob
-  moved down instead. Local axis at panel-frame y 40.88. Finger gap to the knob glass 5.31 mm (was 0.95).
-- **Grip block.** The bezel (screen carrier, MJF PA-12) is a 5 mm tall block: 1.2 mm walls from 0.02 above the faceplate, a 1.6 mm
-  roof under the glass, the glass on top standing 0.6 proud. The faceplate opening tucks behind its edge (0.9 overlap).
-  Glass top z 44.42, 5.62 above the faceplate, 12.38 under the knob screen.
-- **Lift.** The switch, board and carrier are 2 mm higher (30 mm). The carrier floor (z 37.1–38.1) sits inside the faceplate hole.
-- **Guides / up-stop.** Two ISO 7984 M2×6 screws through brass sleeves (OD 3.0, 4.0 long) at (0, ±5). The sleeve slides in a reamed
-  Ø3.06 bore (2.78 long) in the carrier; the screw runs 2.0 mm into an M2×3 insert in the roof boss. The heads under the carrier
-  are the up-stop that v0.4 lacked.
-- **Base.** A printed cradle (MJF PA-12, 30 mm) glued to the main PCB on two Ø1.5 dowels replaces the four standoffs and the seat
-  plate. Ring ±16.0 × (−8.15 .. +7.65), inside the main-PCB top edge (local 8.12). The board (30.4 × 14.3) is glued on a 0.7 land.
-- **Balls at the corners.** Four Ø2 balls on cradle towers at (±17.5, +8.67) and (±17.5, −10.5). The top towers start at z 22.5,
-  above the case's top corner posts, and hang off the ring; the knob-side towers stand on the PCB and carry the dowels.
-- **Springs inside the balls.** Press springs (Lee CI 008B 01 M, grub + insert, 0.5 turn: 0.77 N preload, 2.12 N at the bottom) at
-  (±11.5, ±7.5). Hold-down springs 0.65 N at (±12.5, ±3.0); cross pins along x behind the PCB.
-- **Tipping.** A sideways push on the glass top tips the carrier only above 2.47 N (up), 2.99 N (toward the knob), 4.99 N
-  (left/right): ≥ 1.3 × the switch's worst tilt force 1.89 N.
-- **Board-to-board.** Two 2×5 long-post headers (long side along y) at x ±7.71 into 2×5 H11 sockets; header mates 5.04 mm.
-- **Screen flex.** AXE530127 socket on a +x tab of the board (centre x 16.0, long side along y); slots in the roof and the carrier
-  floor; fold pocket inside the +x wall at the glass edge.
-- **Skirt.** Two walls along the board's ±y edges, split to leave the grubs open and stopped short of the towers; still the
-  anti-rotation stop (3° hits).
+- **Placement.** The case owns it: as high as the top rail screws allow (ISO 7092 Ø6 washers, 0.2 float, MJF tolerance); the knob
+  moved down instead. Joystick axis at panel-frame y 40.63. **Finger gap to the knob glass 5.06 mm** (was 0.95).
+- **Grip block.** The bezel (MJF PA-12) is 5.0 mm tall with 1.2 walls, a 1.6 roof, the glass on top 0.6 proud. It floats 0.55 above
+  the flat faceplate (closes to 0.2 at full press); the faceplate opening tucks behind its edge (0.9 overlap). Glass top z 44.95:
+  6.15 above the faceplate, 11.85 under the knob screen.
+- **Lift.** Switch, board and carrier 2 mm higher (30 mm). The carrier floor (z 37.1–38.1, corners R1.2) is inside the faceplate hole.
+- **Guides / up-stop.** Two ISO 7984 M2×8 screws through brass sleeves (OD 3.0, 6.0 long) at (±9, 0); reamed Ø3.06 bores 4.25 long
+  in the carrier; 2.0 of thread in M2×3 roof inserts. The heads under the carrier are the up-stop.
+- **Press peg.** ISO 4026 M2×6 grub in a centre roof insert; set the 0.2 gap to the stem with a feeler before gluing the glass.
+- **Base.** Printed cradle (MJF PA-12, 30 mm) glued to the main PCB on two ISO 8734 1.5×5 dowels; ring ±16.0 × (−8.15 .. +7.65),
+  0.42 inside the main-PCB top edge. The board (30.4 × 14.3, plus the socket tab) is glued on a 0.7 land. No standoffs, no seat plate.
+- **Balls at the corners.** Four Ø2 balls in gentle cups (radius 2.5, 8.6° at the full slide) on cradle towers at (±17.8, +8.45) and
+  (±17.8, −10.3). The top towers start at z 22.5, above the case's top corner posts; the knob-side towers stand on the PCB.
+- **Springs inside the balls.** Press springs (Lee CI 008B 01 M; 0.5 turn: 0.77 N preload, 2.12 N at the bottom) at (±11.5, ±7.5).
+  Hold-down springs **0.9 N** at (±12.5, ±3.0); cross pins along x behind the PCB.
+- **Tipping.** Push to click 1.75 N nominal / 2.44 N worst (switch + 0.55 N cup spring-back). Safety at the worst-case click: 1.32 up,
+  1.61 toward the knob, 2.78 left/right (≥ 1.3).
+- **Board-to-board.** Two 2×5 long-post headers (long side along y) at x ±7.71 into 2×5 H11 sockets; mates 5.04.
+- **Screen flex.** AXE530127 socket on a +x tab (centre x 16.0, long side along y); slots in the roof and carrier floor; fold pocket
+  inside the +x wall at the glass edge.
+- **Skirt.** Two walls along the board's ±y edges, split to leave the grubs open and short of the towers; the anti-rotation stop.
 - **Rail strip.** Nothing behind the panel reaches into the outer 10 mm (0.4 air).
-- Open: flex tail length [C]; the fold pocket leaves 0.6 of the +x bezel wall [C]; parts to pick (headers, sockets, screws, tube,
-  0.65 N springs, dowels); the daughterboard KiCad (`make_project.py` from `geom.json`) is not regenerated yet.
+- Open: flex tail length [C]; the fold pocket leaves 0.6 of the +x wall (MJF minimum 1.0) [C]; parts to pick (2×5 header code, 2×5
+  sockets, M2×8 low-head, M2×6 grub, inserts, brass tube 3.0/2.1, 0.9 N Ø2 extension springs, dowels, epoxy); the daughterboard
+  KiCad generator (`make_project.py`) does not read the new `geom.json` keys yet (rows, axis, hdr_pins, tab).

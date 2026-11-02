@@ -681,21 +681,30 @@
   },
   {
    "name": "finger gap: knob glass to the joystick bezel",
-   "value": 5.31,
+   "value": 5.06,
    "target": ">= 5",
    "ok": true,
-   "note": "[Ed 2 Nov] joystick place_y 40.88 (rail rule; v0.4 knob rule 36.52); knob 9.2 below the v0.18 panel position",
+   "note": "[Ed 2 Nov] joystick place_y 40.63 (rail rule; v0.4 knob rule 36.52); knob 9.2 below the v0.18 panel position",
    "owner": "case",
-   "slack": 0.31
+   "slack": 0.06
   },
   {
    "name": "joystick bezel clear of the top rail screw washers (full slide)",
-   "value": 0.2,
-   "target": ">= 0.2",
+   "value": 0.45,
+   "target": ">= 0.45",
    "ok": true,
    "note": "ISO 7092 M3 nylon washer, small series, \u00d86.0 \u00d7 0.5 under an M3 pan head, keep-out \u00d86.0 at y 59.10",
    "owner": "case",
    "slack": 0.0
+  },
+  {
+   "name": "clear OLED placed per knob_drop2 \u2212 oled_drop (within 0.05)",
+   "value": 0.04,
+   "target": ">= 0",
+   "ok": true,
+   "note": "electronics clear_oled_xy y -35.19, expected -35.20",
+   "owner": "case",
+   "slack": 0.04
   },
   {
    "name": "clear OLED vs the bottom corner posts",
@@ -720,27 +729,27 @@
    "value": 0.9,
    "target": ">= 0.8",
    "ok": true,
-   "note": "opening 42.22\u00d727.34 at place_y 40.88",
+   "note": "opening 42.22\u00d727.34 at place_y 40.63",
    "owner": "case",
    "slack": 0.1
   },
   {
    "name": "web, knob hole to joystick hole",
-   "value": 6.01,
+   "value": 5.76,
    "target": ">= 0.8",
    "ok": true,
    "note": "plan width of the bridge",
    "owner": "case",
-   "slack": 5.21
+   "slack": 4.96
   },
   {
    "name": "bezel above the faceplate",
-   "value": 0.02,
+   "value": 0.55,
    "target": ">= 0",
    "ok": true,
-   "note": "lip z 38.82\u201343.82, plate top 38.80",
+   "note": "lip z 39.35\u201344.35, plate top 38.80",
    "owner": "case",
-   "slack": 0.02
+   "slack": 0.55
   },
   {
    "name": "knob stands proud of the faceplate",
@@ -846,18 +855,18 @@
    "value": 25.611,
    "target": ">= 0.4",
    "ok": true,
-   "note": "upper bosses y 45.35, room between knob and joystick 10.60",
+   "note": "upper bosses y 45.35, room between knob and joystick 10.35",
    "owner": "case",
    "slack": 25.211
   },
   {
    "name": "top rail screw web",
-   "value": 2.95,
+   "value": 3.2,
    "target": ">= 0.8",
    "ok": true,
    "note": "holes are in the panel, clear of the joystick opening",
    "owner": "case",
-   "slack": 2.15
+   "slack": 2.4
   },
   {
    "name": "ledge width",
@@ -924,12 +933,12 @@
   },
   {
    "name": "top light-strip width",
-   "value": 6.65,
+   "value": 6.9,
    "target": ">= 0.8",
    "ok": true,
    "note": "panel edge above the bezel",
    "owner": "case",
-   "slack": 5.85
+   "slack": 6.1
   },
   {
    "name": "side wall is material",
@@ -1140,12 +1149,12 @@
   },
   {
    "name": "case mass",
-   "value": 51.32,
+   "value": 51.319,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 39477 mm\u00b3 (39.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 39476 mm\u00b3 (39.5 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case",
-   "slack": 88.68
+   "slack": 88.681
   },
   {
    "name": "one hollow shell",
