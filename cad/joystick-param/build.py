@@ -64,7 +64,9 @@ def main():
                                [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["spr_bore"], what="hold-down spring")
                                 for x, y in D["springs"]] +
                                [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["cradle"]["pin"]["d"] + 0.05,
-                                     what="cradle locating dowel (NPTH)") for x, y in D.get("cr_pins", [])],
+                                     what="cradle locating dowel (NPTH)") for x, y in D.get("cr_pins", [])] +
+                               [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["grub_access_d"],
+                                     what="press-spring grub access (NPTH)") for x, y in D.get("access_xy", [])],
                 # v0.5: header body footprint (x, y), pin offsets, the cradle ring and the socket tab
                 hdr_body=[D["hdr_len"], D["hdr_wid"]], hdr_pins=[list(p) for p in D["hdr_pins"]],
                 cradle_ring=dict(inner=[D.get("cr_in_x"), D.get("cr_in_y")], outer=[D.get("cr_out_x"), D.get("cr_out_y0"), D.get("cr_out_y1")]),
