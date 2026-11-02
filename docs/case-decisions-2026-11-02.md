@@ -249,7 +249,24 @@ A fresh-eyes review of v0.20 found real faults; all fixed:
 - **Hall rib raised** to z 9.0 and trimmed to r 16.7: deflection 0.032 under the 2 N rule load, **2.2× margin** (was 0.059 of 0.07).
 - Full build v0.22: **203/203, 0 clashes**, joystick vs knob none.
 - No fan wings any more (they carried the old ear detents). The v0.21 study's other two hub tracks are not built: the train under the
-  spring closes the load path on its own [A: Danny to confirm].
+  spring closes the load path on its own [Ed 15:50: confirmed, dropped].
 - [C] **Height match**: the train is a second axial support besides the 45° knob race. The detent spoke is about 16 N/mm vertically, so a
   0.1 mm height mismatch between the pedestal and the race stack is about 1.6 N on the train. Print the pedestal to the measured
   stack, or make it adjustable.
+
+### Pedestal set by a grub, v0.22b (2 Nov, 15:50)
+- [Ed 15:50] "Grub screw if you can." The pedestal is now a **separate SLA block** guided 1.25 mm in a pocket in the cradle plate
+  (0.1 slide clearance all round), standing on an **M2 × 2 grub** tapped into the plate under it, the same way the detent boss's grub is.
+  Turning the grub raises or lowers the train under the spring: **±0.25 mm** of travel (down until the block meets the pocket floor,
+  up while 1.5 mm of thread stays in the plate). At 0.4 mm pitch that is about 0.6 turn each way, about 0.01 mm per 10° of key.
+- **Setting it**: back cover and screens off, a 0.9 hex key goes in from behind through a **Ø1.6 NPTH in the main PCB** at
+  r 13.5, 263° (`sp_access_d`, `sp_grub_xy`, now interface keys so the PCB and the base drive share them). Turn until the detent spoke
+  just lifts off the knob race, then back a touch. A drop of low-strength threadlocker once set [A].
+- [Ed 15:50] "No need for the other ones if it's covered at the detent": the v0.21 study's other two hub tracks are dropped for good.
+- Model: `base_drive` `sp_ped_pocket`, `sp_ped_clear`, `sp_ped_lift`, `sp_grub`, `sp_thread_min`; parts "detent train pedestal
+  (SLA, grub-set)" and "detent pedestal grub M2x2". New checks: adjustment range, guide length, the key line from behind the PCB, the
+  PCB hole round it; the train's lower race is now the pedestal part.
+- Full build v0.22b: **207/207, 0 clashes**. Adjustment ±0.25; block guided 1.25; key line 0.54 clear of the encoder disc rim (the
+  nearest part) and 0.30 inside the PCB hole. Section: `docs/img/pedestal-grub-section.png`.
+- Order of assembly: the grub goes in from the top, down the pocket (2.1 wide over the M2 thread), then the block, the train and the
+  dial. So it can be changed without lifting the cradle; the Ø1.6 hole in the PCB passes the key only, not the grub.

@@ -16,6 +16,7 @@ RULES = [
     (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
     (r"knob upper-cap", "print", "PA-12", "MJF"),     # v0.19b: carries the 1220 hub gear; was caught by the clear 'cap' rule
     (r"base cradle", "print", "UTR-8100 clear resin (clear race fused in)", "SLA"),   # the race land is the light path
+    (r"train pedestal", "print", "UTR-8100 clear resin", "SLA"),   # v0.22b: before the hardware rule (its name says 'grub-set')
     (r"nylon", "buy", "nylon pinion (Tempero 0.5M-12T)", "buy"),
     (r"anchor", "print", "PA-12", "MJF"),             # joystick rear spring anchor (printed), not a spring
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),

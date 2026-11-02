@@ -17,13 +17,11 @@ def _arc(D): return D["arm_det"] in ("arc", "split") and D["ad_r"] is not None
 def _split(D): return D["arm_det"] == "split" and D["ad_r"] is not None
 
 def split_mount(D):
-    """v0.22 [Ed 2 Nov 15:27]: pedestal under the detent ball (carries the train groove), the wall outboard of the flange
-    sweep from the plate to the boss top, the radial bracket and the boss with the plunger bore (bore cut in cradle_cut)."""
-    a, r = D["ad_ang"], D["ad_r"]; zb = D["tk"][0]["z"]; z_ped = zb - D["bt_up"]
-    p0, p1, ph = D["sp_ped"]; pt = D["plate_t"]
-    s = sector(p0, p1, ph, pt - 0.01, z_ped - pt + 0.01, a, n=48)
+    """v0.22 [Ed 2 Nov 15:27]: the wall outboard of the flange sweep from the plate to the boss top, the radial bracket and the
+    boss with the plunger bore (bore cut in cradle_cut). The pedestal is a separate block (v0.22b, split_pedestal)."""
+    a, r = D["ad_ang"], D["ad_r"]; pt = D["plate_t"]
     a0, a1 = D["sp_wall_a"]; r0, r1 = D["sp_wall_r0"], D["sp_wall_r1"]; z0, z1 = D["det_z0"], D["det_z1"]
-    s += sector(r0, r1, (a1 - a0) / 2, pt - 0.01, z1 - pt + 0.01, (a0 + a1) / 2, n=64)
+    s = sector(r0, r1, (a1 - a0) / 2, pt - 0.01, z1 - pt + 0.01, (a0 + a1) / 2, n=64)
     x, y = _pol(r, a)
     s += cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
     rb = (r0 + r1) / 2
@@ -60,6 +58,21 @@ def det_bore(D, a):
     x, y = _pol(D["ad_r"], D["ad_ang"]) if _arc(D) else _pol(D["det_r"], a)
     return cyl(D["det_bore_d"] / 2, D["det_z0"] - 0.01, D["det_z_thread0"] - D["det_z0"] + 0.02, x, y) + \
            cyl(D["det_thread_d"] / 2, D["det_z_thread0"], D["det_z1"] - D["det_z_thread0"] + 0.01, x, y)
+
+def split_pedestal(D):
+    """v0.22b [Ed 15:50]: the train's lower race, a separate block guided in a plate pocket and set in height by an M2 grub
+    tapped into the plate under it (hex key through the PCB from behind)."""
+    a = D["ad_ang"]; p0, p1, ph = D["sp_ped"]
+    blk = sector(p0, p1, ph, D["sp_z_blk0"], D["sp_z_blk1"] - D["sp_z_blk0"], a, n=48) - track_grooves(D)
+    gd, gl = D["sp_grub"]; gx, gy = D["sp_grub_xy"]
+    return blk, cyl(gd / 2 - 0.01, D["sp_z_grub0"], gl, gx, gy)
+
+def split_cuts(D):
+    """Plate pocket for the pedestal block + the tapped hole for its grub (down to the plate bottom)."""
+    a, c, r = D["ad_ang"], D["sp_ped_clear"], D["ad_r"]; p0, p1, ph = D["sp_ped"]
+    s = sector(p0 - c, p1 + c, ph + math.degrees(c / r), D["sp_z_pf"], D["plate_t"] - D["sp_z_pf"] + 0.01, a, n=48)
+    gx, gy = D["sp_grub_xy"]
+    return s + cyl(D["sp_grub"][0] / 2, -0.01, D["sp_z_pf"] + 0.02, gx, gy)
 
 def track_grooves(D):
     out = None
@@ -104,7 +117,7 @@ def cradle_add(D):
     return s
 
 def cradle_cut(D):
-    s = track_grooves(D)
+    s = split_cuts(D) if _split(D) else track_grooves(D)
     for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
     for (px, py) in D["sl_anchor_xy"]:
         z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
@@ -161,6 +174,10 @@ def build(D):
     if _arc(D):
         for nm, d, bx, by, bz in track_ball_list(D):
             out[nm] = Pos(bx, by, bz) * Sphere(d / 2)
+    if _split(D):
+        blk, grub = split_pedestal(D)
+        out["detent train pedestal (SLA, grub-set)"] = blk
+        out[f"detent pedestal grub M{D['sp_grub'][0]:g}x{D['sp_grub'][1]:g}"] = grub
     if D["cu_on"]:
         md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
         for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):

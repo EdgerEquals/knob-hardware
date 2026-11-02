@@ -261,7 +261,8 @@ def _arc_cross(D, parts, row, TR, ARM):
         dmin, who = 1e9, ""
         for th in TR:
             bs = Compound(children=[Pos(x, y, z) * Sphere(d / 2) for n, d, x, y, z in balls[th] if n.startswith(f"track {t['k']} ")])
-            for nm, s in (("plate", cr), ("arm web", ARM[th])):
+            low = parts.get("detent train pedestal (SLA, grub-set)", cr) if D["arm_det"] == "split" else cr
+            for nm, s in (("pedestal" if D["arm_det"] == "split" else "plate", low), ("arm web", ARM[th])):
                 d = bs.distance_to(s)
                 if d < dmin: dmin, who = d, f"{nm} at {th:+.2f}°"
         row(f"ball track {t['k']}: balls stay inside both grooves across ±travel (ball to race, mm)", dmin, seat - 0.01,
@@ -293,6 +294,20 @@ def _arc_cross(D, parts, row, TR, ARM):
             dc = min(ARM[th].distance_to(c) for th in TR for c in caps)
             row("split detent: arm (flange, spokes) vs the pinion caps across ±travel (mm)", dc, T["arm_vs_cradle"],
                 f"flange underside z {D['sp_z_fu']:.2f}")
+        # v0.22b [Ed 15:50]: the pedestal grub is set from behind (back cover and screens off) through a hole in the PCB
+        gx, gy = D["sp_grub_xy"]; zg = D["sp_z_grub0"]
+        key = cyl(0.5, -13.4, zg + 13.4 - 0.01, gx, gy)   # Ø1.0 key line from just over the front AMOLED to the grub socket
+        skip = ("base cradle", "detent pedestal grub", "detent train pedestal")
+        ispcb = lambda n: n == "PCB" or n.startswith("main PCB")
+        hits = [(n, key.distance_to(q)) for n, q in parts.items() if not n.startswith(skip) and not ispcb(n)
+                and q.bounding_box().min.Z < zg and q.bounding_box().max.Z > -13.4]
+        nn, dk = min(hits, key=lambda t: t[1]) if hits else ("none", 9.0)
+        pcb = [q for n, q in parts.items() if ispcb(n)]
+        row("split detent: pedestal grub reachable from behind the PCB (key line clear, mm)", dk, 0.1,
+            f"Ø1.0 key line from z -13.4 (back cover and screens off) at r {D['sp_r']:g}, {D['sp_ang']:g}°; nearest: {nn}")
+        if pcb:
+            row("split detent: PCB key hole round the key line (mm)", min(key.distance_to(q) for q in pcb), 0.2,
+                f"Ø{D['sp_access_d']:g} NPTH in the main PCB [Ed 15:50]")
         ring = [s for n, s in parts.items() if n.startswith("bottom internal ring")]
         if ring:
             row("split detent wall vs the knob's internal ring (mm)", min(mt.distance_to(q) for q in ring), T["arm_vs_cradle"],
