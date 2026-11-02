@@ -186,7 +186,7 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 ### Back cover
 - [Ed 12:04] **Back cover and lower screen pad in ASA-CF** (FDM, black), was PETG: stiffer (~4.2 GPa) and HDT ~100 °C, so the
   corner-column clamp does not creep in a warm rack. Print floor-down (weaker across layers). FDM ±0.3: counterbore clearance 0.25.
-  [A] a thin PET or Kapton film under the screens (carbon fill can be slightly conductive) [C: meter a sample].
+  [Ed 14:30] Kapton tape under the screens, laid at assembly where needed (carbon fill can be slightly conductive); no metering.
 
 ### Open checks from this session
 - [C] DO0164 flex: tail length from the glass edge to the socket (fold, then ~12 mm down); the fold pocket leaves 0.6 of the +x

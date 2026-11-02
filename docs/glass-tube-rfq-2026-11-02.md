@@ -1,7 +1,11 @@
 # Glass tube: suppliers and RFQ (2 Nov 2026)
 
 Part: borosilicate 3.3 tube, OD 42.0, wall 2.15 (2.0–2.3), length 47.45; end A ground 45° chamfers 0.8 inside / 0.6 outside
-(the inside one is the cap seat), end B fire-polished. Samples 2–10, then 50–200. Nothing sent yet.
+(the inside one is the cap seat), end B fire-polished. Samples 2–10, then 50–200.
+
+[Ed 14:30] Gmail drafts made (not sent; Danny attaches `docs/img/glass-tube-drawing.pdf` and sends): UQG Optics (adds an OD-grinding
+price), Fuxinag, UQ Glassblowing, Elemental Scientific. Sinoptix has only a web RFQ form: paste the text below. Sender: MMICO,
+Unit 4, 62 Manning Road, Wilson WA 6107. v0.21 did not change the tube (length still 47.45).
 
 ## Candidates (best first; none states every step, the quotes must confirm)
 | # | Supplier | Stated capability | MOQ / samples | Contact |
