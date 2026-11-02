@@ -100,3 +100,24 @@ A and B take part of the bottom strip, where the 14-way and power plugs (and pro
   behind the OLED's lit area **50%** with the OLED's flex at the bottom, **70%** with the OLED turned over (flex at the top, which then
   runs into the knob's emitter ring and cradle: no connector room there [C]). Low middle (A): 698 mm², **83%**.
   Picture: `docs/img/lqfp100-top-vs-low.png`.
+
+## [Ed 18:20 "C pls", 18:34 "this is the version I meant"] LQFP100 at the low middle
+"C" was the third panel of the 18:13 picture (`lqfp100-top-vs-low.png`): **A, low middle, OLED flex at the bottom**.
+- The H7B0 (STM32H7B0VBT6, LQFP100) sits on the board **back** at (0, −43.95), panel frame: in the bottom strip, as low as the
+  free board back allows on x = 0 (courtyard bottom −52.55; board edge −53.3). Electronics param `mcu`: body 16 × 16 × 1.6
+  over the leads [S], courtyard 17.2 □ for the chip and its decoupling caps [A], 0.5 margin to the window.
+- `tools/pcb_windows.py` notches the courtyard + 0.5 out of the bottom of D (x ±9.1, up to y −34.85). D stays one window:
+  **697.7 mm²** (was 917.4). A, B, C and E regenerate identically. `--no-mcu` gives the old D back.
+- See-through behind the OLED's lit area: **83%** with its flex at the bottom [A]. The OLED still rests on its 1.6 ledge all
+  round D.
+- The chip takes the middle of the bottom strip, where the 14-way and power plugs (and probably the clear OLED's connector)
+  were going [C]: those need homes either side of it, or on the front, when the board is regenerated. The stale J10 pad field
+  ends 0.98 below the chip body.
+- KiCad back parts left out of the proxy until the board is regenerated: R20–R22 (in D), R30–R32 (under the courtyard).
+- New checks (electronics): courtyard to the nearest window edge 0.50 (≥ 0.49; D is notched at exactly this margin), chip
+  body to the other back-side parts 0.98 (≥ 0.29). Full build 209/209, no clashes. Nearest structure: the back cover
+  1.35 from the chip body (about 0.75 from the courtyard edge), the case 1.65.
+- The model carries the chip as a part (`MCU STM32H7B0VBT6 LQFP100 (PCB back)`, black, PCBA in the BOM). The KiCad
+  constraints export (`export_cad_constraints.py`) now carries `mcu` for the regeneration.
+- The candidate markers are gone from the section atlas; its across and oblique cuts now go through the real chip.
+  Picture: `docs/img/lqfp100-low-middle.png`.

@@ -726,21 +726,39 @@
   },
   {
    "name": "PCB windows: smallest window (mm\u00b2)",
-   "value": 11.591,
+   "value": 45.056,
    "target": ">= 10",
    "ok": true,
-   "note": "A 72, B 22, C 12, D 901, E 12; KiCad back parts to move off the windows: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
+   "note": "A 203, B 159, C 45, D 698, E 45; KiCad back parts to move off the windows / MCU site: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
    "owner": "electronics",
-   "slack": 1.591
+   "slack": 35.056
   },
   {
    "name": "clear OLED rests on the board round window D (narrowest ledge)",
-   "value": 1.62,
+   "value": 1.6,
    "target": ">= 1",
    "ok": true,
    "note": "42.04 x 27.22 on the PCB front at (0, -35.19)",
    "owner": "electronics",
-   "slack": 0.62
+   "slack": 0.6
+  },
+  {
+   "name": "MCU LQFP100 courtyard (17.2 \u25a1 [A]) to the nearest window edge",
+   "value": 0.5,
+   "target": ">= 0.49",
+   "ok": true,
+   "note": "STM32H7B0VBT6 on the board back at (0, -43.95); D is notched at exactly this margin; D 698 mm\u00b2",
+   "owner": "electronics",
+   "slack": 0.01
+  },
+  {
+   "name": "MCU LQFP100 body vs the other back-side parts (KiCad proxy)",
+   "value": 0.975,
+   "target": ">= 0.29",
+   "ok": true,
+   "note": "the KiCad parts under the courtyard are left out above (they move when the board is regenerated)",
+   "owner": "electronics",
+   "slack": 0.685
   },
   {
    "name": "rod VBUS pad (B.Cu) vs back-side parts / pads",

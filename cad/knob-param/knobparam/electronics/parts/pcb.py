@@ -81,7 +81,11 @@ def build(D):
            f"PCB rod pad VBUS Ø{2 * D['rod_pad_r']:.1f} (B.Cu)": pad}
     out.update({k: _mr(D) * v for k, v in emitters(D).items()})
     w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]
-    out['clear OLED 1.51" SSD1309 (PCB front, over window D)'] = Pos(cx, cy, 0) * Box(w, h, th, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    dk = " + ".join(k for k in D["pcb_windows"] if k.startswith("D"))
+    out[f'clear OLED 1.51" SSD1309 (PCB front, over window {dk})'] = Pos(cx, cy, 0) * Box(w, h, th, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if D.get("mcu"):   # [Ed 18:34] H7B0 on the board back, low middle (panel frame): envelope over the leads, decoupling caps not modelled
+        M = D["mcu"]; bw, bl, bh = M["body"]
+        out[f"MCU {M['part']} {M['pkg']} (PCB back)"] = Pos(M["xy"][0], M["xy"][1], -t - bh) * Box(bw, bl, bh, align=A)
     return out
 
 def _in_poly(x, y, poly):
@@ -92,14 +96,17 @@ def _in_poly(x, y, poly):
     return inside
 
 def window_hits(D, K):
-    """KiCad back parts (panel-frame ones) whose footprint box touches a window."""
+    """KiCad back parts (panel-frame ones) whose footprint box touches a window or the MCU courtyard [Ed 18:34]."""
     out = []
+    M = D.get("mcu")
     for p in K.get("back_parts", []):
         if _is_mech(D, p["x"], p["y"]):
             continue
         hw, hl = p["w"] / 2, p["l"] / 2
         pts = [(p["x"] + sx * hw, p["y"] + sy * hl) for sx in (-1, 0, 1) for sy in (-1, 0, 1)]
         if any(_in_poly(x, y, poly) for poly in D["pcb_windows"].values() for x, y in pts):
+            out.append(p["ref"])
+        elif M and abs(p["x"] - M["xy"][0]) < hw + M["court"] / 2 and abs(p["y"] - M["xy"][1]) < hl + M["court"] / 2:
             out.append(p["ref"])
     return out
 

@@ -43,6 +43,7 @@ def main():
         pcb_windows={k: [list(p) for p in v] for k, v in D.get("pcb_windows", {}).items()},   # v0.19b Edge.Cuts cut-outs, PANEL frame
         js_pcb_holes=D.get("js_pcb_holes", []),   # v0.19b joystick standoff screws + hold-down springs, PANEL frame
         clear_oled=dict(size=D.get("clear_oled"), xy=D.get("clear_oled_xy")),
+        mcu=D.get("mcu"),   # [Ed 18:34] H7B0 LQFP100 on B.Cu at the low middle (PANEL frame), D notched round it; court = keep-out for its caps
         drv=__import__("knobparam.electronics.parts.pcb", fromlist=["drv_place"]).drv_place(D),   # v0.19b U20, C20–C22 (B.Cu)
         fm_pad_xy=D["fm_pad_xy"], fm_xy=D["fm_xy"], fm_ang=D["fm_ang"], fm_cd=D["fm_cd"], feel=D["feel"],
         rod_pad_r=D["rod_pad_r"], rod_pad_clear=D["rod_pad_clear"], h1_hole=D["h1_hole"],

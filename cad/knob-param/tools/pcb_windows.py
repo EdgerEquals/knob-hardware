@@ -1,6 +1,6 @@
 # Run from cad/knob-param:  PYTHONPATH=. python tools/pcb_windows.py out.json [--keep 22] [--margin 0.5] [--web 6] [--ab-top Y] [--table]
 #   (then paste the polygons into electronics pcb_windows; --table prints the keep-out / margin trade-off and writes nothing)
-"""PCB see-through windows A, B, C, E (+ D under the clear OLED), panel frame.
+"""PCB see-through windows A, B, C, E (+ D under the clear OLED, notched for the LQFP100), panel frame.
 
 Windows v2 ([Ed] 2 Nov: "these windows can be much bigger"): every window goes out to the REAL limits, each with a margin M
 (default 0.5; v0.20 used 1.0 and a 24.1 knob keep-out):
@@ -15,6 +15,8 @@ Obstacles (panel frame):
               ∪ geom.json cradle_ring outer ∪ geom.json main_pcb_holes (hold-down bores, dowel NPTHs), all + M
   J10         KiCad J10 pad field if it lands on the board (stale v0.11 position, outside the board now)
   clear OLED  D = OLED inset by its 1.6 ledge [Ed v0.19b]; C and E stop M short of the OLED's top edge
+  MCU         [Ed 18:34] electronics mcu (LQFP100 + caps, court 17.2 [A]) at the low middle: court + margin is notched out of
+              the bottom of D. --no-mcu leaves D whole.
   A/B web     a board strip of width WEB on x = 0 from the knob keep-out up to the joystick cradle, so A (left) and B
               (right) stay two windows and the knob region keeps a direct link to the top of the board [A]."""
 import math, json, sys, argparse, os
@@ -31,6 +33,7 @@ ap.add_argument("--rail", type=float, default=1.5, help="board kept inside the o
 ap.add_argument("--web", type=float, default=6.0, help="A/B web width on x = 0 [A]")
 ap.add_argument("--ab-top", type=float, default=None, help="cap A and B at this y (e.g. 26.06, the joystick grip block's shadow) [A]")
 ap.add_argument("--table", action="store_true", help="print the keep-out / margin trade-off table only")
+ap.add_argument("--no-mcu", action="store_true", help="leave D whole (ignore electronics mcu, the LQFP100 column)")
 a = ap.parse_args()
 
 D = model.derive(model.default_params())
@@ -97,8 +100,11 @@ def windows(keep, M, web, ab_top=None):
     Z["E"] = (lower & board).difference(blk) & box(-50, y_ce, 0, 0)
     Z["C"] = (lower & board).difference(blk) & box(0, y_ce, 50, 0)
     Z["D"] = (oled.buffer(-LEDGE, join_style=2) & board & lower).difference(blk)
+    if D.get("mcu") and not a.no_mcu:   # [Ed 18:34] LQFP100 at the low middle: its courtyard + margin notched out of D
+        (mx, my), hc = D["mcu"]["xy"], D["mcu"]["court"] / 2 + D["mcu"]["margin"]
+        Z["D"] = Z["D"].difference(box(mx - hc, my - hc, mx + hc, my + hc))
     out, area = {}, {}
-    for k in "ABCDE":
+    for k in sorted(Z):
         g = Z[k]
         gs = [g] if g.geom_type == "Polygon" else [p for p in getattr(g, "geoms", []) if p.geom_type == "Polygon"]
         gs = [p for p in gs if p.area > 4.0]
@@ -117,11 +123,11 @@ def windows(keep, M, web, ab_top=None):
 
 if a.table:
     print(f"hard limits: emitter bodies r {r_em:.2f}, cradle track r {r_track:.2f}, glass r {D['knob_od'] / 2:.2f}; web {a.web:g}, A/B top {a.ab_top}")
-    print("keep  M    " + "  ".join(f"{k:>6s}" for k in "ABCDE") + "   A+B+C+E     all")
+    print("keep  M    " + "  ".join(f"{k:>6s}" for k in "ABCE") + "  D(all)   A+B+C+E     all")
     for keep, M in ((24.06, 1.0), (23.0, 1.0), (22.5, 0.5), (22.0, 1.0), (22.0, 0.75), (22.0, 0.5), (21.8, 0.5), (21.8, 0.3)):
         _, ar = windows(keep, M, a.web, a.ab_top)
-        s = sum(ar.get(k, 0) for k in "ABCE")
-        print(f"{keep:5.2f} {M:4.2f} " + "  ".join(f"{ar.get(k, 0):6.1f}" for k in "ABCDE") + f"   {s:7.1f} {s + ar.get('D', 0):7.1f}")
+        s = sum(ar.get(k, 0) for k in "ABCE"); sd = sum(v for k, v in ar.items() if k.startswith("D"))
+        print(f"{keep:5.2f} {M:4.2f} " + "  ".join(f"{ar.get(k, 0):6.1f}" for k in "ABCE") + f"  {sd:6.1f}   {s:7.1f} {s + sd:7.1f}")
     sys.exit(0)
 
 print("pcb", x0, x1, y0, y1, "corners", D["corners"], "notch_r", D["notch_r"])

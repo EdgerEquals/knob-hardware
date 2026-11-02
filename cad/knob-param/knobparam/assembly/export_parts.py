@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
+    (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 18:34] main PCB back, low middle
     (r"magnet", "buy", "N52 magnet", "buy"),
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
     (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
