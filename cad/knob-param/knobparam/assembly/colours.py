@@ -25,6 +25,7 @@ MATERIALS = {
     "flex":    ("flex circuits (polyimide amber)", "#c98a1b", False),
     "jack":    ("PJ366ST jacks (black body)", "#262626", False),
     "glow":    ("Shimicoat glow coat", "#d7efae", False),
+    "silicone": ("silicone O-ring (black)", "#141414", False),
     "other":   ("unassigned (check the material rules)", "#ff00ff", False),
 }
 
@@ -33,6 +34,7 @@ def key(name):
     n = name[len("joystick: "):] if name.startswith("joystick: ") else name
     low = n.lower()
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
+    if "o-ring" in low: return "silicone"
     if "seal ring" in low: return "petg"
     if "clear oled" in low: return "oled"
     if "ruby" in low: return "ruby"

@@ -30,7 +30,7 @@ def checks(D, parts):
     row("resin wall round the insert", D["insert_wall"], 1.2, f"M{D['screw_d']:g} insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
     if D["back_screens"] == "amoled2":
         x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]
-        row("back AMOLEDs overlap behind the knob", D["amo_overlap"], 15.0,
+        row("back AMOLEDs overlap behind the knob", D["amo_overlap"], 11.0,   # [Ed 2 Nov] ~11 mm overlap is fine (was 15)
             f"lower y {ly0:.2f}..{ly1:.2f}, upper y {y0:.2f}..{y1:.2f}; seam inside the knob shadow")
         row("back AMOLEDs inside the cover pocket", min(D["void_x1"] - x1, x0 - D["void_x0"], D["void_y1"] - y1, ly0 - D["void_y0"]), 0.3,
             f"{D['amo_w']:.2f} wide in a {D['void_x1'] - D['void_x0']:.2f} pocket")

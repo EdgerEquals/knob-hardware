@@ -11,7 +11,11 @@ P = dict(
                          # on the inner chamfer. "shoulder" = the earlier idea: glass a shoulder short, 2 mm cap shoulder on its top face
     cap_shoulder_t=2.0,   # [Ed] "shoulder" only: shoulder on the glass top face, same OD as the glass
     cap_shoulder_glue=0.05,   # [A] bond line between the shoulder and the glass top face
-    seal_ring=True,   # [Ed 2 Nov] opaque PETG ring bonded on the glass OD; its skirt drops over the faceplate ring (case lab_ring_*)
+    seal_ring=True,   # [Ed 2 Nov] spill seal on the glass above the faceplate ring (case lab_ring_*)
+    seal_type="oring",   # [Ed 2 Nov] "oring": silicone O-ring stretched on the glass as a drip ring, no contact with the case (no drag on
+                         # the feel). "petg": bonded PETG ring with a skirt over the faceplate ring (clashed the joystick bezel and screen)
+    seal_oring=(40.0, 1.0),   # [S] metric silicone O-ring ID x CS; ~5% stretch onto the Ø42 glass, held by the stretch plus a dab of RTV
+    seal_oring_z_air=0.5,   # [A] O-ring underside above the faceplate ring top (also ~0.3 over the joystick bezel lip at rest)
     seal_glue=0.15,   # [A] radial bond on the measured glass OD (print the bore to the measured tube, like the caps)
     seal_wall=1.2,   # [A] skirt wall, 3 lines
     seal_top_t=1.2,   # [A] flange over the faceplate ring

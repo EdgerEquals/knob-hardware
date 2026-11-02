@@ -131,3 +131,9 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 
 ### Joystick in the knob assembly
 - The joystick (cad/joystick-param) is now in the knob clash run and the section sheet. Its main-PCB holes (4 standoff screws, 4 hold-down springs) flow from the joystick build's geom.json into the PCB proxy and cad_constraints.
+
+## 2 Nov late morning (v0.19b, later)
+- [Ed] Spill seal: a **silicone O-ring stretched on the glass** (40 × 1, ~5% stretch, a dab of RTV) as a drip ring just above the faceplate ring, no contact with the case (a rubbing seal would swamp the feel motor). The faceplate ring top now falls 0.3 outward. Replaces the PETG skirt ring, which clashed the joystick bezel and screen.
+- [Ed] Back screens: no single AMOLED fits (see the handover); keep two. Each moved 4 mm toward its end now the corner screws come in from the back; overlap 13.6 mm, ~11 is fine.
+- [Ed] Control-dial arm: move the single spring-ball detent out to near the end of the arm (on the arc) and put the arm's ball supports under the arc. More room for the three dimples there. Not modelled yet.
+- [C] Joystick vs the top rail strip: carrier and the top centring-spring stations reach 3.8 mm into the 10 mm strip behind the panel. Options and a recommendation in the handover; not decided.

@@ -65,6 +65,10 @@ def seal_ring(D):
     outside it to the case's shoulder line (lab_shoulder_*). Turns with the knob; running gaps are the case's lab_gap."""
     if not D.get("seal_ring") or "lab_ring_r" not in D:
         return None
+    if D.get("seal_type") == "oring":   # v0.19b: drip ring, a torus sitting on the glass OD just above the faceplate ring
+        cs = D["seal_oring"][1]
+        zc = D["lab_ring_z1"] + D["seal_oring_z_air"] + cs / 2
+        return Pos(0, 0, zc) * Torus(D["knob_od"] / 2 + cs / 2, cs / 2)
     rb = D["knob_od"] / 2 + D["seal_glue"]
     z0 = D["lab_ring_z1"] + D["lab_gap"]; z1 = z0 + D["seal_top_t"]
     rs0 = D["lab_shoulder_r"]; rs1 = rs0 + D["seal_wall"]; zs = D["lab_shoulder_z0"]
@@ -116,6 +120,8 @@ def build(D):
            "bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper,
            "knob lower-cap land": land,
            f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
-    if seal is not None: out["knob seal ring (PETG, bonded on the glass)"] = seal
+    if seal is not None:
+        out[f"knob drip O-ring {D['seal_oring'][0]:g}x{D['seal_oring'][1]:g} silicone (on the glass)" if D.get("seal_type") == "oring"
+            else "knob seal ring (PETG, bonded on the glass)"] = seal
     if D["rel_sensor"]: out[f"knob ring magnet Ø{ro_:g}/Ø{ri_:g}×{th_:g} diametric"] = ring_mag
     return out

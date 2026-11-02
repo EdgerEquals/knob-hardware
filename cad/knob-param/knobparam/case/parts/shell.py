@@ -216,6 +216,10 @@ def build(D):
     # seal ring: a short thin collar standing up around the knob opening
     ring = _cyl_z(D["lab_ring_r"], D["z_fp1"] - fu, D["lab_ring_z1"], D["ox"], D["oy"])
     ring = _sub(ring, _cyl_z(D["knob_hole_r"], D["z_fp1"] - fu - sl, D["lab_ring_z1"] + sl, D["ox"], D["oy"]))
+    if D.get("lab_ring_slope", 0) > 0:   # v0.19b: top falls outward (drips run away from the knob hole)
+        z1, s, r0, r1 = D["lab_ring_z1"], D["lab_ring_slope"], D["knob_hole_r"], D["lab_ring_r"] + 0.01
+        cut = revolve(Face(Wire.make_polygon([Vector(r0, 0, z1 + sl), Vector(r0, 0, z1), Vector(r1, 0, z1 - s), Vector(r1, 0, z1 + sl)], close=True)), Axis.Z, 360)
+        ring = _sub(ring, Pos(D["ox"], D["oy"], 0) * cut)
     case = _add(case, ring)
     # printed threads
     for x, y in D["corners"]:

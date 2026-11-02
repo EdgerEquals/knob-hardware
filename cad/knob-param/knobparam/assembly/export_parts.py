@@ -12,6 +12,7 @@ RULES = [
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
     (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
     (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
+    (r"O-ring", "buy", "silicone O-ring (metric)", "buy"),
     (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
     (r"knob upper-cap", "print", "PA-12", "MJF"),     # v0.19b: carries the 1220 hub gear; was caught by the clear 'cap' rule
     (r"base cradle", "print", "UTR-8100 clear resin (clear race fused in)", "SLA"),   # the race land is the light path

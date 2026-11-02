@@ -540,7 +540,7 @@
    "value": 17.781,
    "target": ">= 10",
    "ok": true,
-   "note": "A 18, B 18, C 25, D 901, E 25; KiCad back parts to move off the windows: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
+   "note": "A 18, B 18, C 25, D 921, E 25; KiCad back parts to move off the windows: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
    "owner": "electronics",
    "slack": 7.781
   },
@@ -609,12 +609,12 @@
   },
   {
    "name": "back AMOLEDs overlap behind the knob",
-   "value": 21.62,
-   "target": ">= 15",
+   "value": 13.62,
+   "target": ">= 11",
    "ok": true,
-   "note": "lower y -48.10..3.46, upper y -18.16..33.40; seam inside the knob shadow",
+   "note": "lower y -52.10..-0.54, upper y -14.16..37.40; seam inside the knob shadow",
    "owner": "case",
-   "slack": 6.62
+   "slack": 2.62
   },
   {
    "name": "back AMOLEDs inside the cover pocket",
@@ -1050,12 +1050,12 @@
   },
   {
    "name": "back screens: room left toward the ends before a corner column",
-   "value": 4.071,
+   "value": 0.071,
    "target": ">= 0",
    "ok": true,
-   "note": "lower screen could drop 4.07, upper rise 4.07 (column r 2.75 + 0.5 air)",
+   "note": "lower screen could drop 0.07, upper rise 0.07 (column r 2.75 + 0.5 air)",
    "owner": "case",
-   "slack": 4.071
+   "slack": 0.071
   },
   {
    "name": "corner screw through the notch",
@@ -1113,12 +1113,12 @@
   },
   {
    "name": "case mass",
-   "value": 51.667,
+   "value": 51.652,
    "target": "<= 140",
    "ok": true,
-   "note": "volume 39744 mm\u00b3 (39.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
+   "note": "volume 39732 mm\u00b3 (39.7 cm\u00b3), UTR-8100 1.30 g/cm\u00b3",
    "owner": "case",
-   "slack": 88.333
+   "slack": 88.348
   },
   {
    "name": "one hollow shell",
@@ -1377,7 +1377,7 @@
    "value": 0.375,
    "target": ">= 0.3",
    "ok": true,
-   "note": "nearest idler pinion 1 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "note": "nearest encoder pinion cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
    "slack": 0.075
   },
@@ -1585,9 +1585,7 @@
   }
  ],
  "clashes": {
-  "joystick: joystick carrier (printed) / case": 0.04075742380833739,
-  "joystick: screen carrier (printed) / knob seal ring (PETG, bonded on the glass)": 10.694548803060243,
-  "joystick: top screen DWO DO0164FMST05 1.64\" 456x280 AMOLED / knob seal ring (PETG, bonded on the glass)": 0.42525217180739977
+  "joystick: joystick carrier (printed) / case": 0.04075742380833739
  },
  "set": [],
  "sub": null
