@@ -19,12 +19,15 @@ P = dict(
     seal_glue=0.15,   # [A] radial bond on the measured glass OD (print the bore to the measured tube, like the caps)
     seal_wall=1.2,   # [A] skirt wall, 3 lines
     seal_top_t=1.2,   # [A] flange over the faceplate ring
+    cap_shape="cone",   # [Ed 2 Nov] v0.21: cap top and underside are straight cones parallel to the dial ("dished": v0.20)
+    cap_cone_t=3.5,   # [Ed 13:44] cap wall (normal) under the cone; underside flat at the hub-gear top until the cone rises off it
     cap_web_rim=1.5,   # [A] web thickness at the dial cup wall (2.2 at the hub gear); the flare out to the plug keeps it
 )
 
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
                             "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # ball circle + 45° faces
-                            "kb_seat_c_knob", "kb_groove_h"],
+                            "kb_seat_c_knob", "kb_groove_h",
+                            "dial_shape", "cone_deg", "cone_under_r0", "cone_lip_r"],   # v0.21 cone top
             # seal shoulder: a skirt that drops over the case ring. Placed by the case after this
             # sub derives, so the solids here do not use it yet. bore radius lab_shoulder_r,
             # skirt from lab_shoulder_z0 up past lab_shoulder_z1 (the top of the ring).
@@ -78,4 +81,27 @@ def derive(D):
         D["cap_flare_slope"] = math.degrees(math.atan2(dz, dr))
         D["cap_flare_wall"] = D["cap_web_rim"] * math.cos(math.radians(D["cap_flare_slope"]))   # normal wall of the flare
         D["cap_z_flare_top"] = D["z_under_web"] + (D["sleeve_lip_r"] - D["cap_r_s"]) * dz / dr
+    if D["cap_shape"] == "cone" and D["glass_to_dial"] and D["cap_top"] == "chamfer" and D["kb_race"] == "chamfer":
+        # v0.21 [Ed 2 Nov]: top = the race top, then one straight cone (parallel to the dial underside, knob_run under it) up to
+        # the glass top; a flat ring flush with the glass top out to the chamfer seat. Underside flat at the hub-gear top (over the
+        # 1220 pinion) until the parallel cone cap_cone_t below the top rises off it, then up to the plug in the bore.
+        T = math.tan(math.radians(D["cone_deg"])); c = math.cos(math.radians(D["cone_deg"]))
+        o = D["knob_run"] * math.sqrt(2)
+        D["cap_cone_r0"] = D["dial_hub_od"] / 2 + D["gusset"] + o + (D["z_under_web"] - D["z_web0"])   # race top (cap side)
+        D["cap_cone_r1"] = D["cap_cone_r0"] + (D["sleeve_z1"] - D["z_under_web"]) / T                # cone top meets the glass-top flat
+        v = D["cap_cone_t"] / c
+        under_z = lambda r: D["z_under_web"] + (r - D["cap_cone_r0"]) * T - v
+        D["cap_flat_r1"] = D["cap_cone_r0"] + (D["h_band1"] - D["z_under_web"] + v) / T                # flat underside ends here
+        D["cap_plug_z0"] = under_z(D["sleeve_spigot_r"])
+        D["cap_plug_len"] = D["cap_seat_z_foot"] - D["cap_plug_z0"]
+        # running gap to the dial underside cone (normal), and the neck: hub corner (hub-gear root, h_band1) to the cap top
+        dial_z = lambda r: D["z_web0"] + (r - D["cone_under_r0"]) * T
+        D["cap_cone_run"] = (dial_z(D["cap_cone_r0"]) - D["z_under_web"]) * c
+        top = [(D["r_knob_bore"], D["knob_hub_top"]), (D["r_chamfer0"], D["knob_hub_top"]), (D["cap_cone_r0"], D["z_under_web"]),
+               (D["cap_cone_r1"], D["sleeve_z1"])]
+        def _seg(p, a, b):
+            (px, py), (ax, ay), (bx, by) = p, a, b; dx, dy = bx - ax, by - ay
+            t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+            return math.hypot(px - ax - t * dx, py - ay - t * dy)
+        D["cap_neck"] = min(_seg((D["d_hg_root"] / 2, D["h_band1"]), top[i], top[i + 1]) for i in range(3))
     return D

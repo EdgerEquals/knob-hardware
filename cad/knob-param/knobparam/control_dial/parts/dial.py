@@ -8,6 +8,14 @@ SRC_DEPS = [thrust, hall]
 def profile(D):
     ri, rt, rb, rh = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2, D["dial_bore_d"] / 2, D["dial_hub_od"] / 2
     rc, rw, rl, g, f = D["r_cup"], D["r_web"], D["knob_od"] / 2, D["gusset"], D["lip_fillet"]
+    if D["dial_shape"] == "cone" and D["kb_race"] == "chamfer":
+        # v0.21 [Ed 2 Nov]: no steps. Underside: hub bottom, the 45° race, then one straight cone up to the lip over the glass.
+        # Top: the well round the adapter board, one straight cone parallel to the underside, then the flat carrier seat.
+        hub = [(rt, D["z_hub0"]), (rh, D["z_hub0"])] + ([(rh, D["z_web0"] - g)] if D["z_hub0"] < D["z_web0"] - g - 1e-6 else [])
+        rs, zs = D["cone_seat_r"], D["z_screen_cut"]
+        return ([(ri, D["dial_z_base"]), (rt, D["dial_z_base"])] + hub + [(D["cone_under_r0"], D["z_web0"]), (D["cone_lip_r"], D["z_lip0"])]
+                + _lip_edge(D, rl) + [(rl, D["z_top"]), (rs, D["z_top"]), (rs, zs), (D["cone_well_r"], D["cone_top_z_well"]),
+                                      (D["cone_well_r"], D["z_well_top"]), (ri, D["z_well_top"])])
     if D["kb_race"] == "chamfer":   # v0.15c: plain tube straight into the hub (no flare, no collar); the gusset is the ball face
         hub = [(rt, D["z_hub0"]), (rh, D["z_hub0"])] + ([(rh, D["z_web0"] - g)] if D["z_hub0"] < D["z_web0"] - g - 1e-6 else [])
         top = [(rc, D["z_web1"]), (D["r_well"], D["z_web1"]), (D["r_well"], D["z_well_top"])]
