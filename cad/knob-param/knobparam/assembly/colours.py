@@ -28,6 +28,7 @@ MATERIALS = {
     "glow":    ("Shimicoat glow coat", "#d7efae", False),
     "silicone": ("silicone O-ring (black)", "#141414", False),
     "foam":    ("foam tape pads (black)", "#3a3a3a", False),
+    "candidate": ("candidate H7B0 LQFP100 sites (not parts yet)", "#ff9a1f", False),
     "other":   ("unassigned (check the material rules)", "#ff00ff", False),
 }
 
@@ -38,6 +39,7 @@ def key(name):
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if "o-ring" in low: return "silicone"
     if "foam pad" in low: return "foam"                       # v0.6 joystick screen pads
+    if low.startswith("candidate "): return "candidate"       # chip-site study markers
     if "jumper" in low and ("b2b socket" in low or "plug end" in low): return "ic"   # v0.6 jumper connectors
     if "seal ring" in low: return "petg"
     if "clear oled" in low: return "oled"

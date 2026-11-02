@@ -26,7 +26,17 @@ def _parts():
     parts, keys = view(parts, keys, D, "panel")
     jp, JD = js.placed()
     parts = dict(parts); parts.update(jp)
+    # [Ed 17:37] the H7B0 stays LQFP100 and takes part of window D: the four candidate sites (2 Nov, 17:40), drawn as 16 x 16 x 1.6
+    # bodies (leads included) on the board back so the sections show where each would sit. Not parts yet; window D is not cut for them.
+    from build123d import Box, Pos, Align
+    zb = D["z_pcb_back"]
+    for tag, (x, y) in CHIP_SITES.items():
+        parts[f"candidate H7B0 LQFP100 site {tag}"] = Pos(x, y, zb - 0.01) * Box(16.0, 16.0, 1.6, align=(Align.CENTER, Align.CENTER, Align.MAX))
     return D, JD, parts
+
+
+CHIP_SITES = {"A (low centre)": (-0.15, -43.95), "B (low left)": (-12.9, -39.2), "C (centre, full height)": (0.0, -35.04),
+              "D (left end, full height)": (-10.76, -35.04)}
 
 
 def _moved(parts, loc):
@@ -153,7 +163,8 @@ def sheet_across(D, JD, parts, out):
     cuts = [(py + JD["by_top"], "joystick top balls and cradle towers"), (py + 5.6, "joystick press springs (top pair)"),
             (py, "joystick axis: switch, guides, peg, headers"), (py - JD["by_bot"], "joystick knob-side balls and dowels"),
             (enc_y, "encoder wheel"), (0.0, "knob axis"), (-10.0, "1220 motor and lower knob"),
-            (D["clear_oled_xy"][1], "clear OLED centre"), (D["jack_y"], "jacks"), (D["usb_xy"][1], "USB-C"),
+            (D["clear_oled_xy"][1], "clear OLED centre; chip sites C and D"), (-39.2, "chip site B"), (-43.95, "chip site A"),
+            (D["jack_y"], "jacks"), (D["usb_xy"][1], "USB-C"),
             (D["corners"][0][1], "bottom corner posts")]
     ncol = 4
     nrow = math.ceil((len(cuts) + 1) / ncol)
@@ -183,7 +194,11 @@ def sheet_oblique(D, JD, parts, out):
             ("t", 0.0, 20.0, 25, "tilted plane through the knob axis at z 20, leaning 25° toward the joystick\n"
                                   "as it comes out of the panel"),
             ("t", py, JD["z_ball"], -30, "tilted plane through the joystick axis at the ball height, leaning 30°\n"
-                                         "toward the knob as it comes out of the panel")]
+                                         "toward the knob as it comes out of the panel"),
+            ("v", -0.15, -43.95, 25, "through chip site A (low centre), 25°"),
+            ("v", -12.9, -39.2, 65, "through chip site B (low left), 65°"),
+            ("t", -40.0, -1.0, 35, "tilted plane through the board back at y −40 (chip sites), leaning 35°\n"
+                                   "toward the knob as it comes out of the panel")]
     ncol = 3
     nrow = math.ceil(len(jobs) / ncol)
     fig = plt.figure(figsize=(ncol * 7.6, nrow * 5.8 + 1.6), dpi=100)
@@ -267,7 +282,8 @@ def sheet_overall(D, parts, out, tol=0.08):
         l, _c = colour(n); legend.setdefault(l, _c)
     fig.legend(handles=[Patch(fc=c, ec="k", lw=0.3, label=l) for l, c in sorted(legend.items())], loc="lower center", ncol=4,
                fontsize=11, frameon=False)
-    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.5). Resin case drawn see-through.",
+    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.6; candidate LQFP100 sites in orange). "
+                 "Resin case drawn see-through.",
                  fontsize=16, x=0.01, ha="left")
     fig.subplots_adjust(bottom=0.08, left=0.01, right=0.99)
     _save(fig, out)
