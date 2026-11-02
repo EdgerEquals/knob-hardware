@@ -64,8 +64,11 @@ def checks(D, parts):
     row("finger gap: knob glass to the joystick bezel", D["finger_gap"], D["finger_min"],
         f"[Ed 2 Nov] joystick place_y {D['place_y']:.2f} ({D['joy_rule']} rule; v0.4 knob rule {D['place_y_knob']:.2f}); "
         f"knob {D['knob_drop'] + D['knob_drop2']:.1f} below the v0.18 panel position")
-    row("joystick bezel clear of the top rail screw washers (full slide)", D["rail_head_clear"], D["tol_sla"],
+    row("joystick bezel clear of the top rail screw washers (full slide)", D["rail_head_clear"], D["tol_mjf"] + D["rail_float"],
         f"{D['rail_washer']} under an M3 pan head, keep-out Ø{D['rail_keep_d']:.1f} at y {D['rail_y_top']:.2f}")
+    exp_y = -36.6 + D["knob_drop2"] - D["oled_drop"]   # v0.19b centre, moved by the two [Ed] drops
+    row("clear OLED placed per knob_drop2 − oled_drop (within 0.05)", 0.05 - abs(D["clear_oled_xy"][1] - exp_y), 0.0,
+        f"electronics clear_oled_xy y {D['clear_oled_xy'][1]:.2f}, expected {exp_y:.2f}")
     row("clear OLED vs the bottom corner posts", D["oled_post_clear"], 0.3,
         f"OLED {D['clear_oled'][0]:g} x {D['clear_oled'][1]:g} at y {D['clear_oled_xy'][1]:.2f}; posts at y {D['corners'][0][1]:.2f}"
         f"{' (in the bottom wall [Ed])' if D['bot_posts_in_wall'] else ''}")

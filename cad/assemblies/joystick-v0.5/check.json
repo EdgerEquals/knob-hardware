@@ -26,7 +26,21 @@
    "value": 0.20000000000000284,
    "target": "0.20",
    "ok": true,
-   "note": "one SLA tolerance. The peg is part of the bezel, not a separate plunger"
+   "note": "nominal; the M2 grub peg is set to this gap with a feeler before the glass goes on"
+  },
+  {
+   "name": "press peg thread in the roof insert",
+   "value": 2.3500000000000085,
+   "target": ">= 2.0",
+   "ok": true,
+   "note": "ISO 4026 M2 A2 flat-point grub (press peg, set with a 0.2 feeler, threadlocker), M2x6; tip z 36.20"
+  },
+  {
+   "name": "press peg adjustment (down / up, keeping 2 mm of thread)",
+   "value": 0.3500000000000085,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "down 0.35, up 0.45: covers the printed-part and glue stack"
   },
   {
    "name": "preload vs 5x screen weight",
@@ -79,31 +93,38 @@
   },
   {
    "name": "bezel lip above the faceplate",
-   "value": 0.020000000000003126,
+   "value": 0.5499999999999972,
    "target": "0.02",
    "ok": true,
-   "note": "vertical gap 0.02. The rebate is wider than the lip by 0.20, so the closest solid is 0.20 mm. Overlap 0.90 mm"
+   "note": "vertical gap 0.55. The rebate is wider than the lip by 0.20, so the closest solid is 0.55 mm. Overlap 0.90 mm"
   },
   {
    "name": "grip block height (bezel underside to rim)",
    "value": 5.0,
    "target": ">= 5.0",
    "ok": true,
-   "note": "[Ed 2 Nov] at least 5 mm to hold; glass top 5.62 above the faceplate, 12.38 under the knob screen. Walls 1.20, outer 44.02 x 29.14"
+   "note": "[Ed 2 Nov] at least 5 mm to hold; glass top 6.15 above the faceplate, 11.85 under the knob screen. Walls 1.20, outer 44.02 x 29.14"
   },
   {
-   "name": "press rebate clears the switch travel",
-   "value": 0.20000000000000007,
+   "name": "block clear of the flat faceplate at full press",
+   "value": 0.19999999999999574,
    "target": ">= 0.20",
    "ok": true,
-   "note": "the lip drops into the rebate. The switch bottoms before the rebate floor"
+   "note": "the case face has no rebate: the block floats 0.55 above it and the switch bottoms first"
+  },
+  {
+   "name": "carrier clear of the rounded faceplate opening at full slide",
+   "value": 0.1999999999999993,
+   "target": ">= 0.20",
+   "ok": true,
+   "note": "carrier floor corners R1.2 like the opening; checked every 45\u00b0"
   },
   {
    "name": "carrier floor under the bezel (it rises into the faceplate hole)",
-   "value": 0.7199999999999989,
+   "value": 1.249999999999993,
    "target": ">= 0.2",
    "ok": true,
-   "note": "v0.5: 30 mm riser. Carrier floor z 37.10-38.10 inside the faceplate 36.30-38.80; bezel underside z 38.82"
+   "note": "v0.5: 30 mm riser. Carrier floor z 37.10-38.10 inside the faceplate 36.30-38.80; bezel underside z 39.35"
   },
   {
    "name": "carrier drops through the faceplate hole",
@@ -124,7 +145,7 @@
    "value": 0.2499999999999991,
    "target": ">= 0.25",
    "ok": true,
-   "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.250, 0.320, 0.250, 0.320, 0.250, 0.320, 0.250, 0.320"
+   "note": "skirt gap 0.70, slide 0.45, remaining 0.25. gaps 0.251, 0.320, 0.250, 0.320, 0.251, 0.320, 0.250, 0.320"
   },
   {
    "name": "3\u00b0 carrier rotation hits the rectangular skirt",
@@ -149,10 +170,10 @@
   },
   {
    "name": "insert hangs in free air under the floor",
-   "value": 0.9600000000000009,
+   "value": 0.4300000000000068,
    "target": "0.5-3.0",
-   "ok": true,
-   "note": "insert bottom z 36.14, carrier underside z 37.10. Modelled as a slip fit"
+   "ok": false,
+   "note": "insert bottom z 36.67, carrier underside z 37.10. Modelled as a slip fit"
   },
   {
    "name": "grub screw modelled clear of the insert",
@@ -212,14 +233,14 @@
   },
   {
    "name": "compression spring clear of the hold-downs",
-   "value": 3.1078233139191007,
+   "value": 3.4512411898531634,
    "target": ">= 1.0",
    "ok": true,
    "note": "the two spring sets do not share a job"
   },
   {
    "name": "compression spring clear of the plate",
-   "value": 3.896329436956325,
+   "value": 4.311113815390309,
    "target": ">= 1.0",
    "ok": true,
    "note": ""
@@ -261,10 +282,10 @@
   },
   {
    "name": "cradle ring glued inside the main-PCB outline",
-   "value": 0.17000000000000526,
+   "value": 0.42000000000000437,
    "target": ">= 0",
    "ok": true,
-   "note": "ring \u00b116.00 x -8.15..7.65; PCB top edge local y 8.12. The top towers start at z 22.5, above the case's top corner posts, and hang off the ring"
+   "note": "ring \u00b116.00 x -8.15..7.65; PCB top edge local y 8.37. The top towers start at z 22.5, above the case's top corner posts, and hang off the ring"
   },
   {
    "name": "cradle locating dowels in the PCB",
@@ -290,37 +311,37 @@
   {
    "name": "hold-down force per spring (sized by tipping)",
    "value": 0.65,
-   "target": ">= 0.65",
-   "ok": true,
-   "note": "[Ed 2 Nov] 0.65 N with the balls at the corners (v0.4 0.50). Rate 0.081 N/mm over 8.0 mm stretch, installed 40.3 mm"
+   "target": ">= 6.13",
+   "ok": false,
+   "note": "Rate 0.081 N/mm over 8.0 mm stretch, installed 40.3 mm. Cups at the full slide: 34.7\u00b0, push back 1.80 N"
   },
   {
-   "name": "side push to tip the carrier (glass top, up/down)",
-   "value": 2.472680620525525,
-   "target": ">= 2.46",
-   "ok": true,
-   "note": "N; 1.3 \u00d7 the switch's worst tilt force 1.89 N. arm 9.12 above the stem reference, balls \u00b18.67"
+   "name": "tipping safety at the worst-case click (push on the glass top, up the panel)",
+   "value": 0.679351631454302,
+   "target": ">= 1.3",
+   "ok": false,
+   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. top balls at +8.92"
   },
   {
-   "name": "side push to tip the carrier (block side, up/down)",
-   "value": 3.745987916809433,
-   "target": ">= 2.46",
-   "ok": true,
-   "note": "N; 1.3 \u00d7 the switch's worst tilt force 1.89 N. arm 6.02"
+   "name": "tipping safety at the worst-case click (push on the glass top, toward the knob)",
+   "value": 0.7993802696732941,
+   "target": ">= 1.3",
+   "ok": false,
+   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. knob-side balls at -10.50"
   },
   {
-   "name": "side push to tip the carrier (glass top, toward the knob)",
-   "value": 2.9934210526315774,
-   "target": ">= 2.46",
+   "name": "tipping safety at the worst-case click (push on the glass top, left/right)",
+   "value": 1.3323004494554902,
+   "target": ">= 1.3",
    "ok": true,
-   "note": "N; 1.3 \u00d7 the switch's worst tilt force 1.89 N. knob-side balls at -10.50"
+   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. balls \u00b117.50"
   },
   {
-   "name": "side push to tip the carrier (glass top, left/right)",
-   "value": 4.989035087719296,
-   "target": ">= 2.46",
-   "ok": true,
-   "note": "N; 1.3 \u00d7 the switch's worst tilt force 1.89 N. balls \u00b117.50"
+   "name": "tipping safety at the worst-case click (push on the block side, up the panel)",
+   "value": 1.021234795437477,
+   "target": ">= 1.3",
+   "ok": false,
+   "note": "restoring / overturning moment; push to click 3.69 N worst (3.00 nominal) = switch + cups. "
   },
   {
    "name": "two pins, each through a pair",
@@ -376,7 +397,7 @@
    "value": 2.0,
    "target": "2",
    "ok": true,
-   "note": "two 2x5, one each side of the switch: 20 pins (10 signals + 3.3 V + GND; the standoffs are GND too)"
+   "note": "two 2x5, one each side of the switch: 20 pins: 10 signals, 3.3 V and grounds"
   },
   {
    "name": "switch on the carrier axis",
@@ -425,18 +446,18 @@
    "value": 0.20000000000000367,
    "target": ">= 0.20",
    "ok": true,
-   "note": "slide 0.45 mm, cups still hold to 0.65 mm. Ball centres move to (\u00b117.50, \u00b18.67)"
+   "note": "slide 0.45 mm, cups still hold to 0.65 mm. Ball centres move to (\u00b117.50, \u00b18.92)"
   },
   {
    "name": "bezel (full slide toward the knob) vs live knob-param",
-   "value": 4.859999999999995,
+   "value": 4.609999999999995,
    "target": ">= 0.5",
    "ok": true,
    "note": "\u00d842.00. Bezel lip 1.20 mm, outer \u00b114.57"
   },
   {
    "name": "bezel (full slide toward the knob) vs design \u00d841.7",
-   "value": 5.009999999999994,
+   "value": 4.759999999999994,
    "target": ">= 0.5",
    "ok": true,
    "note": "\u00d841.70. Bezel lip 1.20 mm, outer \u00b114.57"
@@ -474,7 +495,7 @@
    "value": 1.0,
    "target": ">= 1.0",
    "ok": true,
-   "note": "floor is the print minimum. Derived riser 30.00 mm. Screen top 44.42"
+   "note": "floor is the print minimum. Derived riser 30.00 mm. Screen top 44.95"
   },
   {
    "name": "skirt wall",
@@ -488,18 +509,18 @@
    "value": 1.0,
    "target": "solid",
    "ok": true,
-   "note": "wall probe y 14.07 at z 43.37; pocket probe y 13.47"
+   "note": "wall probe y 14.07 at z 43.90; pocket probe y 13.47"
   },
   {
    "name": "carrier volume",
-   "value": 1.4592853496591973,
+   "value": 1.4987606065918928,
    "target": "< 12",
    "ok": true,
    "note": "cm3. v0.3 carrier was 4.41 cm3; v0.2 was 33.53"
   },
   {
    "name": "screen-carrier volume",
-   "value": 2.551877164335037,
+   "value": 2.560116933546872,
    "target": "< 8",
    "ok": true,
    "note": "cm3, the bezel the screen is glued to"
@@ -509,7 +530,7 @@
    "value": 0.020000000000003126,
    "target": "0.01-0.30",
    "ok": true,
-   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 44.42"
+   "note": "side glue gap 0.20. Glass sits 0.02 above the spring pads. Top z 44.95"
   },
   {
    "name": "no printed base, spider or round stop",
@@ -520,56 +541,56 @@
   },
   {
    "name": "finger gap: knob glass to the bezel (plan, rest)",
-   "value": 5.309999999999995,
+   "value": 5.059999999999995,
    "target": ">= 5.0",
    "ok": true,
-   "note": "[Ed 2 Nov] place_y 40.88 (rail rule; v0.4 knob rule gave 36.52)"
+   "note": "[Ed 2 Nov] place_y 40.63 (rail rule; v0.4 knob rule gave 36.52)"
   },
   {
    "name": "nothing behind the panel in the rail strip (mm\u00b3)",
    "value": 0.0,
    "target": "0",
    "ok": true,
-   "note": "rail strip from local y 11.22 (less 0.4 air), behind z 36.30; worst: none"
+   "note": "rail strip from local y 11.47 (less 0.4 air), behind z 36.30; worst: none"
   },
   {
    "name": "guide screw thread in the roof insert",
    "value": 2.0,
    "target": ">= 2.0",
    "ok": true,
-   "note": "ISO 7984 M2x8 A2 low-head socket screw + brass tube sleeve OD 3.0 / ID 2.1, cut to length; M2x6, tip z 41.32 under the glass seat 42.92"
+   "note": "ISO 7984 M2 A2 low-head socket screw (length from derive) + brass tube sleeve OD 3.0 / ID 2.1, cut to length; M2x8, tip z 41.85 under the glass seat 43.45"
   },
   {
    "name": "guide length in the carrier / sleeve OD",
-   "value": 0.9266666666666671,
+   "value": 1.416666666666669,
    "target": ">= 0.9",
    "ok": true,
-   "note": "reamed \u00d83.06 bore 2.78 long; sleeve 4.00 long, clamped head to insert"
+   "note": "reamed \u00d83.06 bore 4.25 long; sleeve 6.00 long, clamped head to insert"
   },
   {
-   "name": "guide head clears the switch body at full press",
-   "value": 0.519999999999996,
+   "name": "guide head clears what is under it at full press",
+   "value": 0.29999999999999005,
    "target": ">= 0.25",
    "ok": true,
-   "note": "head z 33.72-35.32 at rest (the up-stop), switch top z 32.85"
+   "note": "guides at (9.0, 0.0) and mirror; head z 32.25-33.85 at rest (the up-stop); under it z 31.60 (board top + solder, or the switch)"
   },
   {
    "name": "roof bosses clear the carrier floor at full press",
-   "value": 0.8699999999999989,
+   "value": 1.3999999999999928,
    "target": ">= 0.20",
    "ok": true,
-   "note": "roof boss bottom z 39.32, floor top z 38.10, press 0.35"
+   "note": "roof boss bottom z 39.85, floor top z 38.10, press 0.35"
   },
   {
    "name": "guide sleeve slides in its bore",
-   "value": 0.029999999999999243,
+   "value": 0.02999999999999936,
    "target": "0.01-0.10",
    "ok": true,
    "note": "ream to size after printing"
   },
   {
    "name": "guide head vs switch body (rest)",
-   "value": 0.8699999999999974,
+   "value": 1.814418876668332,
    "target": ">= 0.25",
    "ok": true,
    "note": ""
@@ -601,20 +622,20 @@
  "key": {
   "version": "v0.5",
   "riser_h": 30.0,
-  "stack_h": 44.42,
-  "scr_top": 44.42,
+  "stack_h": 44.949999999999996,
+  "scr_top": 44.949999999999996,
   "z_knob_top": 52.5,
   "z_db0": 30.0,
   "z_db1": 31.0,
   "z_stem_top": 36.0,
   "z_c0": 37.1,
   "z_ball": 36.1,
-  "z_scr0": 42.92,
-  "z_bz0": 38.82,
-  "z_bz1": 43.82,
-  "z_roof": 41.32,
-  "z_seat": 38.14,
-  "z_tip": 38.34,
+  "z_scr0": 43.449999999999996,
+  "z_bz0": 39.349999999999994,
+  "z_bz1": 44.349999999999994,
+  "z_roof": 41.849999999999994,
+  "z_seat": 38.669999999999995,
+  "z_tip": 38.87,
   "z_skirt0": 30.3,
   "slide": 0.45,
   "slide_need": 0.45,
@@ -650,10 +671,10 @@
    0.0,
    0.0
   ],
-  "place_y": 40.879999999999995,
+  "place_y": 40.629999999999995,
   "board_xy": [
    25.25,
-   12.020000000000003
+   12.270000000000003
   ],
   "spr_len": 40.27,
   "back_panel": 22.65,
@@ -670,7 +691,7 @@
   "balls": [
    [
     17.5,
-    8.67340279199723
+    8.92340279199723
    ],
    [
     17.5,
@@ -678,7 +699,7 @@
    ],
    [
     -17.5,
-    8.67340279199723
+    8.92340279199723
    ],
    [
     -17.5,
@@ -741,7 +762,7 @@
   "sy": 8.6,
   "hx": 7.705652750607062,
   "bx": 17.5,
-  "by": 8.67340279199723,
+  "by": 8.92340279199723,
   "board_x0": -15.2,
   "board_x1": 15.2,
   "board_y0": -7.1499999999999995,
@@ -751,8 +772,8 @@
   "scr_clear": 0.2,
   "glue": 0.2,
   "volume_cm3": {
-   "joystick carrier (printed)": 1.4592853496591973,
-   "screen carrier (printed)": 2.551877164335037
+   "joystick carrier (printed)": 1.4987606065918928,
+   "screen carrier (printed)": 2.560116933546872
   }
  }
 }

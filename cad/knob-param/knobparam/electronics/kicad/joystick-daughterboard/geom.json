@@ -52,41 +52,41 @@
   "od": 3.2,
   "kind": "female-female"
  },
- "place_y": 40.879999999999995,
+ "place_y": 40.629999999999995,
  "main_pcb_holes": [
   {
    "x": 12.5,
-   "y": 43.88,
+   "y": 43.63,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
    "x": 12.5,
-   "y": 37.88,
+   "y": 37.63,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
    "x": -12.5,
-   "y": 43.88,
+   "y": 43.63,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
    "x": -12.5,
-   "y": 37.88,
+   "y": 37.63,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
    "x": 17.5,
-   "y": 30.38,
+   "y": 30.13,
    "d": 1.55,
    "what": "cradle locating dowel (NPTH)"
   },
   {
    "x": -17.5,
-   "y": 30.38,
+   "y": 30.13,
    "d": 1.55,
    "what": "cradle locating dowel (NPTH)"
   }

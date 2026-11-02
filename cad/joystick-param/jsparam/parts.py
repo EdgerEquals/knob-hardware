@@ -16,6 +16,12 @@ def box(x0, x1, y0, y1, z0, z1):
 def cbox(w, h, z0, z1, x=0.0, y=0.0):
     return box(x - w / 2, x + w / 2, y - h / 2, y + h / 2, z0, z1)
 
+def rbox(w, h, r, z0, z1, x=0.0, y=0.0):
+    """Box with rounded vertical corners (review fix: matches the case opening's corner radius)."""
+    if r <= 1e-6:
+        return cbox(w, h, z0, z1, x, y)
+    return Pos(x, y, z0) * extrude(RectangleRounded(w, h, r), z1 - z0)
+
 def cyl(d, z0, z1, x=0.0, y=0.0):
     return Pos(x, y, z0) * Cylinder(d / 2, z1 - z0, align=A)
 
@@ -103,7 +109,7 @@ def _fpc_slot(D, z0, z1):
 
 def carrier(D):
     """Thin floor under the faceplate. Spring seats, cup, hold-down hooks, skirt. It fits through the faceplate hole."""
-    c = cbox(2 * D["car_hw"], 2 * D["car_hh"], D["z_c0"], D["z_floor1"])
+    c = rbox(2 * D["car_hw"], 2 * D["car_hh"], D.get("corner_r", 0.0), D["z_c0"], D["z_floor1"])
     for x, y in D["cs_xy"]:
         # v0.5: the insert top (the grub seat) is level with the floor top; a thin cap boss covers any step
         if D["z_seat"] > D["z_floor1"]:
@@ -162,7 +168,12 @@ def screen_carrier(D):
     b -= cbox(2 * (D["half_w"] - D["bz_lip"]), 2 * (D["half_h"] - D["bz_lip"]), D["z_bz0"] - 0.05, D["z_roof"])   # cavity
     for x, y in D["cs_xy"]:   # spring pilots, 0.3 into the roof underside
         b -= cyl(2 * D["cs_bore_r"], D["z_roof"] - 0.05, D["z_roof"] + 0.3, x, y)
-    b += cyl(D["peg_d"], D["z_peg"], D["z_roof"] + 0.01)
+    if "peg" in D:   # review fix: the peg is an M2 grub in a centre roof insert, set with a feeler
+        pi = D["peg"]["ins"]
+        b += cyl(2 * D["p_rboss_r"], D["p_ins_bot"], D["z_roof"] + 0.01)
+        b -= cyl(pi["hole"], D["p_ins_bot"] - 0.02, D["p_ins_top"])
+    else:
+        b += cyl(D["peg_d"], D["z_peg"], D["z_roof"] + 0.01)
     gi = D["guide"]["ins"]
     for x, y in D["g_xy"]:
         b += cyl(2 * D["g_rboss_r"], D["g_ins_bot"], D["z_roof"] + 0.01, x, y)
@@ -179,9 +190,10 @@ def faceplate(D):
     The lip overlaps the plate. A rebate lets the lip drop for the press without the switch being blocked."""
     m = 10.0
     p = cbox(2 * (D["half_w"] + m), 2 * (D["half_h"] + m), D["z_fp0"], D["z_fp1"])
-    p -= cbox(2 * D["hole_hw"], 2 * D["hole_hh"], D["z_fp0"] - 0.05, D["z_fp1"] + 0.05)
-    p -= cbox(2 * (D["half_w"] + D["tol_sla"]), 2 * (D["half_h"] + D["tol_sla"]),
-              D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + 0.05)
+    p -= rbox(2 * D["hole_hw"], 2 * D["hole_hh"], D.get("corner_r", 0.0), D["z_fp0"] - 0.05, D["z_fp1"] + 0.05)
+    if D["up_gap"] < D["press_travel"] + D["tol_sla"] - 1e-9:   # v0.4 proxy only: the real case face is flat (no rebate)
+        p -= cbox(2 * (D["half_w"] + D["tol_sla"]), 2 * (D["half_h"] + D["tol_sla"]),
+                  D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + 0.05)
     return p
 
 def rear_anchor(D):
@@ -299,6 +311,11 @@ def build(D):
             + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
         )
     out["rear spring anchor (printed)"] = rear_anchor(D)
+    if "peg" in D:
+        pi = D["peg"]["ins"]
+        out[f"press peg grub (ISO 4026 M2x{D['p_len']:.0f})"] = cyl(1.5, D["z_peg"], D["p_top"])
+        out["press peg insert (brass, bezel roof)"] = (cyl(pi["od"] - 0.30, D["p_ins_bot"] + 0.01, D["p_ins_top"] - 0.01)
+                                                        - cyl(1.70, D["p_ins_bot"], D["p_ins_top"]))
     G = D["guide"]; gi = G["ins"]
     for i, (x, y) in enumerate(D["g_xy"]):   # v0.5 guides: head under the carrier boss is the up-stop
         out[f"guide screw {i + 1} (ISO 7984 M2x{D['g_len']:.0f})"] = (cyl(G["head_d"], D["g_head0"], D["g_z0"] - 0.01, x, y)

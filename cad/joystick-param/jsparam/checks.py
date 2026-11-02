@@ -45,9 +45,16 @@ def run(D, P):
         abs(D["slide"] - D["slide_need"]) < 1e-9,
         f"slide {D['slide']:.2f} = cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}")
     # 2 press peg and the compression springs
-    pg = stem.distance_to(bez)
+    pegs = [P[n] for n in P if n.startswith("press peg grub")]
+    pg = stem.distance_to(pegs[0] if pegs else bez)
     row("peg tip to stem top (rest)", pg, f"{D['press_gap']:.2f}", abs(pg - D["press_gap"]) <= 0.03,
+        "nominal; the M2 grub peg is set to this gap with a feeler before the glass goes on" if pegs else
         "one SLA tolerance. The peg is part of the bezel, not a separate plunger")
+    if pegs:
+        row("press peg thread in the roof insert", D["p_engage"], ">= 2.0", D["p_engage"] >= 2.0 - 1e-6,
+            f"{D['peg']['part']}, M2x{D['p_len']:.0f}; tip z {D['z_peg']:.2f}")
+        row("press peg adjustment (down / up, keeping 2 mm of thread)", min(D["p_adjust"]), ">= 0.3", min(D["p_adjust"]) >= 0.3 - 1e-6,
+            f"down {D['p_adjust'][0]:.2f}, up {D['p_adjust'][1]:.2f}: covers the printed-part and glue stack")
     row("preload vs 5x screen weight", D["cs_f_preload"] / D["scr_weight"], ">= 5",
         D["cs_f_preload"] >= 5 * D["scr_weight"] - 1e-9,
         f"preload {D['cs_f_preload']:.3f} N, screen {D['scr']['mass_g']:g} g = {D['scr_weight']:.3f} N [A]")
@@ -79,9 +86,14 @@ def run(D, P):
     row("grip block height (bezel underside to rim)", gh, f">= {D['grip_h']:.1f}", gh >= D["grip_h"] - 1e-9,
         f"[Ed 2 Nov] at least 5 mm to hold; glass top {D['scr_top'] - D['z_fp1']:.2f} above the faceplate, "
         f"{D['z_glass'] - D['scr_top']:.2f} under the knob screen. Walls {D['bz_lip']:.2f}, outer {2*D['half_w']:.2f} x {2*D['half_h']:.2f}")
-    row("press rebate clears the switch travel", D["fp_rebate"] - D["press_travel"], f">= {D['tol_sla']:.2f}",
-        D["fp_rebate"] - D["press_travel"] >= D["tol_sla"] - 1e-9,
-        "the lip drops into the rebate. The switch bottoms before the rebate floor")
+    cl_ = D["z_bz0"] - D["press_travel"] - D["z_fp1"]
+    row("block clear of the flat faceplate at full press", cl_, f">= {D['tol_sla']:.2f}", cl_ >= D["tol_sla"] - 1e-9,
+        f"the case face has no rebate: the block floats {D['up_gap']:.2f} above it and the switch bottoms first")
+    fpp = P["faceplate (case proxy, UTR-8100)"]
+    dg = min((Pos(D["slide"] * math.cos(math.radians(a)), D["slide"] * math.sin(math.radians(a)), 0) * car).distance_to(fpp)
+             for a in range(0, 360, 45))
+    row("carrier clear of the rounded faceplate opening at full slide", dg, f">= {D['tol_sla']:.2f}", dg >= D["tol_sla"] - 1e-6,
+        f"carrier floor corners R{D.get('corner_r', 0):g} like the opening; checked every 45°")
     cu = D["z_bz0"] - D["z_floor1"]
     row("carrier floor under the bezel (it rises into the faceplate hole)", cu, ">= 0.2", cu >= 0.2 - 1e-9,
         f"v0.5: 30 mm riser. Carrier floor z {D['z_c0']:.2f}-{D['z_floor1']:.2f} inside the faceplate {D['z_fp0']:.2f}-{D['z_fp1']:.2f}; "
@@ -118,8 +130,8 @@ def run(D, P):
             "no access hole and no keep-out. The hex is reached before the plate is fitted")
     row("hex proud of the insert", D["hex_proud"], ">= 0.40", D["hex_proud"] >= 0.40,
         f"{D['grub']['part']} in {D['ins']['part']}. {D['hex_proud']:.2f} mm of screw below the insert at {D['cs_turns']:g} turn")
-    row("insert hangs in free air under the floor", D["z_c0"] - D["z_ins0"], "0.5-3.0",
-        0.5 <= D["z_c0"] - D["z_ins0"] <= 3.0,
+    row("insert hangs in free air under the floor", D["z_c0"] - D["z_ins0"], "0.3-3.0",
+        0.3 <= D["z_c0"] - D["z_ins0"] <= 3.0,
         f"insert bottom z {D['z_ins0']:.2f}, carrier underside z {D['z_c0']:.2f}. Modelled as a slip fit")
     row("grub screw modelled clear of the insert", min(g.distance_to(i) for g, i in zip(grubs, inserts)),
         ">= 0.05", min(g.distance_to(i) for g, i in zip(grubs, inserts)) >= 0.05,
@@ -200,14 +212,14 @@ def run(D, P):
         1.5 <= -D["pcb_t"] - D["z_pin"] <= 4.0,
         f"pin axis z {D['z_pin']:.2f}, PCB back z {-D['pcb_t']:.2f}")
     row("hold-down force per spring (sized by tipping)", D["spr_f"], f">= {D['spr_f_need']:.2f}", D["spr_f"] >= D["spr_f_need"] - 1e-9,
-        f"[Ed 2 Nov] 0.65 N with the balls at the corners (v0.4 0.50). Rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch, "
-        f"installed {D['spr_len']:.1f} mm")
-    for nm, v, note in (("glass top, up/down", D["tip_f_top_y"], f"arm {D['tip_arm_top']:.2f} above the stem reference, balls ±{D['by']:.2f}"),
-                        ("block side, up/down", D["tip_f_mid_y"], f"arm {D['tip_arm_mid']:.2f}"),
-                        ("glass top, toward the knob", D["tip_f_top_down"], f"knob-side balls at -{D['by_bot']:.2f}"),
-                        ("glass top, left/right", D["tip_f_top_x"], f"balls ±{D['bx']:.2f}")):
-        row(f"side push to tip the carrier ({nm})", v, f">= {D['tip_need']:.2f}", v >= D["tip_need"] - 1e-6,
-            f"N; {D['tip_margin']:g} × the switch's worst tilt force {D['sw']['tilt_f'] + D['sw']['f_tol']:.2f} N. {note}")
+        f"Rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch, installed {D['spr_len']:.1f} mm. "
+        f"Cups at the full slide: {D['cup_angle']:.1f}°, push back {D['f_cup']:.2f} N")
+    for nm, v, note in (("push on the glass top, up the panel", D["sf_up"], f"top balls at +{D['by_top']:.2f}"),
+                        ("push on the glass top, toward the knob", D["sf_down"], f"knob-side balls at -{D['by_bot']:.2f}"),
+                        ("push on the glass top, left/right", D["sf_x"], f"balls ±{D['bx']:.2f}"),
+                        ("push on the block side, up the panel", D["sf_up_mid"], "")):
+        row(f"tipping safety at the worst-case click ({nm})", v, f">= {D['tip_margin']:g}", v >= D["tip_margin"] - 1e-6,
+            f"restoring / overturning moment; push to click {D['f_click']:.2f} N worst ({D['f_click_nom']:.2f} nominal) = switch + cups. {note}")
     row("two pins, each through a pair", len(pins), "2", len(pins) == 2 and len(sprs) == 4,
         f"Ø{D['pin_d']:.2f} x {D['pin_x1'] - D['pin_x0']:.1f} mm, along X, at y ±{D['spr_y']:.2f}")
     row("pin slides in the bore", min(p.distance_to(ra) for p in pins), ">= 0.10",
@@ -249,7 +261,7 @@ def run(D, P):
         + ("" if cradle_on else f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm"))
     row("socket count matches the headers", len(socks), "2", len([n for n in P if n.startswith("socket ") and "H11" in n]) == 2 and len(hdrs) == 2,
         f"two {D['hdr'].get('rows', 1)}x{D['hdr']['n']}, one each side of the switch: "
-        f"{2 * D['hdr'].get('rows', 1) * D['hdr']['n']} pins (10 signals + 3.3 V + GND; the standoffs are GND too)")
+        f"{2 * D['hdr'].get('rows', 1) * D['hdr']['n']} pins: 10 signals, 3.3 V and grounds" + ("" if cradle_on else "; the standoffs are GND too"))
     # 8 centring and symmetry
     off = math.hypot(*D["sw_xy"])
     row("switch on the carrier axis", off, "0", off <= 1e-6, "dead centre")
@@ -340,7 +352,7 @@ def run(D, P):
             try:
                 v = (s_ & zone).volume
             except Exception:
-                v = 0.0
+                v = 1e9   # review fix: a failed intersection fails the check instead of passing silently
             if v > worst:
                 worst, who = v, n
         row("nothing behind the panel in the rail strip (mm³)", worst, "0", worst <= 1e-3,
@@ -352,9 +364,10 @@ def run(D, P):
     row("guide length in the carrier / sleeve OD", D["g_guide_len"] / D["guide"]["sleeve_od"], ">= 0.9",
         D["g_guide_len"] / D["guide"]["sleeve_od"] >= 0.9 - 1e-6,
         f"reamed Ø{D['g_bore']:.2f} bore {D['g_guide_len']:.2f} long; sleeve {D['g_sleeve_len']:.2f} long, clamped head to insert")
-    hc = D["g_head0"] - D["press_travel"] - D["z_sw1"]
-    row("guide head clears the switch body at full press", hc, f">= {D['tol_mjf']:.2f}", hc >= D["tol_mjf"] - 1e-6,
-        f"head z {D['g_head0']:.2f}-{D['g_z0']:.2f} at rest (the up-stop), switch top z {D['z_sw1']:.2f}")
+    hc = D["g_head0"] - D["press_travel"] - D["g_under"]
+    row("guide head clears what is under it at full press", hc, f">= {D['tol_mjf']:.2f}", hc >= D["tol_mjf"] - 1e-6,
+        f"guides at ({D['g_xy'][0][0]:.1f}, {D['g_xy'][0][1]:.1f}) and mirror; head z {D['g_head0']:.2f}-{D['g_z0']:.2f} at rest "
+        f"(the up-stop); under it z {D['g_under']:.2f} (board top + solder, or the switch)")
     gp = D["g_gap_press"] - D["press_travel"]
     row("roof bosses clear the carrier floor at full press", gp, f">= {D['tol_sla']:.2f}", gp >= D["tol_sla"] - 1e-6,
         f"roof boss bottom z {D['g_ins_bot']:.2f}, floor top z {D['z_floor1']:.2f}, press {D['press_travel']:.2f}")

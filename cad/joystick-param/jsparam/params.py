@@ -4,7 +4,10 @@ v0.5 (2 Nov 2026, Ed): the bezel is a 5 mm grip block with the glass on top; the
 M2x30 standoffs so the carrier rises into the faceplate hole; two guide screws in brass sleeves tie the bezel to the
 carrier (no rocking on the press springs, and their heads are the up-stop v0.4 lacked); the joystick sits as high as
 the top rail screws (ISO 7092 Ø6 washers) allow, and the knob moves down on the panel instead (finger room);
-two 2x3 board-to-board headers (12 pins); the screen flex socket sits on a tab of the daughterboard beyond the plate.
+a printed cradle glued to the main PCB replaces the standoffs and the seat plate, with the balls at its extreme corners and
+the springs inside them; two 2x5 board-to-board headers; the screen flex socket sits on a tab of the joystick board.
+Review fixes (2 Nov): the block floats press-travel + one tolerance above the flat faceplate (the case has no rebate); the
+press peg is an M2 grub set with a feeler; guides on the long axis; carrier corners rounded to the opening's radius.
 
 Local frame: origin = carrier centre on the MAIN PCB FRONT (z = 0), +x right along the panel width, +y up the panel
 (toward the panel top), +z out of the panel. Placement in the knob-param frame (dial axis = 0,0): (0, place_y).
@@ -65,10 +68,15 @@ P = dict(
     roof_t=1.6,             # [A] roof plate under the glass: the springs push on its underside, the glass is glued on top
     # guides (v0.5, Ed 2 Nov): two screws through brass sleeves tie the bezel to the carrier. The sleeve slides in a reamed
     # bore in the carrier; the screw head under the carrier boss is the up-stop (v0.4 had none).
-    guide=dict(part="ISO 7984 M2x8 A2 low-head socket screw + brass tube sleeve OD 3.0 / ID 2.1, cut to length",
+    guide=dict(part="ISO 7984 M2 A2 low-head socket screw (length from derive) + brass tube sleeve OD 3.0 / ID 2.1, cut to length",
                d=2.0, sleeve_od=3.0, head_d=3.8, head_k=1.6, bore_fit=0.03, boss_wall=1.0,
                ins=dict(part="M2x3x3.2 brass heat-set (bezel roof)", od=3.2, length=3.0, hole=3.0)),   # [S] DIN 7984 M2 head Ø3.8 × 1.6 max [A]
-    guide_gy=5.0,           # [A] guides on the y axis at (0, ±guide_gy): clear of the cup, the switch and the hold-down hooks
+    guide_xy=(9.0, 0.0),    # [A] review fix: guides on the long axis at (±9, 0), so an off-centre press slides instead of jamming
+    solder_h=0.6,           # [A] header solder joints / trimmed tails above the joystick board top
+    # press peg (review fix): an M2 grub in a roof insert at the centre, set to the press gap with a feeler before the glass goes on
+    peg=dict(part="ISO 4026 M2 A2 flat-point grub (press peg, set with a 0.2 feeler, threadlocker)", d=2.0,
+             ins=dict(part="M2x3x3.2 brass heat-set (bezel roof, centre)", od=3.2, length=3.0, hole=3.0)),
+    corner_r=1.2,           # [A] carrier floor corners = the case opening's corner radius (case hole_corner_r)
     fp_t=2.5,               # [A] faceplate of the one-piece case. UTR-8100 clear resin, wall ~2.5 mm
     fp_overlap=0.90,        # [A] how far the lip covers the faceplate at rest, before the slide
     skirt_overlap=0.75,     # [A] skirt reaches this far below the plate
@@ -237,7 +245,10 @@ def derive(P_):
     D["cs_outer_r"] = D["cs_bore_r"]
     D["lip_t"] = D["bz_t"]
     D["sh_t"] = 0.0
-    D["up_gap"] = 0.02
+    # review fix: the case face is one flat plane (no rebate), so the block floats press travel + one SLA tolerance above it
+    D["press_gap"] = sla
+    D["press_travel"] = D["press_gap"] + sw["push_travel"]
+    D["up_gap"] = D["press_travel"] + sla
     D["snap"] = D["fp_overlap"]
     D["peg_d"] = 1.80
     D["half_w"] = S["w"] / 2 + D["bz_lip"]
@@ -313,8 +324,6 @@ def derive(P_):
         D["z_skirt0"] = D["z_db0"] + 0.3   # 0.3 over the cradle brackets; still 0.7 of the board edge to stop rotation
     D["stack_h"] = D["scr_top"]
     # press: the peg meets the stem after one SLA tolerance, then the switch travels its own 0.15 mm
-    D["press_gap"] = sla
-    D["press_travel"] = D["press_gap"] + sw["push_travel"]
     D["fp_rebate"] = D["press_travel"] + sla          # the lip can drop this far into the faceplate before it stops
     D["z_peg"] = D["z_stem_top"] + D["press_gap"]
     D["z_lip0"] = D["z_bz0"]
@@ -367,7 +376,10 @@ def derive(P_):
     D["knob_rc"] = rc
     silhouette = [(0.0, -D["half_h"]), (D["half_w"], -D["half_h"])]
     D["place_y_knob"] = max(_place_for(x, y, rc) for x, y in silhouette)   # v0.4 rule: as close to the knob as allowed
-    if D["place_rule"] == "rail" and "case_place_y" in K:
+    if D["place_rule"] == "rail":
+        miss = [k for k in ("case_place_y", "case_panel_y1", "case_rail_clear", "case_pcb_y1", "case_faceplate_z") if k not in K]
+        if miss:   # review fix: no silent fallback to the v0.4 rule
+            raise RuntimeError(f"joystick place_rule='rail' needs the case values {miss} from knob-param")
         D["place_y"] = float(K["case_place_y"])     # v0.5: the case's rail rule (joystick as high as the rail screws allow)
     else:
         D["place_y"] = D["place_y_knob"]
@@ -443,6 +455,8 @@ def derive(P_):
             lo = mid
         else:
             hi = mid
+    if D.get("cup_ratio_set"):   # review option B: gentler cups (larger radius, same depth)
+        hi = max(hi, D["cup_ratio_set"] * Rb)
     D["cup_r"] = hi
     D["cup_ratio"] = hi / Rb
     D["cup_depth"] = cd
@@ -548,13 +562,17 @@ def derive(P_):
         D["skirt_x"] = D["skirt_x1"]
     # ---- v0.5 guides: screw + brass sleeve, bezel to carrier. Head under a carrier boss = up-stop; sleeve in a reamed bore.
     G = D["guide"]; gi = G["ins"]
-    D["g_xy"] = [(0.0, D["guide_gy"]), (0.0, -D["guide_gy"])]
+    gx_, gy_ = D["guide_xy"]
+    D["g_xy"] = [(gx_, gy_), (-gx_, -gy_)] if gy_ else [(gx_, 0.0), (-gx_, 0.0)]
     D["g_boss_r"] = G["sleeve_od"] / 2 + G["boss_wall"]
     D["g_bore"] = G["sleeve_od"] + 2 * G["bore_fit"]
     D["g_ins_top"] = D["z_scr0"] - 0.6                    # [A] 0.6 of roof left under the glass over the insert
     D["g_ins_bot"] = D["g_ins_top"] - gi["length"]
     D["g_rboss_r"] = gi["od"] / 2 + 1.0
-    zmin = D["z_sw1"] + D["press_travel"] + mjf + G["head_k"]   # head clears the switch body at full press
+    # head clears what is under it at full press: the switch body on the axis, the board top + solder off it
+    under = D["z_sw1"] if abs(gx_) < D["sw_ext"] + G["head_d"] / 2 else D["z_db1"] + D["solder_h"]
+    D["g_under"] = under
+    zmin = under + D["press_travel"] + mjf + G["head_k"]
     best = None
     for L in (4.0, 5.0, 6.0, 8.0, 10.0):                   # ISO 7984 stock lengths
         z0 = max(zmin, D["g_ins_bot"] + 2.0 - L)            # at least 2 mm of thread in the insert
@@ -580,6 +598,37 @@ def derive(P_):
     D["tip_f_mid_y"] = fhd * D["by_top"] / D["tip_arm_mid"]
     D["tip_f_top_x"] = fhd * D["bx"] / D["tip_arm_top"]
     D["spr_f_need"] = D["tip_need"] * D["tip_arm_top"] / (len(D["springs"]) * min(D["by_top"], D["by_bot"]))
+    # review fix: at the full slide each ball sits slide/2 off its cups, so the cups push back with F_hd·tanθ on top of the
+    # switch. Moments about the far ball row (ball-centre height): the push on the glass top and the stem reaction below
+    # both tip; the hold-downs (centroid on the axis) restore.
+    th = math.asin(min(1.0, (D["slide"] / 2) / max(D["cup_r"] - Rb, 1e-6)))
+    D["cup_angle"] = math.degrees(th)
+    t_ = math.tan(th)
+    D["cup_tan"] = t_
+    D["f_cup"] = fhd * t_
+    a_top = D["scr_top"] - D["z_ball"]; a_mid = (D["z_bz0"] + D["z_bz1"]) / 2 - D["z_ball"]; d_ref = D["z_ball"] - D["z_ref"]
+    D["tip_a_top"], D["tip_a_mid"], D["tip_d_ref"] = a_top, a_mid, d_ref
+    D["f_click"] = tilt_max + D["f_cup"]            # sideways push needed to click at the worst-case switch
+    D["f_click_nom"] = sw["tilt_f"] + D["f_cup"]
+    def _sf(lever, arm):
+        return fhd * lever / ((tilt_max + D["f_cup"]) * arm + tilt_max * d_ref)
+    D["sf_up"] = _sf(D["by_top"], a_top)
+    D["sf_down"] = _sf(D["by_bot"], a_top)
+    D["sf_x"] = _sf(D["bx"], a_top)
+    D["sf_up_mid"] = _sf(D["by_top"], a_mid)
+    n_ = len(D["springs"]); m_ = D["tip_margin"]; lev = min(D["by_top"], D["by_bot"])
+    den = lev - m_ * t_ * a_top
+    D["spr_f_need"] = (m_ * tilt_max * (a_top + d_ref) / den / n_) if den > 0 else float("inf")
+    # ---- review fix: the press peg is an M2 grub in a roof insert at the centre, set to the press gap with a feeler
+    pg = D["peg"]; pi = pg["ins"]
+    D["p_ins_top"] = D["z_scr0"] - 0.6
+    D["p_ins_bot"] = D["p_ins_top"] - pi["length"]
+    D["p_rboss_r"] = pi["od"] / 2 + 1.0
+    lo_, hi_ = D["p_ins_bot"] + 2.0, D["p_ins_top"] - 0.2
+    D["p_len"] = next((L for L in (3.0, 4.0, 5.0, 6.0, 8.0, 10.0) if lo_ <= D["z_peg"] + L <= hi_), 6.0)
+    D["p_top"] = D["z_peg"] + D["p_len"]
+    D["p_engage"] = D["p_top"] - D["p_ins_bot"]
+    D["p_adjust"] = (D["p_top"] - lo_, hi_ - D["p_top"])   # how far the grub can be set down / up and keep 2 mm of thread
     D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
     return D
 

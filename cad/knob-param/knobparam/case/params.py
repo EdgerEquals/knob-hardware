@@ -45,6 +45,7 @@ P = dict(
     rail_keep_d=6.0,       # [Ed 2 Nov] keep-out round each rail screw on the face: ISO 7092 M3 nylon washer Ø6 × 0.5 (small series)
                            # under an ISO 7045 M3 pan head (Ø5.6). Protects the polished resin face; costs no finger room vs a Ø6 head
     rail_washer="ISO 7092 M3 nylon washer, small series, Ø6.0 × 0.5",   # [Ed 2 Nov]
+    rail_float=0.20,       # [A] review fix: M3 screw in the Ø3.2 hole plus washer on the screw
     # ---- resin ----
     # UTR-8100: tensile 41.6 MPa, elongation 9%, density 1.3 g/cm³. SLA min wall 0.8.
     # Plain clear resin, no tint [Ed]. Only the front face is polished; every other face is as-printed.
@@ -73,7 +74,8 @@ P = dict(
     bz_t=1.2,              # [J][Ed] bezel thickness
     bz_max=1.5,            # [Ed] lip and bezel thickness must not exceed this
     fp_overlap=0.90,       # [J] lip covers the faceplate at rest
-    up_gap=0.02,           # [J] bezel sits this far above the plate so the faces do not fuse
+    up_gap=0.55,           # [J] review fix 2 Nov: the face is one flat plane (no rebate), so the joystick block floats press travel
+                           # (0.35) + one SLA tolerance above it (v0.4: 0.02 over a rebate the case never had)
     roof_pad=0.30,         # [J] glass sits on the spring pads; raises the glass 0.30
     sw_tilt=0.25,          # [J][S] SKRHADE010 tilt travel
     sw_push=0.15,          # [J][S] centre press
@@ -196,7 +198,7 @@ P = dict(
     cover_rho=1.12e-3,     # [A] ASA-CF, g/mm³
     cover_rgb=(40, 42, 45),  # [A] black, as printed
     cover_opacity=0.55,    # [A] render only (the real part is opaque)
-    fdm_tol=0.30,          # [S] FDM ±0.3 mm (Unionfab ASA-CF sheet): fits on the cover use this
+
     # ---- knob collar under the plate, bolts up into the shell ----
     # The seal itself is the thin ring on the front face (interface lab_ring_*).
     collar_h_mult=3.0,     # [A] collar length / screw diameter
@@ -360,7 +362,7 @@ def derive(D):
     # [Ed 2 Nov] joystick: as high as the top rail screw keep-out (washer) allows, at the full slide toward it
     D["rail_y_top"] = D["panel_y1"] - D["rail_edge"]
     if D["joy_rule"] == "rail":
-        D["place_y"] = D["rail_y_top"] - D["rail_keep_d"] / 2 - D["slide"] - D["tol_sla"] - D["half_h"]
+        D["place_y"] = D["rail_y_top"] - D["rail_keep_d"] / 2 - D["slide"] - D["tol_mjf"] - D["rail_float"] - D["half_h"]
     D["finger_gap"] = D["place_y"] - D["half_h"] - D["knob_r"]
     D["panel_y0"] = D["panel_y1"] - D["panel_h"]
     D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2.0
