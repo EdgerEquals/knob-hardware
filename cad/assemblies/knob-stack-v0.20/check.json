@@ -546,12 +546,12 @@
   },
   {
    "name": "clear OLED rests on the board round window D (narrowest ledge)",
-   "value": 1.61,
+   "value": 1.62,
    "target": ">= 1",
    "ok": true,
-   "note": "42.04 x 27.22 on the PCB front at (0, -35.2)",
+   "note": "42.04 x 27.22 on the PCB front at (0, -35.19)",
    "owner": "electronics",
-   "slack": 0.61
+   "slack": 0.62
   },
   {
    "name": "rod VBUS pad (B.Cu) vs back-side parts / pads",
@@ -699,12 +699,12 @@
   },
   {
    "name": "clear OLED vs the bottom corner posts",
-   "value": 0.295,
+   "value": 0.305,
    "target": ">= 0.3",
-   "ok": false,
-   "note": "OLED 42.04 x 27.22 at y -35.20; posts at y -52.35 (in the bottom wall [Ed])",
+   "ok": true,
+   "note": "OLED 42.04 x 27.22 at y -35.19; posts at y -52.35 (in the bottom wall [Ed])",
    "owner": "case",
-   "slack": -0.005
+   "slack": 0.005
   },
   {
    "name": "knob radial clearance",
@@ -1404,7 +1404,7 @@
    "value": 0.375,
    "target": ">= 0.3",
    "ok": true,
-   "note": "nearest idler pinion 2 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "note": "nearest encoder pinion cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
    "slack": 0.075
   },
@@ -1609,6 +1609,15 @@
    "note": "nearest: encoder shaft over the upper screen",
    "owner": "assembly",
    "slack": 0.01
+  },
+  {
+   "name": "clear OLED vs the knob base and nearby parts",
+   "value": 0.668,
+   "target": ">= 0.3",
+   "ok": true,
+   "note": "nearest: base cradle",
+   "owner": "assembly",
+   "slack": 0.368
   }
  ],
  "clashes": {},

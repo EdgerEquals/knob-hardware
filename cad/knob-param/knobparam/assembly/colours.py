@@ -47,7 +47,7 @@ def key(name):
     if low.startswith("jack ") and ("bushing" in low or "nut" in low): return "steel"
     if low.startswith("pcb back parts"): return "ic"
     if "daughterboard" in low or low == "pcb" or low.startswith("adapter board") or "pd board" in low: return "pcb"
-    if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith(("sw1", "socket 1x3", "socket 2x3")):
+    if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith("sw1") or (low.startswith("socket ") and "h11" in low):
         return "ic"
     if low.startswith("emitter "): return "led"
     if low.startswith(("jack ", "pj366st")) or "bushing" in low: return "jack"

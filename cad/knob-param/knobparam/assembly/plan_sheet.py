@@ -149,7 +149,7 @@ def main():
     axv3 = fig.add_subplot(gs[2, 5:7])
     lay = cut(parts, "y", py)
     draw(axv3, lay, f"vertical cut y = {py:.1f} (across, through the encoder wheel; glass, cap and seal ring at the sides)", xl, zl, xlabel="x (mm)", ylabel="z (mm)")
-    fig.suptitle(f"Knob stack {D['version']}b: section sheet, panel frame (looking at the panel face for the plan cuts). "
+    fig.suptitle(f"Knob stack {D['version']}: section sheet, panel frame (looking at the panel face for the plan cuts). "
                  f"1220 at the bottom, encoder at the top, cover depth {D['cover_depth']:.1f} mm.", fontsize=13, x=0.01, ha="left")
     out = os.path.join(os.path.dirname(here), "assemblies", f"knob-stack-{D['version']}", f"knob-stack-{D['version']}-section-sheet.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)

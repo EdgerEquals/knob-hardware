@@ -10,8 +10,8 @@ from matplotlib.patches import Rectangle, Circle, Polygon, Patch, FancyArrowPatc
 GROUPS = [
     ("faceplate (UTR-8100 case proxy)", "#b3e5fc", lambda n: n.startswith("faceplate")),
     ("main PCB (local patch)", "#2e7d32", lambda n: n.startswith("main PCB")),
-    ("2×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
-    ("2×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
+    ("2×5 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
+    ("2×5 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
     ("screen socket AXE530127 (daughterboard tab)", "#263238", lambda n: n.startswith("screen FPC socket")),
     ("guide screws + brass sleeves + inserts (up-stop)", "#b0855a", lambda n: n.startswith("guide ")),
     ("joystick daughterboard (1.0 FR4)", "#1b5e20", lambda n: n == "joystick daughterboard"),
@@ -20,6 +20,7 @@ GROUPS = [
     ("SKRHADE010 body (45°)", "#b0bec5", lambda n: n.startswith("SW1") and "body" in n),
     ("SKRHADE010 stem", "#fff176", lambda n: n.startswith("SW1") and "stem" in n),
     ("seat plate (glued on the daughterboard)", "#6d4c41", lambda n: n.startswith("seat plate")),
+    ("cradle (printed, glued to the PCB) + dowels", "#8d6e63", lambda n: n.startswith(("joystick cradle", "cradle locating"))),
     ("balls Ø2 stainless", "#90a4ae", lambda n: n.startswith("ball ")),
     ("carrier (thin floor, pilots, cup)", "#ab47bc", lambda n: n.startswith("joystick carrier")),
     ("screen carrier: 5 mm grip block", "#5c6bc0", lambda n: n.startswith("screen carrier")),
@@ -95,7 +96,13 @@ def plan(ax, D):
         ax.add_patch(Circle((0, -D["place_y"]), od / 2, fill=False, ec=col, lw=1.2, ls=ls, zorder=2))
     x0, x1, y0, y1 = D["board_x0"], D["board_x1"], D["board_y0"], D["board_y1"]
     ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fc=lighten("#1b5e20", 0.25), ec="k", lw=1.2, zorder=3))
-    ax.add_patch(Circle((0, 0), D["cut_r"], fc="white", ec="#4e342e", lw=0.8, zorder=3))
+    if D.get("base") == "cradle":   # v0.5 cradle ring (dashed) and corner towers
+        ax.add_patch(Rectangle((-D["cr_out_x"], D["cr_out_y0"]), 2 * D["cr_out_x"], D["cr_out_y1"] - D["cr_out_y0"], fill=False, ec="#6d4c41", lw=1.0, ls="--", zorder=3))
+        ax.add_patch(Rectangle((-D["cr_in_x"], -D["cr_in_y"]), 2 * D["cr_in_x"], 2 * D["cr_in_y"], fill=False, ec="#6d4c41", lw=0.8, ls=":", zorder=3))
+        for x, y in D["balls"]:
+            ax.add_patch(Circle((x, y), D["boss_r"], fc="#bcaaa4", ec="#6d4c41", lw=0.6, zorder=3))
+    else:
+        ax.add_patch(Circle((0, 0), D["cut_r"], fc="white", ec="#4e342e", lw=0.8, zorder=3))
     if D.get("fpc_to_db"):   # v0.5 tab with the screen socket (long side along y)
         ax.add_patch(Rectangle((x1, -D["tab_hy"]), D["tab_x1"] - x1, 2 * D["tab_hy"], fc=lighten("#1b5e20", 0.25), ec="k", lw=1.2, zorder=3))
         sl_, ss_, _ = D["db_fpc_sock"]
@@ -105,9 +112,8 @@ def plan(ax, D):
     rows = D["hdr"].get("rows", 1)
     for hx, hy in D["hdr_xy"]:
         ax.add_patch(Rectangle((hx - D["hdr_len"] / 2, hy - D["hdr_wid"] / 2), D["hdr_len"], D["hdr_wid"], fc="#424242", ec="k", zorder=4))
-        for r in range(rows):
-            for k in (-1, 0, 1):
-                ax.add_patch(Circle((hx + k * D["pitch"], hy + (r - (rows - 1) / 2) * D["pitch"]), 0.32, fc="#ffd54f", ec="k", lw=0.4, zorder=5))
+        for dx, dy in D["hdr_pins"]:
+            ax.add_patch(Circle((hx + dx, hy + dy), 0.32, fc="#ffd54f", ec="k", lw=0.4, zorder=5))
     for x, y in D.get("g_xy", []):   # v0.5 guides: sleeve and head
         ax.add_patch(Circle((x, y), D["guide"]["head_d"] / 2, fc="#cfd8dc", ec="k", lw=0.4, zorder=4))
         ax.add_patch(Circle((x, y), D["guide"]["sleeve_od"] / 2, fc="#c9a227", ec="k", lw=0.6, zorder=5))
@@ -143,7 +149,8 @@ def plan(ax, D):
     ax.annotate(f"daughterboard {D['db'][0]:.1f}×{D['db'][1]:.1f}, riser {D['riser_h']:g}", (0, y0), (-hw - 1, y0 - 1),
                 arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
     ax.annotate("SKRHADE010, −45°", (0, 0), (-hw - 1, 3), arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
-    ax.annotate(f"two {rows}×{D['hdr']['n']} + four M2×{D['riser_h']:g}", D["hdr_xy"][0], (hw + 1, -4), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
+    ax.annotate(f"two {rows}×{D['hdr']['n']}" + (f", cradle {D['riser_h']:g} mm" if D.get("base") == "cradle" else f" + four M2×{D['riser_h']:g}"),
+                D["hdr_xy"][0], (hw + 1, -4), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
     ax.annotate("screen socket on the tab" if D.get("fpc_to_db") else "FPC bend [A]", (D["fpc_x"], D["slot_hy"]), (hw + 1, 6), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
     if D.get("g_xy"):
         ax.annotate("guide screw + sleeve (up-stop)", D["g_xy"][0], (-hw - 1, 8), arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
@@ -213,7 +220,9 @@ def render(D, P, rows, png):
     nf = sum(not r["ok"] for r in rows)
     key = (f"Stack (z from the main-PCB front): faceplate front {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − knob_proud {D['knob_proud']:.1f}. "
            f"Screen top {D['scr_top']:.2f}. "
-           f"Derived riser 0–{D['z_db0']:.2f} (catalog {D['standoff']['part']}, {D['standoff']['length']:.0f} mm) · daughterboard {D['z_db0']:.2f}–{D['z_db1']:.2f} · "
+           + (f"Printed cradle 0–{D['z_db0']:.2f}, glued, two dowels; balls at the corners (±{D['bx']:.1f}, +{D['by_top']:.2f}/−{D['by_bot']:.1f}) · " if D.get("base") == "cradle"
+              else f"Derived riser 0–{D['z_db0']:.2f} (catalog {D['standoff']['part']}, {D['standoff']['length']:.0f} mm) · ")
+           + f"daughterboard {D['z_db0']:.2f}–{D['z_db1']:.2f} · "
            f"stem top {D['z_stem_top']:.2f} · carrier underside {D['z_c0']:.2f} · floor {D['car_floor']:.2f} · "
            f"bezel {D['z_bz0']:.2f}–{D['z_bz1']:.2f} · spring roof {D['z_roof']:.2f} · screen {D['z_scr0']:.2f}–{D['scr_top']:.2f}.\n"
            f"Tilt stop is the switch: slide {D['slide']:.2f} mm (cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}). "

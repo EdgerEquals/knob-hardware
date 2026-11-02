@@ -18,7 +18,8 @@ def run(D, P):
         rows.append(dict(name=name, value=float(v), target=tgt, ok=bool(ok), note=note))
     car = P["joystick carrier (printed)"]
     bez = P["screen carrier (printed)"]
-    plate = P["seat plate (printed, glued)"]
+    cradle_on = D.get("base") == "cradle"
+    plate = P["joystick cradle (printed, glued)"] if cradle_on else P["seat plate (printed, glued)"]   # v0.5: the cradle carries the seats
     stem = P["SW1 SKRHADE010 stem"]
     db = P["joystick daughterboard"]
     pcb = P["main PCB (proxy, local patch)"]
@@ -101,13 +102,20 @@ def run(D, P):
     row("skirt clear at switch end of travel", gmin, f">= {D['tol_mjf']:.2f}", gmin >= D["tol_mjf"] - 1e-4,
         f"skirt gap {D['skirt_gap']:.2f}, slide {D['slide']:.2f}, remaining {D['tol_mjf']:.2f}. "
         "gaps " + ", ".join(f"{v:.3f}" for v in gaps))
-    rot = (Rot(0, 0, 3) * car).distance_to(plate)
+    rot = min((Rot(0, 0, 3) * car).distance_to(plate), (Rot(0, 0, 3) * car).distance_to(db))
     row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
         "the skirt is the anti-rotation stop. It is not the tilt stop")
     # 4 grub screws: on the sub-assembly only. No hole in the plate or the daughterboard
-    outside = all(abs(x) - D["cs_bore_r"] > D["board_x1"] or abs(y) - D["cs_bore_r"] > D["board_y1"] for x, y in D["cs_xy"])
-    row("spring pilots outside the plate", 1.0 if outside else 0.0, "outside", outside,
-        "no access hole and no keep-out. The hex is reached before the plate is fitted")
+    if cradle_on:   # v0.5: the press springs sit inside the corner balls; the skirt segments skip the grubs
+        gr = D["grub_d_model"] / 2
+        reach = all(D["skirt_x_in"] < abs(x) - gr and D["skirt_x0"] > abs(x) + gr for x, _ in D["cs_xy"])
+        row("press-spring grubs reachable from underneath (sub-assembly)", 1.0 if reach else 0.0, "open", reach,
+            f"stations (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f}) inside the balls (±{D['bx']:.2f}); skirt segments stop at "
+            f"±{D['skirt_x_in']:.2f} and restart at ±{D['skirt_x0']:.2f}")
+    else:
+        outside = all(abs(x) - D["cs_bore_r"] > D["board_x1"] or abs(y) - D["cs_bore_r"] > D["board_y1"] for x, y in D["cs_xy"])
+        row("spring pilots outside the plate", 1.0 if outside else 0.0, "outside", outside,
+            "no access hole and no keep-out. The hex is reached before the plate is fitted")
     row("hex proud of the insert", D["hex_proud"], ">= 0.40", D["hex_proud"] >= 0.40,
         f"{D['grub']['part']} in {D['ins']['part']}. {D['hex_proud']:.2f} mm of screw below the insert at {D['cs_turns']:g} turn")
     row("insert hangs in free air under the floor", D["z_c0"] - D["z_ins0"], "0.5-3.0",
@@ -151,39 +159,52 @@ def run(D, P):
     row("header body vs carrier", hb, ">= 1.0", hb >= 1.0, "headers are on the underside; trim the 2.79 mm tails flush")
     row("switch body vs headers", min(body.distance_to(h) for h in hdrs), ">= 0.3",
         min(body.distance_to(h) for h in hdrs) >= 0.3, "the switch is on top, the headers underneath")
-    row("standoff count", len(stands), "4", len(stands) == 4, "one in each quadrant, all GND")
-    sd = min(s.distance_to(db) for s in stands)
-    row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05,
-        "round body 0.02 short of the daughterboard. An M2 socket screw passes through the plate")
     bots = [P[n] for n in P if n.startswith("M2 socket screw bottom")]
     tops = [P[n] for n in P if n.startswith("M2 socket screw top")]
-    row("bottom screw head under the PCB", min(s.distance_to(pcb) for s in bots), "0.005-0.05",
+    if cradle_on:
+        C = D["cradle"]
+        row("cradle replaces the standoffs (none modelled)", len(stands), "0", len(stands) == 0 and not bots and not tops,
+            f"[Ed 2 Nov] {C['part']}, {C['h']:g} mm; board glued on a {C['land']:.1f} mm land; two {C['pin']['part']} locate it on the PCB")
+        foot = D["cr_out_y1"] <= D["y_pcb"] - D["pcb_edge"] + 1e-9 and D["cr_out_x"] <= D["pcb_w"] / 2 - D["pcb_edge"]
+        row("cradle ring glued inside the main-PCB outline", D["y_pcb"] - D["pcb_edge"] - D["cr_out_y1"], ">= 0", foot,
+            f"ring ±{D['cr_out_x']:.2f} x {D['cr_out_y0']:.2f}..{D['cr_out_y1']:.2f}; PCB top edge local y {D['y_pcb']:.2f}. "
+            f"The top towers start at z {C['tower_z0']:g}, above the case's top corner posts, and hang off the ring")
+        pins = [P[n] for n in P if n.startswith("cradle locating dowel")]
+        row("cradle locating dowels in the PCB", len(pins), "2", len(pins) == 2 and all(p_.distance_to(plate) <= 0.06 for p_ in pins),
+            ", ".join(f"({x:.1f}, {y:.1f})" for x, y in D["cr_pins"]))
+    if stands:
+        row("standoff count", len(stands), "4", len(stands) == 4, "one in each quadrant, all GND")
+        sd = min(s.distance_to(db) for s in stands)
+        row("standoffs meet the daughterboard", sd, "0.01-0.05", 0.01 <= sd <= 0.05,
+            "round body 0.02 short of the daughterboard. An M2 socket screw passes through the plate")
+    if bots: row("bottom screw head under the PCB", min(s.distance_to(pcb) for s in bots), "0.005-0.05",
         0.005 <= min(s.distance_to(pcb) for s in bots) <= 0.05,
         f"{D['shcs']['part']} M2×{D['shcs']['bot']:.0f}, head Ø{D['shcs']['head_d']:.1f} × {D['shcs']['head_h']:.1f}. "
         f"{D['engage_bot']:.2f} mm of thread in the pillar")
-    row("top screw head on the plate", min(s.distance_to(plate) for s in tops), "0.005-0.05",
+    if tops: row("top screw head on the plate", min(s.distance_to(plate) for s in tops), "0.005-0.05",
         0.005 <= min(s.distance_to(plate) for s in tops) <= 0.05,
         f"M2×{D['shcs']['top']:.0f} through the plate and the board, {D['engage_top']:.2f} mm in the pillar")
-    row("screw thread engagement", min(D["engage_bot"], D["engage_top"]), ">= 2.0",
+    if stands: row("screw thread engagement", min(D["engage_bot"], D["engage_top"]), ">= 2.0",
         D["engage_bot"] >= 2.0 and D["engage_top"] >= 2.0, "both ends, female-female pillar")
-    row("bottom screw clear of the hold-downs", min(s.distance_to(h) for s in bots for h in sprs), ">= 1.0",
+    if bots: row("bottom screw clear of the hold-downs", min(s.distance_to(h) for s in bots for h in sprs), ">= 1.0",
         min(s.distance_to(h) for s in bots for h in sprs) >= 1.0)
     ra = P["rear spring anchor (printed)"]
     pins = [P[n] for n in P if n.startswith("cross pin")]
     row("rear anchor glued to the PCB back", ra.distance_to(pcb), "0.01-0.05",
         0.01 <= ra.distance_to(pcb) <= 0.05,
         f"bond outline {D['ra_bond']:.0f} mm², wall {D['ra_wall']:.1f}, volume {ra.volume/1000:.2f} cm³")
-    row("rear anchor clear of the bottom screws", min(ra.distance_to(s) for s in bots), ">= 1.0",
+    if bots: row("rear anchor clear of the bottom screws", min(ra.distance_to(s) for s in bots), ">= 1.0",
         min(ra.distance_to(s) for s in bots) >= 1.0,
         "the anchor stops inboard of the screws. The heads stay reachable")
     row("lower hooks just behind the PCB", -D["pcb_t"] - D["z_pin"], "1.5-4.0",
         1.5 <= -D["pcb_t"] - D["z_pin"] <= 4.0,
         f"pin axis z {D['z_pin']:.2f}, PCB back z {-D['pcb_t']:.2f}")
     row("hold-down force per spring (sized by tipping)", D["spr_f"], f">= {D['spr_f_need']:.2f}", D["spr_f"] >= D["spr_f_need"] - 1e-9,
-        f"[A] pending Ed (v0.4 0.50 [Ed]). Rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch, "
+        f"[Ed 2 Nov] 0.65 N with the balls at the corners (v0.4 0.50). Rate {D['spr_rate']:.3f} N/mm over {D['spr_ext']:.1f} mm stretch, "
         f"installed {D['spr_len']:.1f} mm")
     for nm, v, note in (("glass top, up/down", D["tip_f_top_y"], f"arm {D['tip_arm_top']:.2f} above the stem reference, balls ±{D['by']:.2f}"),
                         ("block side, up/down", D["tip_f_mid_y"], f"arm {D['tip_arm_mid']:.2f}"),
+                        ("glass top, toward the knob", D["tip_f_top_down"], f"knob-side balls at -{D['by_bot']:.2f}"),
                         ("glass top, left/right", D["tip_f_top_x"], f"balls ±{D['bx']:.2f}")):
         row(f"side push to tip the carrier ({nm})", v, f">= {D['tip_need']:.2f}", v >= D["tip_need"] - 1e-6,
             f"N; {D['tip_margin']:g} × the switch's worst tilt force {D['sw']['tilt_f'] + D['sw']['f_tol']:.2f} N. {note}")
@@ -199,18 +220,22 @@ def run(D, P):
     blind = ra.is_inside((D["ra_x0"] + 0.4, D["spr_y"], D["z_pin"]))
     row("pin mouth open, far end stopped", 1.0 if mouth_open and blind else 0.0, "open",
         mouth_open and blind, "push in from +x. The -x end is a 1 mm wall")
-    row("screw clears the PCB hole", (D["drill_m2"] - D["screw_d_model"]) / 2, ">= 0.15",
+    if stands: row("screw clears the PCB hole", (D["drill_m2"] - D["screw_d_model"]) / 2, ">= 0.15",
         (D["drill_m2"] - D["screw_d_model"]) / 2 >= 0.15,
         f"Ø{D['screw_d_model']:.2f} screw in the Ø{D['drill_m2']:.1f} hole")
-    row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",
-        min(s.distance_to(plate) for s in stands) >= 0.5, "the screw, not the standoff, passes through the plate")
-    row("standoff vs switch body", min(s.distance_to(body) for s in stands), ">= 0.8",
-        min(s.distance_to(body) for s in stands) >= 0.8)
-    row("standoff vs header", min(min(s.distance_to(h) for h in hdrs) for s in stands), ">= 0.6",
-        min(min(s.distance_to(h) for h in hdrs) for s in stands) >= 0.6)
-    row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
-        abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
-        f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
+    if stands:
+        row("standoff vs plate (screw through both)", min(s.distance_to(plate) for s in stands), ">= 0.5",
+            min(s.distance_to(plate) for s in stands) >= 0.5, "the screw, not the standoff, passes through the plate")
+        row("standoff vs switch body", min(s.distance_to(body) for s in stands), ">= 0.8",
+            min(s.distance_to(body) for s in stands) >= 0.8)
+        row("standoff vs header", min(min(s.distance_to(h) for h in hdrs) for s in stands), ">= 0.6",
+            min(min(s.distance_to(h) for h in hdrs) for s in stands) >= 0.6)
+        row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
+            abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
+            f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
+    else:
+        row("cradle height is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}", abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
+            "printed, so any height works; 30 keeps the v0.5 lift")
     pg = D["z_glass"] - D["z_fp1"]   # v0.18 knob_proud is measured to the knob screen glass
     row("knob_proud (to the glass) in the accepted window", pg, "16-20",
         16.0 - 1e-6 <= pg <= 20.0 + 1e-6,
@@ -221,14 +246,16 @@ def run(D, P):
         T["mate_min"] <= D["mate_in"] <= T["mate_max"],
         f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
         f"air {D['mate_air']:.2f}, derived riser {D['riser_h']:.2f} mm, pin tip z {D['z_hdr_tip']:.2f}. "
-        f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm")
+        + ("" if cradle_on else f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm"))
     row("socket count matches the headers", len(socks), "2", len([n for n in P if n.startswith("socket ") and "H11" in n]) == 2 and len(hdrs) == 2,
         f"two {D['hdr'].get('rows', 1)}x{D['hdr']['n']}, one each side of the switch: "
         f"{2 * D['hdr'].get('rows', 1) * D['hdr']['n']} pins (10 signals + 3.3 V + GND; the standoffs are GND too)")
     # 8 centring and symmetry
     off = math.hypot(*D["sw_xy"])
     row("switch on the carrier axis", off, "0", off <= 1e-6, "dead centre")
-    sym = (_mirror_ok(D["standoff_xy"]) and _mirror_ok(D["hdr_xy"]) and _mirror_ok(D["balls"])
+    xmir = lambda pts: {(round(-x, 4), round(y, 4)) for x, y in pts} == {(round(x, 4), round(y, 4)) for x, y in pts}
+    sym = (_mirror_ok(D["standoff_xy"]) and _mirror_ok(D["hdr_xy"])
+           and (xmir(D["balls"]) if cradle_on else _mirror_ok(D["balls"]))   # v0.5: the top ball row is set by the rail strip
            and _mirror_ok(D["springs"]) and _mirror_ok(D["cs_xy"]))
     row("standoffs, headers, balls and both spring sets symmetric", 1.0 if sym else 0.0, "mirror", sym,
         f"standoffs (±{D['sx']:.2f}, ±{D['sy']:.2f}), compression springs (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f})")
@@ -257,12 +284,13 @@ def run(D, P):
     holes = D["standoff_xy"] + D["hdr_xy"] + D["springs"]
     holes_ok = all(on_board(x, y, D["pad_m2"] / 2 if (x, y) in D["standoff_xy"] or (x, y) in D["hdr_xy"] else D["spr_bore"] / 2)
                    for x, y in holes)
-    nuts_on = all(on_board(x, y, D["shcs"]["head_d"] / 2) for x, y in D["standoff_xy"])
+    nuts_on = all(on_board(x, y, D["shcs"]["head_d"] / 2) for x, y in D["standoff_xy"]) and all(
+        on_board(x, y, D["cradle"]["pin"]["d"] / 2) for x, y in D.get("cr_pins", []))
     row("standoff, socket and spring holes on the main PCB", 1.0 if holes_ok else 0.0, "on", holes_ok,
         f"hold-down hooks at x ±{D['spr_x']:.2f} (the corner formula wanted ±{D['spr_x_raw']:.2f}, past the PCB)")
-    row("socket-screw head on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
-        f"head Ø{D['shcs']['head_d']:.1f} needs the screws at y ±{D['sy']:.2f} "
-        f"(the pad alone would have allowed ±{D['sy_pad']:.2f})")
+    row("socket-screw heads / cradle dowels on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
+        (f"two Ø{D['cradle']['pin']['d']:g} dowels" if cradle_on else
+         f"head Ø{D['shcs']['head_d']:.1f} needs the screws at y ±{D['sy']:.2f} (the pad alone would have allowed ±{D['sy_pad']:.2f})"))
     row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
         f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
     # 12 walls, floor, volumes
@@ -270,8 +298,9 @@ def run(D, P):
         f"matches the other bezel. Glue gap around the glass is {D['glue']:.2f}")
     row("carrier floor", D["car_floor"], f">= {D['print_min']}", D["car_floor"] >= D["print_min"] - 1e-9,
         f"floor is the print minimum. Derived riser {D['riser_h']:.2f} mm. Screen top {D['scr_top']:.2f}")
-    row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
-        D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
+    if not cradle_on:
+        row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
+            D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
     row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],
         "anti-rotation skirt")
     z_well = (max(D["z_roof"], D["z_scr0"]) + D["z_bz1"]) / 2   # v0.5: the glass pocket band, above the roof plate
@@ -336,11 +365,15 @@ def run(D, P):
         row("guide head vs switch body (rest)", gsw, f">= {D['tol_mjf']:.2f}", gsw >= D["tol_mjf"] - 1e-6)
     if D["fpc_to_db"]:
         sock = P["screen FPC socket AXE530127 (daughterboard)"]
-        row("screen socket clear of the seat plate", sock.distance_to(plate), ">= 0.3", sock.distance_to(plate) >= 0.3,
+        row("screen socket clear of the seat plate / cradle", sock.distance_to(plate), ">= 0.3", sock.distance_to(plate) >= 0.3,
             f"socket at x {D['db_sock_x']:.2f} on a tab to x {D['tab_x1']:.2f}, ±{D['tab_hy']:.2f}")
         tops = [P[n] for n in P if n.startswith("M2 socket screw top")]
-        row("screen socket clear of the standoff screw heads", min(sock.distance_to(t_) for t_ in tops), ">= 0.3",
-            min(sock.distance_to(t_) for t_ in tops) >= 0.3)
+        if tops:
+            row("screen socket clear of the standoff screw heads", min(sock.distance_to(t_) for t_ in tops), ">= 0.3",
+                min(sock.distance_to(t_) for t_ in tops) >= 0.3)
+        hs = [P[n] for n in P if n.startswith("hold-down spring")]
+        row("screen socket clear of the hold-down springs", min(sock.distance_to(h_) for h_ in hs), ">= 0.3",
+            min(sock.distance_to(h_) for h_ in hs) >= 0.3)
         sc_ = min((Pos(D["slide"] * math.cos(math.radians(a)), D["slide"] * math.sin(math.radians(a)), 0) * car).distance_to(sock)
                   for a in range(0, 360, 45))
         row("screen socket clear of the carrier at full slide", sc_, f">= {D['tol_mjf']:.2f}", sc_ >= D["tol_mjf"] - 1e-6,

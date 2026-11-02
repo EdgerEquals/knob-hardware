@@ -100,11 +100,17 @@ P = dict(
     # male header, plastic on the UNDERSIDE, pin down into the socket. Lead style -17 is the
     # straight-pin post that mates a 25 mm riser (Samtec TSW chart: tail 2.79, post 15.74).
     # The -20 post (25.91) went through the main PCB. The 1x3 is consigned; LCSC's -20 line is 2-row.
-    # v0.5: two 2x3 (12 pins): 10 signals (QSPI CLK, CS, IO0-3, RST, TE, PWR_EN, switch ladder) + 3.3 V + GND; the four brass
-    # standoffs are GND too. Two 2x5 would need the board ~4 mm wider, into the top corner posts.
-    hdr=dict(part="Samtec TSW-103-xx-T-D long-post 2x3 header, post about 21.5 mm for the 30 mm riser (exact -xx code to pick)", lcsc="consigned", mate=21.5, ins=2.54, tail=2.79, n=3, rows=2),  # [A] 2 Nov v0.5
-    # female socket on the main PCB. Same hanxia H11 family as the v0.2 2x3, split into two 1x3s.
-    sock=dict(part="2.54 mm 2x3 female socket, 11 mm (hanxia PM2.54 H11 family, 2x3 part to pick)", lcsc="TBC", h=11.0, tail=3.2, n=3, rows=2),  # [A] v0.5 (v0.4: 1x3 C41427518)
+    # v0.5: two 2x5 (20 pins), long side along y: 10 signals (QSPI CLK, CS, IO0-3, RST, TE, PWR_EN, switch ladder), three 3.3 V
+    # and grounds between the QSPI lines. Room for them came with the cradle (no standoffs).
+    hdr=dict(part="Samtec TSW-105-xx-T-D long-post 2x5 header, post about 21.5 mm for the 30 mm cradle (exact -xx code to pick)", lcsc="consigned", mate=21.5, ins=2.54, tail=2.79, n=5, rows=2, axis="y"),  # [Ed] 2 Nov v0.5
+    sock=dict(part="2.54 mm 2x5 female socket, 11 mm (hanxia PM2.54 H11 family, 2x5 part to pick)", lcsc="TBC", h=11.0, tail=3.2, n=5, rows=2),  # [A] v0.5 (v0.4: 1x3 C41427518)
+    # v0.5 base [Ed 2 Nov 12:17]: a printed cradle glued to the main PCB (two locating dowels) replaces the four standoffs and
+    # the seat plate. The joystick board is glued on its rim. The lower ball seats stand on towers at its extreme corners.
+    base="cradle",
+    cradle=dict(part="joystick cradle, MJF PA-12, glued to the main PCB and to the joystick board", h=30.0, wall=1.5, wall_top=1.0,
+                land=0.7, tower_z0=22.5, pin=dict(part="ISO 8734 1.5x5 stainless dowel", d=1.5, len=5.0, in_pcb=1.6)),   # [A]
+    ball_x=17.5,            # [Ed 2 Nov 12:22] balls at the extreme corners: x as far out as the carrier allows
+    ball_y_bot=10.5,        # [Ed] knob-side row; the carrier outline (±13.02) is the limit. The top row is set by the rail strip
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
     # Hex H3×M2×25 (STTZ2022) and the male-female 25 mm parts were out of stock on LCSC, 1 Nov 2026.
     # OD 3.2 is the usual knurled round M2 pillar; LCSC does not publish it. [A]
@@ -120,9 +126,10 @@ P = dict(
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
-    spr_xy=(6.0, 4.6),      # [A] v0.5 hold-down springs at (±x, ±y): clear of the 2x3 header bodies (y ±2.54) and the balls
-    spr_f=1.40,             # [A] 2 Nov v0.5, pending Ed: N each (v0.4 0.5 [Ed]). Sized so a sideways push on the glass top tips the
-                            # carrier only above 1.3x the switch's worst-case tilt force (balls only 8 mm apart up/down)
+    spr_xy=(12.5, 3.0),     # [A] v0.5 hold-down springs at (±x, ±y): inside the balls, outboard of the 2x5 headers
+    spr_f=0.65,             # [Ed 2 Nov 12:25] N each (v0.4 0.5). With the balls at the corners a sideways push on the glass top
+                            # then tips the carrier only above ~1.3x the switch's worst-case tilt force
+    cs_xy_v05=(11.5, 7.5),  # [Ed 2 Nov 12:22] press springs inside the balls (v0.4 had them at the carrier corners)
     tip_margin=1.3,         # [A] tipping force / worst-case switch tilt force
     spr_ext=8.0,            # [A] extension at rest, mm. Free length is installed length minus this
     pin_d=1.2,              # [A] push-in cross pin, stainless or music wire
@@ -252,7 +259,7 @@ def derive(P_):
     so, hd, sk = D["standoff"], D["hdr"], D["sock"]
     D["knob_proud_live"] = "knob_proud" in K
     D["knob_proud_in"] = D["knob_proud"]
-    D["z_db0"] = so["length"]
+    D["z_db0"] = D["cradle"]["h"] if D["base"] == "cradle" else so["length"]   # v0.5: the cradle height is the riser
     D["z_db1"] = D["z_db0"] + D["db_t"]
     D["z_sw1"] = D["z_db1"] + sw["h"]
     D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
@@ -280,7 +287,7 @@ def derive(P_):
     D["knob_proud"] = D["z_knob_top"] - D["z_fp1"]
     D["z_glass"] = D["z_knob_top"] + 4.3   # [A] v0.18: glass 56.8 = knob shell top 52.5 + 4.3
     D["riser_h"] = D["z_db0"]
-    D["riser_catalog"] = so["length"]
+    D["riser_catalog"] = D["cradle"]["h"] if D["base"] == "cradle" else so["length"]
     D["z_hdr_tip"] = D["z_db0"] - hd["ins"] - hd["mate"]
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
@@ -302,6 +309,8 @@ def derive(P_):
     D["boss_r"] = D["seat_r"] + pm * 0.50
     D["z_cup0"] = D["z_stem_top"] - D["cup_engage"]
     D["z_skirt0"] = D["z_plate0"] - D["skirt_overlap"]
+    if D["base"] == "cradle":   # no seat plate: the skirt engages the board edge only, above the cradle rim
+        D["z_skirt0"] = D["z_db0"] + 0.3   # 0.3 over the cradle brackets; still 0.7 of the board edge to stop rotation
     D["stack_h"] = D["scr_top"]
     # press: the peg meets the stem after one SLA tolerance, then the switch travels its own 0.15 mm
     D["press_gap"] = sla
@@ -366,7 +375,7 @@ def derive(P_):
     # main-PCB top edge and the rail strip, local to the joystick axis
     D["y_pcb"] = (K["case_pcb_y1"] if "case_pcb_y1" in K else D["pcb_above"]) - D["place_y"]
     D["y_rail"] = ((K["case_panel_y1"] - K["case_rail_clear"]) - D["place_y"]) if "case_panel_y1" in K else 99.0
-    D["rail_margin"] = 0.5   # [A] air kept between a part behind the panel and the rail strip line
+    D["rail_margin"] = 0.4   # [A] air kept between a part behind the panel and the 10 mm rail-strip line (itself conservative)
     # switch on the carrier axis. Land extent drives the plate opening and the board
     D["sw_xy"] = (0.0, 0.0)
     D["sw_ext"] = _land_extent(sw, D["sw_rot"])
@@ -376,9 +385,27 @@ def derive(P_):
     D["hdr_len"] = n * pitch
     D["hdr_wid"] = hd.get("rows", 1) * pitch
     D["hx"] = D["sw_ext"] + D["part_gap"] + D["hdr_len"] / 2
+    if hd.get("axis") == "y":   # v0.5 2x5: pin rows along y; the inner pin pads clear the switch land
+        rows = hd.get("rows", 1)
+        D["hdr_len"], D["hdr_wid"] = rows * pitch, n * pitch          # x, y extents of the plastic body
+        D["hx"] = D["sw_ext"] + 0.3 + 0.85 + (rows - 1) / 2 * pitch
+        D["hdr_pins"] = [((r - (rows - 1) / 2) * pitch, (k - (n - 1) / 2) * pitch) for r in range(rows) for k in range(n)]
+    else:
+        D["hdr_pins"] = [((k - (n - 1) / 2) * pitch, (r - (hd.get("rows", 1) - 1) / 2) * pitch)
+                         for r in range(hd.get("rows", 1)) for k in range(n)]
     inset = D["pad_m2"] / 2 + D["cu_edge"]
     D["db_half_w"] = D["hx"] + D["hdr_len"] / 2 + D["standoff_d"] / 2 + D["part_gap"]
     D["db_half_h"] = D["cut_r"] + pm
+    if D["base"] == "cradle":
+        # v0.5: the cradle ring keeps clear of the hold-down bores and the sockets; the board sits on its rim
+        C = D["cradle"]
+        D["cr_in_x"] = D["spr_xy"][0] + D["spr_bore"] / 2 + 0.3
+        D["cr_in_y"] = max(D["hdr_wid"] / 2 + 0.3, D["spr_xy"][1] + D["spr_bore"] / 2 + 0.3, D["sw_ext"] + 0.3)
+        D["cr_out_x"] = D["cr_in_x"] + C["wall"]
+        D["cr_out_y1"] = D["cr_in_y"] + C["wall_top"]     # top side: the main-PCB edge is close
+        D["cr_out_y0"] = -(D["cr_in_y"] + C["wall"])
+        D["db_half_w"] = D["cr_in_x"] + C["land"]
+        D["db_half_h"] = D["cr_in_y"] + C["wall_top"] / 2
     # no round stop: the board is symmetric. The v0.3 -y tab existed only for that stop
     D["board_x0"], D["board_x1"] = -D["db_half_w"], D["db_half_w"]
     D["board_y0"], D["board_y1"] = -D["db_half_h"], D["db_half_h"]
@@ -395,7 +422,7 @@ def derive(P_):
     D["sy_corner"] = sy_corner
     D["sy_pad"] = sy_pad
     D["sy_head"] = sy_head
-    D["standoff_xy"] = [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
+    D["standoff_xy"] = [] if D["base"] == "cradle" else [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
     D["hdr_xy"] = [(D["hx"], 0.0), (-D["hx"], 0.0)]
     # shallow spherical cups, same above and below. The ratio is the smallest cup radius
     # that still keeps cup_margin at the full slide. A ratio near 1.05 only allows ~0.15 mm.
@@ -430,11 +457,22 @@ def derive(P_):
     D["boss_r"] = D["cup_rim_r"] + pm
     D["boss_h"] = D["z_rim_lo"] - D["z_plate1"]
     D["by"] = D["db_half_h"] - D["boss_r"] - D["part_gap"]
+    if D["base"] == "cradle":   # v0.5 [Ed]: balls at the extreme corners. Top row: as high as the rail strip allows
+        D["by_top"] = D["y_rail"] - D["rail_margin"] - D["boss_r"]
+        D["by_bot"] = D["ball_y_bot"]
+        D["by"] = D["by_top"]
     need = D["cut_r"] + D["boss_r"] + D["part_gap"]
     bx_min = math.sqrt(max(need ** 2 - D["by"] ** 2, 0.0))
     bx_max = D["sx"] - D["standoff_d"] / 2 - D["part_gap"] - D["boss_r"]
     D["bx"] = bx_max          # as far toward the plate corners as the standoffs allow
     D["balls"] = [(bx, by) for bx in (D["bx"], -D["bx"]) for by in (D["by"], -D["by"])]
+    if D["base"] == "cradle":
+        D["bx"] = D["ball_x"]
+        D["balls"] = [(bx, by) for bx in (D["bx"], -D["bx"]) for by in (D["by_top"], -D["by_bot"])]
+        D["by_bot_s"] = -D["by_bot"]
+        D["cr_pins"] = [(D["bx"], -D["by_bot"]), (-D["bx"], -D["by_bot"])]   # dowels in the knob-side towers
+    else:
+        D["by_top"] = D["by_bot"] = D["by"]
     # hold-downs stay inboard of the FPC drop and under the bezel. The old pair at x=±22.5
     # stood outside the lip; that is the yellow tube Ed circled.
     D["spr_x_raw"] = D["car_hw"] - D["spr_boss"][0] / 2 - sla
@@ -448,6 +486,8 @@ def derive(P_):
         # runs along y (the flex width), so the flex drops straight onto it. The carrier skirt is notched over the tab.
         sl_, ss_, sz_ = D["db_fpc_sock"]
         D["db_sock_x"] = D["sx"] + D["standoff_d"] / 2 + D["part_gap"] + ss_ / 2
+        if D["base"] == "cradle":   # beyond the +x hold-down bores
+            D["db_sock_x"] = D["spr_xy"][0] + D["spr_bore"] / 2 + 0.3 + ss_ / 2
         D["tab_x1"] = D["db_sock_x"] + ss_ / 2 + D["cu_edge"]
         D["tab_hy"] = sl_ / 2 + D["cu_edge"]
         D["fpc_x"] = D["db_sock_x"]
@@ -473,7 +513,7 @@ def derive(P_):
     D["spr_rate"] = D["spr_f"] / D["spr_ext"]
     wall = D["ra_wall"]
     D["ra_x0"] = -D["spr_x"] - major - wall
-    D["ra_x1"] = D["spr_x"] + major + 2.0
+    D["ra_x1"] = D["spr_x"] + major + 1.2   # v0.5: mouth extension 1.2 (was 2.0); the pin heads clear the cover's corner columns
     D["ra_y0"] = -D["spr_y"] - D["eye_ro"] - wall
     D["ra_y1"] = D["spr_y"] + D["eye_ro"] + wall
     D["ra_z1"] = -D["pcb_t"] - 0.02
@@ -492,12 +532,20 @@ def derive(P_):
     D["cs_bossr"] = br_cs
     D["cs_x"] = D["car_hw"] - br_cs - sla
     cs_y = D["car_hh"] - br_cs - sla
+    if D["base"] == "cradle":   # [Ed 2 Nov] press springs inside the corner balls
+        D["cs_x"], cs_y = D["cs_xy_v05"]
     if D["z_ins0"] < D["z_fp0"]:
         cs_y = min(cs_y, D["y_rail"] - D["rail_margin"] - br_cs)
     D["cs_y"] = cs_y
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
     # skirt walls (±y only in v0.5) end this far out, short of the grubs hanging under the stations
     D["skirt_x"] = min(D["board_x1"] + D["skirt_gap"] + D["car_skirt"], D["cs_x"] - D["grub_d_model"] / 2 - 0.5)
+    if D["base"] == "cradle":
+        # two segments per wall: inside the grubs, and from past the grubs to short of the corner towers
+        D["skirt_x_in"] = D["cs_x"] - D["grub_d_model"] / 2 - 0.5
+        D["skirt_x0"] = D["cs_x"] + D["grub_d_model"] / 2 + 0.5
+        D["skirt_x1"] = D["bx"] - D["boss_r"] - D["slide"] - mjf
+        D["skirt_x"] = D["skirt_x1"]
     # ---- v0.5 guides: screw + brass sleeve, bezel to carrier. Head under a carrier boss = up-stop; sleeve in a reamed bore.
     G = D["guide"]; gi = G["ins"]
     D["g_xy"] = [(0.0, D["guide_gy"]), (0.0, -D["guide_gy"])]
@@ -527,10 +575,11 @@ def derive(P_):
     D["tip_arm_top"] = D["scr_top"] - D["z_ref"]
     D["tip_arm_mid"] = (D["z_bz0"] + D["z_bz1"]) / 2 - D["z_ref"]
     fhd = len(D["springs"]) * D["spr_f"]
-    D["tip_f_top_y"] = fhd * D["by"] / D["tip_arm_top"]
-    D["tip_f_mid_y"] = fhd * D["by"] / D["tip_arm_mid"]
+    D["tip_f_top_y"] = fhd * D["by_top"] / D["tip_arm_top"]       # push up the panel: tips about the top ball row
+    D["tip_f_top_down"] = fhd * D["by_bot"] / D["tip_arm_top"]    # push toward the knob: tips about the bottom row
+    D["tip_f_mid_y"] = fhd * D["by_top"] / D["tip_arm_mid"]
     D["tip_f_top_x"] = fhd * D["bx"] / D["tip_arm_top"]
-    D["spr_f_need"] = D["tip_need"] * D["tip_arm_top"] / (len(D["springs"]) * D["by"])
+    D["spr_f_need"] = D["tip_need"] * D["tip_arm_top"] / (len(D["springs"]) * min(D["by_top"], D["by_bot"]))
     D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
     return D
 

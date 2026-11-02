@@ -137,3 +137,60 @@ Status: sketched only (schematic from the case numbers). Nothing has been checke
 - [Ed] Back screens: no single AMOLED fits (see the handover); keep two. Each moved 4 mm toward its end now the corner screws come in from the back; overlap 13.6 mm, ~11 is fine.
 - [Ed] Control-dial arm: move the single spring-ball detent out to near the end of the arm (on the arc) and put the arm's ball supports under the arc. More room for the three dimples there. Not modelled yet.
 - [C] Joystick vs the top rail strip: carrier and the top centring-spring stations reach 3.8 mm into the 10 mm strip behind the panel. Options and a recommendation in the handover; not decided.
+
+## 2 Nov midday (v0.20, branch asm/v020-layout)
+
+### Finger room between the joystick and the knob
+- [Ed 11:17] The joystick screen sat 0.95 mm from the knob glass (plan, at rest), with the knob 16.2 mm taller than the
+  screen. Too tight to get a finger in. Smaller screens were looked at (Gesight 1.47" E1473AC63.B, 1.47" IPS, 0.95" AMOLED)
+  and not taken.
+- [Ed 11:33] **Keep the DO0164 1.64" joystick screen and the clear OLED size; move the knob down instead.**
+  - Knob a further **5.2 mm** down on the panel (case `knob_drop2`; `knob_drop` 4.0 stays).
+  - Clear OLED **3.8 mm** down on the panel (electronics `clear_oled_xy` (0, −35.19), 1.4 closer to the knob); window D with it.
+  - **Bottom corner posts into the bottom wall** (case `bot_posts_in_wall`), as they already sit in the side walls. Possible since
+    the corner screws come in from the back. OLED to post 0.31.
+  - **Joystick as high as the top rail screws allow** (case `joy_rule="rail"`): bezel at full slide clears the washer keep-out by
+    one SLA tolerance. It sits 0.84 lower on the panel than in v0.19b.
+  - Finger gap (knob glass to the bezel, plan, at rest) **0.95 → 5.31 mm** (rule ≥ 5.0).
+  - Accepted costs: about 3.5 mm more of the clear OLED behind the jack nuts; the board strip below window D (14-way and power plugs)
+    is about 6 mm [C: fit the plugs in KiCad]; windows C and E shrank to 11.6 mm² (the bigger-windows job is next anyway).
+- [Ed 11:52] **Rail screw washers**: ISO 7092 M3 small-series nylon, Ø6 × 0.5, under an ISO 7045 M3 pan head. Keep-out Ø6
+  (case `rail_keep_d`). They protect the polished resin face and cost no finger room (a Ø7 washer would cost 0.5 mm).
+- Fixed: the **top rail holes were never cut** in v0.19b (`rail_top_ok` measured only side to side, so once the knob_drop put the
+  holes above the joystick opening it still said no room). Now measured in plan: web 2.95, holes cut.
+
+### Joystick grip block (joystick v0.5)
+- [Ed 11:43–11:46] The bezel becomes a **grip block at least 5 mm tall** with the glass on top; the faceplate opening tucks in
+  behind its edge (0.9 overlap, as before). Replaces the 1.5 mm bezel cap. Glass top 5.62 above the faceplate, **12.38 below the
+  knob screen** (was 16.2). Inside, the stack stays; the bezel grows upward.
+- [Ed 11:52] **Lift the switch 2 mm** (30 mm riser). The carrier rises into the faceplate hole.
+- [Ed 11:52] **Guide pins**: two ISO 7984 M2×6 low-head screws through brass tube sleeves (OD 3.0 / ID 2.1, cut to 4.0) tie the
+  bezel to the carrier at (0, ±5). The sleeve slides in a reamed Ø3.06 bore in a carrier boss; the screw runs into an M2 heat-set
+  insert in the bezel roof. The **heads under the carrier bosses are the up-stop** (v0.4 had none: the springs pushed the bezel off).
+- [Ed 12:17–12:25] **Printed cradle instead of standoffs** (MJF PA-12, 30 mm), glued to the main PCB and located by two ISO 8734
+  1.5×5 dowels; the joystick board is glued on its rim (0.7 land). The seat plate is gone.
+- [Ed 12:22] **Balls at the extreme corners**, on cradle towers: (±17.5, +8.67 / −10.5) local. The top row is set by the rail strip
+  (seats are behind the panel); the knob-side row by the carrier outline. v0.4 had them on the small board at (±9.5, ±4.1).
+- [Ed 12:22] **Press springs inside the balls**, at (±11.5, ±7.5) (v0.4 had them at the carrier corners). Grubs still reached from
+  underneath on the carrier-and-bezel sub-assembly; the skirt walls are split to leave them open.
+- [Ed 12:25] **Hold-down springs 0.65 N each** (was 0.5), inside the balls at (±12.5, ±3.0). A sideways push on the glass top then
+  tips the carrier only above 2.47 N up the panel, 2.99 N toward the knob, 4.99 N left/right: at least 1.3 × the switch's worst
+  tilt force (1.2 + 0.69 N). With 0.5 N and the v0.4 ball spacing it tipped at about 1.0 N, before the switch clicked.
+- [Ed] **Two 2×5 board-to-board headers** (Samtec TSW-105 long post, ~21.5 mm, code to pick) into 2×5 H11 sockets on the main PCB:
+  10 signals, three 3.3 V, grounds between the QSPI lines. Room for them came with the cradle.
+- The screen flex plugs into the AXE530127 socket on a **tab of the joystick board at +x** (x 16.0, long side along y), outside
+  the cradle ring; it drops straight down through slots in the bezel roof and the carrier floor.
+- Rail strip: nothing of the joystick behind the panel reaches into the outer 10 mm (check, 0.4 air). The v0.19b carrier-vs-rail
+  clash is gone without trimming the carrier.
+
+### Back cover
+- [Ed 12:04] **Back cover and lower screen pad in ASA-CF** (FDM, black), was PETG: stiffer (~4.2 GPa) and HDT ~100 °C, so the
+  corner-column clamp does not creep in a warm rack. Print floor-down (weaker across layers). FDM ±0.3: counterbore clearance 0.25.
+  [A] a thin PET or Kapton film under the screens (carbon fill can be slightly conductive) [C: meter a sample].
+
+### Open checks from this session
+- [C] DO0164 flex: tail length from the glass edge to the socket (fold, then ~12 mm down); the fold pocket leaves 0.6 of the +x
+  bezel wall (under the MJF 1.0 minimum over 8.6 × 1.8 mm): confirm with PCBWay or print the bezel in SLA.
+- [C] Parts: 2×5 long-post header code and 2×5 H11 socket; ISO 7984 M2×6; brass tube 3.0/2.1; 0.65 N extension spring (Ø2, ~32 mm free);
+  cradle glue (epoxy) and the dowel NPTHs in the main-PCB KiCad (geom.json `main_pcb_holes`).
+- [C] KiCad: the board under the knob shifted 5.2 mm against the case outline (regeneration was pending anyway).

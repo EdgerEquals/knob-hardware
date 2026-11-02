@@ -31,7 +31,7 @@ P = dict(
         "E": [(-19.36, -17.06), (-19.19, -16.5), (-18.82, -16.17), (-18.24, -16.07), (-17.78, -16.25), (-15.51, -18.45), (-15.36, -19), (-15.53, -19.55), (-15.89, -19.87), (-16.26, -19.99), (-18.46, -19.99), (-18.92, -19.82), (-19.19, -19.55), (-19.34, -19.19)],
     },
     clear_oled=(42.04, 27.22, 1.25),   # [S] EastRising ER-OLED1.51-1B / Waveshare 1.51" SSD1309 transparent, on the PCB front over window D
-    clear_oled_xy=(0.0, -35.2),   # [Ed 2 Nov] v0.20: was -36.6; the knob dropped 5.2 on the panel (case knob_drop2) and the OLED 3.8
+    clear_oled_xy=(0.0, -35.19),   # [Ed 2 Nov] v0.20: was -36.6; the knob dropped 5.2 on the panel (case knob_drop2) and the OLED 3.8
                                   # (case oled_drop), so it sits 1.4 closer to the knob. Window D moved with it
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side

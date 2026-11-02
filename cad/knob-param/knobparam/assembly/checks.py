@@ -228,6 +228,22 @@ def cross(D, parts):
                 d = sp.distance_to(p)
                 if d < smin: smin, swho = d, f"{n} over the {sn.split('(')[0].replace('back AMOLED ', '').strip()} screen"
         row("parts behind the PCB vs the back AMOLEDs (screen rule)", smin, D.get("screen_air", 1.0) - 0.01, f"nearest: {swho}")
+    # v0.20 [Ed 2 Nov]: the clear OLED moved 1.4 toward the knob (knob down 5.2, OLED down 3.8 on the panel)
+    oled = [parts[n] for n in parts if n.startswith("clear OLED")]
+    if oled:
+        o = oled[0]; ob = o.bounding_box(); omin, owho = 1e9, ""
+        skip = ("PCB", "PCB back parts", "glow coat", "case")
+        for n, p in parts.items():
+            if n.startswith("clear OLED") or n in skip or n.startswith(skip):
+                continue
+            pb = p.bounding_box()
+            if pb.max.X < ob.min.X - 2 or pb.min.X > ob.max.X + 2 or pb.max.Y < ob.min.Y - 2 or pb.min.Y > ob.max.Y + 2 \
+                    or pb.min.Z > ob.max.Z + 2 or pb.max.Z < ob.min.Z - 2:
+                continue
+            d = o.distance_to(p)
+            if d < omin: omin, owho = d, n
+        if omin < 1e9:
+            row("clear OLED vs the knob base and nearby parts", omin, 0.3, f"nearest: {owho}")
     return r
 
 def ring_field(D):

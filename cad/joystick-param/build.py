@@ -1,4 +1,4 @@
-"""Top-screen joystick stack (v0.4): build, checks, clash, render.
+"""Top-screen joystick stack (v0.5): build, checks, clash, render.
   python build.py                 parts + checks + clashes -> ../assemblies/joystick-<version>/check.json
   python build.py --render        + joystick-<version>.png (A-A section + iso cut-away + plan) and -plan.png
   python build.py --preview       low-resolution isometric, before the colour render
@@ -62,7 +62,14 @@ def main():
                 main_pcb_holes=[dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["drill_m2"], what="standoff screw M2")
                                 for x, y in D["standoff_xy"]] +
                                [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["spr_bore"], what="hold-down spring")
-                                for x, y in D["springs"]])
+                                for x, y in D["springs"]] +
+                               [dict(x=round(x, 3), y=round(y + D["place_y"], 3), d=D["cradle"]["pin"]["d"] + 0.05,
+                                     what="cradle locating dowel (NPTH)") for x, y in D.get("cr_pins", [])],
+                # v0.5: header body footprint (x, y), pin offsets, the cradle ring and the socket tab
+                hdr_body=[D["hdr_len"], D["hdr_wid"]], hdr_pins=[list(p) for p in D["hdr_pins"]],
+                cradle_ring=dict(inner=[D.get("cr_in_x"), D.get("cr_in_y")], outer=[D.get("cr_out_x"), D.get("cr_out_y0"), D.get("cr_out_y1")]),
+                fpc_socket=dict(part="Panasonic AXE530127", x=D.get("db_sock_x"), long_y=D["db_fpc_sock"][0], short_x=D["db_fpc_sock"][1]),
+                tab=dict(x1=D.get("tab_x1"), hy=D.get("tab_hy")))
     gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
     json.dump(geom, open(gpath, "w"), indent=1)
     print("geom:", gpath)

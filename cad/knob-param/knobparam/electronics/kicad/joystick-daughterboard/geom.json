@@ -4,10 +4,10 @@
  "db_t": 1.0,
  "corner_r": 0.95,
  "board": [
-  -15.805652750607063,
-  -6.935652750607062,
-  15.805652750607063,
-  6.935652750607062
+  -15.2,
+  -7.1499999999999995,
+  15.2,
+  7.1499999999999995
  ],
  "sw_xy": [
   0.0,
@@ -16,49 +16,33 @@
  "sw_rot": -45.0,
  "headers": [
   [
-   9.745652750607062,
+   7.705652750607062,
    0.0
   ],
   [
-   -9.745652750607062,
+   -7.705652750607062,
    0.0
   ]
  ],
- "standoffs": [
-  [
-   13.905652750607063,
-   4.79
-  ],
-  [
-   13.905652750607063,
-   -4.79
-  ],
-  [
-   -13.905652750607063,
-   4.79
-  ],
-  [
-   -13.905652750607063,
-   -4.79
-  ]
- ],
+ "standoffs": [],
  "drill_m2": 2.4,
  "pad_m2": 3.2,
  "hdr": {
-  "part": "Samtec TSW-103-xx-T-D long-post 2x3 header, post about 21.5 mm for the 30 mm riser (exact -xx code to pick)",
+  "part": "Samtec TSW-105-xx-T-D long-post 2x5 header, post about 21.5 mm for the 30 mm cradle (exact -xx code to pick)",
   "lcsc": "consigned",
   "mate": 21.5,
   "ins": 2.54,
   "tail": 2.79,
-  "n": 3,
-  "rows": 2
+  "n": 5,
+  "rows": 2,
+  "axis": "y"
  },
  "sock": {
-  "part": "2.54 mm 2x3 female socket, 11 mm (hanxia PM2.54 H11 family, 2x3 part to pick)",
+  "part": "2.54 mm 2x5 female socket, 11 mm (hanxia PM2.54 H11 family, 2x5 part to pick)",
   "lcsc": "TBC",
   "h": 11.0,
   "tail": 3.2,
-  "n": 3,
+  "n": 5,
   "rows": 2
  },
  "standoff": {
@@ -71,52 +55,107 @@
  "place_y": 40.879999999999995,
  "main_pcb_holes": [
   {
-   "x": 13.906,
-   "y": 45.67,
-   "d": 2.4,
-   "what": "standoff screw M2"
-  },
-  {
-   "x": 13.906,
-   "y": 36.09,
-   "d": 2.4,
-   "what": "standoff screw M2"
-  },
-  {
-   "x": -13.906,
-   "y": 45.67,
-   "d": 2.4,
-   "what": "standoff screw M2"
-  },
-  {
-   "x": -13.906,
-   "y": 36.09,
-   "d": 2.4,
-   "what": "standoff screw M2"
-  },
-  {
-   "x": 6.0,
-   "y": 45.48,
+   "x": 12.5,
+   "y": 43.88,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": 6.0,
-   "y": 36.28,
+   "x": 12.5,
+   "y": 37.88,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": -6.0,
-   "y": 45.48,
+   "x": -12.5,
+   "y": 43.88,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": -6.0,
-   "y": 36.28,
+   "x": -12.5,
+   "y": 37.88,
    "d": 3.4,
    "what": "hold-down spring"
+  },
+  {
+   "x": 17.5,
+   "y": 30.38,
+   "d": 1.55,
+   "what": "cradle locating dowel (NPTH)"
+  },
+  {
+   "x": -17.5,
+   "y": 30.38,
+   "d": 1.55,
+   "what": "cradle locating dowel (NPTH)"
   }
- ]
+ ],
+ "hdr_body": [
+  5.08,
+  12.7
+ ],
+ "hdr_pins": [
+  [
+   -1.27,
+   -5.08
+  ],
+  [
+   -1.27,
+   -2.54
+  ],
+  [
+   -1.27,
+   0.0
+  ],
+  [
+   -1.27,
+   2.54
+  ],
+  [
+   -1.27,
+   5.08
+  ],
+  [
+   1.27,
+   -5.08
+  ],
+  [
+   1.27,
+   -2.54
+  ],
+  [
+   1.27,
+   0.0
+  ],
+  [
+   1.27,
+   2.54
+  ],
+  [
+   1.27,
+   5.08
+  ]
+ ],
+ "cradle_ring": {
+  "inner": [
+   14.5,
+   6.6499999999999995
+  ],
+  "outer": [
+   16.0,
+   -8.149999999999999,
+   7.6499999999999995
+  ]
+ },
+ "fpc_socket": {
+  "part": "Panasonic AXE530127",
+  "x": 16.0,
+  "long_y": 8.4,
+  "short_x": 3.0
+ },
+ "tab": {
+  "x1": 17.8,
+  "hy": 4.5
+ }
 }

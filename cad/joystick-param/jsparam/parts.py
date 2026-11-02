@@ -50,6 +50,8 @@ def pcb(D):
         p -= cyl(D["spr_bore"], -t - 1, 1, x, y)
     for x, y in D["standoff_xy"]:
         p -= cyl(D["drill_m2"], -t - 1, 1, x, y)
+    for x, y in D.get("cr_pins", []):   # v0.5 cradle locating dowels
+        p -= cyl(D["cradle"]["pin"]["d"] + 0.05, -t - 1, 1, x, y)
     if not D["fpc_to_db"]:   # v0.4 drop through the main PCB; v0.5 plugs into the daughterboard instead
         p -= box(D["hole_x0"], D["hole_x1"], -D["hole_hy"], D["hole_hy"], -t - 1, 1)
     return p
@@ -71,6 +73,29 @@ def plate(D):
     for x, y in D["springs"]:
         p -= cyl(D["spr_bore"], D["z_plate0"] - 0.2, D["z_rim_lo"] + 0.2, x, y)
     return p
+
+def cradle(D):
+    """v0.5 [Ed 2 Nov]: printed cradle glued to the main PCB. A ring under the joystick board's rim (the board is glued on
+    it), towers at the extreme corners carrying the lower ball cups, and two locating dowels into the PCB. The top towers
+    start above the case's top corner posts and hang off the ring; the knob-side towers stand on the PCB."""
+    C = D["cradle"]; zt = D["z_db0"] - 0.02
+    r = box(-D["cr_out_x"], D["cr_out_x"], D["cr_out_y0"], D["cr_out_y1"], 0.01, zt)
+    r -= box(-D["cr_in_x"], D["cr_in_x"], -D["cr_in_y"], D["cr_in_y"], -0.1, zt + 0.1)
+    for x, y in D["balls"]:
+        z0 = C["tower_z0"] if y > 0 else 0.01
+        sx = 1 if x > 0 else -1
+        r += cyl(2 * D["boss_r"], z0, D["z_rim_lo"], x, y)
+        # bracket from the ring wall out to the tower, up to the board underside
+        yr = D["cr_in_y"] if y > 0 else -D["cr_in_y"]
+        r += box(min(sx * D["cr_in_x"], x), max(sx * D["cr_in_x"], x), min(yr, y), max(yr, y), z0, zt)
+        r -= Pos(x, y, D["z_sc_lo"]) * Sphere(D["cup_r"])
+    for x, y in D.get("cr_pins", []):
+        r -= cyl(C["pin"]["d"], 0.0, C["pin"]["len"] - C["pin"]["in_pcb"] + 0.2, x, y)
+    # keep the board's footprint and the hold-down bores clear above the ring
+    r -= box(-D["db_half_w"] - 0.2, D["db_half_w"] + 0.2, -D["db_half_h"] - 0.2, D["db_half_h"] + 0.2, zt, zt + 5.0)
+    if D["fpc_to_db"]:
+        r -= box(D["db_half_w"] - 0.5, D["tab_x1"] + 0.2, -D["tab_hy"] - 0.2, D["tab_hy"] + 0.2, zt, zt + 5.0)
+    return r
 
 def _fpc_slot(D, z0, z1):
     """Vertical drop for the FPC, plus the in-plane run under the glass edge."""
@@ -105,7 +130,16 @@ def carrier(D):
     g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
     y0, y1 = D["board_y0"] - g, D["board_y1"] + g
-    if D["fpc_to_db"]:
+    if D["base"] == "cradle":
+        # v0.5 cradle: two walls along the board's ±y edges, each in three segments that skip the press-spring grubs
+        # (reached from underneath on the sub-assembly) and stop short of the corner towers. Still the anti-rotation stop.
+        segs = [(-D["skirt_x_in"], D["skirt_x_in"]), (D["skirt_x0"], D["skirt_x1"]), (-D["skirt_x1"], -D["skirt_x0"])]
+        skirt = None
+        for a, b_ in segs:
+            for ya, yb in ((y1, y1 + t), (y0 - t, y0)):
+                w = box(a, b_, ya, yb, D["z_skirt0"], D["z_c0"] + 0.01)
+                skirt = w if skirt is None else skirt + w
+    elif D["fpc_to_db"]:
         # v0.5: two long walls along the board's ±y edges only. They stop short of the press-spring grubs (reached from
         # underneath on the sub-assembly) and leave the +x tab with the screen socket open. Still the anti-rotation stop.
         sx_ = D["skirt_x"]
@@ -210,10 +244,8 @@ def build(D):
         sock -= cbox(hw - 2 * wall, hh - 2 * wall, D["sock"]["h"] - D["mate_in"] - wall, D["sock"]["h"] + 0.02, x, y)
         out[f"socket {tag} H11 {i + 1} (main PCB)"] = sock
         z_tip = D["z_db0"] - ht - D["hdr"]["mate"]
-        for r in range(rows):
-            yr = y + (r - (rows - 1) / 2) * D["pitch"]
-            for k in (-1, 0, 1):
-                out[f"header pin {i + 1}.{r + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], yr)
+        for j, (dx, dy) in enumerate(D["hdr_pins"]):
+            out[f"header pin {i + 1}.{j + 1}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + dx, y + dy)
     for i, (x, y) in enumerate(D["standoff_xy"]):
         # round female-female body. The screws are slip-fit solids; the real thread is in the pillar.
         body = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
@@ -227,7 +259,13 @@ def build(D):
     body, stem = switch(D)
     out["SW1 SKRHADE010 body (45°)"] = body
     out["SW1 SKRHADE010 stem"] = stem
-    out["seat plate (printed, glued)"] = plate(D)
+    if D["base"] == "cradle":
+        out["joystick cradle (printed, glued)"] = cradle(D)
+        pin = D["cradle"]["pin"]
+        for i, (x, y) in enumerate(D["cr_pins"]):
+            out[f"cradle locating dowel {i + 1}"] = cyl(pin["d"] - 0.05, -pin["in_pcb"] + 0.01, pin["len"] - pin["in_pcb"], x, y)
+    else:
+        out["seat plate (printed, glued)"] = plate(D)
     for i, (x, y) in enumerate(D["balls"]):
         out[f"ball {i + 1} Ø{D['ball_d']:g} stainless"] = Pos(x, y, D["z_ball"]) * Sphere(D["ball_d"] / 2)
     out["joystick carrier (printed)"] = carrier(D)
