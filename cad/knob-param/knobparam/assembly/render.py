@@ -6,44 +6,10 @@ import numpy as np
 from build123d import *
 from ..common.cache import CACHE
 
-GROUPS = [  # (legend, colour, match)
-    ("clear resin cap (UTR-8100, Fresnel)", "#80deea", lambda n: n.endswith(" cap")),
-    ("rod VBUS pad, B.Cu (enlarged, no washer)", "#d4883a", lambda n: n.startswith("PCB rod pad")),
-    ("main PCB (proxy; --full = KiCad STEP)", "#2e7d32", lambda n: n.startswith("PCB")),
-    ("1220 motor", "#9e9e9e", lambda n: n == "motor"),
-    ("motor pinion", "#ff7043", lambda n: n == "pinion"),
-    ("brass tube", "#c9a227", lambda n: n == "brass tube"),
-    ("M1.6 rod + sleeve, nuts, washer", "#5c6bc0", lambda n: n.startswith("rod")),
-    ("base cradle", "#8d6e63", lambda n: n == "base cradle"),
-    ("borosilicate sleeve (3.3)", "#e1f5fe", lambda n: n.startswith("knob glass")),
-    ("knob seal ring (PETG, opaque)", "#37474f", lambda n: n.startswith("knob seal ring")),
-    ("clear OLED 1.51\" (over window D)", "#4fc3f7", lambda n: n.startswith("clear OLED")),
-    ("knob upper cap (inside the bore)", "#1e88e5", lambda n: n.startswith("knob upper-cap")),
-    ("knob lower cap, clear land", "#b2dfdb", lambda n: n.startswith("knob lower-cap")),
-    ("bottom internal ring", "#42a5f5", lambda n: n.startswith("bottom internal ring")),
-    ("knob balls (opposed 45° cones)", "#bdbdbd", lambda n: n.startswith("knob balls")),
-    ("control dial (+ Hall arm)", "#ab47bc", lambda n: n == "control dial"),
-    ("magnets (Hall row N/S/N/S/N, carrier pair) N52", "#e53935", lambda n: n.startswith(("dial magnet", "hall magnet", "knob ring magnet", "cushion magnet", "screen carrier magnet"))),
-    ("dial TMAG5273 sensor board (turns with the dial)", "#2f6b2f", lambda n: n.startswith(("dial sensor board", "dial TMAG5273"))),
-    ("detent balls, track balls, steel pins + disc", "#cfd8dc", lambda n: (n.startswith("detent") and " ball" in n) or n.startswith(("track ball", "spring anchor pin", "screen carrier steel", "screen carrier locating"))),
-    ("detent springs, grub screws, centring springs (non-magnetic)", "#fdd835", lambda n: n.startswith(("detent", "centring spring"))),
-    ("Hall sensors on the PCB front", "#212121", lambda n: n.startswith("hall sensor")),
-    ("reverse-mount VCSEL / RGB", "#ff8a65", lambda n: n.startswith("emitter ")),
-    ("thrust carrier + balls", "#78909c", lambda n: n.startswith("thrust") or n.startswith("outer thrust")),
-    ("encoder bearings + shaft", "#607d8b", lambda n: n.startswith(("encoder bearing", "encoder shaft"))),
-    ("encoder pinion", "#ffa726", lambda n: n == "encoder pinion"),
-    ("encoder disc + slotted rim (no teeth)", "#26a69a", lambda n: n.startswith("encoder disc")),
-    ("encoder sensor EE-SX1321 + riser", "#37474f", lambda n: n.startswith(("encoder sensor", "encoder daughter", "encoder header", "encoder standoff"))),
-    ("idler pinions + pin 2", "#ff8a65", lambda n: n.startswith("idler")),
-    ("feel motor + shaft [A]", "#00838f", lambda n: (n.startswith("feel motor") or n.startswith("feel compound") or n.startswith("feel pinion")) and "saddle" not in n),
-    ("feel motor open saddle (seat + strap) [A]", "#80deea", lambda n: n.startswith("feel motor saddle")),
-    ("screen holder (fixed, plate under the panel)", "#6d4c41", lambda n: n == "screen holder"),
-    ("adapter cup (fixed, on the tube)", "#6d4c41", lambda n: n == "adapter cup (fixed)"),
-    ("screen carrier (bonded on the dial, turns with it)", "#ce93d8", lambda n: n == "screen carrier (on dial)"),
-    ("screen panel", "#101828", lambda n: n.startswith("screen ") and n.endswith(" panel")),
-    ("screen FPC fold + B2B + service strap / jumper [A]", "#ffb300", lambda n: n.startswith("screen ") and ("FPC" in n)),
-    ("screen adapter board + parts", "#558b2f", lambda n: n.startswith("adapter")),
-]
+# v0.19b [Ed 2 Nov]: real colours by material (assembly/colours.py), one group per material; 'unassigned' (magenta) is last.
+# The v0.19 function palette (one colour per part family) is gone; the legend now reads as a material key.
+from .colours import groups as _material_groups
+GROUPS = _material_groups()
 def group_of(n):
     for i, (_, c, f) in enumerate(GROUPS):
         if f(n): return i

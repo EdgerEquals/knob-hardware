@@ -13,6 +13,8 @@ OPACITY = 0.35
 
 
 def _colour(name):
+    from .colours import colour as _c   # v0.19b: real colours by material
+    return _c(name)
     from .render import GROUPS
     for _, hexc, match in GROUPS:
         if match(name):
@@ -51,7 +53,7 @@ def step(parts, path):
         c = s
         try:
             c.label = n
-            c.color = Color(*_rgb(_colour(n)), OPACITY if any(k in n for k in CLEAR) else 1.0)
+            c.color = Color(*_rgb(_colour(n)), OPACITY if __import__('knobparam.assembly.colours', fromlist=['see_through']).see_through(n) else 1.0)
         except Exception:
             pass
         kids.append(c)
@@ -92,7 +94,7 @@ def usdz(parts, keys, path, tol=0.08, ang=0.4):
         lo, hi = Vy.min(0), Vy.max(0)
         m.CreateExtentAttr([Gf.Vec3f(*map(float, lo)), Gf.Vec3f(*map(float, hi))])
         hexc = _colour(n)
-        clear = any(k in n for k in CLEAR)
+        clear = __import__('knobparam.assembly.colours', fromlist=['see_through']).see_through(n)
         mk = (hexc, clear)
         if mk not in mats:
             mp = f"/knob/Looks/m{len(mats)}"

@@ -12,6 +12,11 @@ RULES = [
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
     (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
     (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
+    (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
+    (r"knob upper-cap", "print", "PA-12", "MJF"),     # v0.19b: carries the 1220 hub gear; was caught by the clear 'cap' rule
+    (r"base cradle", "print", "UTR-8100 clear resin (clear race fused in)", "SLA"),   # the race land is the light path
+    (r"nylon", "buy", "nylon pinion (Tempero 0.5M-12T)", "buy"),
+    (r"anchor", "print", "PA-12", "MJF"),             # joystick rear spring anchor (printed), not a spring
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"^PCB$|^PCB back parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),
     (r"^emitter ", "buy", "VCSEL / RGB LED (LCSC)", "on the PCBA"),
@@ -34,7 +39,6 @@ RULES = [
     (r"rod|nut|screw|grub|insert|pin\b|pins\b|dowel|shaft", "buy", "steel / brass hardware", "buy"),
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"thrust blank", "print", "UTR-8100 clear resin", "SLA"),
-    (r"seal ring", "print", "PETG, opaque", "FDM"),
     (r"clear OLED", "buy", "EastRising ER-OLED1.51-1B (SSD1309, transparent)", "-"),
     (r"spring", "buy", "stainless 316 / phosphor bronze spring", "buy"),
     (r"magnet|cushion", "buy", "N52 magnet", "buy"),

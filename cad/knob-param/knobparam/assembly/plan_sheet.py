@@ -10,33 +10,15 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib.patches import Patch
 
-_J = "joystick: "
-CASE_COLS = [  # (legend, colour, match) for parts the main render palette does not know
-    ("joystick screen + jumper FPC", "#5e35b1", lambda n: n.startswith(_J) and ("screen DWO" in n or "FPC" in n)),
-    ("joystick carriers, seat plate, rear anchor (printed)", "#9fa8da", lambda n: n.startswith(_J) and any(k in n for k in ("carrier", "seat plate", "anchor"))),
-    ("joystick daughterboard, headers, sockets, switch", "#66bb6a", lambda n: n.startswith(_J) and any(k in n for k in ("daughterboard", "header", "socket 1x3", "SW1"))),
-    ("joystick standoffs, screws, springs, balls, pins", "#a1887f", lambda n: n.startswith(_J)),
-    ("knob seal ring (PETG, opaque)", "#37474f", lambda n: n.startswith("knob seal ring")),
-    ("clear OLED 1.51\" (over window D)", "#4fc3f7", lambda n: n.startswith("clear OLED")),
-    ("case (UTR-8100 clear resin)", "#b0bec5", lambda n: n == "case"),
-    ("back cover + screen pad (PETG)", "#455a64", lambda n: n.startswith(("back cover", "lower screen pad"))),
-    ("glow coat", "#c5e1a5", lambda n: n.startswith("glow coat")),
-    ("back AMOLEDs", "#0d1b2a", lambda n: n.startswith("back AMOLED")),
-    ("PJ366ST jacks + USB-C", "#757575", lambda n: n.startswith(("jack ", "USB-C"))),
-    ("corner screws + brass inserts", "#c9a227", lambda n: n.startswith(("corner screw", "corner insert"))),
-    ("encoder bearing 2 seat (printed)", "#a1887f", lambda n: n.startswith("encoder bearing 2 seat")),
-]
-
-
 def colour(n):
-    for leg, c, f in CASE_COLS:
-        if f(n):
-            return leg, c
-    from .render import GROUPS
-    for leg, c, f in GROUPS:
-        if f(n):
-            return leg, c
-    return "other", "#bdbdbd"
+    """v0.19b: real colour by material (assembly/colours.py)."""
+    from .colours import colour as _c, legend as _l
+    return _l(n), _c(n)
+
+
+def _edge(hexc, k=0.55):
+    h = hexc.lstrip("#"); r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return "#%02x%02x%02x" % tuple(int(v * k) for v in (r, g, b))
 
 
 def _cut_faces(solid, axis, at, eps=0.002):
@@ -103,7 +85,7 @@ def cut(parts, axis, at):
 def draw(ax, layer, title, xlim, ylim, xlabel="x (mm)", ylabel="y (mm)"):
     used = {}
     for n, leg, c, tris in layer:
-        ax.add_collection(PolyCollection(tris, facecolors=c, edgecolors=c, linewidths=0.2))
+        ax.add_collection(PolyCollection(tris, facecolors=c, edgecolors=c, linewidths=0.15))
         used.setdefault(leg, c)
     ax.set_xlim(*xlim); ax.set_ylim(*ylim); ax.set_aspect("equal")
     ax.set_title(title, fontsize=8.5, loc="left")
