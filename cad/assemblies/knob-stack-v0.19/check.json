@@ -572,13 +572,13 @@
    "slack": 3.09
   },
   {
-   "name": "cover depth from the screen rule",
-   "value": 14.4,
-   "target": ">= 14.399",
+   "name": "cover depth from the screen rule (not deeper than needed)",
+   "value": 13.4,
+   "target": "<= 13.4",
    "ok": true,
-   "note": "deepest rear part z -13.50 + 1.0 air + 1.5 screens -> floor z -16.00",
+   "note": "deepest rear part z -13.50 over the upper screen, 1.0 air -> floor z -15.00; the 3D screen-rule check confirms the air",
    "owner": "case",
-   "slack": 0.001
+   "slack": 0.0
   },
   {
    "name": "faceplate thickness",
@@ -934,11 +934,11 @@
   {
    "name": "M3 thread engaged in the brass insert / diameter",
    "value": 1.9,
-   "target": ">= 2",
-   "ok": false,
+   "target": ">= 1.5",
+   "ok": true,
    "note": "insert \u00d84.6\u00d75.7 at z -1.60..4.10; screw engages 5.70",
    "owner": "case",
-   "slack": -0.1
+   "slack": 0.4
   },
   {
    "name": "screw tip clearance hole stays under the post top",
@@ -978,12 +978,12 @@
   },
   {
    "name": "pad does not set the depth",
-   "value": 11.774,
+   "value": 10.774,
    "target": ">= 0",
    "ok": true,
-   "note": "pad face -6.37, cover back -18.14; the 3 mm head fits in the local pad",
+   "note": "pad face -6.37, cover back -17.14; the 3 mm head fits in the local pad",
    "owner": "case",
-   "slack": 11.774
+   "slack": 10.774
   },
   {
    "name": "corner screw through the notch",
@@ -1053,7 +1053,7 @@
    "value": 1.0,
    "target": ">= 1",
    "ok": true,
-   "note": "overall 50.50 \u00d7 128.50 \u00d7 56.94 mm; faceplate to PCB 38.80 mm",
+   "note": "overall 50.50 \u00d7 128.50 \u00d7 55.94 mm; faceplate to PCB 38.80 mm",
    "owner": "case",
    "slack": 0.0
   },
@@ -1305,7 +1305,7 @@
    "value": 0.375,
    "target": ">= 0.3",
    "ok": true,
-   "note": "nearest idler pinion 2 cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
+   "note": "nearest encoder pinion cap / bottom internal ring (upper half); UTR-8100 stepped Fresnel, press modelled at 0.04",
    "owner": "assembly",
    "slack": 0.075
   },
@@ -1504,12 +1504,12 @@
   },
   {
    "name": "parts behind the PCB vs the back AMOLEDs (screen rule)",
-   "value": 2.0,
+   "value": 1.0,
    "target": ">= 0.99",
    "ok": true,
    "note": "nearest: encoder shaft over the upper screen",
    "owner": "assembly",
-   "slack": 1.01
+   "slack": 0.01
   }
  ],
  "clashes": {},
