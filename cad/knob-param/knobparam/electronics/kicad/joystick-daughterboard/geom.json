@@ -1,5 +1,5 @@
 {
- "rev": "v0.4",
+ "rev": "v0.5",
  "pitch": 2.54,
  "db_t": 1.0,
  "corner_r": 0.95,
@@ -27,92 +27,94 @@
  "standoffs": [
   [
    13.905652750607063,
-   3.680000000000003
+   4.79
   ],
   [
    13.905652750607063,
-   -3.680000000000003
+   -4.79
   ],
   [
    -13.905652750607063,
-   3.680000000000003
+   4.79
   ],
   [
    -13.905652750607063,
-   -3.680000000000003
+   -4.79
   ]
  ],
  "drill_m2": 2.4,
  "pad_m2": 3.2,
  "hdr": {
-  "part": "Samtec TSW-103 long-post header, post about 19 mm for the 28 mm riser (exact -xx code to pick)",
+  "part": "Samtec TSW-103-xx-T-D long-post 2x3 header, post about 21.5 mm for the 30 mm riser (exact -xx code to pick)",
   "lcsc": "consigned",
-  "mate": 19.0,
+  "mate": 21.5,
   "ins": 2.54,
   "tail": 2.79,
-  "n": 3
+  "n": 3,
+  "rows": 2
  },
  "sock": {
-  "part": "hanxia HX PM2.54-1x3P ZC H11",
-  "lcsc": "C41427518",
+  "part": "2.54 mm 2x3 female socket, 11 mm (hanxia PM2.54 H11 family, 2x3 part to pick)",
+  "lcsc": "TBC",
   "h": 11.0,
   "tail": 3.2,
-  "n": 3
+  "n": 3,
+  "rows": 2
  },
  "standoff": {
-  "part": "M2x28 female-female brass standoff (stock size; part number to source)",
+  "part": "M2x30 female-female brass standoff (stock size; printed spacer if none in stock)",
   "lcsc": "TBC",
-  "length": 28.0,
+  "length": 30.0,
   "od": 3.2,
   "kind": "female-female"
  },
- "place_y": 36.519999999999996,
+ "place_y": 40.879999999999995,
  "main_pcb_holes": [
   {
    "x": 13.906,
-   "y": 40.2,
+   "y": 45.67,
    "d": 2.4,
    "what": "standoff screw M2"
   },
   {
    "x": 13.906,
-   "y": 32.84,
+   "y": 36.09,
    "d": 2.4,
    "what": "standoff screw M2"
   },
   {
    "x": -13.906,
-   "y": 40.2,
+   "y": 45.67,
    "d": 2.4,
    "what": "standoff screw M2"
   },
   {
    "x": -13.906,
-   "y": 32.84,
+   "y": 36.09,
    "d": 2.4,
    "what": "standoff screw M2"
   },
   {
-   "x": 6.5,
-   "y": 40.02,
+   "x": 6.0,
+   "y": 45.48,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": 6.5,
-   "y": 33.02,
+   "x": 6.0,
+   "y": 36.28,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": -6.5,
-   "y": 40.02,
+   "x": -6.0,
+   "y": 45.48,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
-   "x": -6.5,
-   "y": 33.02,
+   "x": -6.0,
+   "y": 36.28,
    "d": 3.4,
    "what": "hold-down spring"
   }

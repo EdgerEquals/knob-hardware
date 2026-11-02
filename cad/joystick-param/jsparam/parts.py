@@ -50,7 +50,8 @@ def pcb(D):
         p -= cyl(D["spr_bore"], -t - 1, 1, x, y)
     for x, y in D["standoff_xy"]:
         p -= cyl(D["drill_m2"], -t - 1, 1, x, y)
-    p -= box(D["hole_x0"], D["hole_x1"], -D["hole_hy"], D["hole_hy"], -t - 1, 1)
+    if not D["fpc_to_db"]:   # v0.4 drop through the main PCB; v0.5 plugs into the daughterboard instead
+        p -= box(D["hole_x0"], D["hole_x1"], -D["hole_hy"], D["hole_hy"], -t - 1, 1)
     return p
 
 def plate(D):
@@ -79,9 +80,16 @@ def carrier(D):
     """Thin floor under the faceplate. Spring seats, cup, hold-down hooks, skirt. It fits through the faceplate hole."""
     c = cbox(2 * D["car_hw"], 2 * D["car_hh"], D["z_c0"], D["z_floor1"])
     for x, y in D["cs_xy"]:
-        c -= cyl(2 * D["cs_bore_r"], D["z_seat"], D["z_floor1"] + 0.02, x, y)
+        # v0.5: the insert top (the grub seat) is level with the floor top; a thin cap boss covers any step
+        if D["z_seat"] > D["z_floor1"]:
+            c += cyl(D["boss_d"], D["z_floor1"] - 0.01, D["z_seat"], x, y)
+        else:
+            c -= cyl(2 * D["cs_bore_r"], D["z_seat"], D["z_floor1"] + 0.02, x, y)
         c += cyl(D["boss_d"], D["z_ins0"], D["z_c0"] + 0.01, x, y)
-        c -= cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y)
+    holes = [cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y) for x, y in D["cs_xy"]]
+    for x, y in D.get("g_xy", []):   # v0.5 guide bosses: reamed bore for the brass sleeve, through the floor
+        c += cyl(2 * D["g_boss_r"], D["g_z0"], D["z_c0"] + 0.01, x, y)
+        holes.append(cyl(D["g_bore"], D["g_z0"] - 0.02, D["z_floor1"] + 0.02, x, y))
     for x, y in D["balls"]:
         c += cyl(2 * D["boss_r"], D["z_rim_hi"], D["z_c0"] + 0.01, x, y)
         c -= Pos(x, y, D["z_sc_hi"]) * Sphere(D["cup_r"])
@@ -97,21 +105,39 @@ def carrier(D):
     g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
     y0, y1 = D["board_y0"] - g, D["board_y1"] + g
-    skirt = box(x0 - t, x1 + t, y0 - t, y1 + t, D["z_skirt0"], D["z_c0"] + 0.01)
-    skirt -= box(x0, x1, y0, y1, D["z_skirt0"] - 0.01, D["z_c0"] + 0.02)
-    return c + skirt
+    if D["fpc_to_db"]:
+        # v0.5: two long walls along the board's ±y edges only. They stop short of the press-spring grubs (reached from
+        # underneath on the sub-assembly) and leave the +x tab with the screen socket open. Still the anti-rotation stop.
+        sx_ = D["skirt_x"]
+        skirt = (box(-sx_, sx_, y1, y1 + t, D["z_skirt0"], D["z_c0"] + 0.01)
+                 + box(-sx_, sx_, y0 - t, y0, D["z_skirt0"], D["z_c0"] + 0.01))
+    else:
+        skirt = box(x0 - t, x1 + t, y0 - t, y1 + t, D["z_skirt0"], D["z_c0"] + 0.01)
+        skirt -= box(x0, x1, y0, y1, D["z_skirt0"] - 0.01, D["z_c0"] + 0.02)
+    c = c + skirt
+    for h in holes:   # v0.5: insert and guide holes cut last, so the skirt cannot fill them
+        c -= h
+    return c
 
 def screen_carrier(D):
-    """1.2 mm bezel. A lip around the glass, corner pads the springs push on, and the press peg."""
+    """v0.5 grip block (Ed 2 Nov): walls bz_lip thick from just above the faceplate to the rim, glass glued on a roof plate.
+    The press springs push on the roof underside; the peg and the two guide-insert bosses hang from it."""
+    S = D["scr"]
     b = cbox(2 * D["half_w"], 2 * D["half_h"], D["z_bz0"], D["z_bz1"])
-    # glass opening. Corner pads stay, so the springs have a face and the glass has something to sit on.
-    b -= cbox(D["pocket"][0], D["pocket"][1], D["z_roof"], D["z_bz1"] + 0.05)
-    for x, y in D["cs_xy"]:
-        b += cyl(2 * D["cs_bore_r"] + 1.2, D["z_bz0"], D["z_roof"], x, y)
-        b -= cyl(2 * D["cs_bore_r"], D["z_bz0"] - 0.02, D["z_roof"], x, y)
-    b += cyl(D["peg_d"], D["z_peg"], D["z_scr0"] - 0.05)
-    b -= box(D["slot_x"][0] - 0.4, D["half_w"] + 0.2, -(D["slot_hy"] + 0.3), D["slot_hy"] + 0.3,
-             D["z_bz0"] - 0.05, D["z_bz1"] + 0.05)
+    b -= cbox(D["pocket"][0], D["pocket"][1], D["z_scr0"], D["z_bz1"] + 0.05)                     # glass pocket
+    b -= cbox(2 * (D["half_w"] - D["bz_lip"]), 2 * (D["half_h"] - D["bz_lip"]), D["z_bz0"] - 0.05, D["z_roof"])   # cavity
+    for x, y in D["cs_xy"]:   # spring pilots, 0.3 into the roof underside
+        b -= cyl(2 * D["cs_bore_r"], D["z_roof"] - 0.05, D["z_roof"] + 0.3, x, y)
+    b += cyl(D["peg_d"], D["z_peg"], D["z_roof"] + 0.01)
+    gi = D["guide"]["ins"]
+    for x, y in D["g_xy"]:
+        b += cyl(2 * D["g_rboss_r"], D["g_ins_bot"], D["z_roof"] + 0.01, x, y)
+        b -= cyl(gi["hole"], D["g_ins_bot"] - 0.02, D["g_ins_top"], x, y)
+    hy = D["slot_hy"] + 0.3
+    # flex: slot through the roof from the drop to the glass edge, and a pocket inside the +x wall for the 180° fold
+    # at the glass edge (the wall keeps 0.6 outside it)
+    b -= box(D["slot_x"][0] - 0.4, S["w"] / 2 + 0.2, -hy, hy, D["z_roof"] - 0.05, D["z_scr0"] + 0.05)
+    b -= box(S["w"] / 2, S["w"] / 2 + D["glue"] + 0.4, -hy, hy, D["z_scr0"] - 0.9, D["scr_top"])
     return b
 
 def faceplate(D):
@@ -170,18 +196,24 @@ def build(D):
         db -= cyl(D["drill_m2"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     for x, y in D["springs"]:
         db -= cyl(D["spr_bore"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
+    if D["fpc_to_db"]:   # v0.5 tab past the +x standoffs for the screen socket
+        db += box(dx1 - 0.01, D["tab_x1"], -D["tab_hy"], D["tab_hy"], D["z_db0"], D["z_db1"])
     out["joystick daughterboard"] = db
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
     pin_d = D["pitch"] * 0.25
     wall = D["part_gap"]
+    rows = D["hdr"].get("rows", 1)
+    tag = f"{rows}x{D['hdr']['n']}"
     for i, (x, y) in enumerate(D["hdr_xy"]):
-        out[f"header 1x3 long pin {i + 1} (underside)"] = cbox(hw, hh, D["z_db0"] - ht, D["z_db0"], x, y)
+        out[f"header {tag} long pin {i + 1} (underside)"] = cbox(hw, hh, D["z_db0"] - ht, D["z_db0"], x, y)
         sock = cbox(hw, hh, 0, D["sock"]["h"], x, y)
         sock -= cbox(hw - 2 * wall, hh - 2 * wall, D["sock"]["h"] - D["mate_in"] - wall, D["sock"]["h"] + 0.02, x, y)
-        out[f"socket 1x3 H11 {i + 1} (main PCB)"] = sock
+        out[f"socket {tag} H11 {i + 1} (main PCB)"] = sock
         z_tip = D["z_db0"] - ht - D["hdr"]["mate"]
-        for k in (-1, 0, 1):
-            out[f"header pin {i + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], y)
+        for r in range(rows):
+            yr = y + (r - (rows - 1) / 2) * D["pitch"]
+            for k in (-1, 0, 1):
+                out[f"header pin {i + 1}.{r + 1}.{k + 2}"] = cyl(pin_d, z_tip, D["z_db0"] - ht, x + k * D["pitch"], yr)
     for i, (x, y) in enumerate(D["standoff_xy"]):
         # round female-female body. The screws are slip-fit solids; the real thread is in the pillar.
         body = cyl(D["standoff_d"], 0.02, D["z_db0"] - 0.02, x, y)
@@ -206,17 +238,19 @@ def build(D):
         out[f"compression spring {i + 1}"] = cyl(D["cs"]["od"], D["z_tip"] + 0.02, D["z_roof"] - 0.02, x, y)
     S = D["scr"]
     glass = cbox(S["w"], S["h"], D["z_scr0"] + 0.02, D["scr_top"])
-    for x, y in D["cs_xy"]:
-        glass -= cyl(2 * D["cs_bore_r"] + 1.4, D["z_scr0"] - 0.05, D["z_roof"] + 0.05, x, y)
+    if D["z_roof"] >= D["z_scr0"] - 1e-6:   # v0.4: the spring pads stood level with the glass underside
+        for x, y in D["cs_xy"]:
+            glass -= cyl(2 * D["cs_bore_r"] + 1.4, D["z_scr0"] - 0.05, D["z_roof"] + 0.05, x, y)
     out["top screen " + S["part"]] = glass
     t = D["fpc_t"]
     fx = D["fpc_x"]
     z_run = D["z_scr0"] - 0.55 + D["tol_mjf"]
     if D["fpc_to_db"]:
         # [Ed] 2 Nov: short jumper flex from the screen edge down to a socket on the daughterboard (service loop not drawn)
-        sx = D["db_sock_x"]; sw_, sh_, sz_ = D["db_fpc_sock"]
+        sx = D["db_sock_x"]; sl_, ss_, sz_ = D["db_fpc_sock"]   # v0.5: long side along y (the flex width)
         z_db_top = D["z_db1"]
-        out["screen FPC socket AXE530127 (daughterboard)"] = box(sx - sw_ / 2, sx + sw_ / 2, -sh_ / 2, sh_ / 2, z_db_top + 0.02, z_db_top + sz_)
+        z_run = D["z_scr0"] - 0.35   # v0.5: the run under the glass sits in the roof slot
+        out["screen FPC socket AXE530127 (daughterboard)"] = box(sx - ss_ / 2, sx + ss_ / 2, -sl_ / 2, sl_ / 2, z_db_top + 0.02, z_db_top + sz_)
         out["screen jumper FPC [A]"] = (
             box(fx - t / 2, fx + t / 2, -D["fpc_w"] / 2, D["fpc_w"] / 2, z_db_top + sz_ + 0.3, z_run + t)
             + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
@@ -227,6 +261,14 @@ def build(D):
             + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
         )
     out["rear spring anchor (printed)"] = rear_anchor(D)
+    G = D["guide"]; gi = G["ins"]
+    for i, (x, y) in enumerate(D["g_xy"]):   # v0.5 guides: head under the carrier boss is the up-stop
+        out[f"guide screw {i + 1} (ISO 7984 M2x{D['g_len']:.0f})"] = (cyl(G["head_d"], D["g_head0"], D["g_z0"] - 0.01, x, y)
+                                                                    + cyl(1.5, D["g_z0"] - 0.02, D["g_tip"], x, y))
+        out[f"guide sleeve {i + 1} (brass tube)"] = (cyl(G["sleeve_od"], D["g_z0"] + 0.01, D["g_ins_bot"] - 0.01, x, y)
+                                                     - cyl(2.1, D["g_z0"], D["g_ins_bot"], x, y))
+        out[f"guide insert {i + 1} (brass, bezel roof)"] = (cyl(gi["od"] - 0.30, D["g_ins_bot"] + 0.01, D["g_ins_top"] - 0.01, x, y)
+                                                            - cyl(1.70, D["g_ins_bot"], D["g_ins_top"], x, y))
     for i, y in enumerate(D["pin_y"]):
         out[f"cross pin {i + 1}"] = cross_pin(D, y)
     for i, (x, y) in enumerate(D["springs"]):

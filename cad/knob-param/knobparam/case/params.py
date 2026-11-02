@@ -42,6 +42,9 @@ P = dict(
     rail_inset=7.5,        # [L] screw station, 7.5 from the panel edge (layout v5)
     rail_edge=3.0,         # [L] screw centre from the panel top / bottom
     rail_hole_d=3.2,       # [L] Ø3.2
+    rail_keep_d=6.0,       # [Ed 2 Nov] keep-out round each rail screw on the face: ISO 7092 M3 nylon washer Ø6 × 0.5 (small series)
+                           # under an ISO 7045 M3 pan head (Ø5.6). Protects the polished resin face; costs no finger room vs a Ø6 head
+    rail_washer="ISO 7092 M3 nylon washer, small series, Ø6.0 × 0.5",   # [Ed 2 Nov]
     # ---- resin ----
     # UTR-8100: tensile 41.6 MPa, elongation 9%, density 1.3 g/cm³. SLA min wall 0.8.
     # Plain clear resin, no tint [Ed]. Only the front face is polished; every other face is as-printed.
@@ -74,6 +77,10 @@ P = dict(
     roof_pad=0.30,         # [J] glass sits on the spring pads; raises the glass 0.30
     sw_tilt=0.25,          # [J][S] SKRHADE010 tilt travel
     sw_push=0.15,          # [J][S] centre press
+    grip_h=5.0,            # [Ed 2 Nov] joystick bezel is a grip block at least 5 mm tall (replaces the 1.2 mm bezel thickness)
+    joy_rule="rail",       # [Ed 2 Nov] "rail": the joystick sits as high as the top rail screw keep-out allows; "knob": v0.4,
+                           # as close to the knob as the process stack allows
+    finger_min=5.0,        # [Ed 2 Nov] plan gap from the knob glass to the joystick bezel at rest, at least this
     tol_sla=0.20,          # [J][S] SLA, wide end of PCBWay ±0.1–0.2
     tol_mjf=0.25,          # [J][S] carrier and knob are MJF; joystick's knob clearance is 2 × this
     hole_corner_r=1.2,     # [A] rounded joystick opening (material left in the corners)
@@ -128,7 +135,7 @@ P = dict(
     head_below=0.10,       # [A] head sits this far below the cover face
     bolt_head_k=2.0,       # [A] knob-bolt head, not the cover screw
     bolt_hex=2.0,          # [A] knob-bolt socket, not the cover screw
-    cbore_clear=0.20,      # [A] counterbore radius over the head radius
+    cbore_clear=0.25,      # [A] counterbore radius over the head radius (v0.20: 0.25 for FDM ASA-CF; 0.30 would crowd the upper screen)
     thread_int_k=1.082532, # [S] internal minor D1 = d − this × pitch
     thread_ext_k=1.226869, # [S] external minor d3 = d − this × pitch
     thread_crest=0.125,    # [S] crest flat, fraction of pitch (P/8)
@@ -149,6 +156,11 @@ P = dict(
     notch_gap=0.30,        # [A] air, printed boss to the PCB corner notch
     # ---- v0.3 case [Ed, 2 Nov] ----
     knob_drop=4.0,         # [Ed] knob, joystick and clear OLED sit this much lower on the panel so all four rail screws fit
+    knob_drop2=5.2,        # [Ed 2 Nov 11:33] the knob alone goes this much further down (finger room under the joystick); the
+                           # joystick follows the rail rule instead, and the clear OLED goes down oled_drop (electronics clear_oled_xy)
+    oled_drop=3.8,         # [Ed 2 Nov] clear OLED, same size, this much lower on the panel (bottom posts moved into the wall)
+    bot_posts_in_wall=True,   # [Ed 2 Nov] bottom corner posts sit in the bottom wall, as they already sit in the side walls
+                              # (screws from the back since v0.19b), so the clear OLED can come down
     top_corners=True,      # [Ed] top bolts at the top corners, mirroring the bottom pair (v0.2: between the knob and the joystick)
     insert_od=3.5,         # [A] stock M2.5 knurled brass insert, epoxied in the resin boss (v0.19: M3, Ø4.6 × 5.7)
     insert_len=4.0,        # [A] insert length (1.6 d of thread)
@@ -165,7 +177,7 @@ P = dict(
     amo_upper_top_up=109.0,   # [Ed 2 Nov] upper screen top edge above the panel bottom; 4 mm higher, same reason (v0.19: 105.0); overlap ~13.6
     screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
     ledge_knob_clear=0.3,  # [A] side ledge cut back this far past the knob hole radius round the knob base
-    joy_board_z=27.1,      # [A] joystick daughterboard underside (v0.18 design notes); the top posts must stop under it
+    joy_board_z=27.46,     # [A] v0.20: joystick header bodies' underside (30 mm riser − 2.54 insulator); the top posts must stop under it
     cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
     tube_press=1.0,        # [A] width of the tube ring that bears on the PCB round the corner notch
     jack_w=10.0,           # [S] PJ366ST body width (x) — clacktronics/AudioJacks STEP, MIT, credit Barwise; untested vs a real part
@@ -179,9 +191,12 @@ P = dict(
     usb_rcpt=(8.94, 3.26, 7.35),   # [S] USB-C receptacle opening w, h and depth behind the plate (typical mid-mount)
     usb_board=(12.0, 6.0, 1.0),    # [Ed] small PD board glued behind the faceplate: w, h, t
     boss_gap=0.40,         # [A] air, boss to the knob hole and to the joystick opening
-    cover_rho=1.27e-3,     # [A] PETG, g/mm³
-    cover_rgb=(132, 136, 142),  # [A] smoky grey, still see-through
-    cover_opacity=0.34,    # [A]
+    cover_mat="ASA-CF",    # [Ed 2 Nov] back cover and lower screen pad: carbon-filled ASA, FDM (was PETG). Stiffer (~4.2 GPa),
+                           # HDT ~100 °C, so the corner-column clamp does not creep. Print floor-down; thin PET/Kapton film under the screens
+    cover_rho=1.12e-3,     # [A] ASA-CF, g/mm³
+    cover_rgb=(40, 42, 45),  # [A] black, as printed
+    cover_opacity=0.55,    # [A] render only (the real part is opaque)
+    fdm_tol=0.30,          # [S] FDM ±0.3 mm (Unionfab ASA-CF sheet): fits on the cover use this
     # ---- knob collar under the plate, bolts up into the shell ----
     # The seal itself is the thin ring on the front face (interface lab_ring_*).
     collar_h_mult=3.0,     # [A] collar length / screw diameter
@@ -305,8 +320,9 @@ def derive(D):
     D["half_h"] = D["scr_h"] / 2 + D["bz_lip"]
     D["slide"] = D["tol_sla"] + D["sw_tilt"]
     D["knob_rc"] = D["knob_r"] + 2 * D["tol_mjf"] + D["slide"]
-    D["place_y"] = max(_place_for(0.0, -D["half_h"], D["knob_rc"]),
-                       _place_for(D["half_w"], -D["half_h"], D["knob_rc"]))
+    D["place_y_knob"] = max(_place_for(0.0, -D["half_h"], D["knob_rc"]),
+                            _place_for(D["half_w"], -D["half_h"], D["knob_rc"]))
+    D["place_y"] = D["place_y_knob"]   # v0.4 rule; the rail rule replaces it once the panel is placed (below)
     D["hole_hw"] = D["half_w"] - D["fp_overlap"]
     D["hole_hh"] = D["half_h"] - D["fp_overlap"]
     D["car_hw"] = D["hole_hw"] - D["slide"] - D["tol_sla"]
@@ -328,7 +344,7 @@ def derive(D):
     D["fp_corner_r"] = D["edge_r"]
     D["fp_to_pcb"] = D["z_fp1"]
     D["z_bz0"] = D["z_fp1"] + D["up_gap"]
-    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
+    D["z_bz1"] = D["z_bz0"] + D["grip_h"]   # [Ed 2 Nov] grip block (v0.4: + bz_t 1.2)
     # 10HP panel. The box behind the rail ears is one rectangle: shell and cover share it.
     # The PCB is inset from that rectangle by the wall plus the drop-in clearance, on all four sides.
     _, above, below, src = _pcb_outline(cons, D["pcb_w"], D["pcb_above"], D["pcb_below"])
@@ -340,7 +356,12 @@ def derive(D):
     D["panel_w_scope"] = D["panel_w"]
     D["panel_x0"] = -D["panel_w"] / 2.0
     D["panel_x1"] = D["panel_w"] / 2.0
-    D["panel_y1"] = D["axis_by"] + D["knob_drop"]   # [Ed] 2 Nov: knob sits knob_drop lower on the panel
+    D["panel_y1"] = D["axis_by"] + D["knob_drop"] + D["knob_drop2"]   # [Ed] 2 Nov: knob sits knob_drop (+ knob_drop2) lower on the panel
+    # [Ed 2 Nov] joystick: as high as the top rail screw keep-out (washer) allows, at the full slide toward it
+    D["rail_y_top"] = D["panel_y1"] - D["rail_edge"]
+    if D["joy_rule"] == "rail":
+        D["place_y"] = D["rail_y_top"] - D["rail_keep_d"] / 2 - D["slide"] - D["tol_sla"] - D["half_h"]
+    D["finger_gap"] = D["place_y"] - D["half_h"] - D["knob_r"]
     D["panel_y0"] = D["panel_y1"] - D["panel_h"]
     D["panel_yc"] = (D["panel_y0"] + D["panel_y1"]) / 2.0
     D["body_y1"] = D["panel_y1"] - D["rail_clear"]
@@ -472,7 +493,6 @@ def derive(D):
         return out if abs(out) <= limit else x
 
     D["rail_x_top"] = (_station(x_std0), _station(x_std1))
-    D["rail_y_top"] = D["panel_y1"] - D["rail_edge"]
     D["rail_y_bot"] = D["panel_y0"] + D["rail_edge"]
     D["rail_pad_r"] = D["rail_hole_d"] / 2 + D["pad_extra"]
     # scanner, bottom-left inner corner (−X, −Y). Motor axis inset so the fillet bead is clear.
@@ -592,6 +612,8 @@ def derive(D):
     y_hi = (y_knob + y_joy) / 2.0 if y_joy >= y_knob else y_knob
     y_scan = D["y_mot"] + D["mirror_r"] + br + gap
     y_floor = D["pcb_y0"] + br + gap
+    if D["bot_posts_in_wall"]:   # [Ed 2 Nov] bottom pair into the bottom wall, like boss_x into the side wall
+        y_floor = D["body_y0"] + D["web_min"] + br
     if D["scanner_enabled"]:
         y_floor = max(y_scan, y_floor)
     if D["tft_on_front"]:
@@ -715,8 +737,19 @@ def derive(D):
     D["collar_margin"] = (D["panel_w"] - D["collar_od"]) / 2.0
     # top rail screws: room beside the joystick opening, inside the panel, with an SLA web both sides
     top_span = (D["panel_w"] - D["joy_hole"][0]) / 2.0
-    D["rail_top_web"] = (top_span - D["rail_hole_d"]) / 2.0
+    # v0.20: the web is measured in plan from each top rail hole to the joystick opening (v0.19 measured x only, so the
+    # holes were never cut once the knob_drop put them above the opening)
+    D["rail_top_web"] = min(_clear_rect(x, D["rail_y_top"], D["rail_hole_d"] / 2, -D["hole_hw"], D["joy_y_near"],
+                                        D["hole_hw"], D["joy_y_far"]) for x in D["rail_x_top"])
     D["rail_top_ok"] = 1.0 if D["rail_top_web"] >= D["sla_min"] else 0.0
+    # the washer under each rail screw vs the bezel slid all the way toward it
+    s_ = D["slide"]
+    D["rail_head_clear"] = min(_clear_rect(x, D["rail_y_top"], D["rail_keep_d"] / 2, -D["half_w"] - s_, D["bezel_y_near"] - s_,
+                                           D["half_w"] + s_, D["bezel_y_far"] + s_) for x in D["rail_x_top"])
+    # clear OLED (electronics, knob frame) vs the bottom corner posts
+    w_, h_, _t = D["clear_oled"]; cx_, cy_ = D["clear_oled_xy"]
+    D["oled_post_clear"] = min(_clear_rect(x, y, D["screw_boss_r"], cx_ - w_ / 2, cy_ - h_ / 2, cx_ + w_ / 2, cy_ + h_ / 2)
+                               for x, y in D["corners"][:2])
     # Front face freed below the knob, above the rail zone. Jack bodies must stay
     # inside the panel; the pitch is the body plus air, and also the 3 HP column.
     D["face_y0"] = D["panel_y0"] + D["rail_clear"]

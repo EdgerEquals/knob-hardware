@@ -351,7 +351,7 @@ def build(D):
         # the pad: a frame under the lower screen where it is not over the upper one
         oy = D["amo_upper"][2]
         if y0 < oy:
-            amo["lower screen pad (PETG)"] = _box(x0, x1, y0, min(oy, y1) - g, D["z_cover_in"] + g, z0 - g)
+            amo[f"lower screen pad ({D['cover_mat']})"] = _box(x0, x1, y0, min(oy, y1) - g, D["z_cover_in"] + g, z0 - g)
     elif D["tft_on_front"]:
         window = _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"])
         module = None
@@ -380,7 +380,7 @@ def build(D):
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
-    out = {"case": case, "back cover (PETG)": cover, "glow coat (inside walls)": glow, "PCB": pcb}   # glow trimmed above
+    out = {"case": case, f"back cover ({D['cover_mat']})": cover, "glow coat (inside walls)": glow, "PCB": pcb}   # glow trimmed above
     if window is not None:
         out["back TFT window"] = window
     out.update(amo)

@@ -10,8 +10,10 @@ from matplotlib.patches import Rectangle, Circle, Polygon, Patch, FancyArrowPatc
 GROUPS = [
     ("faceplate (UTR-8100 case proxy)", "#b3e5fc", lambda n: n.startswith("faceplate")),
     ("main PCB (local patch)", "#2e7d32", lambda n: n.startswith("main PCB")),
-    ("1×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
-    ("1×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
+    ("2×3 H11 sockets (main PCB)", "#546e7a", lambda n: n.startswith("socket ")),
+    ("2×3 long-pin headers (underside)", "#424242", lambda n: n.startswith("header ")),
+    ("screen socket AXE530127 (daughterboard tab)", "#263238", lambda n: n.startswith("screen FPC socket")),
+    ("guide screws + brass sleeves + inserts (up-stop)", "#b0855a", lambda n: n.startswith("guide ")),
     ("joystick daughterboard (1.0 FR4)", "#1b5e20", lambda n: n == "joystick daughterboard"),
     ("M2 female-female brass standoffs (GND, ×4)", "#c9a227", lambda n: n.startswith("brass standoff")),
     ("M2 socket-head screws", "#f9a825", lambda n: n.startswith("M2 socket screw")),
@@ -20,11 +22,11 @@ GROUPS = [
     ("seat plate (glued on the daughterboard)", "#6d4c41", lambda n: n.startswith("seat plate")),
     ("balls Ø2 stainless", "#90a4ae", lambda n: n.startswith("ball ")),
     ("carrier (thin floor, pilots, cup)", "#ab47bc", lambda n: n.startswith("joystick carrier")),
-    ("screen carrier / bezel", "#5c6bc0", lambda n: n.startswith("screen carrier")),
+    ("screen carrier: 5 mm grip block", "#5c6bc0", lambda n: n.startswith("screen carrier")),
     ("M2 grub screws + brass inserts", "#8d6e63", lambda n: n.startswith("grub ") or n.startswith("brass insert")),
     ("compression springs (Lee CI 008B)", "#546e7a", lambda n: n.startswith("compression spring")),
     ("top screen 1.64\" AMOLED", "#101828", lambda n: n.startswith("top screen")),
-    ("screen FPC [A]", "#ffb300", lambda n: n.startswith(("screen FPC", "screen jumper FPC"))),
+    ("screen FPC [A]", "#ffb300", lambda n: n.startswith(("screen FPC [", "screen jumper FPC"))),
     ("rear spring anchor (glued to PCB back)", "#26a69a", lambda n: n.startswith("rear spring")),
     ("cross pins (two, side entry)", "#455a64", lambda n: n.startswith("cross pin")),
     ("hold-down extension springs", "#fdd835", lambda n: n.startswith("hold-down")),
@@ -94,13 +96,23 @@ def plan(ax, D):
     x0, x1, y0, y1 = D["board_x0"], D["board_x1"], D["board_y0"], D["board_y1"]
     ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fc=lighten("#1b5e20", 0.25), ec="k", lw=1.2, zorder=3))
     ax.add_patch(Circle((0, 0), D["cut_r"], fc="white", ec="#4e342e", lw=0.8, zorder=3))
-    ax.add_patch(Rectangle((D["hole_x0"], -D["hole_hy"]), D["hole_x1"] - D["hole_x0"], 2 * D["hole_hy"], fc="none", ec="#c62828", lw=1.0, ls="--", zorder=3))
+    if D.get("fpc_to_db"):   # v0.5 tab with the screen socket (long side along y)
+        ax.add_patch(Rectangle((x1, -D["tab_hy"]), D["tab_x1"] - x1, 2 * D["tab_hy"], fc=lighten("#1b5e20", 0.25), ec="k", lw=1.2, zorder=3))
+        sl_, ss_, _ = D["db_fpc_sock"]
+        ax.add_patch(Rectangle((D["db_sock_x"] - ss_ / 2, -sl_ / 2), ss_, sl_, fc="#263238", ec="k", lw=0.6, zorder=4))
+    else:
+        ax.add_patch(Rectangle((D["hole_x0"], -D["hole_hy"]), D["hole_x1"] - D["hole_x0"], 2 * D["hole_hy"], fc="none", ec="#c62828", lw=1.0, ls="--", zorder=3))
+    rows = D["hdr"].get("rows", 1)
     for hx, hy in D["hdr_xy"]:
         ax.add_patch(Rectangle((hx - D["hdr_len"] / 2, hy - D["hdr_wid"] / 2), D["hdr_len"], D["hdr_wid"], fc="#424242", ec="k", zorder=4))
-        for k in (-1, 0, 1):
-            ax.add_patch(Circle((hx + k * D["pitch"], hy), 0.32, fc="#ffd54f", ec="k", lw=0.4, zorder=5))
+        for r in range(rows):
+            for k in (-1, 0, 1):
+                ax.add_patch(Circle((hx + k * D["pitch"], hy + (r - (rows - 1) / 2) * D["pitch"]), 0.32, fc="#ffd54f", ec="k", lw=0.4, zorder=5))
+    for x, y in D.get("g_xy", []):   # v0.5 guides: sleeve and head
+        ax.add_patch(Circle((x, y), D["guide"]["head_d"] / 2, fc="#cfd8dc", ec="k", lw=0.4, zorder=4))
+        ax.add_patch(Circle((x, y), D["guide"]["sleeve_od"] / 2, fc="#c9a227", ec="k", lw=0.6, zorder=5))
     for x, y in D["standoff_xy"]:
-        ax.add_patch(Circle((x, y), D["nut"]["af"] / 2, fc="#f9a825", ec="k", lw=0.4, zorder=4))
+        ax.add_patch(Circle((x, y), D["shcs"]["head_d"] / 2, fc="#f9a825", ec="k", lw=0.4, zorder=4))
         ax.add_patch(Circle((x, y), D["standoff_d"] / 2, fc="#c9a227", ec="k", lw=0.6, zorder=5))
         ax.add_patch(Circle((x, y), D["drill_m2"] / 2, fc="white", ec="k", lw=0.4, zorder=6))
     th = math.radians(D["sw_rot"])
@@ -131,14 +143,16 @@ def plan(ax, D):
     ax.annotate(f"daughterboard {D['db'][0]:.1f}×{D['db'][1]:.1f}, riser {D['riser_h']:g}", (0, y0), (-hw - 1, y0 - 1),
                 arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
     ax.annotate("SKRHADE010, −45°", (0, 0), (-hw - 1, 3), arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
-    ax.annotate("two 1×3 + four M2×35", D["hdr_xy"][0], (hw + 1, -4), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
-    ax.annotate("FPC bend [A]", (D["fpc_x"], D["slot_hy"]), (hw + 1, 6), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
+    ax.annotate(f"two {rows}×{D['hdr']['n']} + four M2×{D['riser_h']:g}", D["hdr_xy"][0], (hw + 1, -4), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
+    ax.annotate("screen socket on the tab" if D.get("fpc_to_db") else "FPC bend [A]", (D["fpc_x"], D["slot_hy"]), (hw + 1, 6), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
+    if D.get("g_xy"):
+        ax.annotate("guide screw + sleeve (up-stop)", D["g_xy"][0], (-hw - 1, 8), arrowprops=dict(arrowstyle="-", lw=0.6), ha="right", **L)
     ax.annotate("Ø2 ball", D["balls"][0], (D["balls"][0][0] + 6, D["balls"][0][1] + 6), arrowprops=dict(arrowstyle="-", lw=0.6), **L)
     ax.annotate("grub + spring", D["cs_xy"][0], (hw - 4, hh + 2.2), arrowprops=dict(arrowstyle="-", lw=0.6), ha="left", **L)
     bx, by = D["board_xy"]
     ax.text(-hw, hh + 4.6, f"dashed purple = carrier {cw:.1f} × {ch:.1f}, notched to ±{hm:.1f}; dash-dot = screen {S['w']:g} × {S['h']:g}", fontsize=8)
     ax.text(-hw, hh + 3.0, f"blue arc = knob Ø{D['knob_od_design']:.2f} (design) / Ø{D['knob_od_live']:.2f} (live); green = PCB top", fontsize=8)
-    ax.text(-hw, -hm - 12, f"no spider, no round stop; centre board ({bx:.2f}, {by:.2f}); screen top z {D['scr_top']:.2f}; floor {D['car_floor']:.2f}", fontsize=8)
+    ax.text(-hw, -hm - 12, f"centre board ({bx:.2f}, {by:.2f}); screen top z {D['scr_top']:.2f}; finger gap to the knob {D.get('finger_gap', 0):.2f}", fontsize=8)
     ax.plot([4, 14], [-hm - 9.2, -hm - 9.2], color="k", lw=3); ax.text(9, -hm - 8.2, "10 mm", ha="center", fontsize=9)
     ax.set_xlim(-hw - 18, hw + 16); ax.set_ylim(-hm - 16, hh + 7); ax.set_aspect("equal"); ax.set_xticks([]); ax.set_yticks([])
 
@@ -195,18 +209,19 @@ def render(D, P, rows, png):
     axI.set_title("ISOMETRIC QUARTER CUT (+x and -y removed:\nswitch on axis, header, ball seat, spring pilot)", fontsize=13, weight="bold", loc="left")
     axP.set_title("PLAN (front view, panel up = +y)", fontsize=13, weight="bold", loc="left")
     sw = D["sw"]
-    fig.suptitle(f"Top-screen joystick {D['version']} — bezel on four compression springs, thin carrier, {D['riser_h']:g} mm riser (1 Nov 2026, Ed)", fontsize=16, weight="bold", x=0.01, ha="left", y=0.985)
+    fig.suptitle(f"Top-screen joystick {D['version']} — {D['grip_h']:g} mm grip block on four compression springs and two guides, {D['riser_h']:g} mm riser (2 Nov 2026, Ed)", fontsize=16, weight="bold", x=0.01, ha="left", y=0.985)
     nf = sum(not r["ok"] for r in rows)
     key = (f"Stack (z from the main-PCB front): faceplate front {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − knob_proud {D['knob_proud']:.1f}. "
            f"Screen top {D['scr_top']:.2f}. "
-           f"Derived riser 0–{D['z_db0']:.2f} (catalog {D['standoff']['part']} is {D['standoff']['length']:.0f} mm, {D['standoff']['stud']:.0f} mm stud + nut) · daughterboard {D['z_db0']:.2f}–{D['z_db1']:.2f} · "
+           f"Derived riser 0–{D['z_db0']:.2f} (catalog {D['standoff']['part']}, {D['standoff']['length']:.0f} mm) · daughterboard {D['z_db0']:.2f}–{D['z_db1']:.2f} · "
            f"stem top {D['z_stem_top']:.2f} · carrier underside {D['z_c0']:.2f} · floor {D['car_floor']:.2f} · "
            f"bezel {D['z_bz0']:.2f}–{D['z_bz1']:.2f} · spring roof {D['z_roof']:.2f} · screen {D['z_scr0']:.2f}–{D['scr_top']:.2f}.\n"
            f"Tilt stop is the switch: slide {D['slide']:.2f} mm (cup clearance {D['cup_rad_clear']:.2f} + tilt {sw['tilt_travel']:g}). "
            f"Press: {D['cs_f_press']:.2f} N at the switch bottom ({D['cs_turns']:g} turn preload {D['cs_f_preload']:.2f} N, "
            f"{D['cs_f_turn_1']:.3f} N/turn each spring). "
-           f"Hold-down: 4 × {D['spr_f']:g} N, length {D['spr_len']:.0f} mm. "
-           f"Grubs set on the sub-assembly. No spider, no round stop.\n"
+           f"Hold-down: 4 × {D['spr_f']:g} N, length {D['spr_len']:.0f} mm (tips at {D['tip_f_top_y']:.2f} N on the glass top, up/down). "
+           f"Guides: {D['guide']['part']} (M2×{D['g_len']:.0f}); heads are the up-stop. "
+           f"Finger gap to the knob {D['finger_gap']:.2f} mm.\n"
            f"Checks: {len(rows) - nf}/{len(rows)} PASS. Switch on the carrier axis. Footprint −45°: a/b/c/d → UP/RIGHT/LEFT/DOWN, confirmed at first-power calibration. "
            f"FPC exit, pitch and pin-out are still open [A].")
     fig.text(0.01, 0.235, key, fontsize=12, va="top")

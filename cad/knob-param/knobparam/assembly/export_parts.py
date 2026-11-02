@@ -1,7 +1,7 @@
 """v0.19: one STEP per printed part (panel frame), with material and process, plus a bought-parts BOM.
 
 Material recipe [Ed, 2 Nov]: MJF PA-12 for gears and structure, SLA UTR-8100 clear resin for clear parts,
-PETG for the back cover. Anything the rules below do not place is listed as UNASSIGNED so it is not missed.
+ASA-CF for the back cover (v0.20, Ed 2 Nov; was PETG). Anything the rules below do not place is listed as UNASSIGNED so it is not missed.
 Run: python -m knobparam.assembly.export_parts  (from cad/knob-param)."""
 import csv, os, re, sys
 from collections import OrderedDict
@@ -25,7 +25,7 @@ RULES = [
     (r"^encoder daughterboard|^encoder header|^encoder sensor", "board", "encoder daughterboard (EE-SX1321)", "PCBWay PCBA"),
     (r"^case$", "print", "UTR-8100 clear resin, front face polished", "SLA"),
     (r"glow coat", "ref", "Shimicoat strontium aluminate, brushed", "Ed"),
-    (r"back cover|lower screen pad", "print", "PETG, smoky/black", "FDM"),
+    (r"back cover|lower screen pad", "print", "ASA-CF, black (print floor-down; PET/Kapton film under the screens)", "FDM"),
     (r"cap\b|caps\b|Fresnel", "print", "UTR-8100 clear resin", "SLA"),
     (r"thrust carrier|thrust race|bottom thrust", "print", "UTR-8100 clear resin", "SLA"),
     (r"Risley wedge", "print", "UTR-8100 clear resin (acrylic fallback)", "SLA"),

@@ -11,7 +11,8 @@ MATERIALS = {
     "glass":   ("borosilicate glass, glass spacer balls", "#eaf6fa", True),
     "oled":    ("clear OLED (transparent)", "#b9d4de", True),
     "pa12":    ("PA-12, MJF (natural grey)", "#6e7377", False),
-    "petg":    ("PETG, smoky black (cover, screen pad, seal ring)", "#2b3035", False),
+    "petg":    ("PETG, opaque (seal ring)", "#2b3035", False),
+    "asacf":   ("ASA-CF, black (back cover, screen pad)", "#1f2124", False),
     "nylon":   ("nylon pinion (natural)", "#e8e1cf", False),
     "steel":   ("stainless steel: screws, shafts, balls, springs, bearings, USB-C shell", "#a9b0b6", False),
     "brass":   ("brass: tube, inserts, standoffs; ENIG pad", "#c9a227", False),
@@ -46,7 +47,7 @@ def key(name):
     if low.startswith("jack ") and ("bushing" in low or "nut" in low): return "steel"
     if low.startswith("pcb back parts"): return "ic"
     if "daughterboard" in low or low == "pcb" or low.startswith("adapter board") or "pd board" in low: return "pcb"
-    if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith(("sw1", "socket 1x3")):
+    if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith(("sw1", "socket 1x3", "socket 2x3")):
         return "ic"
     if low.startswith("emitter "): return "led"
     if low.startswith(("jack ", "pj366st")) or "bushing" in low: return "jack"
@@ -58,6 +59,7 @@ def key(name):
     m = mat.lower()
     if "utr-8100" in m: return "clear"
     if "pa-12" in m: return "pa12"
+    if "asa-cf" in m: return "asacf"
     if "petg" in m: return "petg"
     if "borosilicate" in m: return "glass"
     if m == "display": return "display"

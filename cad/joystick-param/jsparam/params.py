@@ -1,4 +1,10 @@
-"""Top-screen joystick stack v0.4 — params + derive.
+"""Top-screen joystick stack v0.5 — params + derive.
+
+v0.5 (2 Nov 2026, Ed): the bezel is a 5 mm grip block with the glass on top; the switch stack is lifted 2 mm on
+M2x30 standoffs so the carrier rises into the faceplate hole; two guide screws in brass sleeves tie the bezel to the
+carrier (no rocking on the press springs, and their heads are the up-stop v0.4 lacked); the joystick sits as high as
+the top rail screws (ISO 7092 Ø6 washers) allow, and the knob moves down on the panel instead (finger room);
+two 2x3 board-to-board headers (12 pins); the screen flex socket sits on a tab of the daughterboard beyond the plate.
 
 Local frame: origin = carrier centre on the MAIN PCB FRONT (z = 0), +x right along the panel width, +y up the panel
 (toward the panel top), +z out of the panel. Placement in the knob-param frame (dial axis = 0,0): (0, place_y).
@@ -26,10 +32,13 @@ import os
 import sys
 
 P = dict(
-    version="v0.4",
+    version="v0.5",
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
-    knob_extra=0.0,         # nominal gap is the process stack itself
+    knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
+    place_rule="rail",      # [Ed] 2 Nov v0.5: "rail" = as high as the top rail screw keep-out allows (the case owns the rule
+                            # and publishes place_y); "knob" = v0.4, as close to the knob as the process stack allows
+    finger_min=5.0,         # [Ed] 2 Nov: plan gap from the knob glass to the bezel at rest, at least this (finger room)
     pcb_edge=0.30,          # [A] a PTH pad stays this far inside the main-PCB copper edge
     rail_z=10.0,            # [A] Eurorack rail does not reach this far in front of the PCB
     # PCBWay process tolerances. A clearance is one of these, not a looser drawing gap.
@@ -49,8 +58,17 @@ P = dict(
     fpc_slot_l=2.3,         # [A]
     # ---- carrier / bezel ----
     car_top_below=0.3,      # [A] glass stands this far proud of the bezel top
-    bz_lip=1.2,             # [Ed] bezel lip, same as the other bezel. 1.5 mm is the maximum
-    bz_t=1.2,               # [Ed] bezel thickness. Same limit
+    bz_lip=1.2,             # [Ed] bezel lip (side wall of the grip block), same as the other bezel. 1.5 mm is the maximum
+    bz_t=1.2,               # [Ed] v0.4 bezel thickness; v0.5 uses grip_h for the height (kept so old overrides parse)
+    grip_h=5.0,             # [Ed] 2 Nov v0.5: the bezel is a grip block at least 5 mm tall, glass on top; the faceplate tucks in behind its edge
+    glass_proud=0.6,        # [A] glass top above the block rim (as v0.4: 1.5 glass on 0.3 pads in a 1.2 bezel)
+    roof_t=1.6,             # [A] roof plate under the glass: the springs push on its underside, the glass is glued on top
+    # guides (v0.5, Ed 2 Nov): two screws through brass sleeves tie the bezel to the carrier. The sleeve slides in a reamed
+    # bore in the carrier; the screw head under the carrier boss is the up-stop (v0.4 had none).
+    guide=dict(part="ISO 7984 M2x8 A2 low-head socket screw + brass tube sleeve OD 3.0 / ID 2.1, cut to length",
+               d=2.0, sleeve_od=3.0, head_d=3.8, head_k=1.6, bore_fit=0.03, boss_wall=1.0,
+               ins=dict(part="M2x3x3.2 brass heat-set (bezel roof)", od=3.2, length=3.0, hole=3.0)),   # [S] DIN 7984 M2 head Ø3.8 × 1.6 max [A]
+    guide_gy=5.0,           # [A] guides on the y axis at (0, ±guide_gy): clear of the cup, the switch and the hold-down hooks
     fp_t=2.5,               # [A] faceplate of the one-piece case. UTR-8100 clear resin, wall ~2.5 mm
     fp_overlap=0.90,        # [A] how far the lip covers the faceplate at rest, before the slide
     skirt_overlap=0.75,     # [A] skirt reaches this far below the plate
@@ -65,11 +83,11 @@ P = dict(
     # ---- cup. The bore is derived: stem diameter plus one SLA tolerance per side ----
     cup_od=5.0,             # [A]
     cup_engage=1.2,         # [A]
-    stem_below=1.10,        # [Ed] 2 Nov: the 28 mm riser's 0.25 mm over the v0.18 plate (38.8) is taken out of this air (was 1.35)
+    stem_below=1.10,        # [Ed] 2 Nov: carrier underside above the stem top
     fpc_to_db=True,         # [Ed] 2 Nov: the screen flex plugs into a socket on the joystick daughterboard (no slot in the main PCB;
                             # the old drop landed on the top-right corner bolt post). Signals go down through the board-to-board headers.
-    db_fpc_sock=(8.4, 3.0, 0.9),   # [S/A] AXE530127 30-pin 0.4 mm socket footprint on the daughterboard: x, y, mated height
-    db_fpc_x_in=3.0,        # [A] socket centre this far inboard of the daughterboard edge        # [A] carrier underside above the stem top. The riser length is derived to keep this
+    db_fpc_sock=(8.4, 3.0, 0.9),   # [S/A] AXE530127 30-pin 0.4 mm socket: long side (along y, the flex width), short side (x), mated height
+    db_fpc_x_in=3.0,        # [A] v0.4 only (socket under the plate)
     # ---- switch ----
     sw=dict(part="Alps SKRHADE010", w=7.45, d=7.5, h=1.85, stem_d=3.0, stem_top=5.0, pivot=0.49, ref_h=4.3,
             tilt_travel=0.25, push_travel=0.15, tilt_f=1.2, push_f=2.35, f_tol=0.69,   # [S]
@@ -82,13 +100,15 @@ P = dict(
     # male header, plastic on the UNDERSIDE, pin down into the socket. Lead style -17 is the
     # straight-pin post that mates a 25 mm riser (Samtec TSW chart: tail 2.79, post 15.74).
     # The -20 post (25.91) went through the main PCB. The 1x3 is consigned; LCSC's -20 line is 2-row.
-    hdr=dict(part="Samtec TSW-103 long-post header, post about 19 mm for the 28 mm riser (exact -xx code to pick)", lcsc="consigned", mate=19.0, ins=2.54, tail=2.79, n=3),  # [A] 2 Nov (was TSW-103-17-T-S, post 15.74, for the 25 mm riser)
+    # v0.5: two 2x3 (12 pins): 10 signals (QSPI CLK, CS, IO0-3, RST, TE, PWR_EN, switch ladder) + 3.3 V + GND; the four brass
+    # standoffs are GND too. Two 2x5 would need the board ~4 mm wider, into the top corner posts.
+    hdr=dict(part="Samtec TSW-103-xx-T-D long-post 2x3 header, post about 21.5 mm for the 30 mm riser (exact -xx code to pick)", lcsc="consigned", mate=21.5, ins=2.54, tail=2.79, n=3, rows=2),  # [A] 2 Nov v0.5
     # female socket on the main PCB. Same hanxia H11 family as the v0.2 2x3, split into two 1x3s.
-    sock=dict(part="hanxia HX PM2.54-1x3P ZC H11", lcsc="C41427518", h=11.0, tail=3.2, n=3),  # [S]
+    sock=dict(part="2.54 mm 2x3 female socket, 11 mm (hanxia PM2.54 H11 family, 2x3 part to pick)", lcsc="TBC", h=11.0, tail=3.2, n=3, rows=2),  # [A] v0.5 (v0.4: 1x3 C41427518)
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
     # Hex H3×M2×25 (STTZ2022) and the male-female 25 mm parts were out of stock on LCSC, 1 Nov 2026.
     # OD 3.2 is the usual knurled round M2 pillar; LCSC does not publish it. [A]
-    standoff=dict(part="M2x28 female-female brass standoff (stock size; part number to source)", lcsc="TBC", length=28.0, od=3.2, kind="female-female"),  # [Ed] 2 Nov: 28 mm so the stack meets the v0.18 faceplate (was XHHD STTZ1022, 25 mm)
+    standoff=dict(part="M2x30 female-female brass standoff (stock size; printed spacer if none in stock)", lcsc="TBC", length=30.0, od=3.2, kind="female-female"),  # [Ed] 2 Nov v0.5: 30 mm lifts the switch 2 mm (was 28)
     shcs=dict(part="ISO 4762 M2 A2", head_d=3.8, head_h=2.0, socket=1.5, top=6.0, bot=4.0),  # [S] DIN 912. Top through plate+board, bottom through the PCB
     pad_m2=3.2,             # [A] Ø pad on the Ø2.4 M2 clearance (annular ring 0.4)
     drill_m2=2.4,           # [A]
@@ -100,7 +120,10 @@ P = dict(
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
-    spr_f=0.5,              # [Ed] N each, kept at the new shorter length
+    spr_xy=(6.0, 4.6),      # [A] v0.5 hold-down springs at (±x, ±y): clear of the 2x3 header bodies (y ±2.54) and the balls
+    spr_f=1.40,             # [A] 2 Nov v0.5, pending Ed: N each (v0.4 0.5 [Ed]). Sized so a sideways push on the glass top tips the
+                            # carrier only above 1.3x the switch's worst-case tilt force (balls only 8 mm apart up/down)
+    tip_margin=1.3,         # [A] tipping force / worst-case switch tilt force
     spr_ext=8.0,            # [A] extension at rest, mm. Free length is installed length minus this
     pin_d=1.2,              # [A] push-in cross pin, stainless or music wire
     pin_clear=0.30,         # [A] bore diameter over the pin, so it slides while pliers hold the hook
@@ -128,6 +151,12 @@ def _knob_data():
                axis_bx=float(D["axis_bx"]), axis_by=float(D["axis_by"]))
     if "knob_proud" in D:
         out["knob_proud"] = float(D["knob_proud"])
+    # v0.5: the case owns the panel layout. It publishes the faceplate z, the joystick place_y (rail rule), the
+    # rail strip and the main-PCB nest. Read as data; the joystick keeps its own copy only as a fallback.
+    for k in ("faceplate_z", "place_y", "panel_y1", "rail_clear", "pcb_y1", "pcb_x1", "y_in1", "rail_y_top",
+              "rail_keep_d", "rail_x_top"):
+        if k in D:
+            out["case_" + k] = D[k]
     return out
 
 
@@ -232,13 +261,20 @@ def derive(P_):
     D["car_floor"] = pm
     D["z_c0"] = D["z_stem_top"] + D["stem_below"]
     D["z_floor1"] = D["z_c0"] + D["car_floor"]
-    D["z_fp0"] = D["z_floor1"] + sla
-    D["z_fp1"] = D["z_fp0"] + D["fp_t"]
+    # v0.5: the faceplate z is the knob's (interface faceplate_z, via the case). The 30 mm riser lifts the carrier
+    # into the faceplate hole; v0.4 derived the faceplate from the stack (carrier floor + one SLA tolerance).
+    if "case_faceplate_z" in K:
+        D["z_fp1"] = float(K["case_faceplate_z"])
+        D["z_fp0"] = D["z_fp1"] - D["fp_t"]
+    else:
+        D["z_fp0"] = D["z_floor1"] + sla
+        D["z_fp1"] = D["z_fp0"] + D["fp_t"]
     D["z_bz0"] = D["z_fp1"] + D["up_gap"]
-    D["z_bz1"] = D["z_bz0"] + D["bz_t"]
-    D["z_roof"] = D["z_bz0"] + 0.30
-    D["z_scr0"] = D["z_roof"]
-    D["scr_top"] = D["z_scr0"] + S["t"]
+    # grip block: walls from just above the faceplate to the rim; glass on a roof plate, standing glass_proud above the rim
+    D["z_bz1"] = D["z_bz0"] + D["grip_h"]
+    D["scr_top"] = D["z_bz1"] + D["glass_proud"]
+    D["z_scr0"] = D["scr_top"] - S["t"]
+    D["z_roof"] = D["z_scr0"] - D["roof_t"]          # roof plate underside: the press springs and the guide bosses hang from it
     D["scr_drop"] = D["z_knob_top"] - D["scr_top"]
     D["fp_rebate"] = D["tol_sla"] + 0.15 + 0.20   # filled in after press_travel exists; placeholder
     D["knob_proud"] = D["z_knob_top"] - D["z_fp1"]
@@ -321,8 +357,16 @@ def derive(P_):
     rc = design_od / 2 + D["tgt"]["knob_min"] + D["knob_extra"] + D["slide"]
     D["knob_rc"] = rc
     silhouette = [(0.0, -D["half_h"]), (D["half_w"], -D["half_h"])]
-    D["place_y"] = max(_place_for(x, y, rc) for x, y in silhouette)
-    D["y_pcb"] = D["pcb_above"] - D["place_y"]
+    D["place_y_knob"] = max(_place_for(x, y, rc) for x, y in silhouette)   # v0.4 rule: as close to the knob as allowed
+    if D["place_rule"] == "rail" and "case_place_y" in K:
+        D["place_y"] = float(K["case_place_y"])     # v0.5: the case's rail rule (joystick as high as the rail screws allow)
+    else:
+        D["place_y"] = D["place_y_knob"]
+    D["finger_gap"] = D["place_y"] - D["half_h"] - design_od / 2   # knob glass to the bezel, plan, at rest
+    # main-PCB top edge and the rail strip, local to the joystick axis
+    D["y_pcb"] = (K["case_pcb_y1"] if "case_pcb_y1" in K else D["pcb_above"]) - D["place_y"]
+    D["y_rail"] = ((K["case_panel_y1"] - K["case_rail_clear"]) - D["place_y"]) if "case_panel_y1" in K else 99.0
+    D["rail_margin"] = 0.5   # [A] air kept between a part behind the panel and the rail strip line
     # switch on the carrier axis. Land extent drives the plate opening and the board
     D["sw_xy"] = (0.0, 0.0)
     D["sw_ext"] = _land_extent(sw, D["sw_rot"])
@@ -330,7 +374,7 @@ def derive(P_):
     D["cut_r"] = D["sw_ext"] + D["part_gap"]
     n, pitch = hd["n"], D["pitch"]
     D["hdr_len"] = n * pitch
-    D["hdr_wid"] = pitch
+    D["hdr_wid"] = hd.get("rows", 1) * pitch
     D["hx"] = D["sw_ext"] + D["part_gap"] + D["hdr_len"] / 2
     inset = D["pad_m2"] / 2 + D["cu_edge"]
     D["db_half_w"] = D["hx"] + D["hdr_len"] / 2 + D["standoff_d"] / 2 + D["part_gap"]
@@ -345,7 +389,9 @@ def derive(P_):
     sy_pad = D["y_pcb"] - D["pcb_edge"] - D["pad_m2"] / 2
     # the nut is wider than the pad, so it sets how close the screw can sit to the PCB edge
     sy_head = D["y_pcb"] - D["pcb_edge"] - D["shcs"]["head_d"] / 2
-    D["sy"] = min(sy_corner, sy_pad, sy_head)
+    # v0.5: the 2x3 header bodies are 5.08 wide, so the standoffs sit just outside them in y
+    D["sy_need"] = D["hdr_wid"] / 2 + D["part_gap"] + D["standoff_d"] / 2
+    D["sy"] = max(D["sy_need"], 0.0) if hd.get("rows", 1) > 1 else min(sy_corner, sy_pad, sy_head)
     D["sy_corner"] = sy_corner
     D["sy_pad"] = sy_pad
     D["sy_head"] = sy_head
@@ -392,14 +438,20 @@ def derive(P_):
     # hold-downs stay inboard of the FPC drop and under the bezel. The old pair at x=±22.5
     # stood outside the lip; that is the yellow tube Ed circled.
     D["spr_x_raw"] = D["car_hw"] - D["spr_boss"][0] / 2 - sla
-    D["spr_x"] = 6.5
-    D["spr_y"] = min(3.5, D["y_pcb"] - D["pcb_edge"] - D["spr_bore"] / 2)
+    D["spr_x"], D["spr_y"] = D["spr_xy"]   # v0.5: clear of the 2x3 header bodies (y ±2.54) and the ball cups
     D["springs"] = [(sx, sy) for sx in (D["spr_x"], -D["spr_x"]) for sy in (D["spr_y"], -D["spr_y"])]
     edge = S["w"] / 2
     skirt_outer = D["db_half_w"] + D["skirt_gap"] + D["car_skirt"]
     D["fpc_x"] = max(edge - D["fpc_bend"], skirt_outer + D["tgt"]["cable_min"] + D["fpc_t"] / 2 + sla)
     if D["fpc_to_db"]:
-        D["db_sock_x"] = D["db_half_w"] - D["db_fpc_x_in"] if "db_half_w" in D else D["fpc_x"] - 4.0
+        # v0.5: the socket sits on a tab of the daughterboard past the +x standoffs, outside the seat plate. Its long side
+        # runs along y (the flex width), so the flex drops straight onto it. The carrier skirt is notched over the tab.
+        sl_, ss_, sz_ = D["db_fpc_sock"]
+        D["db_sock_x"] = D["sx"] + D["standoff_d"] / 2 + D["part_gap"] + ss_ / 2
+        D["tab_x1"] = D["db_sock_x"] + ss_ / 2 + D["cu_edge"]
+        D["tab_hy"] = sl_ / 2 + D["cu_edge"]
+        D["fpc_x"] = D["db_sock_x"]
+        D["fpc_bend"] = edge - D["fpc_x"]
     D["slot_x"] = (D["fpc_x"] - D["fpc_slot_l"] / 2, D["fpc_x"] + D["fpc_slot_l"] / 2)
     D["slot_hy"] = D["fpc_w"] / 2 + D["fpc_slot_side"]
     D["hole_x0"] = D["slot_x"][0] - D["slide"] - D["hole_extra"]
@@ -433,6 +485,52 @@ def derive(P_):
     D["pin_y"] = (D["spr_y"], -D["spr_y"])
     D["ra_slot"] = D["spr_d"] + 1.2
     D["ra_bond"] = (D["ra_x1"] - D["ra_x0"]) * (D["ra_y1"] - D["ra_y0"])
+    # ---- v0.5 press-spring stations: inside the carrier outline (their insert bosses rise into the faceplate hole),
+    # and below the rail strip if the boss still reaches behind the panel. With the guides they no longer stop the
+    # bezel rocking, so they can come in from the corners.
+    br_cs = D["boss_d"] / 2
+    D["cs_bossr"] = br_cs
+    D["cs_x"] = D["car_hw"] - br_cs - sla
+    cs_y = D["car_hh"] - br_cs - sla
+    if D["z_ins0"] < D["z_fp0"]:
+        cs_y = min(cs_y, D["y_rail"] - D["rail_margin"] - br_cs)
+    D["cs_y"] = cs_y
+    D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
+    # skirt walls (±y only in v0.5) end this far out, short of the grubs hanging under the stations
+    D["skirt_x"] = min(D["board_x1"] + D["skirt_gap"] + D["car_skirt"], D["cs_x"] - D["grub_d_model"] / 2 - 0.5)
+    # ---- v0.5 guides: screw + brass sleeve, bezel to carrier. Head under a carrier boss = up-stop; sleeve in a reamed bore.
+    G = D["guide"]; gi = G["ins"]
+    D["g_xy"] = [(0.0, D["guide_gy"]), (0.0, -D["guide_gy"])]
+    D["g_boss_r"] = G["sleeve_od"] / 2 + G["boss_wall"]
+    D["g_bore"] = G["sleeve_od"] + 2 * G["bore_fit"]
+    D["g_ins_top"] = D["z_scr0"] - 0.6                    # [A] 0.6 of roof left under the glass over the insert
+    D["g_ins_bot"] = D["g_ins_top"] - gi["length"]
+    D["g_rboss_r"] = gi["od"] / 2 + 1.0
+    zmin = D["z_sw1"] + D["press_travel"] + mjf + G["head_k"]   # head clears the switch body at full press
+    best = None
+    for L in (4.0, 5.0, 6.0, 8.0, 10.0):                   # ISO 7984 stock lengths
+        z0 = max(zmin, D["g_ins_bot"] + 2.0 - L)            # at least 2 mm of thread in the insert
+        if z0 + L <= D["g_ins_top"] - 0.2 + 1e-9 and z0 <= D["z_c0"] - 1.0:
+            best = (L, z0)
+    D["g_len"], D["g_z0"] = best if best else (6.0, zmin)
+    D["g_zmin"] = zmin
+    D["g_tip"] = D["g_z0"] + D["g_len"]
+    D["g_engage"] = D["g_tip"] - D["g_ins_bot"]
+    D["g_sleeve_len"] = D["g_ins_bot"] - D["g_z0"]
+    D["g_guide_len"] = D["z_floor1"] - D["g_z0"]
+    D["g_head0"] = D["g_z0"] - G["head_k"]
+    D["g_gap_press"] = D["g_ins_bot"] - D["z_floor1"]       # roof boss bottom to the carrier floor top (must exceed the press)
+    # ---- v0.5 tipping: a sideways push on the glass top, reacted by the stem at its tilt reference height, against
+    # the hold-down springs about the far ball line. The ball rows are only 2·by apart up/down.
+    tilt_max = sw["tilt_f"] + sw["f_tol"]
+    D["tip_need"] = D["tip_margin"] * tilt_max
+    D["tip_arm_top"] = D["scr_top"] - D["z_ref"]
+    D["tip_arm_mid"] = (D["z_bz0"] + D["z_bz1"]) / 2 - D["z_ref"]
+    fhd = len(D["springs"]) * D["spr_f"]
+    D["tip_f_top_y"] = fhd * D["by"] / D["tip_arm_top"]
+    D["tip_f_mid_y"] = fhd * D["by"] / D["tip_arm_mid"]
+    D["tip_f_top_x"] = fhd * D["bx"] / D["tip_arm_top"]
+    D["spr_f_need"] = D["tip_need"] * D["tip_arm_top"] / (len(D["springs"]) * D["by"])
     D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
     return D
 

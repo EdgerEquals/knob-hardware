@@ -16,7 +16,7 @@ def checks(D, parts):
     r = Rows("case")
     row = r.row
     case = parts["case"]
-    cover = parts["back cover (PETG)"]
+    cover = next(v for k, v in parts.items() if k.startswith("back cover"))
     cb = cover.bounding_box()
     row("cover flush in X", min(D["x_out1"] - cb.max.X, cb.min.X - D["x_out0"]), 0.0,
         f"cover x {cb.min.X:.2f}..{cb.max.X:.2f}, shell ±{D['x_out1']:.2f}")
@@ -59,8 +59,16 @@ def checks(D, parts):
         row("grating-slot lip", D["slot_lip"], sla, "shelf left above and below the film")
     row("outside edge radius", D["edge_r"], D["edge_r_ratio"] * D["wall"],
         "the only radius on the plain box, a ratio of the wall")
-    row("bezel thickness under the cap", D["bz_max"] - D["bz_t"], 0.0,
-        f"joystick v0.4 lip {D['bz_t']:.2f}, cap {D['bz_max']:.1f}")
+    row("joystick grip block height", D["z_bz1"] - D["z_bz0"], D["grip_h"],
+        f"[Ed 2 Nov] at least {D['grip_h']:g} mm to hold (replaces the 1.5 mm bezel cap); walls {D['bz_lip']:.2f}")
+    row("finger gap: knob glass to the joystick bezel", D["finger_gap"], D["finger_min"],
+        f"[Ed 2 Nov] joystick place_y {D['place_y']:.2f} ({D['joy_rule']} rule; v0.4 knob rule {D['place_y_knob']:.2f}); "
+        f"knob {D['knob_drop'] + D['knob_drop2']:.1f} below the v0.18 panel position")
+    row("joystick bezel clear of the top rail screw washers (full slide)", D["rail_head_clear"], D["tol_sla"],
+        f"{D['rail_washer']} under an M3 pan head, keep-out Ø{D['rail_keep_d']:.1f} at y {D['rail_y_top']:.2f}")
+    row("clear OLED vs the bottom corner posts", D["oled_post_clear"], 0.3,
+        f"OLED {D['clear_oled'][0]:g} x {D['clear_oled'][1]:g} at y {D['clear_oled_xy'][1]:.2f}; posts at y {D['corners'][0][1]:.2f}"
+        f"{' (in the bottom wall [Ed])' if D['bot_posts_in_wall'] else ''}")
     # the row above uses higher_ok so value 1.5-bz_t >= 0. Good.
     row("knob radial clearance", D["knob_hole_r"] - D["knob_r"], D["knob_rad_clear"],
         f"hole Ø{2 * D['knob_hole_r']:.2f}, knob Ø{D['knob_od_used']:.2f} (live {D['knob_od']:.2f}, design {D['knob_od_design']:.2f})")

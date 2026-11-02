@@ -16,8 +16,8 @@ lower, upper = box(*[D["amo_lower"][i] for i in (0, 2, 1, 3)]), box(*[D["amo_upp
 r_keep = max(D["r_out"], D["ot_r"] + D["ot_rg"] + D["ot_track_extra"], D["ot_r"] + 1.75, D["knob_od"] / 2) + 2.5   # knob + cradle + emitter bodies, + the case knob ring
 print("r_keep", r_keep)
 obst = [Point(0, 0).buffer(r_keep, 128)]
-py = 36.52   # joystick axis (cad/joystick-param place_y); carrier and screen carrier are opaque, so nothing to see under them
-obst.append(box(-22.01, py - 14.57, 22.01, py + 14.57).buffer(M))
+py = D["place_y"]   # v0.20: joystick axis from the case (rail rule); carrier and screen carrier are opaque, so nothing to see under them
+obst.append(box(-D["half_w"], py - D["half_h"], D["half_w"], py + D["half_h"]).buffer(M))
 for x, y in D["corners"]:
     obst.append(Point(x, y).buffer(D["notch_r"] + D.get("tube_press", 1.0) + 1.0 + M))
 K = D["pcb_kicad"]
@@ -40,9 +40,12 @@ blk = unary_union(obst)
 Z = {}
 Z["A"] = (upper & board).difference(blk) & box(-50, 0, 0, 80)
 Z["B"] = (upper & board).difference(blk) & box(0, 0, 50, 80)
-Z["E"] = (lower & board).difference(blk) & box(-50, -21.8, 0, 0)
-Z["C"] = (lower & board).difference(blk) & box(0, -21.8, 50, 0)
-cut = box(-19.2, -48.6, 19.2, -24.6)   # clear OLED cut-away 38.4 x 24 (sketch, +4 mm into this frame)
+ow, oh, _ = D["clear_oled"]; ox, oy = D["clear_oled_xy"]
+LEDGE = 1.6   # board strip the clear OLED rests on, all round window D (v0.19b)
+y_ce = oy + oh / 2 + LEDGE   # v0.20: C and E stop above the OLED and its ledge (was a fixed -21.8)
+Z["E"] = (lower & board).difference(blk) & box(-50, y_ce, 0, 0)
+Z["C"] = (lower & board).difference(blk) & box(0, y_ce, 50, 0)
+cut = box(ox - 19.2, oy - 12.0, ox + 19.2, oy + 12.0)   # clear OLED cut-away 38.4 x 24, centred on the OLED (v0.20)
 Z["D"] = (cut & board & lower).difference(blk)
 out = {}
 for k in "ABCDE":

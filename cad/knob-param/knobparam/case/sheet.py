@@ -19,7 +19,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # cad/
 CASE_GROUPS = [
     ("shell, plain clear resin — printed M3 threads in the bosses", "#c5d0d8", lambda n: n == "case"),
     ("Shimicoat glow coat, inside walls", "#8fd184", lambda n: n.startswith("glow")),
-    ("back cover, smoky PETG", "#84888e", lambda n: n.startswith("back cover")),
+    ("back cover, ASA-CF (black)", "#2a2c2f", lambda n: n.startswith("back cover")),
     ("TFT light path (air, keep-out)", "#3ec0f0", lambda n: "TFT window" in n),
     ("back TFT module (placeholder)", "#101828", lambda n: n.startswith("back TFT module")),
     ("ISO 4762 M3×10 corner screws, A2", "#b7bcc6", lambda n: n.startswith("corner screw")),

@@ -216,7 +216,7 @@ def _annotate_section(ax, D, bounds, fs):
     _tag(ax, _fx(t - 2.0, bounds), _fz(16.0, bounds), "shell ledge", fs)
     _tag(ax, _fx(4.0, bounds), _fz(D["z_flange_out"] - 5.2, bounds), "clamp rim", fs)
     _tag(ax, _fx(rad - 30.0, bounds), _fz(8.0, bounds), "printed thread", fs)
-    _tag(ax, _fx(rad - 1.0, bounds), _fz(D["z_pad_out"] - 5.2, bounds), "PETG pad", fs)
+    _tag(ax, _fx(rad - 1.0, bounds), _fz(D["z_pad_out"] - 5.2, bounds), "ASA-CF pad", fs)
     _tag(ax, _fx(rad - 2.0, bounds), _fz(22.0, bounds), "M3 screw", fs)
     # faceplate front → PCB front
     xd = _fx(t * 0.18, bounds)
@@ -225,7 +225,7 @@ def _annotate_section(ax, D, bounds, fs):
                 arrowprops=dict(arrowstyle="<->", color="#111", lw=1.4))
     _tag(ax, xd + 0.055, _fz(D["z_fp1"] * 0.62, bounds), f"{D['fp_to_pcb']:.2f} mm\nfaceplate to PCB", fs)
     _tag(ax, _fx(rad - 12.0, bounds), _fz(D["z_pcb_back"] - 2.4, bounds),
-         f"{D['cover_skin']:.2f} mm PETG\nunder the head", fs)
+         f"{D['cover_skin']:.2f} mm ASA-CF\nunder the head", fs)
     _tag(ax, 0.50, 0.97,
          f"knob_proud {D['knob_proud']:.2f} mm  →  plate {D['z_fp1']:.2f} mm", fs)
 
@@ -278,7 +278,7 @@ def _compose_preview(section, plan, iso, out, D, bounds, footer):
     ax3.set_title("ISOMETRIC", loc="left", fontsize=fs, fontweight="bold")
     ax3.set_axis_off()
     handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
-               Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
+               Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, ASA-CF (black)"),
                Patch(facecolor=(0.12, 0.42, 0.22), label="PCB"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head"),
                Patch(facecolor=(0.25, 0.75, 0.95), label="TFT light path (air, keep-out)")]
@@ -308,7 +308,7 @@ def _compose(paths, titles, out, D, footer):
         for sp in ax.spines.values():
             sp.set_visible(False)
     handles = [Patch(facecolor=tuple(c / 255 for c in D["resin_rgb"]), label="shell, plain clear resin"),
-               Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, smoky PETG"),
+               Patch(facecolor=tuple(c / 255 for c in D["cover_rgb"]), label="back cover, ASA-CF (black)"),
                Patch(facecolor=tuple(c / 255 for c in D["glow_rgb"]), label="Shimicoat glow coat, inside walls"),
                Patch(facecolor=(0.72, 0.74, 0.78), label="ISO 4762 M3×10 socket head, A2")]
     fig.legend(handles=handles, loc="lower left", ncol=2, fontsize=9, frameon=False,
@@ -330,21 +330,21 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     case = parts["case"]
     glow = parts["glow coat (inside walls)"]
     beam = beam_solid(D) if D["scanner_enabled"] else None
-    show = [("case", case), ("glow", glow), ("back cover", parts["back cover (PETG)"]),
+    show = [("case", case), ("glow", glow), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
             ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
             ("back TFT module", parts.get("back TFT module (placeholder)")),
             ("corner screw 1", parts["corner screw 1"])]
     if beam is not None:
         show.append(("beam", beam))
     if not preview:
-        show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (PETG)", "corner screw 1")]
-    clean = [("case", case), ("back cover", parts["back cover (PETG)"]), ("glow", glow)]
+        show += [(n, parts[n]) for n in parts if n not in ("case", "glow coat (inside walls)", "back cover (ASA-CF)", "corner screw 1")]
+    clean = [("case", case), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))), ("glow", glow)]
     paths = []
     shots = []
-    joint = [("case", case), ("back cover", parts["back cover (PETG)"]),
+    joint = [("case", case), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
              ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"]),
              ("back TFT window", parts["back TFT window"])]
-    plan_show = [("case", case), ("back cover", parts["back cover (PETG)"]),
+    plan_show = [("case", case), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
                  ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
                  ("corner screw 1", parts["corner screw 1"])]
     if preview:
@@ -411,7 +411,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
               f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}    "
               f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}\n"
               f"bosses {bosses}\n"
-              f"PETG under the head {D['cover_skin']:.2f} mm    "
+              f"ASA-CF under the head {D['cover_skin']:.2f} mm    "
               f"PCB {D['pcb_max_w']:.2f} mm    wall {D['wall']:.2f}    "
               f"scanner parked    checks {nt - nf}/{nt}    clashes {nc}")
     sheet = os.path.join(out, f"case-{rev}-preview.png" if preview else f"case-{rev}.png")
@@ -428,7 +428,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
                 ("q1", "QUARTER CUT  (−X −Y kept)", "quarter-scan", "iso"),
                 ("q2", "QUARTER CUT  (+X −Y kept)", "quarter-front", "iso2")):
             shapes = [("case", _cut(case, kind)), ("glow", _cut(glow, kind)),
-                      ("back cover", _cut(parts["back cover (PETG)"], kind))]
+                      ("back cover", _cut(next(v for k, v in parts.items() if k.startswith("back cover")), kind))]
             if beam is not None:
                 shapes.append(("beam", _cut(beam, kind)))
             items = _items(D, shapes, tol)
@@ -442,7 +442,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     if export:
         from build123d import export_step, export_stl
         paths += export_case(case, D, out)
-        cover = parts["back cover (PETG)"]
+        cover = next(v for k, v in parts.items() if k.startswith("back cover"))
         cstep = os.path.join(out, f"case-{rev}-cover.step")
         cstl = os.path.join(out, f"case-{rev}-cover.stl")
         export_step(cover, cstep)
