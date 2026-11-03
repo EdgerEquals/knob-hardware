@@ -22,6 +22,18 @@ P = dict(
     cap_shape="cone",   # [Ed 2 Nov] v0.21: cap top and underside are straight cones parallel to the dial ("dished": v0.20)
     cap_cone_t=3.5,   # [Ed 13:44] cap wall (normal) under the cone; underside flat at the hub-gear top until the cone rises off it
     cap_web_rim=1.5,   # [A] web thickness at the dial cup wall (2.2 at the hub gear); the flare out to the plug keeps it
+    # ---- v0.25 [Ed 3 Nov 19:00-19:10]: the hub gear is a separate PA-12 (MJF) ring glued into the upper cap, which is now clear
+    # resin. The ring runs on the dial tube (its bore is the knob bore) and carries a keyed collar up into a pocket in the cap's
+    # underside; the keys take the torque, the glue holds it in. ----
+    cap_proc="sla",   # [Ed 19:00 "that needs to be clear"] upper-cap process: UTR-8100 clear resin (PCBWay offers no WaterShed XC [S 3 Nov])
+    hg_collar_h=1.0,   # [A] collar length up into the cap (bond length); keeps the resin over it 1.09 (SLA wall 0.8)
+    hg_collar_over=0.10,   # [A] collar radius past the hub-gear tips (a flange over the teeth: the ring goes in from below)
+    hg_keys=6,   # [A] keys on the collar OD
+    hg_key_w=1.0,   # [A] key width (tangential)
+    hg_key_h=0.6,   # [A] key height (radial)
+    hg_glue=0.10,   # [A] radial bond line round the collar and keys (epoxy; MJF surface)
+    hg_glue_ax=0.05,   # [A] axial bond line on the collar top
+    utr_uts=41.56,   # [S] UTR-8100 tensile strength, MPa (PCBWay material page, 3 Nov 2026); flexural 75.95, HDT 50-52 °C
 )
 
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
@@ -40,8 +52,8 @@ def derive(D):
     D["hb_mid"] = D["h_skirt0"] + D["bot_face"] / 2          # apex the two ring halves and the pinions share
     D["ring_root_d"] = 2 * D["hb_root_r"]
     D["ring_wall"] = D["cap_r"] - D["hb_root_r"]
-    D["d_hg_root"] = (D["z_hub_gear"] - 2 * D["spur_dedendum"]) * D["hub_mod"]
-    D["d_hg_tip"] = (D["z_hub_gear"] + 2 * D["spur_addendum"]) * D["hub_mod"]
+    D["d_hg_root"] = 2 * D["hub_gear_root_r"]          # v0.25: profile-shifted (interface hub_x_gear)
+    D["d_hg_tip"] = 2 * D["hub_gear_tip_r"]
     D["h_bi1"] = D["h_skirt0"] + D["bot_face"]
     D["sleeve_z0"] = D["h_bi1"]
     D["z_knob_top"] = D["z_lip0"] - D["knob_run"]
@@ -104,4 +116,25 @@ def derive(D):
             t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
             return math.hypot(px - ax - t * dx, py - ay - t * dy)
         D["cap_neck"] = min(_seg((D["d_hg_root"] / 2, D["h_band1"]), top[i], top[i + 1]) for i in range(3))
+        # v0.25: the hub gear is a PA-12 ring; its keyed collar sits in a pocket in the clear cap's underside
+        D["hg_collar_r"] = D["hub_gear_tip_r"] + D["hg_collar_over"]
+        D["hg_z1"] = D["h_band1"] + D["hg_collar_h"]                            # ring top (collar top)
+        D["hg_pocket_r"] = D["hg_collar_r"] + D["hg_glue"]
+        D["hg_slot_r"] = D["hg_collar_r"] + D["hg_key_h"] + D["hg_glue"]
+        D["hg_pocket_z1"] = D["hg_z1"] + D["hg_glue_ax"]
+        D["hg_resin_over"] = D["knob_hub_top"] - D["hg_pocket_z1"]              # clear disc over the collar
+        corner = (D["hg_slot_r"], D["hg_pocket_z1"])
+        D["hg_resin_top"] = min(_seg(corner, top[i], top[i + 1]) for i in range(3))
+        gr, gz = D["kb_seat_c_knob"]
+        D["hg_resin_groove"] = math.hypot(corner[0] - gr, corner[1] - gz) - D["kb_seat_r"]
+        # cap section just outside the pocket, from the underside up to the top (the torque path out of the keys)
+        D["hg_neck"] = min(_seg((D["hg_slot_r"], D["h_band1"]), top[i], top[i + 1]) for i in range(3))
+        # key bearing at the joint design torque: the 1220 at its limit, times the ratio, times the static SF
+        D["hg_T_joint"] = D["hub_i_limit"] * D["ratio_knob_motor"] * D["sf_static"]
+        r_mid = D["hg_collar_r"] + D["hg_key_h"] / 2
+        D["hg_key_F"] = D["hg_T_joint"] / (D["hg_keys"] * r_mid)               # N per key
+        D["hg_key_bearing"] = D["hg_key_F"] / (D["hg_key_h"] * D["hg_collar_h"])
+        D["hg_key_shear"] = D["hg_key_F"] / (D["hg_key_w"] * D["hg_collar_h"])
+        r0, r1 = D["r_knob_bore"], D["hg_collar_r"]
+        D["hg_bond_area"] = 2 * math.pi * r1 * D["hg_collar_h"] + math.pi * (r1 * r1 - r0 * r0)
     return D

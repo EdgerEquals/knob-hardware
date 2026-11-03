@@ -1,4 +1,6 @@
-"""Big knob: borosilicate sleeve, printed caps glued on the bore, hub gear, 45 deg race, bottom ring."""
+"""Big knob: borosilicate sleeve, printed caps glued on the bore, hub gear, 45 deg race, bottom ring.
+v0.25 [Ed 3 Nov 19:00-19:10]: the upper cap is clear resin; the hub gear is a separate PA-12 ring glued into it; the bottom
+internal ring is straight (spur) and one piece."""
 import math
 from build123d import *
 from ...common import util
@@ -24,6 +26,10 @@ def profile(D):
         # v0.21 [Ed 2 Nov]: no steps. Hub, flat underside over the pinion, one straight cone up to the plug in the bore, the 45° seat
         # on the glass's inner chamfer, a flat ring flush with the glass top, one straight cone (parallel) down to the race, hub top.
         rk = D["r_knob_bore"]; z1 = D["sleeve_z1"]
+        if "hg_collar_r" in D:   # v0.25: the hub (gear, hub wall) is the separate PA-12 ring; the clear cap starts at its top
+            return [(rk, D["h_band1"]), (D["cap_flat_r1"], D["h_band1"]), (sp, D["cap_plug_z0"]),
+                    (sp, D["cap_seat_z_foot"]), (D["cap_seat_r_top"], z1), (D["cap_cone_r1"], z1),
+                    (D["cap_cone_r0"], D["z_under_web"]), (D["r_chamfer0"], zt), (rk, zt)]
         return [(rk, z0), (rh, z0), (rh, D["h_band1"]), (D["cap_flat_r1"], D["h_band1"]), (sp, D["cap_plug_z0"]),
                 (sp, D["cap_seat_z_foot"]), (D["cap_seat_r_top"], z1), (D["cap_cone_r1"], z1),
                 (D["cap_cone_r0"], D["z_under_web"]), (D["r_chamfer0"], zt), (rk, zt)]
@@ -87,13 +93,44 @@ def race_cut(D):
     return rev([(0, z0 - 0.5), (D["kb_r_lo"], z0 - 0.5), (D["kb_r_lo"], D["kb_zk0"]), (D["kb_r_up"], D["kb_zk1"]),
                 (D["kb_r_up"], zt + 0.5), (0, zt + 0.5)])
 
+def hub_teeth(D):
+    """1220 hub gear teeth (profile-shifted, interface hub_x_gear), turned so a space faces the pinion on +X."""
+    zh, fh, m, x = D["knob_hub_z0"], D["hub_gear_face"], D["hub_mod"], D["hub_x_gear"]
+    dth = 2 * x * m * math.tan(math.radians(D["pressure"])) - D["brass_backlash"] / 2
+    return Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_pinion"])) * ext_gear(
+        D, D["z_hub_gear"], zh, fh, module=m, dthick=dth,
+        addendum=D["spur_addendum"] + x, dedendum=D["spur_dedendum"] - x)
+
+def _keys(D, r0, r1, w, z0, h):
+    n = D["hg_keys"]
+    return [Rot(0, 0, 360.0 * k / n + 180.0 / n) * Pos((r0 + r1) / 2, 0, z0) * Box(r1 - r0, w, h, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            for k in range(n)]
+
+def hub_gear_ring(D):
+    """v0.25 [Ed 19:00-19:10]: PA-12 (MJF) ring. Teeth z knob_hub_z0..h_band1; bore = the knob's running bore on the dial tube;
+    a collar (r hg_collar_r) with hg_keys keys up into the cap's pocket. Keys between teeth angles (off the +X space)."""
+    zh, z1, rk = D["knob_hub_z0"], D["hg_z1"], D["r_knob_bore"]
+    ring = hub_teeth(D) + cyl(D["hg_collar_r"], D["h_band1"], z1 - D["h_band1"])
+    for k in _keys(D, D["hg_collar_r"] - 0.05, D["hg_collar_r"] + D["hg_key_h"], D["hg_key_w"], D["h_band1"], z1 - D["h_band1"]):
+        ring += k
+    return ring - cyl(rk, zh - 0.1, z1 - zh + 0.2)
+
+def cap_pocket(D):
+    """Pocket in the clear cap's underside for the ring's collar and keys (bond lines hg_glue / hg_glue_ax)."""
+    z0, z1, g = D["h_band1"] - 0.05, D["hg_pocket_z1"], D["hg_glue"]
+    p = cyl(D["hg_pocket_r"], z0, z1 - z0)
+    for k in _keys(D, D["hg_collar_r"] - 0.05, D["hg_slot_r"], D["hg_key_w"] + 2 * g, z0, z1 - z0):
+        p += k
+    return p
+
 def build(D):
-    zh, fh = D["knob_hub_z0"], D["hub_gear_face"]
-    teeth = Rot(0, 0, ext_phase(D["z_hub_gear"], D["z_pinion"])) * ext_gear(
-        D, D["z_hub_gear"], zh, fh, module=D["hub_mod"], dthick=-D["brass_backlash"] / 2,
-        addendum=D["spur_addendum"], dedendum=D["spur_dedendum"])
-    teeth -= cyl(D["d_hg_root"] / 2 - 0.02, zh, fh)
-    body = rev(profile(D)) + teeth
+    split_hub = "hg_collar_r" in D   # v0.25: separate PA-12 hub-gear ring in a clear cap
+    if split_hub:
+        body = rev(profile(D)) - cap_pocket(D)
+    else:
+        zh, fh = D["knob_hub_z0"], D["hub_gear_face"]
+        teeth = hub_teeth(D) - cyl(D["d_hg_root"] / 2 - 0.02, zh, fh)
+        body = rev(profile(D)) + teeth
     if D["kb_race"] == "chamfer":   # ball track groove in the chamfer (torus, R kb_seat_r, centre on the 45° line)
         cr, cz = D["kb_seat_c_knob"]; body -= Pos(0, 0, cz) * Torus(cr, D["kb_seat_r"])
     else:
@@ -107,13 +144,17 @@ def build(D):
     h0, h = D["h_skirt0"], D["bot_face"]
     mid, gap = D["hb_mid"], D["hb_gap"]
     def _half(z0, z1):
-        return cyl(D["sleeve_nylon_r"], z0, z1 - z0) - int_herringbone_half(D, D["z_ring"], z0, z1, mid)
+        return cyl(D["sleeve_nylon_r"], z0, z1 - z0) - int_herringbone_half(D, D["z_ring"], z0 - 0.01, z1 + 0.01, mid)
     seat = D["cap_seat_gap"]
     z_top = h0 + h - seat                         # the glass sits this far above the printed cap
-    lower = _half(h0, mid - gap / 2)
-    upper = _half(mid + gap / 2, z_top)
     groove = Pos(0, 0, D["ot_z"]) * Torus(D["ot_r"], D["ot_rg"])
-    lower -= groove
+    if D["hb_split"]:   # v0.18-v0.24 herringbone: two halves, gap at the apex
+        lower = _half(h0, mid - gap / 2)
+        upper = _half(mid + gap / 2, z_top)
+        lower -= groove
+    else:               # v0.25 [Ed 19:00]: straight teeth, one piece
+        lower = None
+        upper = _half(h0, z_top)
     upper -= groove
     # Locating plug on the nylon, same radius as the upper cap. The clear land is the race and the light path.
     upper += cyl(D["sleeve_spigot_r"], z_top, D["sleeve_insert"] + seat) - cyl(D["sleeve_lip_r"], z_top - 0.02, D["sleeve_insert"] + seat + 0.04)
@@ -124,9 +165,12 @@ def build(D):
     seal = seal_ring(D)
     out = {"knob upper-cap": body,
            "knob glass sleeve": glass_sleeve(D),
-           "bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper,
+           **({"bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper} if D["hb_split"]
+              else {"bottom internal ring": upper}),
            "knob lower-cap land": land,
            f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
+    if split_hub:
+        out["knob hub gear ring (PA-12, glued in the upper cap)"] = hub_gear_ring(D)
     if seal is not None:
         out[f"knob drip O-ring {D['seal_oring'][0]:g}x{D['seal_oring'][1]:g} silicone (on the glass)" if D.get("seal_type") == "oring"
             else "knob seal ring (PETG, bonded on the glass)"] = seal

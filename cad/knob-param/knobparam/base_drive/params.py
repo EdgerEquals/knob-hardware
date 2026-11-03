@@ -4,7 +4,7 @@ import math
 
 P = dict(
     # ---- 1220 motor [M] ----
-    motor_pinion_face=3.0,   # [A]
+    motor_pinion_face=4.4,   # [Ed 19:10] printed PA-12 12T m0.75 pinion, z 39.1-43.5 on the 5.5 shaft (0.5 under the cap); v0.24 3.0
     motor_bore_clear=0.05,   # [A]
     # ---- brass tube, rod ----
     brass_od=5.0,   # [S]/[A]

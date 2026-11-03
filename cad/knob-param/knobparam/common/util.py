@@ -26,22 +26,23 @@ def gear_pts(z, m, add, ded, dthick, alpha_deg=20.0, n=7):
 def gear_solid(pts, z0, h):
     f = Face(Wire.make_polygon([Vector(x, y, z0) for x, y in pts], close=True))
     return extrude(f, h)
-def tooth_tip(z, mn, alpha_deg, backlash=0.0, addendum=HA, beta_deg=0.0):
+def tooth_tip(z, mn, alpha_deg, backlash=0.0, addendum=HA, beta_deg=0.0, x=0.0):
     """Transverse tip thickness (mm). `mn` is the normal module (the spur module when beta is 0).
-    `backlash` is removed from this tooth's pitch thickness only."""
+    `backlash` is removed from this tooth's pitch thickness only. v0.25: `x` is the profile shift (modules): the tip
+    radius grows by x*mn and the pitch thickness by 2*x*mn*tan(alpha); `addendum` is the unshifted addendum."""
     b = math.radians(beta_deg); an = math.radians(alpha_deg)
     mt = mn / math.cos(b) if beta_deg else mn
     at = math.atan(math.tan(an) / math.cos(b)) if beta_deg else an
-    rp = z * mt / 2; rb = rp * math.cos(at); ra = rp + addendum * mn
+    rp = z * mt / 2; rb = rp * math.cos(at); ra = rp + (addendum + x) * mn
     if ra <= rb or rp <= 0: return 0.0
     aa = math.acos(min(0.999999, rb / ra))
-    tp = math.pi * mt / 2 - backlash
+    tp = math.pi * mt / 2 + 2 * x * mn * math.tan(an) - backlash
     return ra * (tp / rp + 2 * (_inv(at) - _inv(aa)))
 def _transverse(z, mn, beta, alpha, add_k, ded_k, dthick):
-    """Transverse involute outline. mn is the normal module; centre distance uses mt = mn/cos(beta)."""
+    """Transverse involute outline. mn is the normal module; centre distance uses mt = mn/cos(beta) (= mn for a spur)."""
     b = math.radians(beta)
     mt = mn / math.cos(b)
-    at = math.degrees(math.atan(math.tan(math.radians(alpha)) / math.cos(b)))
+    at = math.degrees(math.atan(math.tan(math.radians(alpha)) / math.cos(b))) if beta else alpha
     return gear_pts(z, mt, add_k * mn, ded_k * mn, dthick, at), mt
 def _face_at(pts, z, phi):
     c, s = math.cos(phi), math.sin(phi)
@@ -60,15 +61,21 @@ def ext_gear(D, z, z0, h, module=None, pressure=None, dthick=None, addendum=HA, 
     if dthick is None: dthick = -D["backlash"] / 2
     return gear_solid(gear_pts(z, m, addendum * m, dedendum * m, dthick, pa), z0, h)
 def ext_herringbone(D, z, z0, h, mid):
-    """Printed external herringbone. Apex on the plane z = mid, shared with the split ring."""
+    """Printed external ring-stage pinion. Apex on the plane z = mid, shared with the split ring.
+    v0.25 [Ed 3 Nov 19:00]: hb_beta 0 is the straight (spur) ring stage: a plain extrusion (the hb_ names are kept)."""
     mn, beta, pa = D["hb_mn"], D["hb_beta"], D["hb_pressure"]
     pts, mt = _transverse(z, mn, beta, pa, D["hb_addendum"], D["hb_dedendum"], -D["hb_backlash"] / 2)
+    if not beta:
+        return gear_solid(pts, z0, h)
     rp = z * mt / 2
     return _helix(pts, z0, mid, rp, beta, mid) + _helix(pts, mid, z0 + h, rp, beta, mid)
 def int_herringbone_half(D, z, z0, z1, mid):
-    """Tooth-space cutter for one axial half of the internal ring (same hand as the pinion half it meets)."""
+    """Tooth-space cutter for one axial half of the internal ring (same hand as the pinion half it meets).
+    v0.25: with hb_beta 0 it is the straight cutter for the one-piece spur ring over z0..z1."""
     mn, beta, pa = D["hb_mn"], D["hb_beta"], D["hb_pressure"]
     pts, mt = _transverse(z, mn, beta, pa, D["hb_dedendum"], D["hb_addendum"], +D["hb_backlash"] / 2)
+    if not beta:
+        return gear_solid(pts, z0, z1 - z0)
     return _helix(pts, z0, z1, z * mt / 2, beta, mid)
 def rev(pts):
     return revolve(Face(Wire.make_polygon([Vector(r, 0, z) for r, z in pts], close=True)), Axis.Z, 360)

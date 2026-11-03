@@ -51,15 +51,22 @@ def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
     r.row("motor pinion tip vs skirt ID (radial)", D["skirt_id"] / 2 - D["offset"] - D["hub_pin_tip_r"], 1.0,
-          f"nylon {D['z_pinion']}T m{D['hub_mod']:.1f} (RW tooth form) / {D['z_hub_gear']}T hub, ratio {D['ratio_knob_motor']:.3f}, mesh {D['hub_cd']:.2f} vs motor {D['offset']:.2f}")
+          f"PA-12 {D['z_pinion']}T m{D['hub_mod']:g} x {D['hub_x_pin']:+.2f} / {D['z_hub_gear']}T hub x {D['hub_x_gear']:+.3f}, ratio "
+          f"{D['ratio_knob_motor']:.3f}, cut for {D['hub_cd']:.2f} (standard {D['hub_cd_std']:.3f}) vs motor {D['offset']:.2f}")
     r.row("hub mesh vs the KiCad motor axis (mm)", abs(D["hub_cd_err"]), 0.15,
           "negative err is a tight mesh; 0.05 mm is inside the 0.10 printed backlash", higher_ok=False)
-    r.row("herringbone pinion teeth inside the ring", D["z_enc_pinion"], D["hb_z_min"],
-          f"25° helix, virtual teeth {D['hb_virtual']:.1f} (classical 20° undercut wants ~17); mn {D['hb_mn']:.2f}, ring {D['z_ring']}T")
-    r.row("herringbone pinion tip thickness vs MJF tooth floor", D["hb_tip_th"], D["hb_tooth_min"],
-          f"stub addendum {D['hb_addendum']:.2f}, backlash {D['hb_backlash']:.2f} shared")
+    r.row("printed 1220 pinion tooth tip vs the MJF tooth floor", D["hub_pin_tip_th"], D["hb_tooth_min"],
+          f"{D['z_pinion']}T m{D['hub_mod']:g} x {D['hub_x_pin']:+.2f}, face {D['motor_pinion_face']:g} (z {D['h_pinion0']:.2f}-{D['h_shaft_tip']:.2f} "
+          f"on the {D['motor']['shaft_len']:g} shaft) [Ed 19:10]")
+    form = "spur" if not D["hb_beta"] else f"{D['hb_beta']:g}° helix"
+    r.row("ring-stage pinion teeth inside the ring", D["z_enc_pinion"], D["hb_z_min"],
+          f"{form}, "
+          f"virtual teeth {D['hb_virtual']:.1f} (classical 20° undercut wants ~17; printed, not generated); m {D['hb_mn']:.2f}, ring {D['z_ring']}T")
+    r.row("ring-stage pinion tip thickness vs MJF tooth floor", D["hb_tip_th"], D["hb_tooth_min"],
+          f"{D['z_enc_pinion']}T m{D['hb_mn']:.2f}, stub addendum {D['hb_addendum']:.2f}, backlash {D['hb_backlash']:.2f} shared; "
+          f"smallest module on the {D['hb_mn_step']:g} grid that keeps it [Ed 19:06]")
     note = (f"{D['fg_pinion']['part']} {D['fg_z_pin']}T × {D['fg_z_gear']}T on the {D['fg_ang']:.0f}° idler, "
-            f"then {D['z_enc_pinion']}T into the {D['z_ring']}T herringbone, overall {D['fm_ratio']:.2f}:1, "
+            f"then {D['z_enc_pinion']}T into the {D['z_ring']}T ring, overall {D['fm_ratio']:.2f}:1, "
             f"can at {D['fm_ang']:.1f}°; knob Ø{D['knob_od']:.2f}; "
             + ", ".join(f"{k} {v:.2f}" for k, v in sorted(D["fm_clear"].items(), key=lambda kv: kv[1])))
     r.row("feel placement (worst plan clearance)", min(D["fm_clear"].values()), F["clear"], note)

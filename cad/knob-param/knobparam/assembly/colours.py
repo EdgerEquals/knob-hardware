@@ -15,7 +15,7 @@ MATERIALS = {
     "pa12":    ("PA-12, MJF (natural grey)", "#6e7377", False),
     "petg":    ("PETG, opaque (seal ring)", "#2b3035", False),
     "asacf":   ("ASA-CF, black (back cover, screen pad)", "#1f2124", False),
-    "nylon":   ("nylon pinion (natural)", "#e8e1cf", False),
+    "nylon":   ("nylon pinion (natural)", "#e8e1cf", False),   # v0.25: no part uses it (every gear is printed PA-12)
     "steel":   ("stainless steel: screws, shafts, balls, springs, bearings, USB-C shell", "#a9b0b6", False),
     "brass":   ("brass: tube, inserts, standoffs; ENIG pad", "#c9a227", False),
     "magnet":  ("N52 magnets, nickel-plated", "#c3c8cd", False),
@@ -41,6 +41,8 @@ def key(name):
     low = n.lower()
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if low.startswith("dial bezel"): return "bezel"                                    # v0.24 bezel cartridge
+    if low.startswith("knob hub gear ring"): return "pa12"                             # v0.25 PA-12 ring glued in the clear cap
+    if low.startswith("knob upper-cap"): return "clear"                                # v0.25 [Ed 19:00] clear resin (v0.24 PA-12)
     if low.startswith("dial screen z132a2441 lens"): return "lens"
     if low.startswith("dial screen z132a2441 flex"): return "flex"
     if low.startswith("dial screen z132a2441 plug"): return "ic"

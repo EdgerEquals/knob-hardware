@@ -5,13 +5,17 @@ from ..common.process import stack
 def checks(D, parts):
     T = D["tgt"]; r = Rows("main_knob")
     if D["kb_race"] == "chamfer":
-        r.row("knob hub wall (hub-gear root over the bore)", D["race_wall"], T["race_wall"], f"bore Ø{2 * D['r_knob_bore']:.2f} on the Ø{2 * D['kb_rt']:.2f} dial tube")
+        r.row("knob hub wall (hub-gear root over the bore)", D["race_wall"], T["race_wall"],
+              f"bore Ø{2 * D['r_knob_bore']:.2f} on the Ø{2 * D['kb_rt']:.2f} dial tube; root Ø{D['d_hg_root']:.2f} "
+              f"(m{D['hub_mod']:g} {D['z_hub_gear']}T, x {D['hub_x_gear']:+.3f}); v0.25 all PA-12 (the hub-gear ring)")
     else:
         r.row("knob race wall (hub-gear root over the cone)", D["race_wall"], T["race_wall"])
     r.row(f"knob ring wall ({D['z_ring']}T root to the cap)", D["ring_wall"], D["hb_wall_min"],
-          f"cap skin r {D['cap_r']:.2f}; glass is the outer wall; herringbone mn {D['hb_mn']:.2f}")
-    r.row("printed hub-gear tooth tip vs MJF short-feature floor", D["hub_tip_th"], D["spur_tooth_min"],
-          f"m{D['hub_mod']:.1f} {D['z_hub_gear']}T stub {D['spur_addendum']:.2f}, backlash {D['brass_backlash']:.2f}; preferred tooth {D['hb_tooth_min']:.2f}")
+          f"cap skin r {D['cap_r']:.2f}; glass is the outer wall; {'spur' if not D['hb_beta'] else 'herringbone'} m{D['hb_mn']:.2f}, "
+          f"{'one piece' if not D['hb_split'] else 'two halves'}")
+    r.row("printed hub-gear tooth tip vs the MJF tooth floor", D["hub_tip_th"], D["hb_tooth_min"],
+          f"m{D['hub_mod']:g} {D['z_hub_gear']}T x {D['hub_x_gear']:+.3f}, stub {D['spur_addendum']:.2f}, backlash {D['brass_backlash']:.2f}; "
+          f"v0.25 floor = the ring stage's {D['hb_tooth_min']:.2f} [Ed 19:06] (was the {D['spur_tooth_min']:.2f} short-feature floor)")
     r.row("cone balls chord play", D["kb_gap"], D["kb_play"], f"{D['kb_n']} × Ø{D['kb_ball_d']:g} on PCD {D['kb_pcd']:.2f}")
     r.row("borosilicate wall, at least the bought minimum", D["sleeve_wall"], D["sleeve_wall_lo"],
           f"nominal {D['sleeve_wall']:.2f} inside {D['sleeve_wall_lo']:.1f}–{D['sleeve_wall_hi']:.1f}; ID Ø{D['sleeve_id']:.2f}")
@@ -48,10 +52,27 @@ def checks(D, parts):
     r.row("cap engagement leaves an open bore between the plugs", D["sleeve_len"] - 2 * D["sleeve_insert"], D["sleeve_insert"])
     if D["glass_to_dial"]:
         from ..common.process import PROCESS
-        if "cap_neck" in D:   # v0.21 cone cap [Ed 2 Nov]
+        if "hg_collar_r" in D:   # v0.25 [Ed 19:00-19:10]: PA-12 hub-gear ring glued into a clear cap
+            sla = PROCESS[D["cap_proc"]]["wall"]
+            r.row("upper cap (clear): neck outside the hub-gear pocket (underside to the cap top)", D["hg_neck"], 1.5,
+                  f"the torque path out of the keys; pocket r {D['hg_pocket_r']:.2f} (slots r {D['hg_slot_r']:.2f}), flat underside z "
+                  f"{D['h_band1']:.2f}, flat top z {D['knob_hub_top']:.2f}; v0.24 neck (PA-12, at the hub-gear root) {D['cap_neck']:.2f}")
+            r.row("upper cap (clear): resin over the hub-gear collar vs the SLA wall", D["hg_resin_over"], sla,
+                  f"pocket top z {D['hg_pocket_z1']:.2f} (collar {D['hg_collar_h']:g} + bond {D['hg_glue_ax']:g}), cap top z {D['knob_hub_top']:.2f}; "
+                  f"{D['cap_proc'].upper()} wall {sla:g}")
+            r.row("upper cap (clear): resin from the pocket corner to the cap top / race groove", min(D["hg_resin_top"], D["hg_resin_groove"]), sla,
+                  f"to the top {D['hg_resin_top']:.2f}, to the Ø{2 * D['kb_seat_r']:g} ball groove {D['hg_resin_groove']:.2f}")
+            r.row("hub-gear ring: key bearing stress at the joint design torque vs UTR-8100 (MPa)", D["hg_key_bearing"], D["utr_uts"],
+                  f"{D['hg_keys']} keys {D['hg_key_w']:g} × {D['hg_key_h']:g} × {D['hg_collar_h']:g} on the Ø{2 * D['hg_collar_r']:.2f} collar; "
+                  f"{D['hg_T_joint']:.0f} mNm = the {D['hub_i_limit']:g} mNm limit × {D['ratio_knob_motor']:.3f} × SF {D['sf_static']:g}: "
+                  f"{D['hg_key_F']:.1f} N a key, key shear {D['hg_key_shear']:.1f} MPa (PA-12 {D['pa12_uts']:g}); resin tensile {D['utr_uts']:g} [S] "
+                  f"taken for bearing; glue {D['hg_glue']:g} radial / {D['hg_glue_ax']:g} axial over {D['hg_bond_area']:.0f} mm² (retention, not counted)",
+                  higher_ok=False)
+        if "cap_neck" in D and "hg_collar_r" not in D:   # v0.21 cone cap [Ed 2 Nov]
             r.row("upper cap: neck at the hub (hub-gear root corner to the cap top)", D["cap_neck"], 1.5,
                   f"was 0.70 in v0.20; race {D['kb_rc']:.2f} from the axis; flat top z {D['knob_hub_top']:.2f}, flat underside z {D['h_band1']:.2f}")
-            r.row("upper cap: cone wall (normal), parallel faces", D["cap_cone_t"], 2 * PROCESS["mjf"]["wall"],
+        if "cap_neck" in D:
+            r.row("upper cap: cone wall (normal), parallel faces", D["cap_cone_t"], 2 * PROCESS[D.get("cap_proc", "mjf")]["wall"],
                   f"{D['cone_deg']:g}° cone from r {D['cap_cone_r0']:.2f} to {D['cap_cone_r1']:.2f}; underside flat to r {D['cap_flat_r1']:.2f}")
             r.row("upper cap: running gap to the dial cone (normal)", D["cap_cone_run"], D["knob_run"] - 0.01,
                   "dial underside and cap top are parallel cones")

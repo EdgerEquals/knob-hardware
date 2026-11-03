@@ -37,10 +37,13 @@ RULES = [
     (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
     (r"O-ring", "buy", "silicone O-ring (metric)", "buy"),
     (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
-    (r"knob upper-cap", "print", "PA-12", "MJF"),     # v0.19b: carries the 1220 hub gear; was caught by the clear 'cap' rule
+    # v0.25 [Ed 3 Nov 19:00-19:12]: the hub gear is a PA-12 ring glued into a clear upper cap; the feel pinion is printed
+    (r"^knob hub gear ring", "print", "PA-12, glued into the clear upper cap (keyed collar)", "MJF"),
+    (r"knob upper-cap", "print", "UTR-8100 clear resin (PCBWay lists no WaterShed XC, 3 Nov) [Ed 19:00]", "SLA"),   # v0.19b-v0.24: PA-12 MJF (it carried the hub gear)
+    (r"^feel motor pinion (?!cap)", "print", "PA-12, printed 11T m0.5 [Ed 19:12 item 9]", "MJF"),
     (r"base cradle", "print", "UTR-8100 clear resin (clear race fused in)", "SLA"),   # the race land is the light path
     (r"train pedestal", "print", "UTR-8100 clear resin", "SLA"),   # v0.22b: before the hardware rule (its name says 'grub-set')
-    (r"nylon", "buy", "nylon pinion (Tempero 0.5M-12T)", "buy"),
+    (r"nylon", "print", "PA-12 (nylon 12)", "MJF"),   # v0.25 [Ed 19:12 item 9]: was "buy Tempero 0.5M-12T"; every gear is printed
     (r"anchor", "print", "PA-12", "MJF"),             # joystick rear spring anchor (printed), not a spring
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"^PCB$|^PCB back parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),

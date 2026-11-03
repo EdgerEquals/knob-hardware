@@ -217,6 +217,18 @@ def cross(D, parts):
             f"gap {D['tm_gap_min']:.2f}: {B['peak_lift']:.0f} mT", higher_ok=False)
     from ..common import gearcheck
     gearcheck.rows(D, row)          # contact ratio and backlash band; tooth counts are this stack's, not the old spur set
+    gearcheck.strength_rows(D, row)   # v0.25 [Ed 19:10]: Lewis allowables of the hub mesh and the ring stage (MJF PA-12)
+    pz0, pz1 = D["h_pinion0"], D["h_pinion0"] + D["motor_pinion_face"]
+    row("hub mesh: engaged face, 1220 pinion inside the hub-gear teeth (mm)", min(pz1, D["h_band1"]) - max(pz0, D["knob_hub_z0"]),
+        D["hub_face"] - 0.01, f"pinion z {pz0:.2f}-{pz1:.2f}, hub-gear teeth z {D['knob_hub_z0']:.2f}-{D['h_band1']:.2f} [Ed 19:10 face {D['hub_face']:g}]")
+    row("1220 pinion top under the clear cap and the hub-gear collar (axial gap)", D["h_band1"] - pz1, 0.3,
+        f"shaft tip z {D['h_shaft_tip']:.2f}; cap underside / collar bottom z {D['h_band1']:.2f}")
+    hg = [s for n, s in parts.items() if n.startswith("knob hub gear ring")]
+    if hg:
+        lo = [s for n, s in parts.items() if n == "motor"]
+        row("hub-gear ring vs the 1220 can and boss", min(hg[0].distance_to(q) for q in lo), 0.5,
+            f"teeth down to z {D['knob_hub_z0']:.2f} (v0.24 39.6); can top z {D['motor']['motor_len'] + D['motor']['gearbox_len']:.1f}, "
+            f"boss to z {D['h_motor_front']:.1f}")
     from .. import optics
     optics.beam_rows(D, parts, row)  # no-op while optics_on is False
     # v0.19 [Ed]: screen rule. Every part behind the PCB keeps screen_air (1.0) from both back AMOLEDs.

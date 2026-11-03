@@ -8,6 +8,7 @@ Sub-assemblies may READ every key of derive_interface() but never write one. Cha
 assembly agent only (see AGENTS.md)."""
 import math
 from ..common.util import tooth_tip
+from ..common import gearcheck
 
 P = dict(
     # ---- main PCB [K] ----
@@ -15,30 +16,51 @@ P = dict(
     axis_bx=25.25,   # [K] H1 = dial axis in board coords
     axis_by=52.9,   # [K] H1 = dial axis in board coords
     # ---- gears [Ed/A] ----
-    # v0.18: printed ring + encoder/idler pinions are 25° herringbone (module derived, coarsest that fits).
-    # Only the two motor shafts carry bought straight pinions, meshing straight printed gears.
+    # v0.18-v0.24: printed ring + encoder/idler pinions were a 25° herringbone. v0.25 [Ed 3 Nov 19:00-19:12]: every gear is
+    # straight and printed PA-12 (MJF): the ring stage (hb_*), the hub mesh (hub_*) and the feel stage (fg_*).
     module=0.5,   # [A] legacy spur module; the herringbone normal module (hb_mn) and hub_mod replace it. Kept so a --set still parses.
     pressure=20.0,   # [A] spur pressure angle (RW and Tempero catalogue pinions are 20°)
     backlash=0.1,   # [A] leftover spur default; herringbone uses hb_backlash, nylon spur meshes use brass_backlash (name kept)
     motor_offset=10.75,   # [Ed/K] dial axis to the 1220 motor axis (KiCad). The mesh centre distance is hub_cd.
     z_motor_pinion=12,   # unused in v0.18 (the pinion is the RW catalogue tooth count hub_z_pin)
     hub_gear_min=True,   # unused in v0.18; the hub tooth count is the one in hub_ratio closest to motor_offset
-    z_enc_pinion=14,   # overwritten: herringbone pinion tooth count (encoder, both idlers, the compound's small gear)
-    # ---- v0.18 printed herringbone [Ed] ----
-    hb_beta=25.0,   # [Ed] helix angle. The internal ring is split so the herringbone can be assembled.
+    z_enc_pinion=14,   # overwritten: ring-stage pinion tooth count (encoder, both idlers, the compound's small gear)
+    # ---- ring stage (internal ring, encoder pinion, both idlers, the compound's small gear). v0.18-v0.24: 25° herringbone.
+    # v0.25 [Ed 3 Nov 19:00-19:06]: straight (spur) teeth, ONE-PIECE ring ("definitely not split"), smallest teeth at the
+    # 0.5 tip floor. The hb_ names are kept (hb_beta 0 = spur; hb_mt = hb_mn) so the contract and the checks stay one set. ----
+    hb_beta=0.0,   # [Ed 19:00] helix angle: 0 = spur (v0.18-v0.24: 25° herringbone)
+    hb_split=False,   # [Ed 19:00] one-piece internal ring (True = the v0.24 two halves with hb_gap at the apex)
     hb_pressure=20.0,   # [A] normal pressure angle. 25° points a 12T tip under the MJF tooth floor; Ed's 12-tooth interference floor is hb_z_min.
     hb_addendum=0.80,   # [A] stub addendum (both printed members) so the pinion tip stays above hb_tooth_min after backlash
     hb_dedendum=1.25,   # [A] standard dedendum: root clearance for unsintered powder
     hb_backlash=0.10,   # [A] total circumferential play of the printed pair (each member takes half)
     hb_z_min=12,   # [Ed] minimum pinion teeth inside the ring (interference at 25° helix; classical spur undercut is ~17 virtual teeth)
-    hb_tooth_min=0.50,   # [A] MJF tooth-tip floor, mm (HP min wall 0.5; PCBWay general tolerance is ±0.25, which a gear tooth cannot absorb)
+    hb_tooth_min=0.50,   # [Ed 19:06] MJF tooth-tip floor after backlash, mm (HP min wall 0.5; PCBWay general tolerance is ±0.25, which a gear tooth cannot absorb)
     hb_wall_min=1.0,   # [A] ring wall outside the tooth root (recommended; the process floor is 0.5)
-    hb_gap=0.40,   # [A] axial split between the two ring halves (MJF parts that assemble want about this)
+    hb_gap=0.40,   # [A] axial split between the two ring halves (only with hb_split; v0.25 one piece)
+    hb_mn_step=0.05,   # [A] v0.25: ring-stage module grid = DIN 780 series (0.50, 0.55, 0.60, 0.65, ...); a 0.01 grid gives m0.64 56T, tips 0.507
+    hb_eps_min=1.2,   # [A] v0.25: effective contact ratio floor inside the search (the gearcheck row's floor)
     hb_ratio_target=15.6,   # [Ed] feel train, Tempero 12T × printed gear × (ring / pinion)
-    # ---- v0.18 bought pinions [Ed] ----
-    hub_mod=0.6,   # [Ed] RW pinion module. The printed hub gear matches it and is straight, not herringbone.
-    hub_z_pin=14,   # [Ed] RW0614, 3 mm bore. 15T (RW0615) is the other catalogue option; 14T is the one whose mesh sits on the KiCad motor.
+    # ---- hub mesh: 1220 pinion -> knob hub gear. v0.18-v0.24: RW m0.6 14T / 22T, pinion face 3.0.
+    # v0.25 [Ed 3 Nov 19:10]: straight, both printed PA-12 (MJF), module 0.75, 12T / 17T (1.417), face 4.4 on both. The hub
+    # gear is a separate PA-12 ring glued into the clear-resin upper cap (main_knob). ----
+    hub_mod=0.75,   # [Ed 19:10] module of the hub mesh (v0.24: 0.6, the RW catalogue form)
+    hub_z_pin=12,   # [Ed 19:10] printed 1220 pinion (v0.24: 14T)
+    hub_z_gear=17,   # [Ed 19:10] hub gear teeth; None = the v0.18 search (the count in hub_ratio whose mesh is closest to the motor)
     hub_ratio=(1.4, 1.6),   # [Ed] hub gear / pinion
+    hub_x_pin=0.0,   # [A] pinion profile shift (modules); the hub gear takes the rest of the shift that hub_cd_work needs
+    hub_cd_work=10.80,   # [A] working centre distance the pair is cut for: 0.05 over the KiCad axis (motor_offset), the v0.18-v0.24
+                         # tight-by-0.05 kept inside the 0.10 backlash. On the axis (10.75) the gear root wall drops to 1.01 and the
+                         # static allowable to 84 mNm (under hub_i_limit), so the coordinator's 10.80 stays
+    hub_face=4.4,   # [Ed 19:10] mesh face of both members (the pinion's whole face; the hub gear runs on 0.5 past it, see hub_gear_face)
+    # ---- v0.25 strength of the printed meshes (gearcheck.strength) ----
+    pa12_uts=43.0,   # [S] MJF PA-12 tensile, dumbbell (HP datasheet 48 MPa XY; 43 measured on dumbbells)
+    pa12_fat=19.1,   # [S] MJF PA-12 Smax at 1e6 cycles, V-notched, R 0.1 (Brescia, Int J Fatigue 2022)
+    fat_two_way=2.0 / 3.0,   # [S] KHK: reversed (two-way) gear-tooth loading takes 2/3 of the one-way allowable
+    sf_static=2.0,   # [A] static safety factor (peaks)
+    sf_fatigue=1.5,   # [A] fatigue safety factor (continuous)
+    hub_i_limit=85.0,   # [A, Ed 19:10 "~85 mNm"] 1220 driver hardware current limit, as torque at the gearbox output (mNm)
+    feel_burst_knob=8.0,   # [A] 716 feel-train burst torque at the knob (mNm; 2 Nov ballpark, case-decisions "Drive and motors")
     brass_backlash=0.10,   # [A] total pitch backlash of a nylon spur mesh, split half and half. Every gear is PA-12 [Ed].
     spur_addendum=0.80,   # [A] stub addendum on printed spur gears (hub, feel wheel) so the tip is as thick as this module allows
     spur_dedendum=1.25,   # [A] full dedendum; both members of a nylon spur mesh use the stub addendum
@@ -75,8 +97,9 @@ P = dict(
     lab_ring_t=0.60,    # [Ed] radial thickness of the ring
     lab_gap=0.25,       # [Ed] radial air, ring outside to the shoulder bore
     lab_overlap=0.70,   # [Ed] how far the shoulder overlaps the ring, axially
-    knob_hub_z0=39.6,   # [A] knob hub / hub-gear bottom
-    hub_gear_face=4.4,   # [A] hub gear face (pinion 3.0 inside it)
+    knob_hub_z0=39.1,   # [A] v0.25: hub-gear bottom = the 4.4 pinion's bottom (shaft tip 43.5 - 4.4); v0.24 39.6
+    hub_gear_face=4.9,   # [A] v0.25: hub-gear teeth z 39.1-44.0 = the 4.4 mesh face [Ed 19:10] + 0.5 over the pinion top (the cap's
+                         # running gap over the shaft tip). v0.24: 4.4 with the 3.0 pinion inside it
     # ---- knob top bearing: opposed 45 deg faces, ball track grooved into both [Ed] ----
     kb_race="chamfer",   # [Ed] v0.15c: balls on the 45° dial-gusset / knob-chamfer faces ("tube" = v0.15 cone race at the dial tube)
     kb_race_at=0.5,   # [Ed] ball circle at this fraction along the 45° face (0.5 = the middle)
@@ -226,12 +249,15 @@ P = dict(
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fm_keepout=[(172.0, 210.0, 6.5, 9.0)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
     fg_edge_x=22.45,   # [A] v0.19: panel |x| the compound gear tip may reach (cover side wall 22.75 - 0.3)
-    hb_mn_pref=0.60,   # [A] v0.19: keep the v0.18 herringbone module (the arm, cradle and caps are tuned to it); 0.55 broke the arm/cradle checks
+    hb_mn_pref=None,   # [Ed 19:06] v0.25: None = the smallest module (hb_mn_step grid) whose hb_z_min pinion keeps hb_tooth_min after
+                       # backlash. A number locks it (fallback 0.7 if the first prints round the tips). v0.19-v0.24: 0.60 (0.55 broke
+                       # the arm/cradle checks with the herringbone)
     fg_ratio_max=True,   # [Ed] 2 Nov: choose the herringbone module / tooth counts for the highest feel ratio (v0.18: closest to hb_ratio_target)
     fg_mod=0.5,   # [Ed] module of that mesh. The herringbone stage is separate.
     fg_z_pin=11,   # [Ed] 2 Nov rule "smallest pinion the gear check allows": 11T is the floor (eps_eff 1.22; 10T 1.15, 9T 1.08 fail).
-    fg_pinion=dict(part="nylon 0.5M-12T", vendor="printed PA-12", material="PA-12 MJF", bore=2.04, face=5.0, hub_d=0.0, hub_w=5.0, od=6.8,
-                   note="tooth form of the Tempero 0.5M-12T (was the brass reference). Stub addendum, press on the Ø2 shaft. Straight spur, 20°."),
+    fg_pinion=dict(part="PA-12 m0.5", vendor="printed PA-12", material="PA-12 MJF", bore=2.04, face=5.0, hub_d=0.0, hub_w=5.0, od=6.8,
+                   note="printed 11T m0.5 [Ed 19:12 item 9] (v0.18 took the Tempero 0.5M-12T tooth form; the part name said 12T until v0.25). "
+                        "Stub addendum, press on the Ø2 shaft. Straight spur, 20°."),
     fg_back_h=0.8,   # [K] tallest PCB-back part the big gear can sit over (U20 / C22)
     fg_clear=0.30,   # [A] big gear below those parts, and the encoder rim below the gear
     fg_hole=1.8,   # [A] PCB NPTH for the compound idler pin (Ø1.5 pin + clearance). KiCad still to add
@@ -342,26 +368,40 @@ def _hall_clear(D, x, y, rad):
 
 
 def _place_hub(D):
-    """RW m0.6 pinion, printed straight hub gear. Tooth count is the one inside hub_ratio whose mesh is closest to the KiCad motor."""
+    """Printed straight 1220 pinion and hub gear (v0.25 [Ed 19:10]: m0.75 12T / 17T, both PA-12). The pair is profile-shifted
+    so its working centre distance is hub_cd_work: the pinion takes hub_x_pin, the hub gear the rest. With hub_z_gear None the
+    tooth count is the v0.18 search (inside hub_ratio, the mesh closest to the KiCad motor)."""
     m, zp = D["hub_mod"], D["hub_z_pin"]
-    r_bore = D["dial_tube_id"] / 2 + D["dial_tube_wall"] + D["kb_clear"]
-    z_lo = int(math.ceil(2 * (r_bore + D["tgt"]["race_wall"]) / m + 2 * D["spur_dedendum"] - 1e-9))
     lo, hi = D["hub_ratio"]
-    best = None
-    for z in range(max(z_lo, int(math.ceil(lo * zp - 1e-9))), int(math.floor(hi * zp + 1e-9)) + 1):
-        cd = (z + zp) * m / 2
-        key = (abs(cd - D["motor_offset"]), abs(z / zp - 0.5 * (lo + hi)))
-        if best is None or key < best[0]:
-            best = (key, z, cd)
-    _, z, cd = best
+    if D["hub_z_gear"]:
+        z = D["hub_z_gear"]
+    else:
+        r_bore = D["dial_tube_id"] / 2 + D["dial_tube_wall"] + D["kb_clear"]
+        z_lo = int(math.ceil(2 * (r_bore + D["tgt"]["race_wall"]) / m + 2 * D["spur_dedendum"] - 1e-9))
+        best = None
+        for z in range(max(z_lo, int(math.ceil(lo * zp - 1e-9))), int(math.floor(hi * zp + 1e-9)) + 1):
+            cd = (z + zp) * m / 2
+            key = (abs(cd - D["motor_offset"]), abs(z / zp - 0.5 * (lo + hi)))
+            if best is None or key < best[0]:
+                best = (key, z, cd)
+        z = best[1]
+    cd = D["hub_cd_work"] if D["hub_cd_work"] else (z + zp) * m / 2
+    xs = gearcheck.shift_sum(zp, z, m, D["pressure"], cd)
+    D["hub_x_sum"] = xs
+    D["hub_x_gear"] = xs - D["hub_x_pin"]
+    D["hub_cd_std"] = (z + zp) * m / 2                # unshifted centre distance (10.875 for m0.75 12/17)
     D["z_pinion"] = zp
     D["z_hub_gear"] = z
     D["hub_cd"] = cd
     D["offset"] = D["motor_offset"]                 # the motor stays on the KiCad axis
     D["hub_cd_err"] = D["offset"] - cd              # negative: mesh is tight of the KiCad axis
     D["ratio_knob_motor"] = z / zp
-    D["hub_tip_th"] = tooth_tip(z, m, D["pressure"], D["brass_backlash"] / 2, D["spur_addendum"])
-    D["hub_pin_tip_r"] = zp * m / 2 + D["spur_addendum"] * m
+    half, ha = D["brass_backlash"] / 2, D["spur_addendum"]
+    D["hub_tip_th"] = tooth_tip(z, m, D["pressure"], half, ha, x=D["hub_x_gear"])
+    D["hub_pin_tip_th"] = tooth_tip(zp, m, D["pressure"], half, ha, x=D["hub_x_pin"])
+    D["hub_pin_tip_r"] = zp * m / 2 + (ha + D["hub_x_pin"]) * m
+    D["hub_gear_tip_r"] = z * m / 2 + (ha + D["hub_x_gear"]) * m
+    D["hub_gear_root_r"] = z * m / 2 - (D["spur_dedendum"] - D["hub_x_gear"]) * m
 
 
 def _motor_room(enc, ang, cd, tip_r, D):
@@ -379,9 +419,11 @@ def _motor_room(enc, ang, cd, tip_r, D):
 
 
 def _place_herringbone(D, R):
-    """Coarsest normal module whose 25° herringbone keeps the root-to-skin wall at least the main knob wall
-    (a bit thicker when the race seat allows), clears the 1220 by the cradle clearance, keeps hb_z_min teeth,
-    and whose feel train can reach hb_ratio_target. The outer radius R is the cap skin: the teeth move inward."""
+    """Ring stage (name kept from the v0.18 herringbone; v0.25 spur, hb_beta 0). Candidates: every module on the hb_mn_step
+    grid and tooth count whose ring keeps the root-to-skin wall at least the main knob wall (a bit thicker when the race seat
+    allows), clears the 1220 by the cradle clearance, keeps hb_z_min pinion teeth with the tip at hb_tooth_min after backlash,
+    keeps the contact ratio at hb_eps_min, and fits a compound gear. With fg_ratio_max [Ed 2 Nov] the pick is the smallest
+    module [Ed 19:06], then the highest feel ratio. The outer radius R is the cap skin: the teeth move inward."""
     beta, pa = D["hb_beta"], D["hb_pressure"]
     ha, ded = D["hb_addendum"], D["hb_dedendum"]
     cosb = math.cos(math.radians(beta))
@@ -398,8 +440,9 @@ def _place_herringbone(D, R):
     idler_ang = max((D["idler1_ang"], (D["enc_ang"] + D["idler2_from_enc"]) % 360),
                     key=lambda a: min((a - 0.0) % 360.0, (0.0 - a) % 360.0))
     cands = []
-    for mn_i in range(120, 49, -1):               # 1.20 mm down to 0.50, 0.01 mm
-        mn = mn_i / 100
+    step = D["hb_mn_step"]
+    for k in range(int(round(1.20 / step)), int(round(0.50 / step)) - 1, -1):   # 1.20 mm down to 0.50 on the module grid
+        mn = round(k * step, 4)
         mt = mn / cosb
         pitch_max = R - D["ring_wall_req"] - ded * mn
         pitch_min = tip_min + ha * mn
@@ -421,6 +464,11 @@ def _place_herringbone(D, R):
                 pp = zp * mt / 2
                 enc = pr - pp
                 if enc - (pp + ha * mn) - dial_r < 0.4:
+                    continue
+                # v0.25: contact ratio floor (transverse plane; the gearcheck row)
+                at_ = math.degrees(math.atan(math.tan(math.radians(pa)) / cosb)) if beta else pa
+                g_ = gearcheck.mesh(zp, zr, mt, at_, enc, True, D["hb_backlash"], ha * mn / mt, ded * mn / mt)
+                if g_["eps_eff"] < D["hb_eps_min"]:
                     continue
                 zmax = int(math.floor((enc - keep) / (D["fg_mod"] / 2) - 2 * D["spur_addendum"] + 1e-9))
                 # v0.19: the compound gear (under the PCB) must stay inside the cover side wall in the panel frame
@@ -448,12 +496,17 @@ def _place_herringbone(D, R):
         raise ValueError("no herringbone module fits the fixed OD, the main wall and the feel ratio")
     if D["fg_ratio_max"]:
         # [Ed] 2 Nov: the feel motor needs all the reduction the space allows. The compound gear is already as big as the
-        # space allows (zbig = zmax); keep v0.18's coarsest herringbone module (the arm, cradle and caps are tuned to it),
-        # then take the highest ratio, then the thicker wall.
+        # space allows (zbig = zmax). v0.25 [Ed 19:06]: the smallest module whose hb_z_min pinion keeps the tooth floor (the
+        # tip filter above), then the highest ratio, then the thicker wall. hb_mn_pref locks a module instead (v0.19-v0.24: 0.60).
         pool = full or cands
-        pref = [c for c in pool if abs(c[0] - D["hb_mn_pref"]) < 1e-9]
-        if not pref:
-            print(f"WARNING: no herringbone candidate at module {D['hb_mn_pref']}; using the full pool (re-check the arm, cradle and caps)")
+        if D["hb_mn_pref"] is None:
+            low = [c for c in pool if c[2] == D["hb_z_min"]] or pool
+            mn_sel = min(c[0] for c in low)
+            pref = [c for c in low if abs(c[0] - mn_sel) < 1e-9]
+        else:
+            pref = [c for c in pool if abs(c[0] - D["hb_mn_pref"]) < 1e-9]
+            if not pref:
+                print(f"WARNING: no ring-stage candidate at module {D['hb_mn_pref']}; using the full pool (re-check the arm, cradle and caps)")
         best = max(pref or pool, key=lambda c: (round(c[1], 3), c[0], c[5]))
     else:
         # coarsest module, then the thickest root wall, then the ratio closest to the target
@@ -537,8 +590,7 @@ def _place_feel(D):
     D["fg_face"] = face
     half = D["brass_backlash"] / 2
     D["spur_tip_th"] = min(
-        tooth_tip(D["z_hub_gear"], D["hub_mod"], D["pressure"], half, D["spur_addendum"]),
-        tooth_tip(D["z_pinion"], D["hub_mod"], D["pressure"], half, D["spur_addendum"]),
+        D["hub_tip_th"], D["hub_pin_tip_th"],
         tooth_tip(D["fg_z_gear"], D["fg_mod"], D["pressure"], half, D["spur_addendum"]),
         tooth_tip(D["fg_z_pin"], D["fg_mod"], D["pressure"], half, D["spur_addendum"]))
 
