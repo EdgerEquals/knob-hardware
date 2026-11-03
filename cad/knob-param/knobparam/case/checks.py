@@ -52,7 +52,7 @@ def checks(D, parts):
                                                                             align=(_Al.CENTER, _Al.CENTER, _Al.MIN))
                 dd = path.distance_to(cover)
                 if dd < big: big, who = dd, nm
-            row("back AMOLEDs drop straight in: path clear of the cover (corner flares trimmed)", big, D["amo_drop_air"],
+            row("back AMOLEDs drop straight in: path clear of the cover (corner flares trimmed)", big, 0.3,   # [A] the v0.25 path rule
                 f"[Ed 19:12 (5)] each screen's plan swept from its own top face up to the cover rim; nearest: the {who} screen. The flare and "
                 f"ring of each corner column are cut {D['amo_drop_air']:g} round the screens' plans (v0.24: the upper AMOLED caught a top flare by 0.48)")
         row("cover depth from the screen rule (not deeper than needed)", D["cover_depth"], D["cover_depth"],
