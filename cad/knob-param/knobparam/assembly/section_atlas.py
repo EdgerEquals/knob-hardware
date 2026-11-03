@@ -226,7 +226,7 @@ def sheet_oblique(D, JD, parts, out):
     _save(fig, out)
 
 
-def sheet_overall(D, parts, out, tol=0.08):
+def sheet_overall(D, parts, out, tol=0.08, js_version="v0.8"):
     """Front view, iso, iso half-section (x < 0 kept), rear iso. The resin case is drawn see-through."""
     import numpy as np
     import pyvista as pv
@@ -285,7 +285,7 @@ def sheet_overall(D, parts, out, tol=0.08):
         l, _c = colour(n); legend.setdefault(l, _c)
     fig.legend(handles=[Patch(fc=c, ec="k", lw=0.3, label=l) for l, c in sorted(legend.items())], loc="lower center", ncol=4,
                fontsize=11, frameon=False)
-    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.7 on the vertical boards; H7B0 LQFP100 on the board front under the joystick). "
+    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick {js_version} on the vertical boards; H7B0 LQFP100 on the board front under the joystick). "
                  "Resin case drawn see-through.",
                  fontsize=16, x=0.01, ha="left")
     fig.subplots_adjust(bottom=0.08, left=0.01, right=0.99)
@@ -302,7 +302,7 @@ def main():
     base = os.path.join(os.path.dirname(here), "assemblies", f"knob-stack-{D['version']}", "atlas")
     v = D["version"]
     if not only or "overall" in only:
-        sheet_overall(D, parts, os.path.join(base, f"{v}-atlas-1-overall.png"))
+        sheet_overall(D, parts, os.path.join(base, f"{v}-atlas-1-overall.png"), js_version=JD.get("version", "?"))
     if not only or "horizontal" in only:
         sheet_horizontal(D, JD, parts, os.path.join(base, f"{v}-atlas-2-parallel-to-panel.png"))
     if not only or "long" in only:
