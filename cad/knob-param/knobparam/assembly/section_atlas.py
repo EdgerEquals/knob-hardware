@@ -107,8 +107,9 @@ def _z_levels(D, JD, step):
         feats.append(((D["h_big_top"] + D["h_big_bot"]) / 2, "encoder disc"))
     if D.get("cart"):   # v0.24 [Ed 3 Nov 12:41] dial screen as a bezel cartridge
         feats += [(D["db_z0"] - 0.5, "dial board underside: ESP32, diode, LEDs in the pocket"),
-                  ((D["db_z0"] + D["db_z1"]) / 2, "dial board on the ledge; magnets and pins in the land"),
-                  ((D["bz_boss_z"][0] + D["pad_z"][0]) / 2 + 0.2, "cartridge: bosses, plug pad, tail's lower leg"),
+                  ((D["db_z0"] + D["db_z1"]) / 2, "dial board on the ledge; key + seat ribs in their slots"),
+                  (D["cart_mags"][0][1][1] + 0.2, "v0.25 sideways magnet pairs in the dial wall and the bezel skirt"),
+                  ((D["db_z1"] + D["pad_z"][0]) / 2 + 0.2, "cartridge: ribs, plug pad, tail's lower leg"),
                   ((D["patch_z0"] + D["lcm_z0"]) / 2, "panel's flex patches, pad arm"),
                   ((D["bend_z"][0] + D["bend_z"][1]) / 2, "panel and its bends under the glass seat"),
                   ((D["lens_step_z"] + D["z_top"]) / 2, "lens step in the bezel lap")]

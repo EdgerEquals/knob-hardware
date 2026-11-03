@@ -1,7 +1,7 @@
 """v0.24 [Ed 3 Nov 12:28-12:58]: the dial screen as a drop-in bezel cartridge (knob +4.4).
 
 Cartridge (lifts out from the top with a suction cup): printed bezel = the whole outside of the dial (laps the lens step, glass seat,
-bore below the glass, magnet / pin bosses), Waveshare Z132A2441 panel proxy (lens, panel, its own flex: three parts patches, bottom COF
+bore below the glass; v0.25: key + seat ribs and sideways magnets in the skirt), Waveshare Z132A2441 panel proxy (lens, panel, its own flex: three parts patches, bottom COF
 bend, top tab, free tail with its U-turn and lower leg, 24-pin 0.4 mm plug facing down), printed plug pad glued to an arm off the bezel.
 In the dial: dial board (PCBA; receptacle on top; ESP32-S3-PICO-1, LDO, PHY, 405 nm diode and five LED sites underneath), the dial-side
 magnets and the locating pins. Strap loop from the fixed rod-link board up to the dial board.
@@ -9,7 +9,7 @@ Everything is drawn in the PANEL frame and turned into the mechanism frame (to_m
 import math
 from build123d import *
 from ...common.util import A, rev, cyl, tube
-from .dial import ring_sector, to_mech
+from .dial import ring_sector, to_mech, radial_cyl, rib_box
 from . import dial
 SRC_DEPS = [dial]
 
@@ -24,15 +24,12 @@ def bezel(D):
     rb, rs, rl = D["bz_bore_r"], D["bz_seat_r"], D["bz_lap_r"]
     # outside as today's lip: flat underside to R - c, 45° chamfer, OD up to the lens top; inside: lap over the lens step, glass seat, bore
     b = rev([(rb, z0), (R - c, z0), (R, z0 + c), (R, zt), (rl, zt), (rl, D["lens_step_z"]), (rs, D["lens_step_z"]), (rs, zb), (rb, zb)])
-    bz0, bz1 = D["bz_boss_z"]
-    for k, a, _, (x, y) in D["cart_holes"]:
-        h = D["boss_half"][k]
-        b += ring_sector(bz["boss_r"][0], rb + 0.3, a - h, a + h, bz0, bz1 - bz0)
-    for k, a, _, (x, y) in D["cart_holes"]:
-        if k == "magnet":
-            b -= cyl((bz["mag"][0] + bz["mag_press"]) / 2, bz0 - 0.01, bz["mag"][1] + 0.01, x, y)
-        else:
-            b -= cyl(bz["pin"][0] / 2 + bz["pin_clear"], bz0 - 0.01, bz["pin"][2] + 0.11, x, y)
+    # v0.25 [Ed 18:26]: no bosses or pin holes; key + seat ribs on the skirt's inside, from their seat up to the glass seat ceiling
+    for a, _cl, _k in D["cart_ribs"]:
+        b += rib_box(bz["rib_r_in"], rb + 0.3, bz["rib_w"], D["rib_z0"], zb, a)
+    d, h = bz["mag"]
+    for a, _dm, (rs_, zs) in D["cart_mags"]:   # sideways pockets, open into the bore
+        b -= radial_cyl(rb - 0.5, rb + h, d + bz["mag_press"], zs, a)
     return b
 
 
@@ -143,14 +140,10 @@ def build(D):
     out["dial screen Z132A2441 flex (parts, bends, tail)"] = flex(D)
     out["dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down)"] = plug_end(D)
     out["dial cartridge plug pad + arm (printed, glued)"] = pad(D)
-    md, mh = bz["mag"]
-    for k, a, _, (x, y) in D["cart_holes"]:
-        if k == "magnet":
-            out[f"cartridge magnet {md:g}x{mh:g} N52 (bezel) {a:g}°"] = cyl(md / 2, D["bz_boss_z"][0], mh, x, y)
-            out[f"cartridge magnet {md:g}x{mh:g} N52 (dial) {a:g}°"] = cyl(md / 2, D["db_z1"] - mh, mh, x, y)
-        else:
-            pd, pp, pe = bz["pin"]
-            out[f"cartridge locating pin Ø{pd:g} {a:g}°"] = cyl(pd / 2, D["db_z1"] - pp, pp + bz["boss_gap"] + pe, x, y)
+    md, mh = bz["mag"]; ro, rb = D["ct"]["outer_r"], D["bz_bore_r"]
+    for a, (rd, zd), (rs_, zs) in D["cart_mags"]:   # v0.25 [Ed 18:26]: sideways, attracting across the 0.3 gap
+        out[f"cartridge magnet {md:g}x{mh:g} N52 (bezel skirt, facing in) {a:g}°"] = radial_cyl(rb, rb + mh, md, zs, a)
+        out[f"cartridge magnet {md:g}x{mh:g} N52 (dial wall, facing out) {a:g}°"] = radial_cyl(ro - mh, ro, md, zd, a)
     out.update(board(D))
     out["dial strap loop, 2 lines + 2 spares [A]"] = strap(D)
     return {n: to_mech(D, s) if not n.startswith("dial strap") else s for n, s in out.items()}

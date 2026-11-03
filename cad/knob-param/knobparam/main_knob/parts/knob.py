@@ -123,15 +123,37 @@ def cap_pocket(D):
         p += k
     return p
 
+def _cs_region(D, o, oax):
+    """v0.25 [Ed 19:46]: the inner hub's region (top hat), grown by o radially and oax under the step; keys on its cylinder."""
+    rj, ro, zs, z0 = D["cs_r"], D["cs_r_flange"], D["cs_z_step"], D["h_band1"]
+    r = rev([(0, z0 - 1.0), (rj + o, z0 - 1.0), (rj + o, zs - oax), (ro + o, zs - oax), (ro + o, D["z_top"]), (0, D["z_top"])])
+    for k in _keys(D, rj - 0.05, rj + D["hg_key_h"] + o, D["hg_key_w"] + 2 * o, z0 - 1.0, zs - oax - z0 + 1.0):
+        r += k
+    return r
+
+def cap_split(D):
+    """v0.25 [Ed 19:46]: inner PA-12 hub (hub-gear teeth, hub, 45° race and its groove, keyed top-hat rim) and the outer clear cap
+    (web, plug, glass seat) with the matching stepped bore and key slots (bond lines hg_glue / hg_glue_ax)."""
+    full = rev(profile(D))
+    cr, cz = D["kb_seat_c_knob"]
+    inner = (full & _cs_region(D, 0.0, 0.0)) + hub_teeth(D)
+    inner = inner - cyl(D["r_knob_bore"], D["knob_hub_z0"] - 0.1, D["z_top"]) - Pos(0, 0, cz) * Torus(cr, D["kb_seat_r"])
+    outer = full - _cs_region(D, D["hg_glue"], D["hg_glue_ax"])
+    return inner, outer
+
 def build(D):
     split_hub = "hg_collar_r" in D   # v0.25: separate PA-12 hub-gear ring in a clear cap
-    if split_hub:
+    if split_hub and D.get("cs_on"):   # v0.25 [Ed 19:46]: the inner hub carries the teeth and the race; built in cap_split
+        body = None
+    elif split_hub:
         body = rev(profile(D)) - cap_pocket(D)
     else:
         zh, fh = D["knob_hub_z0"], D["hub_gear_face"]
         teeth = hub_teeth(D) - cyl(D["d_hg_root"] / 2 - 0.02, zh, fh)
         body = rev(profile(D)) + teeth
-    if D["kb_race"] == "chamfer":   # ball track groove in the chamfer (torus, R kb_seat_r, centre on the 45° line)
+    if body is None:
+        pass
+    elif D["kb_race"] == "chamfer":   # ball track groove in the chamfer (torus, R kb_seat_r, centre on the 45° line)
         cr, cz = D["kb_seat_c_knob"]; body -= Pos(0, 0, cz) * Torus(cr, D["kb_seat_r"])
     else:
         body -= race_cut(D)
@@ -163,13 +185,19 @@ def build(D):
     R = D["kb_ball_d"] / 2; n = D["kb_n"]
     balls = Compound(children=[Pos(D["kb_rc"] * math.cos(2 * math.pi * i / n), D["kb_rc"] * math.sin(2 * math.pi * i / n), D["kb_zc"]) * Sphere(R) for i in range(n)])
     seal = seal_ring(D)
-    out = {"knob upper-cap": body,
+    if body is None:
+        inner, outer = cap_split(D)
+        caps = {"knob upper-cap (clear UTR-8100: web, plug, glass seat)": outer,
+                "knob upper-cap hub (PA-12: hub-gear teeth + 45° ball race)": inner}
+    else:
+        caps = {"knob upper-cap": body}
+    out = {**caps,
            "knob glass sleeve": glass_sleeve(D),
            **({"bottom internal ring (lower half)": lower, "bottom internal ring (upper half)": upper} if D["hb_split"]
               else {"bottom internal ring": upper}),
            "knob lower-cap land": land,
            f"knob balls {n} x Ø{D['kb_ball_d']:g} (45° cones)": balls}
-    if split_hub:
+    if split_hub and body is not None:
         out["knob hub gear ring (PA-12, glued in the upper cap)"] = hub_gear_ring(D)
     if seal is not None:
         out[f"knob drip O-ring {D['seal_oring'][0]:g}x{D['seal_oring'][1]:g} silicone (on the glass)" if D.get("seal_type") == "oring"

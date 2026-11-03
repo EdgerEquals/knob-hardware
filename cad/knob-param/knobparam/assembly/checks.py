@@ -17,6 +17,15 @@ def local(D, parts, owner, subs=None):
         rows += model.sub(s).checks(model.view(D, s), {n: p for n, p in parts.items() if owner[n] == s})
     return rows
 
+def _dial(parts, which="all"):
+    """v0.25 [Ed 18:12]: the control dial is two parts (lower part, dish); before that one. which: "lower", "dish" or "all"
+    (fused for distance checks)."""
+    if "control dial" in parts:
+        return parts["control dial"]
+    pre = {"lower": ("control dial lower part",), "dish": ("control dial dish",), "all": ("control dial lower part", "control dial dish")}[which]
+    q = [s for n, s in parts.items() if n.startswith(pre)]
+    return q[0] if len(q) == 1 else Compound(children=q)
+
 def cross(D, parts):
     from .. import control_dial as cd
     from . import hall_dyn
@@ -100,7 +109,7 @@ def cross(D, parts):
         row("Hall angle noise, worst over ±travel (deg rms)", H["s_theta_worst"], 0.01, f"min |dB/dθ| {H['slope_min']:.1f} mT/deg, noise {H['noise_mT'] * 1e3:.0f} µT rms", higher_ok=False)
     if D["kb_groove_h"] > 0:
         kb = [parts[n] for n in parts if n.startswith("knob") and "ball" not in n]
-        row("seat: dial vs knob (race region)", min(parts["control dial"].distance_to(q) for q in kb), T["seat_vs_knob"])
+        row("seat: dial vs knob (race region)", min(_dial(parts, "dish").distance_to(q) for q in kb), T["seat_vs_knob"])
     row("idler 1 vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
     feel_names = [n for n in parts if n.startswith("feel motor")]
     feels = [parts[n] for n in feel_names]
@@ -114,7 +123,7 @@ def cross(D, parts):
         f"can {can.distance_to(knob):.2f} inside the skirt; {D['fg_pinion']['part']} at {D['fm_ang']:.1f}°, overall {D['fm_ratio']:.2f}:1, knob Ø{D['knob_od']:.2f}")
     row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
     row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
-    row("feel motor vs dial tube", min(p.distance_to(parts["control dial"]) for p in feels), D["feel"]["clear"])
+    row("feel motor vs dial tube", min(p.distance_to(_dial(parts, "lower")) for p in feels), D["feel"]["clear"])
     row("feel motor vs Hall arm (±travel)", min_dist(list(ARM.values()), feels), T["hall_vs_pinions"])
     # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
     from ..base_drive.parts.mech import springs_at, track_balls_at
@@ -223,9 +232,11 @@ def cross(D, parts):
         D["hub_face"] - 0.01, f"pinion z {pz0:.2f}-{pz1:.2f}, hub-gear teeth z {D['knob_hub_z0']:.2f}-{D['h_band1']:.2f} [Ed 19:10 face {D['hub_face']:g}]")
     row("1220 pinion top under the clear cap and the hub-gear collar (axial gap)", D["h_band1"] - pz1, 0.3,
         f"shaft tip z {D['h_shaft_tip']:.2f}; cap underside / collar bottom z {D['h_band1']:.2f}")
-    hg = [s for n, s in parts.items() if n.startswith("knob hub gear ring")]
+    hg = [s for n, s in parts.items() if n.startswith(("knob hub gear ring", "knob upper-cap hub"))]   # v0.25 [Ed 19:46]: the inner hub
     if hg:
-        lo = [s for n, s in parts.items() if n == "motor"]
+        # v0.25 [Ed 19:46]: the PA-12 hub's flat underside now spans the 1220 shaft tip (0.5 over it, the pinion-top row's gap), so
+        # this row keeps to what it says: the can and the boss (below the gearbox front)
+        lo = [s & cyl(30.0, -60.0, D["h_motor_front"] + 60.0 + 0.01, D["offset"]) for n, s in parts.items() if n == "motor"]
         row("hub-gear ring vs the 1220 can and boss", min(hg[0].distance_to(q) for q in lo), 0.5,
             f"teeth down to z {D['knob_hub_z0']:.2f} (v0.24 39.6); can top z {D['motor']['motor_len'] + D['motor']['gearbox_len']:.1f}, "
             f"boss to z {D['h_motor_front']:.1f}")
@@ -270,7 +281,7 @@ def _cart_cross(D, parts, row, TR, Dc):
     T = D["tgt"]
     stat = {"rod + nut": cyl(D["nut_s"] / math.sqrt(3), D["z_board_top"], D["nut_m"])}   # fixed (the strap's foot sits on the board)
     rot = {n: parts[n] for n in parts if n.startswith("dial board") and not n.startswith("dial board (")}   # turn with the dial
-    rot["control dial"] = parts["control dial"]
+    rot["control dial"] = _dial(parts, "all")
     smin, swho = 1e9, ""
     for t in TR:
         sb = cd.strap_loop(Dc, t)
@@ -288,6 +299,21 @@ def _cart_cross(D, parts, row, TR, Dc):
         d, who = min((bz.distance_to(q), n) for n, q in kn.items())
         row("bezel bottom vs the main knob (running gap)", d, D["knob_run"] - 0.01,
             f"nearest: {who}; bezel underside z {D['z_lip0']:.2f} = the v0.23 lip underside, knob top {D['z_knob_top']:.2f}: the main knob does not move")
+    lo = [q for n, q in parts.items() if n.startswith("control dial lower part")]
+    if lo:   # v0.25 [Ed 18:12]: the lower part goes in before the cap, the cap over its tube, the dish on last
+        from ..common.util import tube
+        lo = lo[0]; tip = D["hb_tip_r"]; spg = D["sleeve_lip_r"]; gl = D["sleeve_id_worst"] / 2
+        rr = min(tip, spg)   # the ring's innermost: its teeth (tips) and the plug ring up into the glass (ID sleeve_lip_r)
+        d_ring = lo.distance_to(tube(rr, rr + 3.0, -5.0, 80.0))           # exact: the lower part's outermost point vs that circle, all z
+        row("dial split: lower part passes down through the glass and the ring (ring bore - its outermost point, radial)", d_ring,
+            T["arm_vs_cradle"], f"ring tips r {tip:.3f} (v0.25 spur), its plug ring ID r {spg:.2f}, worst glass bore r {gl:.2f}; outermost: the "
+            "Hall rib's outer corner (r 16.90, the rib top); nothing of the cap or the detent boss is in yet")
+        hi = lo & cyl(30.0, D["knob_hub_z0"] - 0.5, 30.0)                  # what the cap passes over on its way down
+        rk = D["r_knob_bore"]
+        d_cap = hi.distance_to(tube(rk, rk + 3.0, D["knob_hub_z0"] - 1.0, 30.0))
+        row("dial split: upper cap passes down over the lower part (cap bore - the lower part above the cap's bottom, radial)",
+            d_cap, 0.2, f"cap bore Ø{2 * rk:.2f} [Ed 18:12 Ø8.62] in the inner PA-12 hub [Ed 19:46]; above z {D['knob_hub_z0'] - 0.5:.1f} "
+            f"only the Ø{D['dial_tube_od']:.2f} tube is there")
     v0 = D["faceplate_z_v023"]; fz, fz1 = D["faceplate_z"], D.get("z_fp1", D["faceplate_z"])
     row("faceplate front unchanged by the taller knob (|z - v0.23|)", max(abs(fz - v0), abs(fz1 - v0)), 0.001,
         f"interface {fz:.3f}, case {fz1:.3f}, v0.23 {v0:g}: lens top {D['z_top']:.2f} (+{D['z_top'] - (v0 + 18.0):.2f}), knob_proud "
@@ -333,7 +359,8 @@ def _arc_cross(D, parts, row, TR, ARM):
         mt = split_mount(model.view(D, "base_drive"))
         bd = min(ARM[th].distance_to(mt) for th in TR)
         row("split detent mount (pedestal, wall, bracket, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
-            f"wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}")
+            f"wall r {D['sp_wall_r0']:.2f}-{D.get('sp_wall_r1_used', D['sp_wall_r1']):.3f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}"
+            + ("; v0.25 the separate detent block [Ed 18:15]" if D.get("dt_block") else ""))
         caps = [s for n, s in parts.items() if "cap" in n and "pinion" in n]
         if caps:
             dc = min(ARM[th].distance_to(c) for th in TR for c in caps)

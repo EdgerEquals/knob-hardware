@@ -42,6 +42,7 @@ def key(name):
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if low.startswith("dial bezel"): return "bezel"                                    # v0.24 bezel cartridge
     if low.startswith("knob hub gear ring"): return "pa12"                             # v0.25 PA-12 ring glued in the clear cap
+    if low.startswith("knob upper-cap hub"): return "pa12"                             # v0.25 [Ed 19:46] inner PA-12 hub (teeth + race)
     if low.startswith("knob upper-cap"): return "clear"                                # v0.25 [Ed 19:00] clear resin (v0.24 PA-12)
     if low.startswith("dial screen z132a2441 lens"): return "lens"
     if low.startswith("dial screen z132a2441 flex"): return "flex"

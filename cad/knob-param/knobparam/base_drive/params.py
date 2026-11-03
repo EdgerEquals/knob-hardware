@@ -101,6 +101,23 @@ P = dict(
                           # height against the 45° knob race stack at assembly (key through the PCB from behind)
     sp_thread_min=1.5,   # [A] grub thread kept in the plate at the top of its range
     sp_lift_max=0.010,   # [Ed 2x rule] boss lift under the detent spring: 0.01 (was 0.05 for the v0.21 bridge)
+    # ---- v0.25 [Ed 3 Nov 18:15] detent block: the boss, its bracket and the wall are one separate printed block (UTR-8100, like
+    # the cradle), dropped in from the top after the pedestal, the train and the dial's lower part, with the ball, spring and grub
+    # already in it. Danny's hold-down is a screw from behind through the main board; it does not fit (the block's foot is the
+    # wall zone between the flange's sweep and the cradle OD, r 15.00-16.855 = 1.855 wide: an M2 needs 1.6 + 2 x 0.8 SLA wall =
+    # 3.2, an M1.6 2.85), so the block takes his fallback: glued on its flat seat, located on two pins [A, Ed 18:15 fallback]. ----
+    dt_block=True,   # [Ed 18:15] False = v0.22-v0.24: wall, bracket and boss printed in the cradle
+    dt_head_half=10.0,   # [A] the head (v0.24: a 3.0-wide bracket, boss to wall) is a sector +-10° about the boss, from the boss's
+                         # inner edge out to the wall, boss underside to top: the 3.0 bracket left the head 3x softer than the wall
+    dt_r1_inset=0.0,   # [A] block outer face this far inside the cradle OD r_out (v0.25 gears: r_out 16.855; the v0.24 wall's 16.89
+                       # stuck out 0.035). Replaces sp_wall_r1 while dt_block is on.
+    dt_pin=(1.0, 1.5, 1.5),   # [A] Ø1 steel dowels: Ø, pressed depth in the plate, engagement up into the block's foot
+    dt_pin_angs=(250.5, 277.0),   # [A] pin angles (mechanism frame) at the foot's mid radius: 1.0 of foot past each hole end
+    dt_pin_clear=0.05,   # [A] foot hole over the pin (slip, glued)
+    dt_glue=0.05,   # [A] epoxy bond line on the seat (modelled as contact; counted in the lift)
+    dt_glue_E=2500.0,   # [A] cured epoxy modulus, N/mm²
+    dt_glue_lap=10.0,   # [A] epoxy on sanded SLA resin, lap shear / tension allowable, MPa (conservative; datasheets 15-25)
+    dt_pcb_E=10000.0,   # [A] FR4 through-thickness modulus, N/mm² (the PCB under the cradle plate, in the lift's seat term)
 )
 
 IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
@@ -226,13 +243,16 @@ def _place_split_mount(D):
     """v0.22: wall sector outboard of the flange sweep (plate to boss top), a radial bracket from the boss to the wall, and the
     boss lift under the full spring force: the wall bends as a cantilever from the plate under the moment F·e (e = boss to the
     wall's mid radius), lift at the boss = F e² h / (E I), I of the wall's plan section about its tangential axis."""
-    r0 = D["ad_r"] + D["sp_hw"] + D["sp_wall_gap"]; r1 = D["sp_wall_r1"]; a0, a1 = D["sp_wall_a"]
-    D["sp_wall_r0"] = r0
+    r0 = D["ad_r"] + D["sp_hw"] + D["sp_wall_gap"]; a0, a1 = D["sp_wall_a"]
+    r1 = D["r_out"] - D["dt_r1_inset"] if D["dt_block"] else D["sp_wall_r1"]   # v0.25: flush with the cradle OD, not past it
+    D["sp_wall_r0"], D["sp_wall_r1_used"] = r0, r1
     rm = (r0 + r1) / 2; t = r1 - r0; L = rm * math.radians(a1 - a0)
     D["det_force_max"] = D["det_spring_k"] * (D["det_preload"] + D["det_grub_adj"] + D["det_dimple"])
     e = rm - D["ad_r"]; h = D["det_z1"] - D["plate_t"]; I = L * t ** 3 / 12
     D["sp_wall_e"], D["sp_wall_I"], D["sp_wall_h"] = e, I, h
     D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
+    if D["dt_block"]:
+        _detent_block_joint(D, r0, r1, rm, t, L, e)
     # v0.22b [Ed 15:50]: pedestal is a separate block on an M2 grub, guided in a pocket
     zb = D["tk"][0]["z"]; D["sp_z_blk1"] = zb - D["bt_up"]                     # block top (train seat level)
     D["sp_z_pf"] = D["plate_t"] - D["sp_ped_pocket"]                       # pocket floor
@@ -242,6 +262,38 @@ def _place_split_mount(D):
     D["sp_adj_down"] = min(D["sp_ped_lift"], D["sp_z_grub0"])               # until the block meets the floor / the grub the PCB
     D["sp_adj_up"] = D["sp_z_pf"] - D["sp_thread_min"] - D["sp_z_grub0"]   # while sp_thread_min of thread stays in the plate
     D["sp_guide"] = D["plate_t"] - D["sp_z_blk0"]
+
+
+def _detent_block_joint(D, r0, r1, rm, t, L, e):
+    """v0.25 [Ed 18:15] detent block glued on its seat (the wall's footprint on the plate top). Boss lift under the full spring
+    force F at the boss (r ad_r), moment M = F e about the seat's centroid, as rotations summed over the load path:
+      wall from the seat up to the bracket (I = L t³/12), the head (wall + bracket, the boss and its bore left out), the epoxy
+      bond line and, conservatively, the cradle plate and the PCB under the seat taken as columns of the seat's own footprint;
+      lift = sum(θ) x e. The v0.22-v0.24 one-piece check took the whole height at the wall's I with the plate rigid."""
+    F, E = D["det_force_max"], D["ad_E"]; Mo = F * e; pt = D["plate_t"]
+    I_seat = L * t ** 3 / 12
+    h1 = D["det_z0"] - pt                                                   # wall alone, under the bracket
+    h2 = D["det_z1"] - D["det_z0"]                                          # head: wall + bracket
+    ri = D["ad_r"] - D["det_boss_d"] / 2                                    # head: sector from the boss's inner edge to the wall
+    wb = 2 * D["ad_r"] * math.sin(math.radians(D["dt_head_half"])) - D["det_thread_d"]   # its width less the bore / thread
+    rb0 = ri
+    A1, c1 = L * t, rm; A2, c2 = wb * (r0 - rb0), (r0 + rb0) / 2
+    cc = (A1 * c1 + A2 * c2) / (A1 + A2)
+    I_head = I_seat + A1 * (c1 - cc) ** 2 + wb * (r0 - rb0) ** 3 / 12 + A2 * (c2 - cc) ** 2
+    th = dict(wall=Mo * h1 / (E * I_seat), head=Mo * h2 / (E * I_head),
+              bond=Mo * D["dt_glue"] / (D["dt_glue_E"] * I_seat),
+              plate=Mo * (pt / E + D["pcb_t"] / D["dt_pcb_E"]) / I_seat)
+    D["dt_lift_parts"] = {k: v * e for k, v in th.items()}
+    D["dt_lift"] = sum(D["dt_lift_parts"].values())
+    D["dt_I_seat"], D["dt_I_head"] = I_seat, I_head
+    D["dt_seat_area"] = L * t
+    D["dt_bond_sigma"] = F / (L * t) + 6 * Mo / (L * t * t)                 # peak tension at the seat's inner edge
+    D["dt_seat"] = (r0, r1, D["sp_wall_a"][0], D["sp_wall_a"][1])
+    pd = D["dt_pin"][0] + D["dt_pin_clear"]
+    D["dt_pin_wall"] = min(rm - r0, r1 - rm) - pd / 2                       # foot material each side of a pin hole (radial)
+    D["dt_pin_xy"] = [_pol(rm, a) for a in D["dt_pin_angs"]]
+    D["dt_pin_end"] = min(min(a - D["sp_wall_a"][0], D["sp_wall_a"][1] - a) for a in D["dt_pin_angs"]) * math.pi / 180 * rm - pd / 2
+    D["dt_screw_need"] = {"M2": 1.6 + 2 * 0.8, "M1.6": 1.25 + 2 * 0.8}      # foot width a tapped screw needs (tap drill + SLA walls)
 
 
 def derive(D):
