@@ -746,18 +746,27 @@ class Scene:
                 hi = np.maximum(hi, np.array([min(b[3], 0.0), b[4], b[5]]) + o)
         return lo, hi
 
-    def frame_cam(self, lo, hi):
+    def frame_cam(self, lo, hi, fill=0.8, top=0.14):
+        """Focal point + distance so the box's 8 corners fit `fill` of the frame below a `top` band kept for the captions."""
+        d = VIEW_DIR / np.linalg.norm(VIEW_DIR)
+        right = np.cross(-d, (0.0, 1.0, 0.0)); right /= np.linalg.norm(right)
+        up = np.cross(right, -d)
         c = (lo + hi) / 2
-        r = 0.5 * float(np.linalg.norm(hi - lo))
+        P = np.array([[x, y, z] for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]) - c
+        t = math.tan(math.radians(FOV / 2))
         aspect = self.size[0] / self.size[1]
-        dist = 0.92 * r / math.sin(math.radians(FOV / 2)) / min(1.0, aspect) ** 0.5
-        return np.concatenate([c, [max(dist, 60.0)]])
+        hy = (1.0 - top) * fill
+        dist = max(max(abs(p @ up) / (t * hy) + p @ d, abs(p @ right) / (t * aspect * fill) + p @ d) for p in P)
+        dist = max(dist, 60.0)
+        c = c + up * (top * 0.5 * t * dist)      # content sits below the caption band
+        return np.concatenate([c, [dist]])
 
     def set_cam(self, cam):
         c, dist = cam[:3], cam[3]
         d = VIEW_DIR / np.linalg.norm(VIEW_DIR)
         self.pl.camera_position = [tuple(c + dist * d), tuple(c), (0, 1, 0)]
         self.pl.camera.view_angle = FOV
+        self.pl.renderer.ResetCameraClippingRange()   # else the near/far planes stay at the first view and clip the parts
 
     def caption(self, lines, color="black", fs=None):
         fs = fs or max(9, int(self.size[0] / 95))
@@ -867,8 +876,7 @@ def stage_sheet(plan, idx, out):
         lo1, hi1 = sc.pose(k + 1, None, 0.0)
         sc.set_cam(sc.frame_cam(np.minimum(lo0, lo1), np.maximum(hi0, hi1)))
         sc.pose(k + 1, None, 0.0) if still else sc.pose(k, k, 0.0)
-        for i in range(4):
-            sc.pl.remove_actor(f"cap{i}")
+        sc.caption([(f"{k + 1}", "#808080")])   # (adding a text actor is also what makes pyvista take the new camera)
         img = sc.grab()
         ax = axs.ravel()[k]
         ax.imshow(img)

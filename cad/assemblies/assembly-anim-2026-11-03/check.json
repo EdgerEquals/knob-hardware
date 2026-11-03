@@ -1,0 +1,2139 @@
+{
+ "meta": {
+  "version": "v0.24",
+  "branch": "asm/layout-v4",
+  "commit": "c5787de",
+  "js_place_y": 40.629999999999995,
+  "clash_mm3": 0.001,
+  "built": "2026-11-03 15:25",
+  "n": 189
+ },
+ "thr": 0.001,
+ "steps": [
+  {
+   "k": 0,
+   "id": "pcb",
+   "events": []
+  },
+  {
+   "k": 1,
+   "id": "vboards",
+   "events": []
+  },
+  {
+   "k": 2,
+   "id": "oled",
+   "events": []
+  },
+  {
+   "k": 3,
+   "id": "back",
+   "events": [
+    {
+     "moving": "encoder bearing 2 (seat on the PCB back)",
+     "fixed": "PCB",
+     "kind": "contact",
+     "why": "",
+     "s_first": 0.75,
+     "s_last": 0.25,
+     "n_hits": 3,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 4,
+   "id": "cradle",
+   "events": []
+  },
+  {
+   "k": 5,
+   "id": "anchors",
+   "events": [
+    {
+     "moving": "spring anchor pin 1",
+     "fixed": "base cradle",
+     "kind": "press",
+     "why": "pressed into the cradle",
+     "s_first": 4.75,
+     "s_last": 0.25,
+     "n_hits": 19,
+     "vmax": 0.4799,
+     "s_confirmed": [
+      2.5,
+      0.25
+     ],
+     "depth": 0.722
+    },
+    {
+     "moving": "spring anchor pin 2",
+     "fixed": "base cradle",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.5,
+     "s_last": 0.25,
+     "n_hits": 6,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 6,
+   "id": "motor",
+   "events": []
+  },
+  {
+   "k": 7,
+   "id": "enc-b1",
+   "events": [
+    {
+     "moving": "encoder bearing 1 (cradle+PCB)",
+     "fixed": "PCB",
+     "kind": "contact",
+     "why": "",
+     "s_first": 0.5,
+     "s_last": 0.25,
+     "n_hits": 2,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "encoder bearing 1 (cradle+PCB)",
+     "fixed": "base cradle",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.5,
+     "s_last": 0.25,
+     "n_hits": 6,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 8,
+   "id": "pedestal",
+   "events": [
+    {
+     "moving": "track 1 ball 1 \u00d81",
+     "fixed": "base cradle",
+     "kind": "clash",
+     "why": "",
+     "s_first": 8.55,
+     "s_last": 1.75,
+     "n_hits": 22,
+     "vmax": 0.3653,
+     "s_confirmed": [
+      4.25,
+      1.75
+     ],
+     "depth": 0.799
+    },
+    {
+     "moving": "track 1 ball 2 \u00d81",
+     "fixed": "base cradle",
+     "kind": "clash",
+     "why": "",
+     "s_first": 8.55,
+     "s_last": 1.75,
+     "n_hits": 22,
+     "vmax": 0.3653,
+     "s_confirmed": [
+      4.25,
+      1.75
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "detent train pedestal (SLA, grub-set)",
+     "fixed": "base cradle",
+     "kind": "clash",
+     "why": "",
+     "s_first": 11.0,
+     "s_last": 2.5,
+     "n_hits": 17,
+     "vmax": 8.8946,
+     "s_confirmed": [
+      4.5,
+      2.5
+     ],
+     "depth": 2.05
+    },
+    {
+     "moving": "detent pedestal grub M2x2",
+     "fixed": "base cradle",
+     "kind": "clash",
+     "why": "",
+     "s_first": 9.9,
+     "s_last": 5.4,
+     "n_hits": 6,
+     "vmax": 1.9766,
+     "s_confirmed": [
+      7.2,
+      5.4
+     ],
+     "depth": 1.85
+    }
+   ]
+  },
+  {
+   "k": 9,
+   "id": "detent",
+   "events": []
+  },
+  {
+   "k": 10,
+   "id": "thrust",
+   "events": []
+  },
+  {
+   "k": 11,
+   "id": "ring-lo",
+   "events": []
+  },
+  {
+   "k": 12,
+   "id": "pinions",
+   "events": [
+    {
+     "moving": "encoder pinion",
+     "fixed": "bottom internal ring (lower half)",
+     "kind": "helical",
+     "why": "",
+     "s_first": 0.5,
+     "s_last": 0.25,
+     "n_hits": 2,
+     "vmax": 0.0161,
+     "s_confirmed": [
+      0.25
+     ],
+     "depth": 0.32
+    },
+    {
+     "moving": "encoder shaft",
+     "fixed": "encoder bearing 2 (seat on the PCB back)",
+     "kind": "contact",
+     "why": "",
+     "s_first": 12.0,
+     "s_last": 0.25,
+     "n_hits": 27,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "encoder shaft",
+     "fixed": "encoder bearing 1 (cradle+PCB)",
+     "kind": "contact",
+     "why": "",
+     "s_first": 15.0,
+     "s_last": 0.25,
+     "n_hits": 30,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "idler pinion 1",
+     "fixed": "bottom internal ring (lower half)",
+     "kind": "helical",
+     "why": "",
+     "s_first": 0.5,
+     "s_last": 0.25,
+     "n_hits": 2,
+     "vmax": 0.0161,
+     "s_confirmed": [
+      0.25
+     ],
+     "depth": 0.32
+    },
+    {
+     "moving": "idler pin 1",
+     "fixed": "base cradle",
+     "kind": "contact",
+     "why": "",
+     "s_first": 9.0,
+     "s_last": 0.25,
+     "n_hits": 24,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "idler pinion 2",
+     "fixed": "bottom internal ring (lower half)",
+     "kind": "helical",
+     "why": "",
+     "s_first": 0.5,
+     "s_last": 0.25,
+     "n_hits": 2,
+     "vmax": 0.0161,
+     "s_confirmed": [
+      0.25
+     ],
+     "depth": 0.32
+    },
+    {
+     "moving": "idler pin 2",
+     "fixed": "base cradle",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.75,
+     "s_last": 0.25,
+     "n_hits": 7,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 13,
+   "id": "back2",
+   "events": []
+  },
+  {
+   "k": 14,
+   "id": "feel",
+   "events": []
+  },
+  {
+   "k": 15,
+   "id": "feel-strap",
+   "events": [
+    {
+     "moving": "feel motor saddle screw",
+     "fixed": "feel motor saddle seat [A]",
+     "kind": "thread",
+     "why": "the M1 screw cuts its thread in the printed seat",
+     "s_first": 2.25,
+     "s_last": 0.5,
+     "n_hits": 8,
+     "vmax": 0.6585,
+     "s_confirmed": [
+      1.25,
+      0.5
+     ],
+     "depth": 6.246
+    }
+   ]
+  },
+  {
+   "k": 16,
+   "id": "feel-pin",
+   "events": []
+  },
+  {
+   "k": 17,
+   "id": "ring-hi",
+   "events": [
+    {
+     "moving": "bottom internal ring (upper half)",
+     "fixed": "encoder pinion",
+     "kind": "helical",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.1247,
+     "s_confirmed": [
+      0.5,
+      0.25
+     ],
+     "depth": 0.85
+    },
+    {
+     "moving": "bottom internal ring (upper half)",
+     "fixed": "idler pinion 1",
+     "kind": "helical",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.1247,
+     "s_confirmed": [
+      0.5,
+      0.25
+     ],
+     "depth": 0.85
+    },
+    {
+     "moving": "bottom internal ring (upper half)",
+     "fixed": "idler pinion 2",
+     "kind": "helical",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.1247,
+     "s_confirmed": [
+      0.5,
+      0.25
+     ],
+     "depth": 0.85
+    }
+   ]
+  },
+  {
+   "k": 18,
+   "id": "glass",
+   "events": []
+  },
+  {
+   "k": 19,
+   "id": "cap",
+   "events": []
+  },
+  {
+   "k": 20,
+   "id": "kballs",
+   "events": [
+    {
+     "moving": "knob balls 53 x \u00d81 (45\u00b0 cones)",
+     "fixed": "knob upper-cap",
+     "kind": "seat",
+     "why": "0.04 mm\u00b3 only in the last 0.25 mm: seated on the 45\u00b0 cone",
+     "s_first": 0.25,
+     "s_last": 0.25,
+     "n_hits": 1,
+     "vmax": 0.0403,
+     "s_confirmed": [
+      0.25
+     ],
+     "depth": 0.141
+    }
+   ]
+  },
+  {
+   "k": 21,
+   "id": "dial",
+   "events": []
+  },
+  {
+   "k": 22,
+   "id": "dial-hall",
+   "events": [
+    {
+     "moving": "hall magnet 1 N-down",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "hall magnet 2 S-down",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "hall magnet 3 N-down",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "hall magnet 4 S-down",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "hall magnet 5 N-down",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 23,
+   "id": "dial-pin",
+   "events": [
+    {
+     "moving": "cartridge locating pin \u00d81 90\u00b0",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    },
+    {
+     "moving": "cartridge locating pin \u00d81 180\u00b0",
+     "fixed": "control dial",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.0,
+     "s_last": 0.25,
+     "n_hits": 4,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 24,
+   "id": "dial-csp",
+   "events": [
+    {
+     "moving": "centring spring 2 (non-magnetic)",
+     "fixed": "control dial",
+     "kind": "flex",
+     "why": "the spring is stretched over the lever pin",
+     "s_first": 4.25,
+     "s_last": 1.5,
+     "n_hits": 12,
+     "vmax": 0.1545,
+     "s_confirmed": [
+      2.75,
+      1.5
+     ],
+     "depth": 0.649
+    }
+   ]
+  },
+  {
+   "k": 25,
+   "id": "dial-in",
+   "events": [
+    {
+     "moving": "control dial",
+     "fixed": "base cradle",
+     "kind": "clash",
+     "why": "",
+     "s_first": 7.0,
+     "s_last": 0.5,
+     "n_hits": 21,
+     "vmax": 13.1194,
+     "s_confirmed": [
+      3.0,
+      0.5
+     ],
+     "depth": 3.0
+    },
+    {
+     "moving": "control dial",
+     "fixed": "spring anchor pin 2",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 1.5,
+     "n_hits": 12,
+     "vmax": 0.7037,
+     "s_confirmed": [
+      2.75,
+      1.5
+     ],
+     "depth": 0.8
+    },
+    {
+     "moving": "control dial",
+     "fixed": "detent 1 ball \u00d81.5",
+     "kind": "clash",
+     "why": "",
+     "s_first": 2.5,
+     "s_last": 0.25,
+     "n_hits": 10,
+     "vmax": 1.6095,
+     "s_confirmed": [
+      1.25,
+      0.25
+     ],
+     "depth": 1.274
+    },
+    {
+     "moving": "control dial",
+     "fixed": "detent 1 spring",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 1.25,
+     "n_hits": 14,
+     "vmax": 1.0545,
+     "s_confirmed": [
+      2.75
+     ],
+     "depth": 1.4
+    },
+    {
+     "moving": "control dial",
+     "fixed": "detent 1 grub M2x2",
+     "kind": "clash",
+     "why": "",
+     "s_first": 6.4,
+     "s_last": 3.75,
+     "n_hits": 8,
+     "vmax": 2.3324,
+     "s_confirmed": [
+      4.5,
+      3.75
+     ],
+     "depth": 0.8
+    },
+    {
+     "moving": "control dial",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 50.0,
+     "s_last": 31.0,
+     "n_hits": 20,
+     "vmax": 260.7901,
+     "s_confirmed": [
+      40.0,
+      31.0
+     ],
+     "depth": 7.25
+    },
+    {
+     "moving": "control dial",
+     "fixed": "knob balls 53 x \u00d81 (45\u00b0 cones)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 45.55,
+     "s_last": 0.25,
+     "n_hits": 19,
+     "vmax": 4.0287,
+     "s_confirmed": [
+      41.5,
+      0.25
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "hall magnet 1 N-down",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 44.2,
+     "s_last": 37.0,
+     "n_hits": 14,
+     "vmax": 1.55,
+     "s_confirmed": [
+      39.7,
+      37.0
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "hall magnet 2 S-down",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 44.65,
+     "s_last": 41.5,
+     "n_hits": 5,
+     "vmax": 1.3486,
+     "s_confirmed": [
+      43.75,
+      41.5
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "hall magnet 2 S-down",
+     "fixed": "knob balls 53 x \u00d81 (45\u00b0 cones)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 45.55,
+     "s_last": 44.2,
+     "n_hits": 4,
+     "vmax": 0.2111,
+     "s_confirmed": [
+      44.65,
+      44.2
+     ],
+     "depth": 0.797
+    },
+    {
+     "moving": "hall magnet 3 N-down",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 46.45,
+     "s_last": 41.5,
+     "n_hits": 8,
+     "vmax": 1.7671,
+     "s_confirmed": [
+      42.85,
+      41.5
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "hall magnet 4 S-down",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 48.25,
+     "s_last": 42.85,
+     "n_hits": 8,
+     "vmax": 1.7637,
+     "s_confirmed": [
+      44.2,
+      42.85
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "hall magnet 5 N-down",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 49.6,
+     "s_last": 44.2,
+     "n_hits": 8,
+     "vmax": 1.7467,
+     "s_confirmed": [
+      45.55,
+      44.2
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "centring spring 1 (non-magnetic)",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 38.8,
+     "s_last": 31.24,
+     "n_hits": 13,
+     "vmax": 0.0426,
+     "s_confirmed": [
+      34.48
+     ],
+     "depth": 0.331
+    },
+    {
+     "moving": "centring spring 2 (non-magnetic)",
+     "fixed": "knob upper-cap",
+     "kind": "clash",
+     "why": "",
+     "s_first": 38.8,
+     "s_last": 31.24,
+     "n_hits": 13,
+     "vmax": 0.119,
+     "s_confirmed": [
+      34.48,
+      31.24
+     ],
+     "depth": 0.669
+    }
+   ]
+  },
+  {
+   "k": 26,
+   "id": "sleeve",
+   "events": []
+  },
+  {
+   "k": 27,
+   "id": "rodlink",
+   "events": []
+  },
+  {
+   "k": 28,
+   "id": "rod",
+   "events": []
+  },
+  {
+   "k": 29,
+   "id": "rod-nut",
+   "events": [
+    {
+     "moving": "rod nut bottom",
+     "fixed": "rod M1.6 (VBUS_DATA)",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.75,
+     "s_last": 0.25,
+     "n_hits": 7,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 30,
+   "id": "disc",
+   "events": [
+    {
+     "moving": "encoder disc + slotted rim",
+     "fixed": "encoder shaft",
+     "kind": "contact",
+     "why": "",
+     "s_first": 3.0,
+     "s_last": 0.25,
+     "n_hits": 12,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 31,
+   "id": "dialboard",
+   "events": []
+  },
+  {
+   "k": 32,
+   "id": "shell",
+   "events": []
+  },
+  {
+   "k": 33,
+   "id": "shell-ins",
+   "events": []
+  },
+  {
+   "k": 34,
+   "id": "shell-jacks",
+   "events": [
+    {
+     "moving": "jack 1 PJ366ST body + pins [S]",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 36.0,
+     "s_last": 24.0,
+     "n_hits": 13,
+     "vmax": 33.0225,
+     "s_confirmed": [
+      30.0,
+      24.0
+     ],
+     "depth": 1.6
+    },
+    {
+     "moving": "jack 1 PJ366ST body + pins [S]",
+     "fixed": "glow coat (inside walls)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 33.0,
+     "s_last": 4.5,
+     "n_hits": 31,
+     "vmax": 15.7185,
+     "s_confirmed": [
+      18.0
+     ],
+     "depth": 0.15
+    },
+    {
+     "moving": "jack 4 PJ366ST body + pins [S]",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 36.0,
+     "s_last": 24.0,
+     "n_hits": 13,
+     "vmax": 33.0225,
+     "s_confirmed": [
+      30.0,
+      24.0
+     ],
+     "depth": 1.6
+    },
+    {
+     "moving": "jack 4 PJ366ST body + pins [S]",
+     "fixed": "glow coat (inside walls)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 33.0,
+     "s_last": 4.5,
+     "n_hits": 31,
+     "vmax": 15.7185,
+     "s_confirmed": [
+      18.0
+     ],
+     "depth": 0.15
+    }
+   ]
+  },
+  {
+   "k": 35,
+   "id": "shell-nuts",
+   "events": []
+  },
+  {
+   "k": 36,
+   "id": "shell-usb",
+   "events": [
+    {
+     "moving": "USB-C PD board",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 31.05,
+     "s_last": 28.35,
+     "n_hits": 7,
+     "vmax": 6.0,
+     "s_confirmed": [
+      29.7,
+      28.35
+     ],
+     "depth": 0.5
+    },
+    {
+     "moving": "USB-C PD board",
+     "fixed": "glow coat (inside walls)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 31.05,
+     "s_last": 28.35,
+     "n_hits": 7,
+     "vmax": 4.2,
+     "s_confirmed": [
+      29.7,
+      28.35
+     ],
+     "depth": 0.35
+    }
+   ]
+  },
+  {
+   "k": 37,
+   "id": "jcr",
+   "events": []
+  },
+  {
+   "k": 38,
+   "id": "jcr-tb",
+   "events": []
+  },
+  {
+   "k": 39,
+   "id": "jcr-bead",
+   "events": [
+    {
+     "moving": "joystick: joystick cradle gasket: form-in-place silicone bead [A]",
+     "fixed": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+     "kind": "contact",
+     "why": "",
+     "s_first": 1.25,
+     "s_last": 0.25,
+     "n_hits": 5,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 40,
+   "id": "jcr-in",
+   "events": [
+    {
+     "moving": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 39.0,
+     "s_last": 0.75,
+     "n_hits": 52,
+     "vmax": 6.1239,
+     "s_confirmed": [
+      13.0,
+      0.75
+     ],
+     "depth": 2.65
+    },
+    {
+     "moving": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+     "fixed": "corner insert 3 M2.5 brass",
+     "kind": "clash",
+     "why": "",
+     "s_first": 39.0,
+     "s_last": 28.0,
+     "n_hits": 12,
+     "vmax": 7.3378,
+     "s_confirmed": [
+      33.0,
+      28.0
+     ],
+     "depth": 2.45
+    },
+    {
+     "moving": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+     "fixed": "corner insert 4 M2.5 brass",
+     "kind": "clash",
+     "why": "",
+     "s_first": 39.0,
+     "s_last": 28.0,
+     "n_hits": 12,
+     "vmax": 7.3378,
+     "s_confirmed": [
+      33.0,
+      28.0
+     ],
+     "depth": 2.45
+    },
+    {
+     "moving": "joystick: joystick top board (on the vertical boards, sockets under it)",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 32.3,
+     "s_last": 30.5,
+     "n_hits": 5,
+     "vmax": 9.2601,
+     "s_confirmed": [
+      31.4,
+      30.5
+     ],
+     "depth": 0.98
+    },
+    {
+     "moving": "joystick: top-board socket L (1.27 single row, 13) [A]",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 31.0,
+     "s_last": 28.0,
+     "n_hits": 4,
+     "vmax": 1.1468,
+     "s_confirmed": [
+      29.0,
+      28.0
+     ],
+     "depth": 0.55
+    },
+    {
+     "moving": "joystick: top-board socket R (1.27 single row, 13) [A]",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 31.0,
+     "s_last": 28.0,
+     "n_hits": 4,
+     "vmax": 1.1468,
+     "s_confirmed": [
+      29.0,
+      28.0
+     ],
+     "depth": 0.55
+    },
+    {
+     "moving": "joystick: joystick cradle gasket: form-in-place silicone bead [A]",
+     "fixed": "case",
+     "kind": "clash",
+     "why": "",
+     "s_first": 38.978,
+     "s_last": 0.25,
+     "n_hits": 61,
+     "vmax": 2.05,
+     "s_confirmed": [
+      13.868
+     ],
+     "depth": 0.41
+    },
+    {
+     "moving": "joystick: joystick cradle gasket: form-in-place silicone bead [A]",
+     "fixed": "corner insert 3 M2.5 brass",
+     "kind": "clash",
+     "why": "",
+     "s_first": 37.304,
+     "s_last": 33.956,
+     "n_hits": 5,
+     "vmax": 0.336,
+     "s_confirmed": [
+      35.63,
+      33.956
+     ],
+     "depth": 0.41
+    },
+    {
+     "moving": "joystick: joystick cradle gasket: form-in-place silicone bead [A]",
+     "fixed": "corner insert 4 M2.5 brass",
+     "kind": "clash",
+     "why": "",
+     "s_first": 37.304,
+     "s_last": 33.956,
+     "n_hits": 5,
+     "vmax": 0.336,
+     "s_confirmed": [
+      35.63,
+      33.956
+     ],
+     "depth": 0.41
+    }
+   ]
+  },
+  {
+   "k": 41,
+   "id": "js-balls",
+   "events": []
+  },
+  {
+   "k": 42,
+   "id": "jt-block",
+   "events": []
+  },
+  {
+   "k": 43,
+   "id": "jt-screen",
+   "events": [
+    {
+     "moving": "joystick: screen jumper FPC [A]",
+     "fixed": "joystick: screen carrier (printed)",
+     "kind": "flex",
+     "why": "the tail is fed through the roof window, not pushed in bent",
+     "s_first": 11.0,
+     "s_last": 0.25,
+     "n_hits": 26,
+     "vmax": 0.705,
+     "s_confirmed": [
+      3.25
+     ],
+     "depth": 0.1
+    },
+    {
+     "moving": "joystick: screen jumper plug end (bottom, in the daughterboard socket) [A]",
+     "fixed": "joystick: screen carrier (printed)",
+     "kind": "flex",
+     "why": "the tail is fed through the roof window, not pushed in bent",
+     "s_first": 11.5,
+     "s_last": 9.0,
+     "n_hits": 11,
+     "vmax": 9.072,
+     "s_confirmed": [
+      10.25,
+      9.0
+     ],
+     "depth": 0.27
+    }
+   ]
+  },
+  {
+   "k": 44,
+   "id": "jc",
+   "events": []
+  },
+  {
+   "k": 45,
+   "id": "jt-carrier",
+   "events": [
+    {
+     "moving": "joystick: joystick carrier (printed)",
+     "fixed": "joystick: screen jumper FPC [A]",
+     "kind": "flex",
+     "why": "the tail is fed through the slot (joystick model: plug passes with 0.25)",
+     "s_first": 5.0,
+     "s_last": 1.75,
+     "n_hits": 14,
+     "vmax": 1.1774,
+     "s_confirmed": [
+      3.25,
+      1.75
+     ],
+     "depth": 0.9
+    },
+    {
+     "moving": "joystick: joystick carrier (printed)",
+     "fixed": "joystick: screen jumper plug end (bottom, in the daughterboard socket) [A]",
+     "kind": "flex",
+     "why": "the tail is fed through the slot (joystick model: plug passes with 0.25)",
+     "s_first": 6.0,
+     "s_last": 5.0,
+     "n_hits": 5,
+     "vmax": 1.8144,
+     "s_confirmed": [
+      5.5,
+      5.0
+     ],
+     "depth": 0.27
+    }
+   ]
+  },
+  {
+   "k": 46,
+   "id": "jt-guides",
+   "events": []
+  },
+  {
+   "k": 47,
+   "id": "jt-hold",
+   "events": []
+  },
+  {
+   "k": 48,
+   "id": "js-top",
+   "events": []
+  },
+  {
+   "k": 49,
+   "id": "shell-on",
+   "events": [
+    {
+     "moving": "case",
+     "fixed": "vertical board L male pins (right-angle 1.27, 13 into the top-board socket) [A]",
+     "kind": "clash",
+     "why": "",
+     "s_first": 27.0,
+     "s_last": 25.0,
+     "n_hits": 3,
+     "vmax": 0.1758,
+     "s_confirmed": [
+      26.0,
+      25.0
+     ],
+     "depth": 0.15
+    },
+    {
+     "moving": "case",
+     "fixed": "vertical board R male pins (right-angle 1.27, 13 into the top-board socket) [A]",
+     "kind": "clash",
+     "why": "",
+     "s_first": 27.0,
+     "s_last": 25.0,
+     "n_hits": 3,
+     "vmax": 0.1758,
+     "s_confirmed": [
+      26.0,
+      25.0
+     ],
+     "depth": 0.15
+    }
+   ]
+  },
+  {
+   "k": 50,
+   "id": "js-pins",
+   "events": []
+  },
+  {
+   "k": 51,
+   "id": "oring",
+   "events": [
+    {
+     "moving": "knob drip O-ring 40x1 silicone (on the glass)",
+     "fixed": "knob glass sleeve",
+     "kind": "contact",
+     "why": "",
+     "s_first": 11.1,
+     "s_last": 0.25,
+     "n_hits": 34,
+     "vmax": 0.0,
+     "s_confirmed": [],
+     "depth": 0.0
+    }
+   ]
+  },
+  {
+   "k": 52,
+   "id": "cart",
+   "events": []
+  },
+  {
+   "k": 53,
+   "id": "cart-mag",
+   "events": []
+  },
+  {
+   "k": 54,
+   "id": "cart-panel",
+   "events": [
+    {
+     "moving": "dial screen Z132A2441 lens (cover glass)",
+     "fixed": "dial bezel (printed cartridge ring)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 1.5,
+     "n_hits": 13,
+     "vmax": 5.9425,
+     "s_confirmed": [
+      3.0
+     ],
+     "depth": 0.75
+    },
+    {
+     "moving": "dial screen Z132A2441 lens (cover glass)",
+     "fixed": "cartridge magnet 1x1 N52 (bezel) 30\u00b0",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 3.0,
+     "n_hits": 7,
+     "vmax": 0.2184,
+     "s_confirmed": [
+      3.75,
+      3.0
+     ],
+     "depth": 0.652
+    },
+    {
+     "moving": "dial screen Z132A2441 lens (cover glass)",
+     "fixed": "cartridge magnet 1x1 N52 (bezel) 150\u00b0",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 3.0,
+     "n_hits": 7,
+     "vmax": 0.2184,
+     "s_confirmed": [
+      3.75,
+      3.0
+     ],
+     "depth": 0.652
+    },
+    {
+     "moving": "dial screen Z132A2441 lens (cover glass)",
+     "fixed": "cartridge magnet 1x1 N52 (bezel) 240\u00b0",
+     "kind": "clash",
+     "why": "",
+     "s_first": 4.5,
+     "s_last": 3.0,
+     "n_hits": 7,
+     "vmax": 0.2184,
+     "s_confirmed": [
+      3.75,
+      3.0
+     ],
+     "depth": 0.652
+    },
+    {
+     "moving": "dial screen Z132A2441 panel (AMOLED)",
+     "fixed": "dial bezel (printed cartridge ring)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 3.75,
+     "s_last": 0.5,
+     "n_hits": 14,
+     "vmax": 2.9777,
+     "s_confirmed": [
+      2.0
+     ],
+     "depth": 1.0
+    },
+    {
+     "moving": "dial screen Z132A2441 flex (parts, bends, tail)",
+     "fixed": "dial bezel (printed cartridge ring)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 3.5,
+     "s_last": 0.5,
+     "n_hits": 13,
+     "vmax": 1.2078,
+     "s_confirmed": [
+      2.0
+     ],
+     "depth": 0.7
+    }
+   ]
+  },
+  {
+   "k": 55,
+   "id": "cart-pad",
+   "events": [
+    {
+     "moving": "dial cartridge plug pad + arm (printed, glued)",
+     "fixed": "dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down)",
+     "kind": "flex",
+     "why": "the tail is lifted to slide the pad under the plug",
+     "s_first": 1.75,
+     "s_last": 0.25,
+     "n_hits": 7,
+     "vmax": 9.4325,
+     "s_confirmed": [
+      1.0,
+      0.25
+     ],
+     "depth": 0.35
+    }
+   ]
+  },
+  {
+   "k": 56,
+   "id": "cart-in",
+   "events": []
+  },
+  {
+   "k": 57,
+   "id": "cover",
+   "events": []
+  },
+  {
+   "k": 58,
+   "id": "cover-upper",
+   "events": [
+    {
+     "moving": "back AMOLED upper (rear, on the cover floor)",
+     "fixed": "back cover (ASA-CF)",
+     "kind": "clash",
+     "why": "",
+     "s_first": 13.25,
+     "s_last": 2.25,
+     "n_hits": 45,
+     "vmax": 1.4204,
+     "s_confirmed": [
+      7.75,
+      2.25
+     ],
+     "depth": 0.48
+    }
+   ]
+  },
+  {
+   "k": 59,
+   "id": "cover-lower",
+   "events": []
+  },
+  {
+   "k": 60,
+   "id": "cover-on",
+   "events": []
+  },
+  {
+   "k": 61,
+   "id": "screws",
+   "events": []
+  }
+ ],
+ "home": [
+  {
+   "a": "PCB",
+   "b": "PCB back parts (Hall decouplers, J10, DRV8837, passives)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "PCB rod pad VBUS \u00d89.8 (B.Cu)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "clear OLED 1.51\" SSD1309 (PCB front, over window D)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "MCU STM32H7B0VBT6 LQFP100 (PCB front, under the joystick)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "motor",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "brass tube",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "rod sleeve",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "base cradle",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "hall sensor H1 TMAG5253BA3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "hall sensor H2 TMAG5253BA3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "hall sensor H3 TMAG5273A2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "hall sensor H4 TMAG5253BA3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "hall sensor H5 TMAG5253BA3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "encoder bearing 1 (cradle+PCB)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "encoder bearing 2 (seat on the PCB back)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB",
+   "b": "idler pin 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB back parts (Hall decouplers, J10, DRV8837, passives)",
+   "b": "case",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "PCB rod pad VBUS \u00d89.8 (B.Cu)",
+   "b": "rod nut bottom",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "brass tube",
+   "b": "rod-link board (fixed, nut on top)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "rod M1.6 (VBUS_DATA)",
+   "b": "rod nut top",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "rod M1.6 (VBUS_DATA)",
+   "b": "rod nut bottom",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "rod sleeve",
+   "b": "rod-link board (fixed, nut on top)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "rod nut top",
+   "b": "rod-link board (fixed, nut on top)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "encoder bearing 1 (cradle+PCB)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "idler pinion 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "idler pin 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "idler pinion 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "idler pin 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "spring anchor pin 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "base cradle",
+   "b": "spring anchor pin 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "outer thrust load balls 30 x \u00d82",
+   "b": "knob lower-cap land",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "knob upper-cap",
+   "b": "knob balls 53 x \u00d81 (45\u00b0 cones)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "knob glass sleeve",
+   "b": "knob drip O-ring 40x1 silicone (on the glass)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "knob balls 53 x \u00d81 (45\u00b0 cones)",
+   "b": "control dial",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "hall magnet 1 N-down",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "hall magnet 2 S-down",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "hall magnet 3 N-down",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "hall magnet 4 S-down",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "hall magnet 5 N-down",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "detent 1 ball \u00d81.5",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "cartridge magnet 1x1 N52 (dial) 30\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "cartridge magnet 1x1 N52 (dial) 150\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "cartridge magnet 1x1 N52 (dial) 240\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "cartridge locating pin \u00d81 90\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "cartridge locating pin \u00d81 180\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "control dial",
+   "b": "dial board (PCBA, under the screen)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder bearing 1 (cradle+PCB)",
+   "b": "encoder pinion",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder bearing 1 (cradle+PCB)",
+   "b": "encoder shaft",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder pinion",
+   "b": "encoder shaft",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder shaft",
+   "b": "encoder bearing 2 (seat on the PCB back)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder shaft",
+   "b": "encoder disc + slotted rim",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder bearing 2 (seat on the PCB back)",
+   "b": "encoder bearing 2 seat (printed, glued)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder sensor EE-SX1321",
+   "b": "encoder daughterboard",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "encoder daughterboard",
+   "b": "encoder header",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "feel motor coreless \u00d82 [A]",
+   "b": "feel motor shaft \u00d82 [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "feel motor saddle seat [A]",
+   "b": "feel motor saddle strap [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "feel motor saddle strap [A]",
+   "b": "feel motor saddle screw",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "detent train pedestal (SLA, grub-set)",
+   "b": "detent pedestal grub M2x2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial bezel (printed cartridge ring)",
+   "b": "dial screen Z132A2441 lens (cover glass)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial bezel (printed cartridge ring)",
+   "b": "cartridge magnet 1x1 N52 (bezel) 30\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial bezel (printed cartridge ring)",
+   "b": "cartridge magnet 1x1 N52 (bezel) 150\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial bezel (printed cartridge ring)",
+   "b": "cartridge magnet 1x1 N52 (bezel) 240\u00b0",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial screen Z132A2441 lens (cover glass)",
+   "b": "dial screen Z132A2441 panel (AMOLED)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial screen Z132A2441 panel (AMOLED)",
+   "b": "dial screen Z132A2441 flex (parts, bends, tail)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial screen Z132A2441 flex (parts, bends, tail)",
+   "b": "dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down)",
+   "b": "dial cartridge plug pad + arm (printed, glued)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down)",
+   "b": "dial board receptacle, 24-pin 0.4 B2B (faces up)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board receptacle, 24-pin 0.4 B2B (faces up)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board part ESP32-S3-PICO-1-N8R8",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board part LDO 3.3 V",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board part rod-link PHY",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board 405 nm laser diode (TO-38 class, facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board LED site 30\u00b0 (facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board LED site 150\u00b0 (facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board LED site 210\u00b0 (facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board LED site 270\u00b0 (facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial board LED site 330\u00b0 (facing down)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial board (PCBA, under the screen)",
+   "b": "dial strap loop, 2 lines + 2 spares [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "dial strap loop, 2 lines + 2 spares [A]",
+   "b": "rod-link board (fixed, nut on top)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "vertical board L (power), 1.0 FR4",
+   "b": "vertical board L header (right-angle 2\u00d71.27, 22 THT + 0 SMT legs) [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "vertical board L (power), 1.0 FR4",
+   "b": "vertical board L male pins (right-angle 1.27, 13 into the top-board socket) [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "vertical board R (CAN + joystick lines), 1.0 FR4",
+   "b": "vertical board R header (right-angle 2\u00d71.27, 14 THT + 8 SMT legs) [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "vertical board R (CAN + joystick lines), 1.0 FR4",
+   "b": "vertical board R male pins (right-angle 1.27, 13 into the top-board socket) [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "case",
+   "b": "glow coat (inside walls)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "case",
+   "b": "corner insert 1 M2.5 brass",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "case",
+   "b": "corner insert 2 M2.5 brass",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "case",
+   "b": "corner insert 3 M2.5 brass",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "case",
+   "b": "corner insert 4 M2.5 brass",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "back cover (ASA-CF)",
+   "b": "corner screw 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "back cover (ASA-CF)",
+   "b": "corner screw 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "back cover (ASA-CF)",
+   "b": "corner screw 3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "back cover (ASA-CF)",
+   "b": "corner screw 4",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "USB-C receptacle [S]",
+   "b": "USB-C PD board",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick top board (on the vertical boards, sockets under it)",
+   "b": "joystick: SW1 SKRHADE010 body (45\u00b0)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick top board (on the vertical boards, sockets under it)",
+   "b": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: SW1 SKRHADE010 body (45\u00b0)",
+   "b": "joystick: SW1 SKRHADE010 stem",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: SW1 SKRHADE010 stem",
+   "b": "joystick: screen carrier (printed)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "b": "joystick: joystick cradle gasket: form-in-place silicone bead [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "b": "joystick: ball 1 \u00d82 stainless",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "b": "joystick: ball 2 \u00d82 stainless",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "b": "joystick: ball 3 \u00d82 stainless",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick case cradle (SLA, lip in the faceplate cutout)",
+   "b": "joystick: ball 4 \u00d82 stainless",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: ball 1 \u00d82 stainless",
+   "b": "joystick: joystick carrier (printed)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: ball 2 \u00d82 stainless",
+   "b": "joystick: joystick carrier (printed)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: ball 3 \u00d82 stainless",
+   "b": "joystick: joystick carrier (printed)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: ball 4 \u00d82 stainless",
+   "b": "joystick: joystick carrier (printed)",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick carrier (printed)",
+   "b": "joystick: hold-down spring 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick carrier (printed)",
+   "b": "joystick: hold-down spring 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick carrier (printed)",
+   "b": "joystick: hold-down spring 3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: joystick carrier (printed)",
+   "b": "joystick: hold-down spring 4",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: screen carrier (printed)",
+   "b": "joystick: screen foam pads 0.15 (foam tape) [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: screen jumper B2B socket (top, on the panel header) [A]",
+   "b": "joystick: screen jumper FPC [A]",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: rear spring anchor (printed)",
+   "b": "joystick: hold-down spring 1",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: rear spring anchor (printed)",
+   "b": "joystick: hold-down spring 2",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: rear spring anchor (printed)",
+   "b": "joystick: hold-down spring 3",
+   "vol": 0.0,
+   "depth": 0.0
+  },
+  {
+   "a": "joystick: rear spring anchor (printed)",
+   "b": "joystick: hold-down spring 4",
+   "vol": 0.0,
+   "depth": 0.0
+  }
+ ],
+ "alts": {},
+ "stats": {
+  "mesh_tests": 52,
+  "exact": 0,
+  "t_exact": 0.0,
+  "wall": 14.0
+ }
+}
