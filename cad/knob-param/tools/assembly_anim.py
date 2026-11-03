@@ -560,8 +560,254 @@ def stage_check(plan, idx, out):
                stats=dict(mesh_tests=ck.n_mesh, exact=ck.geo.n_exact, t_exact=round(ck.geo.t_exact, 1), wall=round(time.time() - t0, 1)))
     os.makedirs(out, exist_ok=True)
     json.dump(res, open(os.path.join(cache_dir(), "check.json"), "w"), indent=1)
+    json.dump(res, open(os.path.join(out, "check.json"), "w"), indent=1)
+    open(os.path.join(out, "check.txt"), "w").write(report_text(plan, res))
     log(f"check done: {ck.n_mesh} mesh tests, {ck.geo.n_exact} exact OCC confirms ({ck.geo.t_exact:.0f} s)")
     return res
+
+
+def report_text(plan, res):
+    """Plain-text summary of the insertion-path check (the same facts the captions and the sheet show)."""
+    m = res["meta"]
+    L = [f"Assembly insertion-path check, knob {m['version']} ({m['branch']} @ {m['commit']}, cache built {m['built']}), "
+         f"{len(plan.steps)} steps, {m['n']} parts. Clash = common volume > {res['thr']} mm³ (exact OCC) somewhere on the way in.",
+         "Kinds: clash (blocked), helical (herringbone teeth: they screw in, a straight push is expected to hit), contact (touch, no volume).",
+         ""]
+    nclash = 0
+    for st in res["steps"]:
+        S = plan.steps[st["k"]]
+        ev = st["events"]
+        bad = [e for e in ev if e["kind"] == "clash"]
+        nclash += len(bad)
+        kinds = {}
+        for e in ev:
+            kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
+        tag = "CLASH" if bad else ("ok" if not ev else "ok (" + ", ".join(f"{v} {k}" for k, v in kinds.items()) + ")")
+        L.append(f"{S['k'] + 1:2d}. [{S['sub']}] {S['name']}: {dir_label(S['d'])}, {S['check_travel']:.0f} mm checked -> {tag}")
+        for e in bad:
+            L.append(f"      {e['moving']}  x  {e['fixed']}: up to {e['vmax']:.3f} mm³, depth {e['depth']:.2f}, "
+                     f"from {e['s_first']:.2f} to {e['s_last']:.2f} mm before home")
+        if S["id"] in res.get("alts", {}):
+            A = res["alts"][S["id"]]
+            L.append(f"      other directions (clashes): {A['dirs']}")
+            for j, r in A["reorder"].items():
+                L.append(f"      moved before '{j}': {r['clashes']} clashes {r['which'][:3]}")
+    hc = [h for h in res["home"] if h["vol"] > res["thr"] or h["vol"] < 0]
+    L += ["", f"Assembled state: {len(res['home'])} touching pairs, {len(hc)} with volume over {res['thr']} mm³"]
+    L += [f"      {h['a']}  x  {h['b']}: {h['vol']:.3f} mm³" for h in hc]
+    L += ["", f"TOTAL: {nclash} clash events on the insertion paths; stats {res['stats']}"]
+    return "\n".join(L) + "\n"
+
+
+# ------------------------------------------------------------------------------------------------- sheet and video
+VIEW_DIR = np.array([1.0, 0.32, 0.42])    # camera direction from the target: from +x (the cut face), a little above and in front
+FOV = 30.0
+CLEAR_OPACITY = 0.35
+
+
+def _dark(hexc, k=0.6):
+    h = hexc.lstrip("#"); r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return "#%02x%02x%02x" % tuple(int(v * k) for v in (r, g, b))
+
+
+class Scene:
+    """Half-section (x <= 0) meshes of every part as pyvista actors; parts move by actor position, appear when their step starts."""
+
+    def __init__(self, plan, idx, size):
+        import pyvista as pv
+        from knobparam.assembly.colours import colour, see_through
+        self.plan, self.size = plan, size
+        self.pl = pv.Plotter(off_screen=True, window_size=size)
+        self.pl.set_background("white")
+        try:
+            pass  # depth peeling drops every translucent actor under xvfb here; plain alpha blending instead
+        except Exception:
+            pass
+        self.actors, self.first, self.bb = {}, {}, {}
+        for n, p in idx["parts"].items():
+            z = np.load(p["mesh"])
+            if "CP" not in z:
+                continue                                   # wholly on the cut-away side
+            P, T, C = z["CP"].astype(float), z["CT"], z["CC"].astype(bool)
+            col, clear = colour(n), see_through(n)
+            acts = []
+            for sel, c, cut in ((~C, col, False), (C, _dark(col), True)):
+                if not sel.any():
+                    continue
+                m = pv.PolyData(P, np.hstack([np.full((int(sel.sum()), 1), 3), T[sel]]).ravel())
+                op = (0.75 if cut else CLEAR_OPACITY) if clear else 1.0
+                a = self.pl.add_mesh(m, color=_dark(c, 0.8) if clear else c, opacity=op, smooth_shading=False,
+                                     ambient=0.3, diffuse=0.75, specular=0.1)
+                acts.append(a)
+                if clear and not cut:   # clear parts: draw their feature edges so they read on a white background
+                    fe = m.extract_feature_edges(35)
+                    if fe.n_points:
+                        acts.append(self.pl.add_mesh(fe, color="#5a7f8c", line_width=1.0, opacity=0.7))
+            self.actors[n] = acts
+            self.first[n] = min(plan.chain.get(n, [0]))
+            self.bb[n] = np.array(p["bb"])
+        self.cam = None
+
+    def pose(self, done, cur=None, frac=0.0):
+        """Show steps < done finished, step cur at frac. Returns the bounding box of what is visible."""
+        lo, hi = np.full(3, 1e9), np.full(3, -1e9)
+        upto = cur if cur is not None else done - 1
+        for n, acts in self.actors.items():
+            vis = self.first[n] <= upto
+            o = self.plan.offset(n, done, cur, frac)
+            for a in acts:
+                a.SetVisibility(vis)
+                a.SetPosition(*o)
+            if vis:
+                b = self.bb[n]
+                lo = np.minimum(lo, np.minimum(b[:3], [min(b[0], 0.0), b[1], b[2]]) + o)
+                hi = np.maximum(hi, np.array([min(b[3], 0.0), b[4], b[5]]) + o)
+        return lo, hi
+
+    def frame_cam(self, lo, hi):
+        c = (lo + hi) / 2
+        r = 0.5 * float(np.linalg.norm(hi - lo))
+        aspect = self.size[0] / self.size[1]
+        dist = 0.92 * r / math.sin(math.radians(FOV / 2)) / min(1.0, aspect) ** 0.5
+        return np.concatenate([c, [max(dist, 60.0)]])
+
+    def set_cam(self, cam):
+        c, dist = cam[:3], cam[3]
+        d = VIEW_DIR / np.linalg.norm(VIEW_DIR)
+        self.pl.camera_position = [tuple(c + dist * d), tuple(c), (0, 1, 0)]
+        self.pl.camera.view_angle = FOV
+
+    def caption(self, lines, color="black", fs=None):
+        fs = fs or max(9, int(self.size[0] / 95))
+        for i in range(4):
+            self.pl.remove_actor(f"cap{i}")
+        y = self.size[1] - 8
+        for i, (t, c) in enumerate(lines[:4]):
+            y -= int(fs * (1.9 if i == 0 else 1.6))
+            self.pl.add_text(t, position=(12, y), font_size=fs if i == 0 else int(fs * 0.85), color=c, name=f"cap{i}")
+
+    def grab(self):
+        return self.pl.screenshot(None, return_img=True)
+
+
+def _events(plan):
+    p = os.path.join(cache_dir(), "check.json")
+    if not os.path.exists(p):
+        log("no check results yet (run the `check` stage): captions show no clash status")
+        return {}
+    res = json.load(open(p))
+    return {st["id"]: st["events"] for st in res["steps"]}
+
+
+def _step_lines(S, n_steps, ev):
+    bad = [e for e in ev.get(S["id"], []) if e["kind"] == "clash"]
+    tag = f" [{S['sub']}]" if S["sub"] != "main" else ""
+    L = [(f"Step {S['k'] + 1}/{n_steps}{tag}: {S['name']}", "black"), (S.get("note", ""), "#404040")]
+    if bad:
+        e = max(bad, key=lambda e: e["vmax"])
+        L.append((f"CLASH on the way in: {e['moving'][:48]} x {e['fixed'][:48]} ({e['vmax']:.2f} mm³)"
+                  + (f" +{len(bad) - 1} more" if len(bad) > 1 else ""), "#c00000"))
+    elif S["id"] in ev:
+        L.append(("insertion path clear", "#1a7f37"))
+    return L
+
+
+def _ease(t):
+    return 0.5 - 0.5 * math.cos(math.pi * t)
+
+
+def stage_video(plan, idx, out, quick=False):
+    import subprocess
+    os.makedirs(out, exist_ok=True)
+    size = (640, 360) if quick else (1280, 720)
+    fps = 12 if quick else 24
+    move, hold, blend = (14, 5, 5) if quick else (30, 10, 10)
+    ev = _events(plan)
+    sc = Scene(plan, idx, size)
+    mp4 = os.path.join(out, "assembly.mp4")
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{size[0]}x{size[1]}", "-r", str(fps),
+           "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", mp4]
+    ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    n = len(plan.steps)
+    meta = idx["meta"]
+    foot = f"knob {meta['version']} ({meta['branch']} @ {meta['commit']}) · cut at x = 0 · clear parts at {int(CLEAR_OPACITY * 100)} %"
+    prev = None
+    nf = 0
+    for S in plan.steps:
+        k = S["k"]
+        lo0, hi0 = sc.pose(k, k, 0.0)
+        lo1, hi1 = sc.pose(k + 1, None, 0.0)
+        cam = sc.frame_cam(np.minimum(lo0, lo1), np.maximum(hi0, hi1))
+        lines = _step_lines(S, n, ev) + [(foot, "#808080")]
+        sc.caption(lines)
+        still = S["base"] and S["sub"] != "main"
+        frames = ([0.0] * hold) + ([] if still else [_ease(i / (move - 1)) for i in range(move)]) + [1.0] * hold
+        for i, f in enumerate(frames):
+            if f >= 1.0:
+                sc.pose(k + 1, None, 0.0)
+            else:
+                sc.pose(k, k, f)
+            t = min(1.0, i / blend) if prev is not None else 1.0
+            sc.set_cam(prev + (cam - prev) * _ease(t) if prev is not None else cam)
+            ff.stdin.write(np.ascontiguousarray(sc.grab()[:, :, :3]).tobytes()); nf += 1
+        prev = cam
+        log(f"  video step {k + 1}/{n}: {len(frames)} frames")
+    for _ in range(fps * 2):
+        ff.stdin.write(np.ascontiguousarray(sc.grab()[:, :, :3]).tobytes()); nf += 1
+    ff.stdin.close(); ff.wait()
+    gif = os.path.join(out, "assembly.gif")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-vf",
+                    "fps=8,scale=640:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer",
+                    gif], check=True)
+    log(f"video: {nf} frames -> {mp4}, {gif}")
+
+
+def stage_sheet(plan, idx, out):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    os.makedirs(out, exist_ok=True)
+    ev = _events(plan)
+    size = (560, 400)
+    sc = Scene(plan, idx, size)
+    n = len(plan.steps)
+    cols = 6
+    rows = int(math.ceil(n / cols))
+    fig, axs = plt.subplots(rows, cols, figsize=(cols * 4.0, rows * 3.35), dpi=110)
+    for ax in axs.ravel():
+        ax.axis("off")
+    for S in plan.steps:
+        k = S["k"]
+        still = S["base"] and S["sub"] != "main"
+        lo0, hi0 = sc.pose(k, k, 0.0)
+        lo1, hi1 = sc.pose(k + 1, None, 0.0)
+        sc.set_cam(sc.frame_cam(np.minimum(lo0, lo1), np.maximum(hi0, hi1)))
+        sc.pose(k + 1, None, 0.0) if still else sc.pose(k, k, 0.0)
+        for i in range(4):
+            sc.pl.remove_actor(f"cap{i}")
+        img = sc.grab()
+        ax = axs.ravel()[k]
+        ax.imshow(img)
+        bad = [e for e in ev.get(S["id"], []) if e["kind"] == "clash"]
+        tag = f"[{S['sub']}] " if S["sub"] != "main" else ""
+        mv = "" if still else f"  ({dir_label(S['d'])})"
+        title = f"{k + 1}. {tag}{S['name']}{mv}"
+        import textwrap
+        ax.set_title("\n".join(textwrap.wrap(title, 52)[:3]), fontsize=7.5, color="#c00000" if bad else "black", loc="left")
+        if bad:
+            e = max(bad, key=lambda e: e["vmax"])
+            ax.text(0.01, 0.02, "\n".join(textwrap.wrap(f"CLASH: {e['moving']} x {e['fixed']} {e['vmax']:.2f} mm³", 70)[:2]),
+                    transform=ax.transAxes, fontsize=6.2, color="#c00000", va="bottom",
+                    bbox=dict(facecolor="white", alpha=0.85, edgecolor="none", pad=1.5))
+        log(f"  sheet step {k + 1}/{n}")
+    meta = idx["meta"]
+    fig.suptitle(f"Assembly sequence, knob {meta['version']} ({meta['branch']} @ {meta['commit']}): each panel shows the step's "
+                 f"parts at the start of their move (cut at x = 0); red = a clash somewhere on the way in", fontsize=12, x=0.01,
+                 ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.985))
+    p = os.path.join(out, "steps.png")
+    fig.savefig(p)
+    log(f"sheet -> {p}")
 
 
 def _prefix(plan, k):
@@ -588,6 +834,10 @@ def main():
         sys.exit("fix the rules first: every part must be in exactly one step")
     if a.stage in ("check", "all"):
         stage_check(plan, idx, a.out)
+    if a.stage in ("sheet", "all"):
+        stage_sheet(plan, idx, a.out)
+    if a.stage in ("video", "all"):
+        stage_video(plan, idx, a.out, a.quick)
 
 
 if __name__ == "__main__":
