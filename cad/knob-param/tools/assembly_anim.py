@@ -331,8 +331,9 @@ def stage_seq(plan, quiet=False):
 # straight-line hit between them is reported as "helical mesh", not as a blocked path.
 HELICAL = re.compile(r"^bottom internal ring|^idler pinion \d$|^encoder pinion$", re.I)
 NEAR, FINE, COARSE = 5.0, 0.25, 1.0       # last NEAR mm at FINE steps, further out at <= COARSE
-N_EXACT = 5                               # exact OCC confirmations per (moving, fixed) pair at most
-SCHED = "v1"
+N_EXACT = 2                               # exact OCC confirmations per (moving, fixed) pair: middle and last mesh hit
+SCHED = "v2"
+WORKERS = max(1, int(os.environ.get("KNOB_POOL", "2")))   # parallel pair checks (fork); the 2-core box: 2
 
 
 class Geo:
@@ -390,23 +391,30 @@ def schedule(L, coarse):
 
 class Checker:
     def __init__(self, idx, memo_path, thr):
+        self.idx = idx
         self.geo = Geo(idx)
         self.BB = {n: p["bb"] for n, p in idx["parts"].items()}
         self.memo_path = memo_path
-        self.memo = json.load(open(memo_path)) if os.path.exists(memo_path) else {}
+        self.memo = json.load(open(memo_path)) if memo_path and os.path.exists(memo_path) else {}
         self.thr = thr
         self.n_mesh = 0
 
     def save(self):
-        json.dump(self.memo, open(self.memo_path, "w"))
+        if self.memo_path:
+            tmp = self.memo_path + ".tmp"
+            json.dump(self.memo, open(tmp, "w"))
+            os.replace(tmp, self.memo_path)      # a restart mid-write keeps the last good memo
 
     def _key(self, *a):
         return _sha("|".join(str(x) for x in a))
 
+    def pair_key(self, m, f, d, L):
+        P = self.geo.P
+        return self._key(SCHED, P[m]["mesh"], P[f]["mesh"], *np.round(d, 6), round(L, 3))
+
     def pair(self, m, f, d, L):
         """Insertion of m along d from L to 0 (mm) past fixed f. Returns {hits: [s...], exact: [[s, vol, depth]...]}."""
-        P = self.geo.P
-        k = self._key(SCHED, P[m]["mesh"], P[f]["mesh"], *np.round(d, 6), round(L, 3))
+        k = self.pair_key(m, f, d, L)
         if k in self.memo:
             return self.memo[k]
         bm, bf = self.BB[m], self.BB[f]
@@ -425,7 +433,8 @@ class Checker:
                     hits.append(s)
         ex = []
         if hits:
-            picks = sorted({hits[0], hits[-1]} | {hits[int(i)] for i in np.linspace(0, len(hits) - 1, N_EXACT)[1:-1]}, reverse=True)
+            # the middle of the hit run (deepest for a part passing an obstacle) and the last hit (deepest for one seating into it)
+            picks = sorted({hits[len(hits) // 2], hits[-1]}, reverse=True)
             for s in picks[:N_EXACT]:
                 v, dm = self.geo.exact(m, f, list(-s * d))
                 ex.append([s, round(v, 4), round(dm, 3)])
@@ -433,10 +442,11 @@ class Checker:
         self.memo[k] = r
         return r
 
-    def home(self, a, b):
-        """Assembled state: common volume of a and b (mesh filter, exact confirm)."""
+    def home(self, a, b, exact=False):
+        """Assembled state: do a and b touch (mesh)? The exact common volume only on request: the knob build's own all-pairs
+        clash check (exact, every part) already covers the assembled state, so this stage only lists the touching pairs."""
         P = self.geo.P
-        k = self._key("home", P[a]["mesh"], P[b]["mesh"])
+        k = self._key("home", P[a]["mesh"], P[b]["mesh"], exact)
         if k in self.memo:
             return self.memo[k]
         import vtk
@@ -445,10 +455,49 @@ class Checker:
         cf.SetMatrix(0, vtk.vtkMatrix4x4()); cf.SetMatrix(1, vtk.vtkMatrix4x4())
         cf.SetCollisionModeToFirstContact(); cf.Update(); self.n_mesh += 1
         r = dict(touch=cf.GetNumberOfContacts() > 0, vol=0.0, depth=0.0)
-        if r["touch"]:
+        if r["touch"] and exact:
             r["vol"], r["depth"] = self.geo.exact(a, b, [0.0, 0.0, 0.0])
         self.memo[k] = r
         return r
+
+    def step_tasks(self, moving, fixed, d, L):
+        """(m, f, d, L, key) for every pair this step meets that is not in the memo yet."""
+        out = []
+        for m in moving:
+            sw = _union([self.BB[m], _bb_off(self.BB[m], -L * d)])
+            for f in fixed:
+                if _ov(sw, self.BB[f], 0.05):
+                    k = self.pair_key(m, f, d, L)
+                    if k not in self.memo:
+                        out.append((m, f, tuple(float(x) for x in d), float(L), k))
+        return out
+
+    def prefetch(self, tasks, label=""):
+        """Run the pair checks in WORKERS forked processes (each its own meshes and BREPs); memo saved as results come in."""
+        seen, todo = set(), []
+        for t in tasks:
+            if t[4] not in seen and t[4] not in self.memo:
+                seen.add(t[4]); todo.append(t)
+        if not todo:
+            return
+        t0 = time.time()
+        log(f"  {label}{len(todo)} pair sweeps to run ({WORKERS} workers) ...")
+        if WORKERS == 1:
+            for i, (m, f, d, L, k) in enumerate(todo):
+                self.pair(m, f, np.array(d), L)
+                if (i + 1) % 25 == 0:
+                    self.save(); log(f"    {i + 1}/{len(todo)} ({time.time() - t0:.0f} s)")
+        else:
+            import multiprocessing as mp
+            bbv = lambda n: float(np.prod(np.array(self.BB[n][3:]) - np.array(self.BB[n][:3])))
+            todo.sort(key=lambda t: -(bbv(t[0]) + bbv(t[1])))   # the big (slow) pairs first, so the pool ends evenly
+            with mp.get_context("fork").Pool(WORKERS, _winit, (self.idx, self.thr)) as pool:
+                for i, (k, r, nm, ne, te) in enumerate(pool.imap_unordered(_wpair, todo, chunksize=1)):
+                    self.memo[k] = r
+                    self.n_mesh += nm; self.geo.n_exact += ne; self.geo.t_exact += te
+                    if (i + 1) % 25 == 0 or i + 1 == len(todo):
+                        self.save(); log(f"    {i + 1}/{len(todo)} ({time.time() - t0:.0f} s)")
+        self.save()
 
     def classify(self, m, f, res):
         if not res["hits"]:
@@ -479,21 +528,42 @@ class Checker:
         return ev
 
 
-def run_order(plan, ck, order, dirs=None):
-    """Check a step order (list of step indices into plan.steps); returns {k: events}. Travels are re-derived (bbox clear)."""
-    members, out = {}, {}
+_W = None
+
+
+def _winit(idx, thr):
+    global _W
+    _W = Checker(idx, None, thr)
+
+
+def _wpair(t):
+    m, f, d, L, k = t
+    n0, e0, t0 = _W.n_mesh, _W.geo.n_exact, _W.geo.t_exact
+    r = _W.pair(m, f, np.array(d), L)
+    return k, r, _W.n_mesh - n0, _W.geo.n_exact - e0, _W.geo.t_exact - t0
+
+
+def _order_steps(plan, ck, order, dirs=None):
+    """[(k, moving, fixed, d, L or None)] for a step order; travels re-derived (bbox clear)."""
+    members, out = {}, []
     for k in order:
         S = plan.steps[k]
         moving = list(members.get(S["join"], [])) if S.get("join") else S["own"]
         fixed = list(members.get(S["sub"], []))
         d = dirs.get(k, S["d"]) if dirs else S["d"]
+        L = None
         if fixed and not (S["base"] and S["sub"] != "main"):
             L = max(auto_travel(moving, fixed, d, ck.BB), S["travel"] if np.allclose(d, S["d"]) else 0.0)
-            out[k] = ck.step_events(moving, fixed, d, L)
-        else:
-            out[k] = []
+        out.append((k, moving, fixed, d, L))
         members.setdefault(S["sub"], []).extend(moving)
     return out
+
+
+def run_order(plan, ck, order, dirs=None, label=""):
+    """Check a step order (list of step indices into plan.steps); returns {k: events}. The pair sweeps run in parallel first."""
+    seq = _order_steps(plan, ck, order, dirs)
+    ck.prefetch([t for k, mv, fx, d, L in seq if L is not None for t in ck.step_tasks(mv, fx, d, L)], label)
+    return {k: (ck.step_events(mv, fx, d, L) if L is not None else []) for k, mv, fx, d, L in seq}
 
 
 def _placed_in(plan, k, f):
@@ -517,7 +587,7 @@ def stage_check(plan, idx, out):
         S = plan.steps[k]
         bad = [e for e in ev[k] if e["kind"] == "clash"]
         log(f"  {k + 1:2d}. {S['name'][:60]:60s} {len(ev[k]):3d} touching pairs, {len(bad)} clash")
-    log("assembled state (every pair whose boxes overlap) ...")
+    log("assembled state (every pair whose boxes overlap; touching only, the build's clash check has the volumes) ...")
     names = list(idx["parts"])
     home = []
     for i, a in enumerate(names):
@@ -542,12 +612,12 @@ def stage_check(plan, idx, out):
             d = _unit(ax)
             if np.allclose(d, S["d"]):
                 continue
-            r = run_order(plan, ck, _prefix(plan, k) + [k], {k: d})[k]
+            r = run_order(plan, ck, _prefix(plan, k) + [k], {k: d}, f"step {k + 1} {ax}: ")[k]
             A["dirs"][ax] = sum(1 for e in r if e["kind"] == "clash")
         blockers = sorted({_placed_in(plan, k, e["fixed"]) for e in bad} - {None})
         for j in blockers:
             new = order[:j] + [k] + [x for x in order[j:] if x != k]
-            r = run_order(plan, ck, new)
+            r = run_order(plan, ck, new, None, f"step {k + 1} before {plan.steps[j]['id']}: ")
             span = new[j:k + 1]   # k itself, then the steps it jumped over
             n = sum(1 for x in span for e in r[x] if e["kind"] == "clash")
             A["reorder"][plan.steps[j]["id"]] = dict(clashes=n, which=[(plan.steps[x]["id"], e["moving"], e["fixed"])
