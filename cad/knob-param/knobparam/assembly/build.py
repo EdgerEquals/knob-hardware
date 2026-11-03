@@ -7,13 +7,13 @@ from ..common import model
 ORDER = [("optics", "scanner"), ("optics", "ring_lights"), ("electronics", "pcb"), ("base_drive", "motor"), ("base_drive", "brass"), ("base_drive", "cradle"),
          ("control_dial", "thrust"), ("main_knob", "knob"), ("control_dial", "dial"), ("control_dial", "hall_arm"),
          ("electronics", "hall_sensors"), ("under_pcb", "encoder"), ("base_drive", "idlers"), ("base_drive", "feel"), ("base_drive", "mech"),
-         ("control_dial", "screen"), ("control_dial", "holder"), ("electronics", "adapter"),
+         ("control_dial", "screen"), ("control_dial", "holder"), ("electronics", "adapter"), ("electronics", "vboards"),
          ("case", "shell")]
 PATHS = {}
 NATIVE = {}   # native brep path per part (mechanism parts in the mechanism frame, the rest in the panel frame)
 FRAME = {}    # part -> "mech" | "panel"
 # modules built in the panel frame. The PCB proxy turns its own mechanism features into the panel frame.
-FIXED = {("case", "shell"), ("electronics", "pcb"), ("optics", "scanner")}
+FIXED = {("case", "shell"), ("electronics", "pcb"), ("optics", "scanner"), ("electronics", "vboards")}   # vboards: v4, panel frame
 
 
 def view(parts, keys, D, which):

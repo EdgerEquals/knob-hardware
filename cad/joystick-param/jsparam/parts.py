@@ -10,6 +10,10 @@ import math
 from build123d import *
 
 A = (Align.CENTER, Align.CENTER, Align.MIN)
+# v0.7 part names (layout v4 step 1)
+DB_NAME = "joystick top board (on the spring contacts)"
+CC_NAME = "joystick case cradle (SLA, lip in the faceplate cutout)"
+GK_NAME = "joystick cradle gasket (silicone sponge) [A]"
 
 def box(x0, x1, y0, y1, z0, z1):
     return Pos((x0 + x1) / 2, (y0 + y1) / 2, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=A)
@@ -106,6 +110,54 @@ def cradle(D):
         r -= box(D["db_half_w"] - 0.5, D["tab_x1"] + 0.2, -D["tab_hy"] - 0.2, D["tab_hy"] + 0.2, zt, zt + 5.0)
     return r
 
+def case_cradle(D):
+    """v0.7 [Ed 3 Nov 11:03] cradle captured by the case (clear SLA). Flange behind the faceplate (−y, ±x; the +y side is over the rail
+    strip), lip ring up into the cutout (closed across +y inside the cutout only), hangers and end walls round the top board with
+    shoulders over its edge (the board is glued to them; the spring contacts push it up), and the four lower ball seats."""
+    cc = D["cc"]
+    zf0, zf1, zl0, zl1 = D["z_fl0"], D["z_fl1"], D["z_lipb"], D["z_lip1"]
+    ohw, ohh, ihw, ihh = D["lip_out_hw"], D["lip_out_hh"], D["lip_in_hw"], D["lip_in_hh"]
+    fx1, fy0, fy1 = D["fl_x1"], D["fl_y0"], D["fl_y1"]
+    nhw, ny0, ny1, w = D["nest_hw"], D["nest_y0"], D["nest_y1"], cc["wall"]
+    # lip ring in the cutout, all round
+    c = rbox(2 * ohw, 2 * ohh, D["lip_corner_r"], zl0, zl1) - cbox(2 * ihw, 2 * ihh, zl0 - 0.1, zl1 + 0.1)
+    # lip root down to the flange, only over the flange (y <= fl_y1)
+    root = rbox(2 * ohw, 2 * ohh, D["lip_corner_r"], zf1 - 0.01, zl0 + 0.01) - cbox(2 * ihw, 2 * ihh, zf1 - 0.2, zl0 + 0.2)
+    c += root - box(-ohw - 1, ohw + 1, fy1, ohh + 1, zf1 - 0.5, zl0 + 0.5)
+    # flange: the two side strips (inside edge = the nest wall) and the knob-side strip
+    for sx in (-1, 1):
+        c += box(min(sx * nhw, sx * fx1), max(sx * nhw, sx * fx1), fy0, fy1, zf0, zf1)
+    c += box(-fx1, fx1, fy0, -ihh, zf0, zf1)
+    # hangers along the board's ±x edges and end walls along its ±y edges, from just under the board up to the flange
+    for sx in (-1, 1):
+        c += box(min(sx * nhw, sx * (nhw + w)), max(sx * nhw, sx * (nhw + w)), ny0 - w, ny1 + w, D["z_nest0"], zf0 + 0.01)
+    c += box(-nhw - w, nhw + w, ny0 - w, ny0, D["z_nest0"], zf0 + 0.01)
+    c += box(-nhw - w, nhw + w, ny1, ny1 + w, D["z_nest0"], zf0 + 0.01)
+    # shoulders over the board edge (x sides full length; y ends), the +x one notched round the screen socket and the jumper's plug
+    sh = D["sh_in"]; z0, z1 = D["z_sh0"], D["z_sh1"]
+    for sx in (-1, 1):
+        c += box(min(sx * (D["board_x1"] - sh), sx * nhw), max(sx * (D["board_x1"] - sh), sx * nhw) + (0.01 if sx > 0 else 0),
+                 ny0, ny1, z0, z1)
+    c += box(-nhw, nhw, ny0, D["board_y0"] + sh, z0, z1)
+    c += box(-nhw, nhw, D["board_y1"] - sh, ny1, z0, z1)
+    if D.get("fpc_to_db"):
+        hy = D["db_fpc_sock"][0] / 2 + 0.6
+        c -= box(D["board_x1"] - sh - 0.1, nhw - 0.01, -hy, hy, z0 - 0.1, z1 + 0.1)
+    # lower ball seats on brackets from the hangers
+    for x, y in D["balls"]:
+        sx = 1 if x > 0 else -1
+        c += cyl(2 * D["boss_r"], D["z_seat0"], D["z_rim_lo"], x, y)
+        c += box(min(x, sx * (nhw + 0.5)), max(x, sx * (nhw + 0.5)), y - 0.8 * D["boss_r"], y + 0.8 * D["boss_r"], D["z_seat0"], zf0 + 0.01)
+        c -= Pos(x, y, D["z_sc_lo"]) * Sphere(D["cup_r"])
+    return c
+
+def cradle_gasket(D):
+    """v0.7 gasket on the flange top, outside the lip (−y and ±x sides), drawn at its nominal compression, 0.01 under the faceplate."""
+    ohw, ohh = D["lip_out_hw"], D["lip_out_hh"]
+    g = box(-D["fl_x1"], D["fl_x1"], D["fl_y0"], D["fl_y1"], D["z_fl1"], D["z_fp0"] - 0.01)
+    g -= box(-ohw, ohw, -ohh, D["fl_y1"] + 1.0, D["z_fl1"] - 0.1, D["z_fp0"] + 0.1)
+    return g
+
 def _fpc_slot(D, z0, z1):
     """Vertical drop for the FPC, plus the in-plane run under the glass edge."""
     return box(D["slot_x"][0], D["slot_x"][1], -D["slot_hy"], D["slot_hy"], z0, z1)
@@ -137,6 +189,10 @@ def carrier(D):
     m_, my_ = (D["slot_cut"], D["slot_cut"]) if "slot_cut" in D else (0.5, 0.4)   # v0.6: the slot is sized to pass the jumper plug
     c -= box(D["slot_x"][0] - m_, D["slot_x"][1] + m_, -(D["slot_hy"] + my_), D["slot_hy"] + my_,
              D["z_c0"] - 0.5, D["z_floor1"] + 0.5)
+    if not D.get("skirt", True):   # v0.7: no skirt; the lip ring is the anti-rotation stop
+        for h in holes:
+            c -= h
+        return c
     g, t = D["skirt_gap"], D["car_skirt"]
     x0, x1 = D["board_x0"] - g, D["board_x1"] + g
     y0, y1 = D["board_y0"] - g, D["board_y1"] + g
@@ -263,11 +319,11 @@ def build(D):
         db -= cyl(D["drill_m2"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
     for x, y in D["springs"]:
         db -= cyl(D["spr_bore"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
-    if D["fpc_to_db"]:   # v0.5 tab past the +x standoffs for the screen socket
+    if D["fpc_to_db"] and D["tab_x1"] > dx1:   # v0.5 tab past the +x standoffs for the screen socket (v0.7: inside the top board)
         db += box(dx1 - 0.01, D["tab_x1"], -D["tab_hy"], D["tab_hy"], D["z_db0"], D["z_db1"])
     for x, y in D.get("access_xy", []):   # [Ed 13:23] press-spring grub access
         db -= cyl(D["grub_access_d"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
-    out["joystick daughterboard"] = db
+    out[DB_NAME if D["base"] == "case" else "joystick daughterboard"] = db
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
     pin_d = D["pitch"] * 0.25
     wall = D["part_gap"]
@@ -294,7 +350,10 @@ def build(D):
     body, stem = switch(D)
     out["SW1 SKRHADE010 body (45°)"] = body
     out["SW1 SKRHADE010 stem"] = stem
-    if D["base"] == "cradle":
+    if D["base"] == "case":   # v0.7 [Ed 3 Nov]
+        out[CC_NAME] = case_cradle(D)
+        out[GK_NAME] = cradle_gasket(D)
+    elif D["base"] == "cradle":
         out["joystick cradle (printed, glued)"] = cradle(D)
         pin = D["cradle"]["pin"]
         for i, (x, y) in enumerate(D["cr_pins"]):

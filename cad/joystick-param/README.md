@@ -1,4 +1,9 @@
-# joystick-param — top-screen joystick sub-assembly (v0.6)
+# joystick-param — top-screen joystick sub-assembly (v0.7)
+
+v0.7 (3 Nov 2026, layout v4 step 1): base `case`. The top board rests on the knob-param vertical boards' spring contacts and is glued
+into a clear SLA cradle captured by the case (flange on a gasket behind the faceplate, lip ring in its cutout); the glued cradle,
+dowels, H11 sockets and long-pin headers below are gone, and the carrier narrows to make room for the lip. `base="cradle"` keeps v0.6.
+Notes: `docs/top-screen-joystick.md` (v0.7) and `docs/layout-v4-2026-11-03.md` ("Step 1 in the model"). The v0.6 text follows.
 
 Parametric build123d model of the top-screen 5-way joystick. An Alps SKRHADE010 sits on the carrier axis, on a daughterboard
 glued on a printed cradle (MJF PA-12, 30 mm) that is glued to the main PCB on two dowels; two 2×5 long-post headers carry the

@@ -179,7 +179,10 @@ P = dict(
     amo_upper_top_up=109.0,   # [Ed 2 Nov] upper screen top edge above the panel bottom; 4 mm higher, same reason (v0.19: 105.0); overlap ~13.6
     screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
     ledge_knob_clear=0.3,  # [A] side ledge cut back this far past the knob hole radius round the knob base
-    joy_board_z=27.46,     # [A] v0.20: joystick header bodies' underside (30 mm riser − 2.54 insulator); the top posts must stop under it
+    joy_board_z=26.6,      # [A] v0.23 layout v4: the lowest part over the top posts is the vertical boards' spring-contact strip
+                           # (electronics vb, body bottom z 26.6; the joystick top board is at z 30). v0.20: 27.46, the 2x5 header bodies
+    joy_lip=1.20,          # [J] v0.7 joystick snapshot: the case cradle's lip (0.20 clearance + 1.0 wall) sits in the cutout, so the
+                           # carrier is this much narrower each side than the cutout rule alone (the cutout itself is unchanged)
     cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
     tube_press=1.0,        # [A] width of the tube ring that bears on the PCB round the corner notch
     jack_w=10.0,           # [S] PJ366ST body width (x) — clacktronics/AudioJacks STEP, MIT, credit Barwise; untested vs a real part
@@ -327,8 +330,8 @@ def derive(D):
     D["place_y"] = D["place_y_knob"]   # v0.4 rule; the rail rule replaces it once the panel is placed (below)
     D["hole_hw"] = D["half_w"] - D["fp_overlap"]
     D["hole_hh"] = D["half_h"] - D["fp_overlap"]
-    D["car_hw"] = D["hole_hw"] - D["slide"] - D["tol_sla"]
-    D["car_hh"] = D["hole_hh"] - D["slide"] - D["tol_sla"]
+    D["car_hw"] = D["hole_hw"] - D.get("joy_lip", 0.0) - D["slide"] - D["tol_sla"]   # v0.23: inside the joystick cradle's lip
+    D["car_hh"] = D["hole_hh"] - D.get("joy_lip", 0.0) - D["slide"] - D["tol_sla"]
     D["joy_hole"] = (2 * D["hole_hw"], 2 * D["hole_hh"])
     # press rebate, same stack as the joystick proxy
     D["press_travel"] = D["tol_sla"] + D["sw_push"]

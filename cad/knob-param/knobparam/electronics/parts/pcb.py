@@ -43,14 +43,21 @@ def build(D):
         mc.append(Pos(D["offset"] + s * M["term_pitch"] / 2, 0, -t - 1) * Box(M["term_t"] + c, M["term_w"] + c, t + 2, align=A))
     b -= _mr(D) * Compound(children=mc)
     K = D["pcb_kicad"]
-    for h in K.get("holes", []):                                                       # M1 relief (turns), joystick springs / pins (fixed)
+    gone = set(D.get("pcb_hole_displaced", []))   # [Ed 3 Nov] v4: stale KiCad joystick holes / slot under the H7B0 or the vertical boards
+    for i, h in enumerate(K.get("holes", [])):                                         # M1 relief (turns), joystick springs / pins (fixed)
+        if f"hole {i}" in gone: continue
         hx, hy = (_mpt(D, h["x"], h["y"]) if _is_mech(D, h["x"], h["y"]) else (h["x"], h["y"]))
         b -= cyl(h["d"] / 2, -t - 1, t + 2, hx, hy)
-    for sl in K.get("slots", []):                                                                       # joystick FPC slot (oval)
+    for i, sl in enumerate(K.get("slots", [])):                                                         # joystick FPC slot (oval)
+        if f"slot {i}" in gone: continue
         dx, dy = sl["dx"], sl["dy"]; r = min(dx, dy) / 2
         b -= Pos(sl["x"], sl["y"], -t - 1) * extrude(SlotOverall(max(dx, dy), 2 * r, rotation=0 if dx >= dy else 90), t + 2)
     for h in D.get("js_pcb_holes", []):   # v0.19b: joystick standoff screws + hold-down springs (cad/joystick-param geom.json)
         b -= cyl(h["d"] / 2, -t - 1, t + 2, h["x"], h["y"])
+    if D.get("vb"):   # [Ed 3 Nov] v4: PTH for the vertical boards' right-angle header legs
+        for sx in (-1, 1):
+            for y in D["vb_pins"][sx]:
+                b -= cyl(D["vb_hdr"]["drill"] / 2, -t - 1, t + 2, sx * D["vb_pin_x"], y)
     for k, poly in D["pcb_windows"].items():   # v0.19b [Ed 2 Nov]: see-through windows (panel frame, not turned)
         b -= Pos(0, 0, -t - 1) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in poly], close=True)), t + 2, dir=(0, 0, 1))
     # back-side parts: Hall decouplers behind each sensor [K positions follow the params]; the rest from KiCad (pcb_proxy.json)
@@ -83,9 +90,12 @@ def build(D):
     w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]
     dk = " + ".join(k for k in D["pcb_windows"] if k.startswith("D"))
     out[f'clear OLED 1.51" SSD1309 (PCB front, over window {dk})'] = Pos(cx, cy, 0) * Box(w, h, th, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    if D.get("mcu"):   # [Ed 18:34] H7B0 on the board back, low middle (panel frame): envelope over the leads, decoupling caps not modelled
+    if D.get("mcu"):   # H7B0 envelope over the leads, decoupling caps not modelled (panel frame)
         M = D["mcu"]; bw, bl, bh = M["body"]
-        out[f"MCU {M['part']} {M['pkg']} (PCB back)"] = Pos(M["xy"][0], M["xy"][1], -t - bh) * Box(bw, bl, bh, align=A)
+        if M.get("side", "back") == "front":   # [Ed 3 Nov 09:47] v4: main-board front under the joystick
+            out[f"MCU {M['part']} {M['pkg']} (PCB front, under the joystick)"] = Pos(M["xy"][0], M["xy"][1], 0.0) * Box(bw, bl, bh, align=A)
+        else:   # [Ed 18:34] board back, low middle of D
+            out[f"MCU {M['part']} {M['pkg']} (PCB back)"] = Pos(M["xy"][0], M["xy"][1], -t - bh) * Box(bw, bl, bh, align=A)
     return out
 
 def _in_poly(x, y, poly):
@@ -96,9 +106,10 @@ def _in_poly(x, y, poly):
     return inside
 
 def window_hits(D, K):
-    """KiCad back parts (panel-frame ones) whose footprint box touches a window or the MCU courtyard [Ed 18:34]."""
+    """KiCad back parts (panel-frame ones) whose footprint box touches a window, or the MCU courtyard when the MCU is on the back
+    [Ed 18:34]. v4 (MCU on the front): only the windows count, so R30-R32 (under the old back courtyard) come back."""
     out = []
-    M = D.get("mcu")
+    M = D.get("mcu") if D.get("mcu", {}).get("side", "back") == "back" else None
     for p in K.get("back_parts", []):
         if _is_mech(D, p["x"], p["y"]):
             continue
@@ -109,6 +120,42 @@ def window_hits(D, K):
         elif M and abs(p["x"] - M["xy"][0]) < hw + M["court"] / 2 and abs(p["y"] - M["xy"][1]) < hl + M["court"] / 2:
             out.append(p["ref"])
     return out
+
+def vb_footprint(D):
+    """[Ed 3 Nov] v4: what the vertical boards put on the main-board front, as plan boxes (x0, x1, y0, y1): each board's edge, its
+    header body and the header pads."""
+    if not D.get("vb"):
+        return []
+    V, H = D["vb"], D["vb_hdr"]; y0, y1 = V["y"]; fo, fi = D["vb_face_out"], D["vb_face_in"]; r = H["pad"] / 2
+    out = []
+    for sx in (-1, 1):
+        xs = sorted((sx * fi, sx * (fo + H["body_x"])))
+        out.append((xs[0], xs[1], y0, D["vb_hdr_y1"]))
+        out.append((min(sx * fi, sx * fo), max(sx * fi, sx * fo), y0, y1))
+        for y in D["vb_pins"][sx]:
+            out.append((sx * D["vb_pin_x"] - r, sx * D["vb_pin_x"] + r, y - r, y + r))
+    return out
+
+
+def hole_hits(D, K):
+    """[Ed 3 Nov] v4: KiCad holes / slots (panel-frame ones; the v0.16 joystick MH1 set is stale) that touch the MCU courtyard or
+    the vertical boards' footprint on the main board. Left out of the proxy until the board is regenerated."""
+    out = []
+    M = D.get("mcu")
+    boxes = list(vb_footprint(D))
+    if M:
+        (mx, my), c = M["xy"], M["court"] / 2
+        boxes.append((mx - c, mx + c, my - c, my + c))
+    def hit(x0, x1, y0, y1):
+        return any(x0 < b[1] and b[0] < x1 and y0 < b[3] and b[2] < y1 for b in boxes)
+    for i, h in enumerate(K.get("holes", [])):
+        if _is_mech(D, h["x"], h["y"]): continue
+        r = h["d"] / 2
+        if hit(h["x"] - r, h["x"] + r, h["y"] - r, h["y"] + r): out.append(f"hole {i}")
+    for i, sl in enumerate(K.get("slots", [])):
+        if hit(sl["x"] - sl["dx"] / 2, sl["x"] + sl["dx"] / 2, sl["y"] - sl["dy"] / 2, sl["y"] + sl["dy"] / 2): out.append(f"slot {i}")
+    return out
+
 
 STEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad", "knob-main-pcb", "knob-main-pcb.step")
 

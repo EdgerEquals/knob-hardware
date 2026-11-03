@@ -108,14 +108,14 @@ def main():
     zfp = (D["z_fp0"] + D["z_fp1"]) / 2
     levels = [
         (zfp, "faceplate: knob, joystick opening, jack bushings, USB-C"),
-        (30.0, "under the plate: joystick riser, knob shell, collar"),
+        (30.5, "under the plate: joystick top board on the vertical boards, case cradle, knob shell, collar"),
         (20.0, "jack bodies, knob shell, corner posts below the jacks"),
         (12.0, "inside the knob: 1220 and 716 cans, brass tube"),
         (D["hb_mid"], "ring band: herringbone ring, encoder and idler pinions"),
         (5.0, "Hall arm, single detent, lever"),
-        (0.5, "PCB front: Hall sensors, cradle plate, motor tabs, clear OLED over window D"),
-        (D["z_pcb_back"] / 2, "main PCB: windows A B C E + D (clear OLED, notched for the H7B0), corner notches, holes"),
-        (D["z_pcb_back"] - 0.6, "PCB back: emitters, bearing 2 seat, H7B0 LQFP100 (low middle, under the notch in D)"),
+        (0.5, "PCB front: Hall sensors, cradle plate, motor tabs, clear OLED over window D, H7B0 and the vertical-board headers"),
+        (D["z_pcb_back"] / 2, "main PCB: windows A B C E + D (clear OLED, whole), corner notches, holes"),
+        (D["z_pcb_back"] - 0.6, "PCB back: emitters, bearing 2 seat, joystick rear anchor"),
         ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear (under the PCB)"),
         ((D["h_big_top"] + D["h_big_bot"]) / 2 if "h_big_top" in D else -11.2, "encoder disc, sensor (top, under the joystick)"),
         (D["amo_lower_z"][0] + D["amo_t"] / 2, "lower (front) AMOLED on its pad"),

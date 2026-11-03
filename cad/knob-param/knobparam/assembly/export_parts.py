@@ -8,7 +8,15 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
-    (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 18:34] main PCB back, low middle
+    (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
+    # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick, and the joystick's case cradle / gasket / top board
+    (r"^vertical board [LR] \(", "board", "vertical board (FR-4, parts on both faces)", "PCBWay PCBA"),
+    (r"^vertical board [LR] header", "buy", "right-angle 2.54 mm pin header (on the PCBA)", "on the PCBA"),
+    (r"^vertical board [LR] spring contacts", "buy", "right-angle spring-contact (pogo) strip (on the PCBA)", "on the PCBA"),
+    (r"^vertical boards' standoff", "buy", "M2 female-female brass standoff", "buy"),
+    (r"case cradle", "print", "UTR-8100 clear resin", "SLA"),
+    (r"gasket", "buy", "closed-cell silicone sponge gasket, die-cut", "buy"),
+    (r"top board", "board", "joystick top board (FR-4, ENIG contact pads)", "PCBWay PCBA"),
     (r"magnet", "buy", "N52 magnet", "buy"),
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
     (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
