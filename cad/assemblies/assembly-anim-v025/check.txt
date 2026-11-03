@@ -1,0 +1,96 @@
+Assembly insertion-path check, knob v0.25 (asm/layout-v4 @ 59f4258, cache built 2026-11-03 20:41), 69 steps, 189 parts. Clash = common volume > 0.001 mm³ (exact OCC) somewhere on the way in.
+Kinds: clash (blocked), contact (touch, no volume), and the expected ones named per step (press, thread, flex, seat, inside).
+
+ 1. [main] Main PCB with its soldered parts (H7B0 on the front): +z, 10 mm checked -> ok
+ 2. [main] Vertical boards L and R onto the main board (hybrid headers, male pins on top): -z, 8 mm checked -> ok
+ 3. [main] Clear OLED onto the PCB front over window D: -z, 8 mm checked -> ok
+ 4. [main] Back-side parts: encoder riser board, bearing-2 seat + bearing, joystick spring anchor: +z, 8 mm checked -> ok (1 contact)
+ 5. [main] Base cradle + brass centre tube onto the PCB: -z, 8 mm checked -> ok
+ 6. [main] 1220 main motor (pinion on) down through the cradle: -z, 19 mm checked -> ok
+ 7. [main] Encoder bearing 1 into the cradle + PCB bore: -z, 17 mm checked -> ok (2 contact)
+ 8. [main] Detent train: pedestal grub, pedestal block, train balls: -z, 16 mm checked -> ok
+ 9. [main] Outer thrust ring: load balls, glass spacers, rubies: -z, 53 mm checked -> ok
+10. [main] Idler pins + pinions and encoder shaft + pinion (caps on): -z, 30 mm checked -> ok (4 contact)
+11. [main] Back: feel compound gear on idler pin 1: +z, 10 mm checked -> ok
+12. [main] 716 feel motor in its open saddle (seat first), shaft down through the PCB: -z, 19 mm checked -> ok
+13. [main] Saddle strap + M1 screw round the 716: (-0.87, -0.50, +0.00), 24 mm checked -> ok (1 thread)
+      (thread) feel motor saddle screw  x  feel motor saddle seat [A]: 0.660 mm³; the M1 screw cuts its thread in the printed seat
+14. [main] Back: printed 11T pinion + cap onto the 716 shaft: +z, 10 mm checked -> ok
+15. [main] Knob base: lower-cap land + one-piece ring down over the pinions: -z, 52 mm checked -> ok
+16. [main] Borosilicate glass sleeve into the land: -z, 49 mm checked -> ok
+17. [dial] Control dial lower part (tube, Hall and detent spokes, lever): +z, 0 mm checked -> ok
+18. [dial] Five Hall magnets into the Hall bar (from below): +z, 8 mm checked -> ok (5 contact)
+19. [dial] Centring springs hooked on the lever pin from below (free ends hanging): +z, 11 mm checked -> ok (1 flex)
+      (flex) centring spring 2 (non-magnetic)  x  control dial lower part (tube, Hall and detent spokes, lever): 0.154 mm³; the spring is stretched over the lever pin
+20. [main] Dial lower part down through the glass and the ring, flange onto the train: -z, 55 mm checked -> CLASH
+      control dial lower part (tube, Hall and detent spokes, lever)  x  base cradle: up to 2.508 mm³, depth 1.80, from 4.50 to 0.50 mm before home
+21. [main] Two centring-spring anchor pins pressed through the springs' free loops into the cradle: -z, 50 mm checked -> ok (1 press, 1 contact)
+      (press) spring anchor pin 1  x  base cradle: 0.480 mm³; pressed into the cradle
+22. [main] Two Ø1 locating pins for the detent block pressed into the plate: -z, 55 mm checked -> ok (2 contact)
+23. [detent block] Detent block (UTR-8100: wall, head, boss): +z, 0 mm checked -> ok
+24. [detent block] Ball, spring, grub down the block's bore (grease holds the ball): -z, 11 mm checked -> ok
+25. [main] Detent block down onto its seat over the two pins, glued (ball onto the flange): -z, 54 mm checked -> ok
+26. [cap] Knob upper-cap, clear UTR-8100 part (web, plug, glass seat): +z, 0 mm checked -> ok
+27. [cap] PA-12 hub (hub-gear teeth + 45° race) down into the clear part, keyed and glued: -z, 18 mm checked -> ok
+28. [main] Upper cap down over the dial tube into the glass top (hub gear onto the 1220 pinion): -z, 18 mm checked -> ok
+29. [main] 53 x Ø1 race balls onto the cap's 45° cone (PA-12 hub): -z, 10 mm checked -> ok (1 seat)
+      (seat) knob balls 53 x Ø1 (45° cones)  x  knob upper-cap hub (PA-12: hub-gear teeth + 45° ball race): 0.040 mm³; 0.04 mm³ only in the last 0.25 mm: seated on the 45° cone
+30. [dish] Control dial dish (top, race, pocket, land, key slots): +z, 0 mm checked -> ok
+31. [dish] Dial-wall magnet at 30° pressed sideways into the dish's outer wall (facing out): (-0.87, -0.50, +0.00), 9 mm checked -> ok
+32. [dish] Dial-wall magnet at 150° pressed sideways into the dish's outer wall (facing out): (+0.87, -0.50, +0.00), 9 mm checked -> ok
+33. [dish] Dial-wall magnet at 240° pressed sideways into the dish's outer wall (facing out): (+0.50, +0.87, +0.00), 9 mm checked -> ok
+34. [main] Dial dish bonded onto the tube end (socket over the tube, flat keyed), seated on the balls: -z, 11 mm checked -> ok (1 seat)
+      (seat) control dial dish (bonded on the tube)  x  knob balls 53 x Ø1 (45° cones): 0.038 mm³; 0.04 mm³ only in the last 0.25 mm: the dish's race groove seats on the balls
+35. [main] Insulating sleeve down the brass tube: -z, 60 mm checked -> ok
+36. [main] Rod-link board onto the brass tube top (in the dial well): -z, 11 mm checked -> ok
+37. [main] Centre bolt: rod down the sleeve, top nut on the rod-link board: -z, 64 mm checked -> ok
+38. [main] Back: bottom rod nut onto the VBUS pad: +z, 11 mm checked -> ok (1 contact)
+39. [main] Back: encoder disc on its shaft (after the rod nut and the feel pinion: it covers both): +z, 10 mm checked -> ok (1 contact)
+40. [main] Dial board PCBA (ESP32 underneath) into the dial top, strap loop to the rod-link board: -z, 10 mm checked -> ok
+41. [shell] Front shell (clear UTR-8100) with its glow coat: +z, 0 mm checked -> ok
+42. [shell] Corner brass inserts into the shell's corner posts: +z, 8 mm checked -> ok
+43. [shell] Four PJ366ST jacks into the faceplate from behind: +z, 47 mm checked -> CLASH
+      jack 1 PJ366ST body + pins [S]  x  case: up to 33.023 mm³, depth 1.60, from 36.00 to 24.00 mm before home
+      jack 4 PJ366ST body + pins [S]  x  case: up to 33.023 mm³, depth 1.60, from 36.00 to 24.00 mm before home
+      jack 1 PJ366ST body + pins [S]  x  glow coat (inside walls): up to 15.719 mm³, depth 0.15, from 33.00 to 4.50 mm before home
+      jack 4 PJ366ST body + pins [S]  x  glow coat (inside walls): up to 15.719 mm³, depth 0.15, from 33.00 to 4.50 mm before home
+44. [shell] Jack nuts from the front: -z, 8 mm checked -> ok
+45. [shell] USB-C PD board + receptacle behind the faceplate: +z, 45 mm checked -> CLASH
+      USB-C PD board  x  case: up to 6.000 mm³, depth 0.50, from 31.05 to 28.35 mm before home
+      USB-C PD board  x  glow coat (inside walls): up to 4.200 mm³, depth 0.35, from 31.05 to 28.35 mm before home
+46. [shell] Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders: +z, 42 mm checked -> ok
+47. [shell] Four Ø2 balls into the cradle's ball seats, from the front: -z, 9 mm checked -> ok
+48. [joystick top] Grip block (bezel, cup over the stem) with its roof inserts: +z, 0 mm checked -> ok
+49. [joystick top] Jumper on the panel header, foam pads, panel glued on the block: -z, 17 mm checked -> ok (2 flex)
+      (flex) joystick: screen jumper FPC [A]  x  joystick: screen carrier (printed): 0.705 mm³; the tail is fed through the roof window, not pushed in bent
+      (flex) joystick: screen jumper plug end (bottom, in the daughterboard socket) [A]  x  joystick: screen carrier (printed): 9.072 mm³; the tail is fed through the roof window, not pushed in bent
+50. [joystick carrier] Joystick carrier (no press springs, grubs or inserts): +z, 0 mm checked -> ok
+51. [joystick top] Carrier up under the block (jumper tail through its slot): +z, 11 mm checked -> ok (2 flex)
+      (flex) joystick: joystick carrier (printed)  x  joystick: screen jumper FPC [A]: 1.177 mm³; the tail is fed through the slot (joystick model: plug passes with 0.25)
+      (flex) joystick: joystick carrier (printed)  x  joystick: screen jumper plug end (bottom, in the daughterboard socket) [A]: 1.814 mm³; the tail is fed through the slot (joystick model: plug passes with 0.25)
+52. [joystick top] Up-stop cushions, guide sleeves + M2 low-head screws from below: +z, 14 mm checked -> ok
+53. [joystick top] Four hold-down springs hooked to the carrier, hanging: +z, 9 mm checked -> ok
+54. [shell] Joystick top (block + carrier) in from the front through the lip ring: -z, 50 mm checked -> ok
+55. [main] Shell + joystick over the board stack (the stack goes in from the back, springs through): -z, 63 mm checked -> ok
+56. [main] Back: two cross pins through the spring anchor, hooks pulled on: -x, 37 mm checked -> ok
+57. [main] Drip O-ring stretched over the dial onto the glass: -z, 21 mm checked -> ok (1 contact)
+58. [cartridge] Dial bezel (printed ring, the whole outside of the dial top): +z, 0 mm checked -> ok
+59. [cartridge] Bezel magnet at 30° pressed sideways into the skirt from the bore (facing in): (+0.87, +0.50, +0.00), 49 mm checked -> ok (1 inside)
+      (inside) cartridge magnet 1x0.8 N52 (bezel skirt, facing in) 30°  x  dial bezel (printed cartridge ring): 0.201 mm³; put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall
+60. [cartridge] Bezel magnet at 150° pressed sideways into the skirt from the bore (facing in): (-0.87, +0.50, +0.00), 49 mm checked -> ok (1 inside)
+      (inside) cartridge magnet 1x0.8 N52 (bezel skirt, facing in) 150°  x  dial bezel (printed cartridge ring): 0.201 mm³; put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall
+61. [cartridge] Bezel magnet at 240° pressed sideways into the skirt from the bore (facing in): (-0.50, -0.87, +0.00), 49 mm checked -> ok (1 inside)
+      (inside) cartridge magnet 1x0.8 N52 (bezel skirt, facing in) 240°  x  dial bezel (printed cartridge ring): 0.317 mm³; put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall
+62. [cartridge] Glass + panel (Waveshare Z132A2441) glued up into the bezel from underneath: +z, 13 mm checked -> ok
+63. [cartridge] Printed plug pad + arm under the plug: +z, 10 mm checked -> ok (1 flex)
+      (flex) dial cartridge plug pad + arm (printed, glued)  x  dial screen Z132A2441 plug end, 24-pin 0.4 B2B (faces down): 12.127 mm³; the tail is lifted to slide the pad under the plug
+64. [main] Dial cartridge drops in from the top, plugs in on the way down: -z, 8 mm checked -> ok
+65. [cover] Back cover (ASA-CF): +z, 0 mm checked -> ok
+66. [cover] Upper AMOLED and the lower screen pad on the cover floor: -z, 18 mm checked -> ok
+67. [cover] Lower AMOLED on its 1 mm pad: -z, 17 mm checked -> ok
+68. [main] Back cover with the screens onto the back: +z, 16 mm checked -> ok
+69. [main] Four M2.5 corner screws from the back: +z, 26 mm checked -> ok
+
+Assembled state: 117 touching pairs, 0 with volume over 0.001 mm³
+
+TOTAL: 7 clash events on the insertion paths; stats {'mesh_tests': 467, 'exact': 0, 't_exact': 0.0, 'wall': 13.9}
