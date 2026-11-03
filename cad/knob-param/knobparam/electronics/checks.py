@@ -38,43 +38,40 @@ def _hole_desc(D, key):
 
 
 def _vb_rows(D, parts, r):
-    """[Ed 3 Nov] v4 local rows for the vertical boards: contact count and working point, pads vs windows / joystick holes, chip room."""
-    V, H, G = D["vb"], D["vb_hdr"], D["vb_pogo"]
-    n = D["vb_n_contacts"]
-    r.row("vertical boards: spring contacts to the top board (total)", n, 16,
-          f"{n // 2} per board at {G['pitch']:g} along the {V['y'][1] - V['y'][0]:.1f} top edge, y {D['vb_contact_y'][0]:.2f}..{D['vb_contact_y'][-1]:.2f}; "
-          f"doc: about 16-20 [Ed 11:25]. 2.0 pitch would give {2 * (int((V['y'][1] - V['y'][0] - 2.0) / 2.0) + 1)}")
-    comp = G["free"] - (V["top_board_z"] - D["vb_z1"])
-    r.row("vertical-board contacts: compression at the nominal stack (mid travel)", min(comp, G["travel"] - comp), 0.3,
-          f"board top edge z {D['vb_z1']:.2f}, tips {G['free']:g} above it free, top board underside z {V['top_board_z']:g}: "
-          f"{comp:.2f} of {G['travel']:g} [A]; the tolerance band is the assembly row")
-    # header pads vs windows and the joystick's main-PCB holes (spring bores, grub access)
+    """[Ed 3 Nov] v4 local rows for the vertical boards. v0.24 [Ed 13:31-14:08]: pins into the top board's sockets, end tabs as posts,
+    a hybrid two-row header at the bottom (no standoff); pads vs windows / joystick holes; chip room."""
+    V, H, Q = D["vb"], D["vb_hdr"], D["vb_pin"]
+    n = D["vb_n_top"]
+    r.row("vertical boards: male pins into the top board's sockets (total)", n, 16,
+          f"{Q['n']} per board at {Q['pitch']:g} (right-angle header on the outer face, row x ±{D['vb_top_x']:.2f}), y {D['vb_top_y'][0]:.2f}.."
+          f"{D['vb_top_y'][-1]:.2f}; doc: about 16-20 [Ed 11:25]. No spring contacts [Ed 13:46]")
+    tw = min(b - a for a, b in D["vb_tabs"])
+    r.row("vertical boards: end tabs (posts) beside the sockets, narrowest (mm)", tw, Q["tab_min"],
+          f"[Ed 14:08] tabs y {D['vb_tabs'][0][0]:.2f}..{D['vb_tabs'][0][1]:.2f} and {D['vb_tabs'][1][0]:.2f}..{D['vb_tabs'][1][1]:.2f} up to z "
+          f"{D['vb_z1']:g} (the top board); the edge between them is at z {D['vb_ze']:.2f}, {Q['sock_clear']:g} under the socket")
+    cnt = {sx: (sum(k == "tht" for _, _, k in D["vb_legs"][sx]), sum(k == "smt" for _, _, k in D["vb_legs"][sx])) for sx in (-1, 1)}
+    r.row("vertical boards: bottom header legs per board (fewest)", min(a + b for a, b in cnt.values()), 20,
+          f"[Ed 13:31-13:39] hybrid right-angle header, 2 rows at {H['pitch']:g}: L {cnt[-1][0]} THT + {cnt[-1][1]} SMT, R {cnt[1][0]} THT + "
+          f"{cnt[1][1]} SMT (SMT over y {H['smt'][0][1]:g}-{H['smt'][0][2]:g}, the encoder riser behind R's foot); about 20 lines each [Ed]. "
+          "No standoff between the boards [Ed 13:39]")
+    # header pads vs windows and the joystick holes in the main PCB (hold-down spring bores)
     rp = H["pad"] / 2; best, who = 9e9, ""
     for sx in (-1, 1):
-        x = sx * D["vb_pin_x"]
-        for y in D["vb_pins"][sx]:
+        for x, y, _ in D["vb_legs"][sx]:
             for k, poly in D["pcb_windows"].items():
                 d = min(_seg_d(x, y, p, q) for p, q in zip(poly, poly[1:] + poly[:1])) - rp
                 if d < best: best, who = d, f"window {k}"
             for h in D.get("js_pcb_holes", []):
                 d = ((x - h["x"]) ** 2 + (y - h["y"]) ** 2) ** 0.5 - h["d"] / 2 - rp
                 if d < best: best, who = d, h["what"]
-    L, R_ = D["vb_pins"][-1], D["vb_pins"][1]
     r.row("vertical-board header pads vs the windows and the joystick holes in the main PCB", best, 0.5,
-          f"legs at x ±{D['vb_pin_x']:.2f} (pad Ø{H['pad']:g}, {H['pitch']:g} pitch): L {len(L)} at y {L[0]:.2f}..{L[-1]:.2f}, R {len(R_)} at y "
-          f"{R_[0]:.2f}..{R_[-1]:.2f} (R skips the encoder daughterboard's standoff behind the board); nearest: {who}")
+          f"legs at x ±{D['vb_face_out'] + H['row0']:.2f} / ±{D['vb_face_out'] + H['row0'] + H['pitch']:.2f} (pad Ø{H['pad']:g}); nearest: {who}")
     M = D.get("mcu")
     if M:
         (mx, my), c = M["xy"], M["court"] / 2
-        dx = min(D["vb_face_in"], D["vb_pin_x"] - rp) - (abs(mx) + c)
+        dx = D["vb_face_in"] - (abs(mx) + c)
         r.row("MCU courtyard to the vertical boards (inner faces less their parts envelope)", dx - V["env"], 1.0,
               f"courtyard x ±{abs(mx) + c:.2f}; inner faces x ±{D['vb_face_in']:.2f}, parts envelope {V['env']:g} [A]")
-    so = parts.get("vertical boards' standoff (M2 F-F brass, joins L and R) [A]")
-    mp = [parts[n] for n in parts if n.startswith("MCU ")]
-    if so is not None and mp:
-        r.row("vertical boards' standoff clear of the MCU", so.distance_to(mp[0]), 1.0,
-              f"standoff at y {D['vb_standoff']['y']:g}, z {D['vb_standoff']['z']:g} (panel), Ø{D['vb_standoff']['od']:g}, "
-              f"{2 * D['vb_face_in']:.1f} long between the inner faces")
 
 
 def checks(D, parts):

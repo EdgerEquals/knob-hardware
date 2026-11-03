@@ -1,4 +1,11 @@
-# joystick-param — top-screen joystick sub-assembly (v0.7)
+# joystick-param — top-screen joystick sub-assembly (v0.8)
+
+v0.8 (3 Nov 2026, step-1 follow-ups [Ed 13:09–14:08]): the cup over the stem is printed into the bezel and sits on the stem (the switch's
+own click is the press); the press peg, the four press springs, their grubs and inserts and the grub-access holes are gone. The guide heads
+hang a float below the carrier bosses with a soft silicone-sponge ring under each boss (comparison in `derive`, rows in `checks`). The top
+board carries two 13-way 1.27 sockets underneath; the vertical boards' male pins plug in and their end tabs bear on the top board (the
+boards are the posts). Form-in-place silicone bead on the flange and in a new top-edge step (rebate in the cutout wall, dam on the lip ring).
+Notes: `docs/layout-v4-2026-11-03.md` ("Step 1 follow-ups in the model"). v0.7 text follows.
 
 v0.7 (3 Nov 2026, layout v4 step 1): base `case`. The top board rests on the knob-param vertical boards' spring contacts and is glued
 into a clear SLA cradle captured by the case (flange on a gasket behind the faceplate, lip ring in its cutout); the glued cradle,

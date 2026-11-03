@@ -14,6 +14,19 @@ A = (Align.CENTER, Align.CENTER, Align.MIN)
 DB_NAME = "joystick top board (on the spring contacts)"
 CC_NAME = "joystick case cradle (SLA, lip in the faceplate cutout)"
 GK_NAME = "joystick cradle gasket (silicone sponge) [A]"
+# v0.8 part names (step-1 follow-ups)
+DB_NAME8 = "joystick top board (on the vertical boards, sockets under it)"
+GK_NAME8 = "joystick cradle gasket: form-in-place silicone bead [A]"
+SK_NAME = "top-board socket {} (1.27 single row, {}) [A]"
+US_NAME = "guide up-stop cushion {} ({}) [A]"
+
+
+def db_name(D):
+    return DB_NAME8 if D.get("top_joint") == "sockets" else DB_NAME
+
+
+def gk_name(D):
+    return GK_NAME8 if D.get("top_joint") == "sockets" else GK_NAME
 
 def box(x0, x1, y0, y1, z0, z1):
     return Pos((x0 + x1) / 2, (y0 + y1) / 2, z0) * Box(x1 - x0, y1 - y0, z1 - z0, align=A)
@@ -38,6 +51,11 @@ def hex_at(af, z0, z1, x=0.0, y=0.0):
     """Hex prism, across-flats `af`. A flat faces +y so the wrench flat is parallel to the PCB edge."""
     r = (af / 2) / math.cos(math.radians(30))
     return Pos(x, y, z0) * Rot(0, 0, 30) * extrude(RegularPolygon(radius=r, side_count=6), z1 - z0)
+
+def step_region(D, solid, y_from=None):
+    """v0.8: the part of a solid on the top-edge step (local y >= the step's start, fl_y1 by default)."""
+    y0 = D["st_y0"] if y_from is None else y_from
+    return solid & box(-60.0, 60.0, y0, 60.0, -20.0, 80.0)
 
 def notched(D, z0, z1):
     """Full corner rectangle, with the middle of each long side cut back to h_mid.
@@ -143,6 +161,11 @@ def case_cradle(D):
     if D.get("fpc_to_db"):
         hy = D["db_fpc_sock"][0] / 2 + 0.6
         c -= box(D["board_x1"] - sh - 0.1, nhw - 0.01, -hy, hy, z0 - 0.1, z1 + 0.1)
+    if "z_dam1" in D:   # v0.8 [Ed 14:02] the dam on the lip ring inside the faceplate's rebate (top edge + the long sides above fl_y1)
+        st = D["step"]
+        dam = (rbox(2 * D["dam_hw"], 2 * D["dam_hh"], max(D["reb_corner_r"] - st["c"], 0.2), D["z_dam0"], D["z_dam1"])
+               - cbox(2 * ihw, 2 * ihh, D["z_dam0"] - 0.1, D["z_dam1"] + 0.1))
+        c += step_region(D, dam, D["st_y0"] + st["c"])
     # lower ball seats on brackets from the hangers
     for x, y in D["balls"]:
         sx = 1 if x > 0 else -1
@@ -151,8 +174,28 @@ def case_cradle(D):
         c -= Pos(x, y, D["z_sc_lo"]) * Sphere(D["cup_r"])
     return c
 
+def cradle_bead(D):
+    """v0.8 [Ed 14:03] form-in-place bead, drawn as its contact band at the nominal squeeze, 0.01 short of the case: (1) on the flange top
+    under the faceplate back (knob side and the long sides up to fl_y1), the land next to the cutout edge (0.79 wide: the long sides'
+    land); (2) a riser where the flange ends, up the rebate's end wall to the step; (3) on the dam's front face under the rebate ceiling
+    (top edge and the long sides above fl_y1). The riser is a 3D dispense path [C]."""
+    hw, hh, r = D["hole_hw"], D["hole_hh"], D.get("corner_r", 0.0)
+    a = D["gk_land_x"]                                   # band width next to the cutout edge
+    ring = lambda w, z0, z1: (rbox(2 * (hw + w), 2 * (hh + w), r + w, z0, z1) - rbox(2 * hw, 2 * hh, r, z0 - 0.1, z1 + 0.1))
+    fl = ring(a, D["z_fl1"], D["z_fp0"] - 0.01) & box(-60, 60, -60, D["fl_y1"], -20, 80)
+    st, y0 = D["step"], D["st_y0"]
+    top = step_region(D, ring(D["step_land"], D["z_dam1"], D["z_reb1"] - 0.01), y0 + st["c"])
+    risers = None
+    for sx in (-1, 1):
+        x0, x1 = sorted((sx * hw, sx * (hw + a)))
+        rz = box(x0, x1, y0 + 0.01, y0 + st["c"], D["z_fl1"], D["z_reb1"] - 0.01)
+        risers = rz if risers is None else risers + rz
+    return fl + risers + top
+
 def cradle_gasket(D):
     """v0.7 gasket on the flange top, outside the lip (−y and ±x sides), drawn at its nominal compression, 0.01 under the faceplate."""
+    if D.get("top_joint") == "sockets":
+        return cradle_bead(D)
     ohw, ohh = D["lip_out_hw"], D["lip_out_hh"]
     g = box(-D["fl_x1"], D["fl_x1"], D["fl_y0"], D["fl_y1"], D["z_fl1"], D["z_fp0"] - 0.01)
     g -= box(-ohw, ohw, -ohh, D["fl_y1"] + 1.0, D["z_fl1"] - 0.1, D["z_fp0"] + 0.1)
@@ -174,13 +217,16 @@ def carrier(D):
         c += cyl(D["boss_d"], D["z_ins0"], D["z_c0"] + 0.01, x, y)
     holes = [cyl(D["ins_hole"], D["z_ins0"] - 0.02, D["z_seat"] + 0.01, x, y) for x, y in D["cs_xy"]]
     for x, y in D.get("g_xy", []):   # v0.5 guide bosses: reamed bore for the brass sleeve, through the floor
-        c += cyl(2 * D["g_boss_r"], D["g_z0"], D["z_c0"] + 0.01, x, y)
-        holes.append(cyl(D["g_bore"], D["g_z0"] - 0.02, D["z_floor1"] + 0.02, x, y))
+        c += cyl(2 * D["g_boss_r"], D["g_boss0"], D["z_c0"] + 0.01, x, y)
+        holes.append(cyl(D["g_bore"], D["g_boss0"] - 0.02, D["z_floor1"] + 0.02, x, y))
     for x, y in D["balls"]:
         c += cyl(2 * D["boss_r"], D["z_rim_hi"], D["z_c0"] + 0.01, x, y)
         c -= Pos(x, y, D["z_sc_hi"]) * Sphere(D["cup_r"])
-    c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01)
-    c -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_floor1"] + 0.02)
+    if D.get("cup_in_bezel"):   # v0.8: the cup is the bezel's; the floor has a clearance hole round its column
+        holes.append(cyl(D["car_cup_hole"], D["z_c0"] - 0.05, D["z_floor1"] + 0.05))
+    else:
+        c += cyl(D["cup_od"], D["z_cup0"], D["z_c0"] + 0.01)
+        c -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_floor1"] + 0.02)
     hook_w = D["spr_d"] * 0.325
     hook_reach = D["spr_d"] * 1.1
     for x, y in D["springs"]:
@@ -233,6 +279,9 @@ def screen_carrier(D):
         pi = D["peg"]["ins"]
         b += cyl(2 * D["p_rboss_r"], D["p_ins_bot"], D["z_roof"] + 0.01)
         b -= cyl(pi["hole"], D["p_ins_bot"] - 0.02, D["p_ins_top"])
+    elif D.get("cup_in_bezel"):   # v0.8 [Ed 13:09]: the cup column hangs from the roof; its bore's ceiling sits on the stem top
+        b += cyl(D["cup_col_od"], D["z_cup0"], D["z_roof"] + 0.01)
+        b -= cyl(D["cup_bore"], D["z_cup0"] - 0.01, D["z_stem_top"])
     else:
         b += cyl(D["peg_d"], D["z_peg"], D["z_roof"] + 0.01)
     gi = D["guide"]["ins"]
@@ -268,6 +317,8 @@ def faceplate(D):
     m = 10.0
     p = cbox(2 * (D["half_w"] + m), 2 * (D["half_h"] + m), D["z_fp0"], D["z_fp1"])
     p -= rbox(2 * D["hole_hw"], 2 * D["hole_hh"], D.get("corner_r", 0.0), D["z_fp0"] - 0.05, D["z_fp1"] + 0.05)
+    if "z_reb1" in D:   # v0.8 [Ed 14:02] the top-edge step: rebate in the faceplate back (top edge and the long sides above fl_y1)
+        p -= step_region(D, rbox(2 * D["reb_hw"], 2 * D["reb_hh"], D["reb_corner_r"], D["z_fp0"] - 0.05, D["z_reb1"]))
     if D["up_gap"] < D["press_travel"] + D["tol_sla"] - 1e-9:   # v0.4 proxy only: the real case face is flat (no rebate)
         p -= cbox(2 * (D["half_w"] + D["tol_sla"]), 2 * (D["half_h"] + D["tol_sla"]),
                   D["z_fp1"] - D["fp_rebate"], D["z_fp1"] + 0.05)
@@ -323,7 +374,15 @@ def build(D):
         db += box(dx1 - 0.01, D["tab_x1"], -D["tab_hy"], D["tab_hy"], D["z_db0"], D["z_db1"])
     for x, y in D.get("access_xy", []):   # [Ed 13:23] press-spring grub access
         db -= cyl(D["grub_access_d"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
-    out[DB_NAME if D["base"] == "case" else "joystick daughterboard"] = db
+    out[db_name(D) if D["base"] == "case" else "joystick daughterboard"] = db
+    if D.get("top_joint") == "sockets":   # v0.8 [Ed 13:46]: SMT sockets under the top board, a hole for each male pin
+        S = D["tb_sock"]; ys0, ys1 = D["sock_y"]
+        for sx, tag in ((-1, "L"), (1, "R")):
+            x = sx * D["vb_pin_x"]
+            sk = box(x - S["w"] / 2, x + S["w"] / 2, ys0, ys1, D["z_sock0"], D["z_db0"] - 0.01)
+            for y in D["sock_pin_y"]:
+                sk -= cyl(0.7, D["z_sock0"] - 0.05, D["z_sock0"] + S["ins"][1] + 0.05, x, y)
+            out[SK_NAME.format(tag, S["n"])] = sk
     hw, hh, ht = D["hdr_len"], D["hdr_wid"], D["hdr"]["ins"]
     pin_d = D["pitch"] * 0.25
     wall = D["part_gap"]
@@ -352,7 +411,7 @@ def build(D):
     out["SW1 SKRHADE010 stem"] = stem
     if D["base"] == "case":   # v0.7 [Ed 3 Nov]
         out[CC_NAME] = case_cradle(D)
-        out[GK_NAME] = cradle_gasket(D)
+        out[gk_name(D)] = cradle_gasket(D)
     elif D["base"] == "cradle":
         out["joystick cradle (printed, glued)"] = cradle(D)
         pin = D["cradle"]["pin"]
@@ -433,6 +492,11 @@ def build(D):
             + box(min(fx, S["w"] / 2 - 0.4) - t / 2, max(fx, S["w"] / 2 - 0.2), -D["fpc_w"] / 2, D["fpc_w"] / 2, z_run, z_run + t)
         )
     out["rear spring anchor (printed)"] = rear_anchor(D)
+    if D.get("cup_in_bezel"):   # v0.8: cushion rings glued under the carrier guide bosses (the head meets them when the bezel lifts)
+        U = D["upstop"]
+        for i, (x, y) in enumerate(D["g_xy"]):
+            out[US_NAME.format(i + 1, U["part"].split(" ring")[0])] = (cyl(U["od"], D["g_boss0"] - U["t"], D["g_boss0"] - 0.01, x, y)
+                                                                     - cyl(U["id"], D["g_boss0"] - U["t"] - 0.1, D["g_boss0"], x, y))
     if "peg" in D:
         pi = D["peg"]["ins"]
         out[f"press peg grub (ISO 4026 M2x{D['p_len']:.0f})"] = cyl(1.5, D["z_peg"], D["p_top"])

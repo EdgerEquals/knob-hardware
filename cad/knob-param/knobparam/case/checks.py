@@ -28,6 +28,15 @@ def checks(D, parts):
         row("top posts stop under the joystick board", D["joy_board_z"] - D["z_post_top"], 1.0,
             f"post top z {D['z_post_top']:.2f}; lowest part over them about z {D['joy_board_z']:.1f} [A] (v0.23: the vertical boards' "
             "contact strip; the assembly row measures the real parts)")
+    if D.get("joy_step"):   # v0.24 [Ed 14:02] joystick top-edge step
+        st = D["joy_step"]
+        row("joystick top-edge step: faceplate left over the rebate", D["wall"] - st["d"], 0.8,
+            f"rebate {st['w']:g} past the cutout wall, {st['d']:g} into the {D['wall']:g} faceplate back, from y {D['joy_step_y0']:.2f} up the long sides "
+            "and across the top; the joystick cradle's dam and the bead sit in it")
+        ry = D["place_y"] + D["joy_reb"][1] / 2
+        rr = min(math.hypot(max(abs(x) - D["joy_reb"][0] / 2, 0.0), D["rail_y_top"] - ry) for x in D["rail_x_top"]) - D["rail_hole_d"] / 2
+        row("joystick top-edge rebate clear of the top rail holes", rr, 1.0,
+            f"rebate top edge y {ry:.2f}; rail holes Ø{D['rail_hole_d']:g} at y {D['rail_y_top']:.2f}")
     row("resin wall round the insert", D["insert_wall"], 1.2, f"M{D['screw_d']:g} insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
     if D["back_screens"] == "amoled2":
         x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]

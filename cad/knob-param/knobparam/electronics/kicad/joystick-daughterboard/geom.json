@@ -1,12 +1,12 @@
 {
- "rev": "v0.7",
+ "rev": "v0.8",
  "pitch": 2.54,
  "db_t": 1.0,
  "corner_r": 0.95,
  "board": [
-  -18.900000000000002,
+  -19.25,
   -14.529999999999996,
-  18.900000000000002,
+  19.25,
   8.170000000000003
  ],
  "sw_xy": [
@@ -68,30 +68,6 @@
    "y": 39.13,
    "d": 3.4,
    "what": "hold-down spring"
-  },
-  {
-   "x": 11.5,
-   "y": 46.23,
-   "d": 1.6,
-   "what": "press-spring grub access (NPTH)"
-  },
-  {
-   "x": 11.5,
-   "y": 35.03,
-   "d": 1.6,
-   "what": "press-spring grub access (NPTH)"
-  },
-  {
-   "x": -11.5,
-   "y": 46.23,
-   "d": 1.6,
-   "what": "press-spring grub access (NPTH)"
-  },
-  {
-   "x": -11.5,
-   "y": 35.03,
-   "d": 1.6,
-   "what": "press-spring grub access (NPTH)"
   }
  ],
  "hdr_body": [
@@ -160,5 +136,53 @@
  "tab": {
   "x1": 17.8,
   "hy": 4.5
- }
+ },
+ "top_joint": {
+  "kind": "sockets",
+  "part": "1.27 mm single-row female socket, 3.4 tall, SMT, 13 way (part to pick) [A]; height of the XFCN PM127V-11-xxP-H34 class [S]",
+  "pitch": 1.27,
+  "n": 13,
+  "side": "bottom (SMT)",
+  "rows_x": [
+   -17.5,
+   17.5
+  ],
+  "pin_y": [
+   -10.8,
+   -9.53,
+   -8.26,
+   -6.99,
+   -5.72,
+   -4.45,
+   -3.18,
+   -1.91,
+   -0.64,
+   0.63,
+   1.9,
+   3.17,
+   4.44
+  ],
+  "body": [
+   2.0,
+   16.91,
+   3.4
+  ],
+  "pad_hw": 1.45,
+  "post_land": "bare board under the vertical boards' end tabs (x \u00b115.5..16.5, beyond the sockets in y)"
+ },
+ "guide_keepout": [
+  {
+   "x": 6.5,
+   "y": 3.0,
+   "d": 4.3,
+   "what": "no parts under the guide heads"
+  },
+  {
+   "x": -6.5,
+   "y": -3.0,
+   "d": 4.3,
+   "what": "no parts under the guide heads"
+  }
+ ],
+ "notes": "v0.8: no spring-contact pads, no grub-access holes; two 13-way 1.27 sockets on the underside; the board is \u00b119.25 wide (v0.7 \u00b118.90)"
 }

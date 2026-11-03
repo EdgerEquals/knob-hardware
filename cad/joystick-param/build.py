@@ -49,6 +49,11 @@ def main():
         "back_panel", "knob_od_live", "knob_od_design", "fpc_x", "slot_x", "hole_x0", "hole_x1", "hole_hy",
         "balls", "springs", "cs_xy", "standoff_xy", "sw_xy", "hdr_xy", "mate_in", "sx", "sy", "hx", "bx", "by",
         "board_x0", "board_x1", "board_y0", "board_y1", "cup_bore", "skirt_gap", "scr_clear", "glue")}
+    for k in ("cup_col_od", "car_cup_hole", "g_boss0", "g_len", "g_sleeve_len", "us_rss", "us_wc", "us_gap", "us_float", "us_room",
+              "preload_max", "preload_lim", "us_table", "sock_y", "sock_pin_y", "z_sock0", "eng_nom", "gk_nom", "gk_range", "bead_band",
+              "bead_band_net", "z_fl1", "z_reb1", "z_dam1", "st_y0", "step_land", "tb_flex", "tb_span"):   # v0.8
+        if k in D:
+            keyd[k] = D[k]
     keyd["volume_cm3"] = vols
     json.dump(dict(rows=rows, clashes=cl, set=a.set, key=keyd), open(os.path.join(OUT, "check.json"), "w"), indent=1, default=str)
     geom = dict(rev=V, pitch=D["pitch"], db_t=D["db_t"], corner_r=D["cu_edge"] + D["part_gap"],
@@ -72,6 +77,16 @@ def main():
                 cradle_ring=dict(inner=[D.get("cr_in_x"), D.get("cr_in_y")], outer=[D.get("cr_out_x"), D.get("cr_out_y0"), D.get("cr_out_y1")]),
                 fpc_socket=dict(part="Panasonic AXE530127", x=D.get("db_sock_x"), long_y=D["db_fpc_sock"][0], short_x=D["db_fpc_sock"][1]),
                 tab=dict(x1=D.get("tab_x1"), hy=D.get("tab_hy")))
+    if D.get("top_joint") == "sockets":   # v0.8 [Ed 13:46/14:08]: what the KiCad top-board generator needs next (not yet read by it)
+        S = D["tb_sock"]
+        geom["top_joint"] = dict(kind="sockets", part=S["part"], pitch=S["pitch"], n=S["n"], side="bottom (SMT)",
+                                 rows_x=[-D["vb_pin_x"], D["vb_pin_x"]], pin_y=[round(y, 3) for y in D["sock_pin_y"]],
+                                 body=[S["w"], round(D["sock_len"], 3), S["h"]], pad_hw=S["pad_hw"],
+                                 post_land="bare board under the vertical boards' end tabs (x ±15.5..16.5, beyond the sockets in y)")
+        geom["guide_keepout"] = [dict(x=x, y=y, d=D["guide"]["head_d"] + 2 * D["tol_mjf"], what="no parts under the guide heads")
+                                 for x, y in D["g_xy"]]
+        geom["notes"] = ("v0.8: no spring-contact pads, no grub-access holes; two 13-way 1.27 sockets on the underside; the board is "
+                         f"±{D['board_x1']:.2f} wide (v0.7 ±18.90)")
     gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
     json.dump(geom, open(gpath, "w"), indent=1)
     print("geom:", gpath)

@@ -70,13 +70,17 @@ def daughterboard(D):
     z_pin1 = D["z_pcb_back"] - D["enc_pin_gap"]
     pins = []
     n = D["enc_header_n"]; pitch = D["enc_header_pitch"]
+    z_tht1 = D["z_pcb_back"] + D["pcb_t"] + D.get("enc_tht_tail", 1.0)   # v0.24: through the main board to a tail past its front
     for k in range(n):
-        pins.append(cyl(D["enc_header_d"] / 2, z_pin0, max(z_pin1 - z_pin0, 0.2), (k - (n - 1) / 2) * pitch, -D["sens_r"]))
-    # standoffs either side of the header, same span, stopped 0.05 short of the PCB
+        tht = k in D.get("enc_header_tht", ())
+        z1 = z_tht1 if tht else z_pin1
+        pins.append(cyl(D["enc_header_d"] / 2, z_pin0, max(z1 - z_pin0, 0.2), (k - (n - 1) / 2) * pitch, -D["sens_r"]))
+    # standoffs either side of the header, same span, stopped 0.05 short of the PCB (v0.17-v0.23; none since v0.24 [Ed 13:39])
     so = []
-    for s in (-1, 1):
-        so.append(tube(D["enc_header_d"] / 2, D["enc_standoff_d"] / 2, z_pin0, max(z_pin1 - z_pin0, 0.2), 0, -D["sens_r"] + s * (by / 2 + m * 0.3)))
-    return board, Compound(children=pins), Compound(children=so)
+    if D.get("enc_standoffs", True):
+        for s in (-1, 1):
+            so.append(tube(D["enc_header_d"] / 2, D["enc_standoff_d"] / 2, z_pin0, max(z_pin1 - z_pin0, 0.2), 0, -D["sens_r"] + s * (by / 2 + m * 0.3)))
+    return board, Compound(children=pins), (Compound(children=so) if so else None)
 
 def build(D):
     T = Pos(*D["enc_xy"], 0)
@@ -96,4 +100,4 @@ def build(D):
             "encoder sensor EE-SX1321": T * S * sensor(D),
             "encoder daughterboard": T * S * board,
             "encoder header": T * S * header,
-            "encoder standoff": T * S * stands}
+            **({"encoder standoff": T * S * stands} if stands is not None else {})}
