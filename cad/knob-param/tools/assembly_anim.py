@@ -327,9 +327,10 @@ def stage_seq(plan, quiet=False):
     return not plan.unassigned and not plan.double
 
 # ----------------------------------------------------------------------------------------------------------- check
-# Herringbone pairs: the 25° teeth cannot slide straight in; the pinions turn as the part goes down (a screw motion), so a
-# straight-line hit between them is reported as "helical mesh", not as a blocked path.
-HELICAL = re.compile(r"^bottom internal ring|^idler pinion \d$|^encoder pinion$", re.I)
+# Herringbone pairs (v0.18-v0.24): the 25° teeth cannot slide straight in; the pinions turn as the part goes down (a screw motion),
+# so a straight-line hit between them was reported as "helical mesh", not as a blocked path. v0.25 [Ed 19:00]: spur teeth, so a hit
+# between the gears is a real clash again (set HELICAL back to the regex for a herringbone build).
+HELICAL = None   # v0.24: re.compile(r"^bottom internal ring|^idler pinion \d$|^encoder pinion$", re.I)
 NEAR, FINE, COARSE = 5.0, 0.25, 1.0       # last NEAR mm at FINE steps, further out at <= COARSE
 N_EXACT = 2                               # exact OCC confirmations per (moving, fixed) pair: middle and last mesh hit
 SCHED = "v2"
@@ -504,7 +505,7 @@ class Checker:
             return None
         vols = [v for _, v, _ in res["exact"]]
         if any(v > self.thr for v in vols):
-            return "helical" if (HELICAL.search(m) and HELICAL.search(f)) else "clash"
+            return "helical" if (HELICAL and HELICAL.search(m) and HELICAL.search(f)) else "clash"
         if any(v < 0 for v in vols):
             return "occ-fail"
         return "contact"
@@ -649,7 +650,8 @@ def report_text(plan, res):
     m = res["meta"]
     L = [f"Assembly insertion-path check, knob {m['version']} ({m['branch']} @ {m['commit']}, cache built {m['built']}), "
          f"{len(plan.steps)} steps, {m['n']} parts. Clash = common volume > {res['thr']} mm³ (exact OCC) somewhere on the way in.",
-         "Kinds: clash (blocked), helical (herringbone teeth: they screw in, a straight push is expected to hit), contact (touch, no volume).",
+         "Kinds: clash (blocked), contact (touch, no volume), and the expected ones named per step (press, thread, flex, seat, inside)"
+         + (", helical (herringbone teeth: they screw in, a straight push is expected to hit)" if HELICAL else "") + ".",
          ""]
     nclash = 0
     for st in res["steps"]:
