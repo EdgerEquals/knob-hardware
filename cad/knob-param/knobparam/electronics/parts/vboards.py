@@ -5,6 +5,8 @@ v0.24 [Ed 13:31-14:08]: each board (y-z plane at x = ±vb.x) stands on a hybrid 
 it is not: R over the encoder riser). No standoff between the boards. At the top, a right-angle 1.27 male header on the outer face puts
 13 pins up into the socket under the joystick top board; the board's edge is lowered under the socket and its two end tabs reach up and
 bear on the top board (the boards are the posts that hold the joystick cradle up). L (-x): power. R (+x): CAN and the joystick lines.
+v0.25 [Ed 18:35 / 19:12]: the cradle is printed into the case and the pins take the stack, so the tabs clear the top board; 4.5 sockets;
+the pin rows 0.3 inboard and 2.5 toward the knob (only the +y tab is left).
 Envelopes [A] until parts are picked."""
 from build123d import *
 from ...common.util import A
@@ -19,7 +21,7 @@ def build(D):
     t = D["pcb_t"]
     y0, y1 = V["y"]
     fo, fi, z0 = D["vb_face_out"], D["vb_face_in"], V["z0"]
-    ze, ztab = D["vb_ze"], D["vb_z1"] - 0.01            # edge under the sockets; tab tops 0.01 under the top board (bearing)
+    ze, ztab = D["vb_ze"], D["vb_z1"]                   # edge under the sockets; tab tops (v0.25: tab_air under the top board, no longer posts)
     out = {}
     for sx, tag, role in ((-1, "L", V["roles"][0]), (1, "R", V["roles"][1])):
         xa, xb = sorted((sx * fi, sx * fo))

@@ -1,4 +1,11 @@
-# joystick-param — top-screen joystick sub-assembly (v0.8)
+# joystick-param — top-screen joystick sub-assembly (v0.9)
+
+v0.9 (3 Nov 2026 evening, [Ed 18:35 / 19:12]): the cradle is printed into the case (one UTR-8100 print with the faceplate: the lip ring
+fills the cutout wall below the front, the flange is joined to the faceplate back by a riser; hangers, end walls, ball seats and shoulders as
+v0.8). No bead, no top-edge step. The pins take the stack (the vertical boards' end tabs clear the top board); 4.5 tall sockets; the pin rows
+0.3 inboard and 2.5 toward the knob [A]. The top board goes in from the back on its own, glued up under the printed shoulders [A], with
+corner notches round the top corner posts. The knob model fuses `parts.case_cradle(D, ov=0.02)` into its `case` (assembly/build.py), so the
+BOM and the per-part STEP have one printed part. Notes: `docs/layout-v4-2026-11-03.md` ("v0.25: joystick cradle in the case").
 
 v0.8 (3 Nov 2026, step-1 follow-ups [Ed 13:09–14:08]): the cup over the stem is printed into the bezel and sits on the stem (the switch's
 own click is the press); the press peg, the four press springs, their grubs and inserts and the grub-access holes are gone. The guide heads

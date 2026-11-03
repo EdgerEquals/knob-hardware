@@ -47,7 +47,7 @@ RULES = [
     (r"^emitter ", "buy", "VCSEL / RGB LED (LCSC)", "on the PCBA"),
     (r"^hall sensor|^adapter part|^adapter board", "board", "PCBA parts", "PCBWay PCBA"),
     (r"^encoder daughterboard|^encoder header|^encoder sensor", "board", "encoder daughterboard (EE-SX1321)", "PCBWay PCBA"),
-    (r"^case$", "print", "UTR-8100 clear resin, front face polished", "SLA"),
+    (r"^case$", "print", "UTR-8100 clear resin, front face polished; the joystick cradle printed in (v0.25, Ed 18:35)", "SLA"),
     (r"glow coat", "ref", "Shimicoat strontium aluminate, brushed", "Ed"),
     (r"back cover|lower screen pad", "print", "ASA-CF, black (print floor-down; PET/Kapton film under the screens)", "FDM"),
     (r"cap\b|caps\b|Fresnel", "print", "UTR-8100 clear resin", "SLA"),

@@ -122,18 +122,11 @@ STEPS = [
          parts=[r"^jack \d nut"], note="threaded on the bushings"),
     dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle behind the faceplate", dir="+z", travel="auto",
          parts=[r"^USB-C"], note="glued behind the faceplate (CD) [L4 step 2: slot in the bottom wall, JB Weld]"),
-    # ---- joystick cradle (built off to the side, then into the shell from the back)
-    dict(id="jcr", sub="joystick cradle", base=True, name="Joystick case cradle (clear SLA, lip ring + flange)",
-         parts=[r"^joystick: joystick case cradle"], note="UTR-8100 so it stays see-through (L4 step 1)"),
-    dict(id="jcr-tb", sub="joystick cradle", name="Top board PCBA (SW1, two 13-way sockets, FPC socket) glued under the shoulders",
-         dir="+z", travel=8,
+    # ---- v0.25 [Ed 18:35]: the joystick cradle is printed into the case (part of "case"); the top board goes in from the back on its own
+    dict(id="jcr-tb", sub="shell", name="Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders",
+         dir="+z", travel="auto",
          parts=[r"^joystick: joystick top board", r"^joystick: top-board socket", r"^joystick: SW1 ", r"^joystick: screen FPC socket"],
-         note="glued under the cradle's 1.0 shoulders from the back (L4 step 1)"),
-    dict(id="jcr-bead", sub="joystick cradle", name="Form-in-place silicone bead dispensed on the flange and in the top-edge step",
-         dir="-z", travel=6, parts=[r"^joystick: joystick cradle gasket"],
-         note="[Ed 14:03] dispensed bead; size and squeeze [A]; open: the bead cannot take the post stack (L4, Danny)"),
-    dict(id="jcr-in", sub="shell", join="joystick cradle", name="Cradle with the top board into the faceplate cutout from behind",
-         dir="+z", travel="auto", note="lip into the cutout, flange on the bead behind the faceplate (L4 Ed 11:03; Danny's order)"),
+         note="corner notches pass the top corner posts; glue still wet when the board stack goes in, so the pins centre it [A] (L4 v0.25)"),
     dict(id="js-balls", sub="shell", name="Four Ø2 balls into the cradle's ball seats, from the front", dir="-z", travel="auto",
          parts=[r"^joystick: ball \d"], note="loose, held by the carrier and the hold-downs (TJ); dropped through the lip ring [A]"),
     # ---- joystick top (grip block + carrier), on the bench

@@ -1,12 +1,12 @@
 {
- "rev": "v0.8",
+ "rev": "v0.9",
  "pitch": 2.54,
  "db_t": 1.0,
  "corner_r": 0.95,
  "board": [
-  -19.25,
+  -18.95,
   -14.529999999999996,
-  19.25,
+  18.95,
   8.170000000000003
  ],
  "sw_xy": [
@@ -139,36 +139,37 @@
  },
  "top_joint": {
   "kind": "sockets",
-  "part": "1.27 mm single-row female socket, 3.4 tall, SMT, 13 way (part to pick) [A]; height of the XFCN PM127V-11-xxP-H34 class [S]",
+  "part": "1.27 mm single-row female socket, 4.5 tall, SMT, 13 way [A] (part to pick; 1.27 single-row sockets 4.3 / 4.6 tall exist: XFCN PM127V-11-xx-H43 / -H46, LCSC C2917342 / C2689177, through-hole [S]; SMT 1.27 single-row socket strips: Mill-Max 853 series, 1-50 ways, pins \u00d80.38-0.53, pads alternate sides [S], height to confirm [C])",
   "pitch": 1.27,
   "n": 13,
   "side": "bottom (SMT)",
   "rows_x": [
-   -17.5,
-   17.5
+   -17.2,
+   17.2
   ],
   "pin_y": [
-   -10.8,
-   -9.53,
-   -8.26,
-   -6.99,
-   -5.72,
-   -4.45,
-   -3.18,
-   -1.91,
-   -0.64,
-   0.63,
-   1.9,
-   3.17,
-   4.44
+   -13.3,
+   -12.03,
+   -10.76,
+   -9.49,
+   -8.22,
+   -6.95,
+   -5.68,
+   -4.41,
+   -3.14,
+   -1.87,
+   -0.6,
+   0.67,
+   1.94
   ],
   "body": [
    2.0,
    16.91,
-   3.4
+   4.5
   ],
   "pad_hw": 1.45,
-  "post_land": "bare board under the vertical boards' end tabs (x \u00b115.5..16.5, beyond the sockets in y)"
+  "post_land": "none: the vertical boards' end tabs clear the top board (the pins take the stack)",
+  "pads": "alternate sides (single-row SMT socket); the end pin by each corner notch has its pad inboard [A]"
  },
  "guide_keepout": [
   {
@@ -184,5 +185,23 @@
    "what": "no parts under the guide heads"
   }
  ],
- "notes": "v0.8: no spring-contact pads, no grub-access holes; two 13-way 1.27 sockets on the underside; the board is \u00b119.25 wide (v0.7 \u00b118.90)"
+ "notes": "v0.9: board \u00b118.95 (v0.8 \u00b119.25); the socket rows 0.3 inboard (x \u00b117.2) and -2.5 in y; 4.5 tall sockets; corner notches 1.30 \u00d7 6.20; glued up under the printed shoulders of the case (no bare lands for posts)",
+ "corner_notches": [
+  {
+   "post_x": -21.2,
+   "post_y": 4.72,
+   "r": 3.55,
+   "square_from_x": -17.65,
+   "up_to_y": 8.17,
+   "what": "notch round the top corner post, squared off to the board's +y edge (no copper within 0.3)"
+  },
+  {
+   "post_x": 21.2,
+   "post_y": 4.72,
+   "r": 3.55,
+   "square_from_x": 17.65,
+   "up_to_y": 8.17,
+   "what": "notch round the top corner post, squared off to the board's +y edge (no copper within 0.3)"
+  }
+ ]
 }

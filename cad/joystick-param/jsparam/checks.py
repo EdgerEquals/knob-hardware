@@ -3,7 +3,7 @@ springs, preloaded by grub screws that are reached on the sub-assembly. The four
 springs are unchanged in kind from v0.3."""
 import math, itertools
 from build123d import Pos, Rot
-from .parts import cyl as cyl_, DB_NAME, CC_NAME, GK_NAME, db_name, gk_name
+from .parts import cyl as cyl_, box as box_, DB_NAME, CC_NAME, GK_NAME, db_name, gk_name, cc_name
 
 def _mirror_ok(pts, tol=1e-6):
     s = {(round(x, 4), round(y, 4)) for x, y in pts}
@@ -21,7 +21,7 @@ def run(D, P):
     bez = P["screen carrier (printed)"]
     cradle_on = D.get("base") == "cradle"
     case_on = D.get("base") == "case"   # v0.7 layout v4: top board on the spring contacts, cradle captured by the case
-    plate = (P[CC_NAME] if case_on else P["joystick cradle (printed, glued)"] if cradle_on
+    plate = (P[cc_name(D)] if case_on else P["joystick cradle (printed, glued)"] if cradle_on
              else P["seat plate (printed, glued)"])   # v0.5: the cradle carries the seats; v0.7: the case cradle does
     stem = P["SW1 SKRHADE010 stem"]
     db = P[db_name(D)] if case_on else P["joystick daughterboard"]
@@ -227,6 +227,8 @@ def run(D, P):
     row("top board on the cradle shoulders (glued, faces touch)" if case_on else "daughterboard vs plate (glued, faces touch)",
         db.distance_to(plate), "<= 0.02", db.distance_to(plate) <= 0.02,
         f"board {D['db'][0]:.2f} x {D['db'][1]:.2f} x {D['db_t']:g}" + (f" at y {D['board_y0']:.2f}..{D['board_y1']:.2f}; " + (
+        "v0.9: it goes in from the back on its own and is glued up under the printed shoulders [A]; the pins slide in its sockets"
+        if D.get("cradle_in_case") else
         "the vertical boards' end tabs (posts) push it up against the shoulders" if D.get("top_joint") == "sockets" else
         "the spring contacts push it up against the shoulders") if case_on else ". The v0.3 -y stop tab is gone"))
     row("switch opening in the plate", body.distance_to(plate), f">= {T['board_min']}",
@@ -575,6 +577,8 @@ def _case_rows(D, P, row, car, bez, plate, db):
     """v0.7 [Ed 3 Nov 11:03] the case cradle: lip in the faceplate cutout, flange on a gasket, top board in its nest."""
     cc, gk, sla = D["cc"], D["gasket"], D["tol_sla"]
     fp = P["faceplate (case proxy, UTR-8100)"]
+    if D.get("cradle_in_case"):   # v0.9 [Ed 18:35]: printed with the case, no bead
+        return _case_rows9(D, P, row, car, bez, plate, db, fp)
     gas = P[gk_name(D)]
     if D.get("top_joint") == "sockets":
         return _case_rows8(D, P, row, car, bez, plate, db, fp, gas)
@@ -689,6 +693,116 @@ def _case_rows8(D, P, row, car, bez, plate, db, fp, gas):
     fits = D["car_hw"] + D["slide"] + sla <= D["lip_in_hw"] + 1e-9 and D["car_hh"] + D["slide"] + sla <= D["lip_in_hh"] + 1e-9
     row("carrier drops through the lip ring", 1.0 if fits else 0.0, "fits", fits,
         f"carrier ±{D['car_hw']:.2f} × ±{D['car_hh']:.2f} + slide {D['slide']:.2f} + {sla:.2f} inside the lip ±{D['lip_in_hw']:.2f} × ±{D['lip_in_hh']:.2f}")
+
+
+def _case_rows9(D, P, row, car, bez, plate, db, fp):
+    """v0.9 [Ed 18:35 / 19:12]: the cradle printed into the case. One print (no bead, no step), the pins take the stack (rows in the knob
+    assembly), the top board glued up under the printed shoulders, corner notches round the top corner posts."""
+    import itertools as _it
+    cc, sla, S, G = D["cc"], D["tol_sla"], D["tb_sock"], D["glue9"]
+    d = plate.distance_to(fp)
+    try:
+        v = (plate & fp).volume
+    except Exception:
+        v = 1e9
+    row("cradle printed with the case: lip ring on the cutout wall, flange on the faceplate back (one print)", d, "<= 0.001",
+        d <= 1e-3 and v <= 1e-3,
+        f"[Ed 18:35] one UTR-8100 print: the lip ring fills the cutout wall from the faceplate back to {cc['lip_below']:g} under the front "
+        f"(inner face ±{D['lip_in_hw']:.2f} × ±{D['lip_in_hh']:.2f}, as v0.8: the carrier and the balls do not move); the flange keeps its v0.8 "
+        f"height (top z {D['z_fl1']:.2f}, {D['fl_drop']:.2f} under the faceplate back [A]) and a riser outboard of the lip's inner face joins it "
+        "to the faceplate. In the knob model the two solids are fused into the case")
+    row("case cradle lip ring in the cutout (depth below the front)", D["lip_engage"], ">= 1.0", D["lip_engage"] >= 1.0 - 1e-9,
+        f"lip z {D['z_fp0']:.2f}→{D['z_lip1']:.2f}; the top {cc['lip_below']:g} of the cutout keeps its full size (the grip block covers it)")
+    lw = D["hole_hw"] - D["lip_in_hw"]
+    w = min(lw, cc["flange_t"], cc["wall"], cc["shoulder"])
+    row("printed cradle walls ≥ SLA minimum (lip ring, flange, hangers, shoulders)", w, ">= 0.80", w >= 0.8 - 1e-9,
+        f"lip ring {lw:.2f} (v0.8 1.0 + the 0.2 slot, now filled), flange {cc['flange_t']:g}, hangers {cc['wall']:g}, shoulders "
+        f"{cc['shoulder']:g} [S SLA 0.8]. [C] SLA supports for the hangers and ball seats inside the case must be reachable")
+    row("grip block covers the cutout (and the lip in it) at full slide", D["block_cover_slide"], f">= {sla:.2f}",
+        D["block_cover_slide"] >= sla - 1e-9, f"cover {D['block_cover_rest']:.2f} at rest, {D['block_cover_slide']:.2f} at the {D['slide']:.2f} slide")
+    row("grip block clear of the lip top at full press", D["block_lip_press"], f">= {sla:.2f}", D["block_lip_press"] >= sla - 1e-9,
+        f"block underside z {D['z_bz0']:.2f} − press {D['press_travel']:.2f}; lip top z {D['z_lip1']:.2f}")
+    gone = [n for n in P if "form-in-place" in n or "gasket" in n]
+    row("no bead, no top-edge step (one print)", len(gone) + (1 if "z_reb1" in D else 0), "0", not gone and "z_reb1" not in D,
+        "[Ed 18:35] the form-in-place bead, the dam and the faceplate rebate are gone: nothing to seal between the cradle and the case")
+    bx = D["board_x1"] - D["vb_pin_x"] - S["pad_hw"]
+    row("top board covers the sockets' pads (copper to the edge)", bx, f">= {D['cu_edge']:.2f}", bx >= D["cu_edge"] - 1e-9,
+        f"board ±{D['board_x1']:.2f} (v0.8 ±19.25) × {D['board_y0']:.2f}..{D['board_y1']:.2f}; socket rows x ±{D['vb_pin_x']:g} [Ed 19:12 (4): "
+        f"0.3 inboard], pads ±{S['pad_hw']:g} [A]; {S['n']} way each, y {D['sock_y'][0]:.2f}..{D['sock_y'][1]:.2f} ({D['sock_y_shift']:+g} toward "
+        "the knob [A])")
+    sk = [P[n] for n in P if n.startswith("top-board socket")]
+    if sk:
+        ds = max(k.distance_to(db) for k in sk)
+        row("sockets on the top board's underside", ds, "<= 0.02", ds <= 0.02, f"{S['part']}; entry z {D['z_sock0']:.2f}")
+        dn = min(k.distance_to(plate) for k in sk)
+        row("sockets clear of the printed cradle (hangers, seats)", dn, f">= {sla:.2f}", dn >= sla - 1e-9, "")
+    row("top board edges clear of the nest walls", cc["nest_c"], f">= {sla:.2f}", cc["nest_c"] >= sla - 1e-9,
+        f"nest ±{D['nest_hw']:.2f} × {D['nest_y0']:.2f}..{D['nest_y1']:.2f}; the last {D['z_db1'] - D['z_nest0']:.1f} of the board's way in")
+    sg = D["z_seat0"] - D["z_db1"]
+    row("lower ball seats clear of the top board", sg, ">= 1.0", sg >= 1.0 - 1e-9,
+        f"seat bosses from z {D['z_seat0']:.2f}, board top z {D['z_db1']:.2f}; balls at (±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f})")
+    a, b, al = D["tb_plate"]
+    row("top board flex at a worst-case click (glued under the shoulders)", D["tb_flex"], "<= 0.10", D["tb_flex"] <= 0.10,
+        f"{D['push_hi']:.2f} N at the switch; 1.0 FR4 plate {a:.1f} × {b:.1f} between the shoulders' inner edges, simply supported on four "
+        f"edges [S Timoshenko α {al:.4f}; A E 18 GPa]; v0.8 on the posts 0.061. Stiffness {D['tb_k']:.0f} N/mm")
+    row("top board glue line under the shoulders: peak line load at a worst-case click", D["glue_q_click"], f"<= {G['peel'] / 3:.2f}",
+        D["glue_q_click"] <= G["peel"] / 3 + 1e-9,
+        f"[Ed 18:35] the pins slide, so a press goes stem → top board → glue (tension / peel) → printed shoulders → case. {D['push_hi']:.2f} N "
+        f"over {D['glue_len']:.0f} mm of glue line × {G['peak']:g} peak [A]; target a third of a cautious {G['peel']:g} N/mm peel [A, not sourced]")
+    row("top board glue line at the overpress stop (info: grip block lands on the faceplate)", D["glue_q_op"], f"info ({G['peel']:g} [A])", True,
+        f"past the switch's bottom a hard press pushes the board {D['op_gap']:.2f} more before the block lands on the faceplate: about "
+        f"{D['op_f']:.0f} N into the glue ({D['glue_q_op']:.2f} N/mm peak). " + ("TIGHT: over the cautious peel figure [A]. " if D["glue_q_op"] >
+        G["peel"] else "") + "[C, Danny] a toughened epoxy, a screw or clip at the board ends, or less block travel would take it")
+    cb_ = min(D["car_hw"] - (abs(x) + D["boss_r"]) for x, _ in D["balls"])
+    cby = min(D["car_hh"] - (abs(y) + D["boss_r"]) for _, y in D["balls"])
+    row("carrier cup bosses inside the carrier outline", min(cb_, cby), ">= 0", min(cb_, cby) >= -1e-6,
+        f"(±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}), cup boss r {D['boss_r']:.2f}")
+    fits = D["car_hw"] + D["slide"] + sla <= D["lip_in_hw"] + 1e-9 and D["car_hh"] + D["slide"] + sla <= D["lip_in_hh"] + 1e-9
+    row("carrier drops through the lip ring", 1.0 if fits else 0.0, "fits", fits,
+        f"carrier ±{D['car_hw']:.2f} × ±{D['car_hh']:.2f} + slide {D['slide']:.2f} + {sla:.2f} inside the lip ±{D['lip_in_hw']:.2f} × ±{D['lip_in_hh']:.2f}")
+    # corner notches round the top corner posts (the board passes their bases on its way in from the back)
+    if D.get("tb_notch"):
+        rp = D["tb_notch"][0][2] - D["notch_air"]
+        posts = [cyl_(2 * rp, D["z_db0"], D["z_db1"], x, y) for x, y, _ in D["tb_notch"]]
+        dp = min(db.distance_to(q) for q in posts)
+        nx, ny = D["tb_notch_size"]
+        row("top-board corner notches clear the top corner posts (plan)", dp, f">= {D['notch_air']:.2f}", dp >= D["notch_air"] - 1e-4,
+            f"[Ed 18:35] notch round each post (r {rp:.2f} + {D['notch_air']:g}) squared off to the +y edge: {nx:.2f} deep (x) × {ny:.2f} along "
+            f"the edge (y {D['tb_notch_y0']:.2f}..{D['board_y1']:.2f}); posts at (±{abs(D['tb_notch'][0][0]):.2f}, {D['tb_notch'][0][1]:.2f}). The path "
+            "row (knob assembly) checks the real case")
+        from .parts import top_board_notches as _tbn
+        big = box_(-60, 60, -60, 60, D["z_sock0"] - 1.0, D["z_db1"] + 3.0)
+        cut = big - _tbn(D, big, D["z_sock0"] - 2.0, D["z_db1"] + 4.0)       # the notch volumes, through every part's height
+        near = [(P[n].distance_to(cut), n) for n in P if n.startswith(("top-board socket", "screen FPC socket", "SW1"))]
+        dmin, who = min(near)
+        row("nothing on the top board in the corner notches (part bodies)", dmin, ">= 0 (none cut)", dmin >= -1e-6,
+            f"nearest: {who}; " + ", ".join(f"{n.split(' (')[0]} {v:.2f}" for v, n in sorted(near)[:3]) + ". TIGHT: the sockets' outer "
+            "corners sit at the notch's edge (they are what the 0.3 path is measured from); the screen FPC socket (AXE530127, top face) "
+            "body is about 0.19 from it: its +y end hold-down pad must keep 0.3 copper-to-edge in KiCad [C]")
+        # socket pads: single-row SMT 1.27 sockets put their pads on alternate sides [S Mill-Max 853 footprint]; the end pin by the notch
+        # has its pad inboard [A]. Pads 0.76 long [A].
+        best = 9e9
+        for sx in (-1, 1):
+            x_r = sx * D["vb_pin_x"]
+            for k, y in enumerate(D["sock_pin_y"]):
+                out_ = (S["n"] - 1 - k) % 2 == 1
+                xa, xb = sorted((x_r, x_r + sx * S["pad_hw"])) if out_ else sorted((x_r, x_r - sx * S["pad_hw"]))
+                for x0, y0, r in D["tb_notch"]:
+                    if x0 * sx < 0:
+                        continue
+                    dx = max(xa - x0, 0.0, x0 - xb); dy = max((y - 0.38) - y0, 0.0, y0 - (y + 0.38))
+                    dc = math.hypot(dx, dy) - r                           # to the notch's round part
+                    dbx = (abs(x0) - r) - max(abs(xa), abs(xb))             # to the squared-off part (x), where y + 0.38 > y0
+                    best = min(best, dc if (y + 0.38) <= y0 else min(dc, dbx))
+        row("socket pads clear of the corner notches (copper to the edge)", best, f">= {D['cu_edge']:.2f}", best >= D["cu_edge"] - 1e-6,
+            f"pads ±{S['pad_hw']:g} × 0.76 [A] on alternate sides [S Mill-Max 853]; the end pin by the notch has its pad inboard [A, KiCad]")
+    if "sf_up_wc" in D:
+        lo, hi = D["sf_up_wc"]
+        row("tipping up the panel at the worst-case corner of the up-stop stack (info)", lo, "info (1.3 wanted)", True,
+            f"[Ed 19:12 (1)] HT-870 kept: {lo:.3f}–{hi:.3f} in the corner where the stack is tightest (the cushion preloads the stem "
+            f"{D['us_choice']['f_wc'][0]:.2f}–{D['us_choice']['f_wc'][2]:.2f} N); {D['sf_up']:.3f} over the RSS band. NOT over 1.3 in that corner: the "
+            "shoulder-to-seat term (0.2 SLA) is still one dimension inside one print, and the cradle-to-faceplate term that left was never in "
+            "this stack. Setting the sleeve length at assembly (±0.1) keeps the cushion off the stem [C]")
 
 
 def clashes(P, tol=1e-3):

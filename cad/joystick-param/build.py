@@ -51,7 +51,9 @@ def main():
         "board_x0", "board_x1", "board_y0", "board_y1", "cup_bore", "skirt_gap", "scr_clear", "glue")}
     for k in ("cup_col_od", "car_cup_hole", "g_boss0", "g_len", "g_sleeve_len", "us_rss", "us_wc", "us_gap", "us_float", "us_room",
               "preload_max", "preload_lim", "us_table", "sock_y", "sock_pin_y", "z_sock0", "eng_nom", "gk_nom", "gk_range", "bead_band",
-              "bead_band_net", "z_fl1", "z_reb1", "z_dam1", "st_y0", "step_land", "tb_flex", "tb_span"):   # v0.8
+              "bead_band_net", "z_fl1", "z_reb1", "z_dam1", "st_y0", "step_land", "tb_flex", "tb_span",   # v0.8
+              "fl_drop", "tb_notch", "tb_notch_size", "tb_notch_y0", "tb_plate", "tb_k", "op_gap", "op_f", "glue_len", "glue_q_click",
+              "glue_q_op", "sf_up_wc", "vb_pin_x", "board_x1"):   # v0.9
         if k in D:
             keyd[k] = D[k]
     keyd["volume_cm3"] = vols
@@ -87,6 +89,16 @@ def main():
                                  for x, y in D["g_xy"]]
         geom["notes"] = ("v0.8: no spring-contact pads, no grub-access holes; two 13-way 1.27 sockets on the underside; the board is "
                          f"±{D['board_x1']:.2f} wide (v0.7 ±18.90)")
+        if D.get("cradle_in_case"):   # v0.9 [Ed 18:35 / 19:12]
+            geom["top_joint"]["post_land"] = "none: the vertical boards' end tabs clear the top board (the pins take the stack)"
+            geom["top_joint"]["pads"] = "alternate sides (single-row SMT socket); the end pin by each corner notch has its pad inboard [A]"
+            geom["corner_notches"] = [dict(post_x=round(x, 3), post_y=round(y, 3), r=round(r, 3),
+                                           square_from_x=round((abs(x) - r) * (1 if x > 0 else -1), 3), up_to_y=round(D["board_y1"], 3),
+                                           what="notch round the top corner post, squared off to the board's +y edge (no copper within 0.3)")
+                                      for x, y, r in D.get("tb_notch", ())]
+            geom["notes"] = (f"v0.9: board ±{D['board_x1']:.2f} (v0.8 ±19.25); the socket rows 0.3 inboard (x ±{D['vb_pin_x']:g}) and "
+                             f"{D['sock_y_shift']:+g} in y; 4.5 tall sockets; corner notches {D['tb_notch_size'][0]:.2f} × "
+                             f"{D['tb_notch_size'][1]:.2f}; glued up under the printed shoulders of the case (no bare lands for posts)")
     gpath = os.path.join(os.path.dirname(HERE), "knob-param", "knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")
     json.dump(geom, open(gpath, "w"), indent=1)
     print("geom:", gpath)

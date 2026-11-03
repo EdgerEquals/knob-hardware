@@ -74,13 +74,22 @@ P = dict(
     # [Ed 13:46/14:08] top joint: male 1.27 pins on the top edge into sockets under the top board; the boards' end tabs bear on the top board
     vb_pin=dict(part="right-angle 1.27 mm single-row male header, SMT on the outer face at the top edge, pins up [A]; part to pick",
                 pitch=1.27, n=13,  # [A] 13 a board (26): doc about 16-20 [Ed 11:25]; R: ~10 joystick lines + 3.3 V + grounds
-                off=1.0,           # [A] pin row this far out from the outer face (x ±17.5, the v0.7 contact line)
-                body_x=1.6, body_z=2.0, pin=0.40,   # [A] insulator on the face under the board's lowered edge; square pins
+                off=0.70,          # [Ed 19:12 (4)] pin row this far out from the outer face: x ±17.2, 0.3 inboard of v0.24's 17.5 (the header
+                                   # was 0.15 into the case's top corner post bases on the way in)
+                body_x=1.3, body_z=2.0, pin=0.40,   # [A] insulator on the face under the board's lowered edge (v0.25: 1.3 off the face, the header
+                                   # moved 0.3 inboard with its pins: a lower right-angle body, part to pick); square pins
                 len_extra=0.40,    # [A] mirror of the joystick socket: body length = n × pitch + this
-                sock_h=3.4,        # [S] mirror of the joystick socket height (XFCN PM127V-11-xxP-H34 class, 3.4)
-                sock_ins=(1.83, 3.00),   # [S]/[A] mirror of the joystick socket insertion range (Samtec FLE 1.83 min; 0.4 short of the body)
-                sock_clear=0.30,   # [A] board edge under the sockets, and the tabs, this far from the socket body
-                tab_min=2.0),      # [A] narrowest end tab (post) that bears on the top board
+                sock_h=4.5,        # [Ed 19:12 (7)] mirror of the joystick socket height, ~4.5 (v0.24 3.4) [A; 4.3 / 4.6 classes exist, S]
+                sock_ins=(1.83, 4.10),   # [S]/[A] mirror of the joystick socket insertion range (Samtec FLE 1.83 min; 0.4 short of the body)
+                sock_clear=0.30,   # [A] the end tab beside the sockets this far from the socket body (y)
+                sock_z_air=1.00,   # [A] v0.25: board edge / header body top this far under the socket entry: the worst-case stack (0.65, the
+                                   # pins take it) + 0.35 (assembly cross-check)
+                tab_air=1.20,      # [A] v0.25 [Ed 18:35, decision (c)]: the end tabs are no longer posts; their tops sit this far under the top
+                                   # board: the worst-case stack (0.55) + 0.65 (assembly cross-check); 1.2 also keeps the +y tab 1.17 from the
+                                   # end wall printed in the case (1.0 gave exactly the 1.0 case rule)
+                y_shift=-2.5,      # [A, needs Danny's OK] v0.25: the pin rows (and the joystick's sockets) this far toward the knob from the
+                                   # boards' middle, so the sockets and headers pass the top corner posts' bases with >= 0.3 (assembly row)
+                tab_min=2.0),      # [A] narrowest end tab beside the sockets (v0.24: the posts that bore on the top board)
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side
     hall_z=0.65,   # [A] TMAG5273 element above the adapter top
@@ -121,14 +130,15 @@ def derive(D):
     D["vb_face_out"] = V["x"] + V["t"] / 2
     D["vb_face_in"] = V["x"] - V["t"] / 2
     y0, y1 = V["y"]
-    D["vb_z1"] = V["top_board_z"]                                       # the tabs' top edges bear on the top board's underside
-    D["vb_ze"] = V["top_board_z"] - Q["sock_h"] - Q["sock_clear"]       # the edge under the sockets (the male header sits under it)
+    D["vb_z1"] = V["top_board_z"] - Q.get("tab_air", 0.0)              # the tabs' top edges (v0.25: clear of the top board; v0.24 bore on it)
+    D["vb_ze"] = V["top_board_z"] - Q["sock_h"] - Q.get("sock_z_air", Q["sock_clear"])   # the edge under the sockets (the male header under it)
     D["vb_top_x"] = D["vb_face_out"] + Q["off"]                          # male pin row
-    yc, span = (y0 + y1) / 2, (Q["n"] - 1) * Q["pitch"]
+    yc, span = (y0 + y1) / 2 + Q.get("y_shift", 0.0), (Q["n"] - 1) * Q["pitch"]
     D["vb_top_y"] = [yc - span / 2 + k * Q["pitch"] for k in range(Q["n"])]
     sl = Q["n"] * Q["pitch"] + Q["len_extra"]
     D["vb_sock_y"] = (yc - sl / 2, yc + sl / 2)                          # the joystick socket's body (mirror; assembly cross-check)
-    D["vb_tabs"] = ((y0, D["vb_sock_y"][0] - Q["sock_clear"]), (D["vb_sock_y"][1] + Q["sock_clear"], y1))
+    D["vb_tabs"] = tuple((a, b) for a, b in ((y0, D["vb_sock_y"][0] - Q["sock_clear"]), (D["vb_sock_y"][1] + Q["sock_clear"], y1))
+                         if b - a > 1e-6)                                # v0.25: the -y tab goes (the rows moved toward the knob)
     D["vb_n_top"] = 2 * Q["n"]
     D["vb_eng_nom"] = (Q["sock_ins"][0] + Q["sock_ins"][1]) / 2         # [A] pins to the middle of the insertion range
     D["vb_tip_z"] = V["top_board_z"] - Q["sock_h"] + D["vb_eng_nom"]
