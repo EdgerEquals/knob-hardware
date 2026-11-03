@@ -1,4 +1,13 @@
-"""Top-screen joystick stack v0.7 — params + derive.
+"""Top-screen joystick stack v0.8 — params + derive.
+
+v0.8 (3 Nov 2026, step-1 follow-ups, Ed 13:09–14:08): the cup over the SKRHADE010 stem is printed into the bezel (grip block) and its
+ceiling sits on the stem, so the switch's own click is the press: the carrier's cup, the press peg (grub + insert), the four Lee press
+springs with their grubs and inserts, and the Ø1.6 grub-access holes through the main board and the top board all go. The guides stay;
+their heads are the up-stop with a float band and a thin cushion ring under each carrier guide boss (comparison in derive: O-ring /
+silicone sponge / PORON). The top board no longer rides on spring contacts: male 1.27 pins on the vertical boards' top edges plug
+into single-row 1.27 sockets under the top board, and the boards' end tabs bear on the top board (the boards are the posts), so
+closing the case clamps the cradle flange onto a form-in-place silicone bead. The top edge (over the rail strip) gets a step: a
+rebate in the cutout wall and a dam on the lip ring, with the bead in it.
 
 v0.7 (3 Nov 2026, layout v4 step 1, Ed 09:47–11:32): base "case". The printed cradle glued to the main PCB, its dowels, the two
 2x5 H11 sockets and the long-pin headers go: the H7B0 takes their place on the main PCB, and two vertical boards (electronics sub,
@@ -51,7 +60,7 @@ import os
 import sys
 
 P = dict(
-    version="v0.7",
+    version="v0.8",
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
     knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
@@ -192,6 +201,69 @@ P = dict(
     gasket=dict(part="closed-cell silicone sponge gasket, 0.8 thick, die-cut, adhesive one side [A]", t=0.80,
                 comp_nom=0.25, comp_lo=0.10, comp_hi=0.50,   # [A] compression: nominal, and the working band of the sponge
                 land_min=0.75),   # [A] narrowest gasket land under the faceplate that is still a die-cut strip
+    # ---- v0.8 [Ed 3 Nov 13:09–14:08] step-1 follow-ups ----
+    cup_in_bezel=True,      # [Ed 13:09] the cup over the stem is printed into the bezel (grip block); its ceiling sits on the stem (no
+                            # gap), so the switch's own click is the press. False = v0.7 (cup in the carrier, peg over a 0.2 gap)
+    press_springs=False,    # [Ed 13:16/13:18] no Lee press springs, no grubs, no inserts, no press peg (True = v0.7)
+    up_gap_set=0.55,        # [A] bezel underside above the faceplate front, kept at v0.7's 0.55 so the block, the screen and the case do
+                            # not move (the press is now 0.15, so the block clears the faceplate by 0.40 at full press)
+    guide_boss_ratio=0.95,  # [A] carrier guide boss length / sleeve OD (v0.7 1.1; >= 0.9 is the check): 0.3 shorter to make room for the
+                            # 1.59 cushion under it
+    guide_keepout=0.05,     # [A] top board under each guide head: no parts, no tails (KiCad keep-out Ø head + 2 × 0.25); this is the
+                            # height of what is left there (mask, silk). v0.7 used solder_h 0.6 (header tails, gone since v0.7)
+    # up-stop [Ed 13:09 "guides stay"; Danny 13:21 suggested silicone]: a thin cushion ring glued under each carrier guide boss, round the
+    # sleeve; the screw head meets it when the bezel is lifted off the stem. The gap is set so the cushion does NOT preload the stem over
+    # the RSS band of the stack below (preload on the stem takes straight off the hold-downs' tipping moment, see derive).
+    upstop=dict(part="BISCO HT-870 soft silicone sponge 1.59 ring OD 4.4 / ID 3.3, glued under each carrier guide boss [S thickness, CFD; A ring]",
+                kind="foam", t=1.59, od=4.4, id=3.3, cfd25=(7.0, 26.0, 48.0),   # [S] Rogers BISCO HT-870 data sheet (1.59 min)
+                area_k=1.3,   # [A] the Ø3.8 head presses the ring's inner annulus; the foam round it adds about 30 % (shear)
+                # stack between the stem top (bezel at rest) and the head's bearing face vs the carrier boss underside, ± each [A]:
+                tol=dict(switch=0.10,      # [A] SKRHADE010 stem top above its seat (Alps drawing tolerance not in hand)
+                         switch_seat=0.05, # [A] SMT solder under the switch
+                         cradle=0.20,      # [S] SLA: top-board shoulder to the lower ball seats (tol_sla)
+                         carrier=0.25,     # [S] MJF: upper ball cup to the guide boss underside (tol_mjf)
+                         bezel=0.25,       # [S] MJF: cup ceiling to the guide-insert seat (tol_mjf)
+                         insert=0.05,      # [A] heat-set insert flush with the boss
+                         sleeve=0.05)),    # [A] brass tube cut to length
+    # comparison of compliant up-stops (Danny 13:21): kind, free thickness, ring / O-ring size, 25 % CFD (lo, typ, hi) kPa or Shore A
+    upstop_options=(
+        dict(name="solid silicone O-ring 3 × 1.0, 40 Shore A", kind="oring", t=1.0, id=3.0, shore=40, c_max=0.30,
+             src="[A] metric O-ring; force from Lindley's rubber-cylinder law with E from Shore A (Gent)"),
+        dict(name="closed-cell silicone sponge BISCO HT-800, 0.79", kind="foam", t=0.79, cfd25=(41.0, 67.0, 97.0), c_max=0.50,
+             src="[S] Rogers HT-800 data sheet: 0.79 min, 25 % CFD 6–14 psi (typ 9.7); compression set 19–30 % at 100 °C"),
+        dict(name="soft silicone sponge BISCO HT-870, 1.59", kind="foam", t=1.59, cfd25=(7.0, 26.0, 48.0), c_max=0.50,
+             src="[S] Rogers HT-870 data sheet: 1.59 min, 25 % CFD 1–7 psi (typ 3.8); set < 10 %"),
+        dict(name="extra-soft silicone foam BISCO BF-1000, 1.59", kind="foam", t=1.59, cfd25=(7.0, 16.5, 35.0), c_max=0.50,
+             src="[S] Rogers BF-1000: 1.59 min, 25 % CFD typ 16.5 kPa (range read as 1–5 psi); set < 5 %"),
+        dict(name="PORON 4701-30 (25 pcf), 0.79", kind="foam", t=0.79, cfd25=(35.0, 62.0, 83.0), c_max=0.50,
+             src="[S] Rogers PORON 4701-30: 0.79–1.14 at 25 pcf, 25 % CFD 5–12 psi (typ 9); set ≤ 10 % at 70 °C"),
+        dict(name="PORON 4701-30 (20 pcf), 1.57", kind="foam", t=1.57, cfd25=(21.0, 35.0, 55.0), c_max=0.50,
+             src="[S] Rogers PORON 4701-30: 1.57–3.18 at 20 pcf, 25 % CFD 3–8 psi (typ 5)"),
+    ),
+    foam_n=1.5,             # [A] foam stress ~ (strain / 25 %)^n between 5 and 60 % (data sheets give the 25 % point only)
+    push_frac=1 / 3,        # [A] "well under the switch's minimum push": the stack preload stays under this fraction of it
+    # [Ed 13:46/14:08] sockets under the top board: male 1.27 pins on the vertical boards' top edges plug in; the boards' end tabs bear on
+    # the top board beside the sockets (the boards are the posts)
+    tb_sock=dict(part="1.27 mm single-row female socket, 3.4 tall, SMT, 13 way (part to pick) [A]; height of the XFCN PM127V-11-xxP-H34 "
+                      "class [S]", pitch=1.27, n=13, w=2.0, h=3.4, pad_hw=1.45, len_extra=0.40,
+                 ins=(1.83, 3.00)),   # [S] Samtec FLE (a 1.27 socket) gives 1.83 min insertion; [A] max 0.4 short of the 3.4 body
+    top_joint="sockets",    # [Ed 13:46] "sockets": pins into sockets, the boards are the posts [Ed 14:08]; "contacts" = v0.7 spring contacts
+    vb_plane_x=16.0,        # [Ed 09:47] mirror of electronics vb.x: the vertical boards' planes (the posts)
+    vb_pin_x=17.5,          # [A] mirror of electronics: the male pin row (outer face ±16.5 + the right-angle header's 1.0 offset)
+    # [Ed 14:03] gasket = a dispensed (form-in-place) silicone bead all round the flange and in the top-edge step
+    bead=dict(part="form-in-place silicone bead, dispensed on the cradle flange and in the top-edge step [A]",
+              w0=0.70,      # [A] dispensed width: +0.1 dispense tolerance still sits on the 0.99 flange top beside the lip
+              h0=0.60,      # [S] height: Henkel CIPG guideline aspect 0.6–0.9 (0.86 here)
+              c_nom=0.30,   # [A] nominal compression (middle of the band)
+              c_lo=0.15, c_hi=0.45,   # [S] Henkel CIPG guideline: 15 % minimum for sealing, 45 % maximum (strain limit)
+              disp=0.10,    # [S] Henkel: dispensing tolerance ±0.1 on width and height
+              f_mm=0.28),   # [A] N per mm of bead at the nominal 30 %: Parker CHO-FORM ~4 N/cm for a 1 mm bead [S], scaled to 0.7
+    # [Ed 14:02] top-edge seal: a rebate in the cutout wall (case) and a dam on the lip ring (cradle) with the bead between them,
+    # along the top edge and down the long sides to where the flange starts (water goes down, across and back up)
+    step=dict(w=1.20,       # [A] rebate width past the cutout wall (the bead land on the dam is w - c)
+              d=1.45,       # [A] rebate depth into the faceplate back (2.5 wall: 1.05 left above it)
+              c=0.20,       # [A] dam to the rebate's back wall (one SLA tolerance)
+              dam_air=0.05),   # [A] dam underside above the faceplate back (nothing behind the panel in the rail strip)
     ball_x=17.8,            # [Ed 2 Nov 12:22] balls at the extreme corners: x as far out as the carrier allows (cup boss inside it)
     ball_y_bot=10.3,        # [Ed] knob-side row; the carrier outline (±13.02) less the cup boss is the limit. The top row: rail strip
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
@@ -347,8 +419,13 @@ def derive(P_):
     D["sh_t"] = 0.0
     # review fix: the case face is one flat plane (no rebate), so the block floats press travel + one SLA tolerance above it
     D["press_gap"] = sla
+    if D.get("cup_in_bezel"):   # v0.8 [Ed 13:09]: the bezel's cup ceiling sits on the stem (no gap); the press is the switch's own travel
+        D["press_gap"] = 0.0
+        D.pop("peg", None)        # no press peg, no peg insert
     D["press_travel"] = D["press_gap"] + sw["push_travel"]
     D["up_gap"] = D["press_travel"] + sla
+    if D.get("cup_in_bezel"):
+        D["up_gap"] = D["up_gap_set"]   # [A] block, screen and case stay where v0.7 had them
     D["snap"] = D["fp_overlap"]
     D["peg_d"] = 1.80
     D["half_w"] = S["w"] / 2 + D["bz_lip"]
@@ -439,6 +516,9 @@ def derive(P_):
     D["seat_r"] = D["ball_d"] / 2 + D["seat_clear"]
     D["boss_r"] = D["seat_r"] + pm * 0.50
     D["z_cup0"] = D["z_stem_top"] - D["cup_engage"]
+    # v0.8: the cup is a column hanging from the bezel roof through a hole in the carrier floor; bore over the stem, ceiling on it
+    D["cup_col_od"] = D["cup_bore"] + 2 * pm                       # print-minimum wall round the SLA-clearance bore
+    D["car_cup_hole"] = D["cup_col_od"] + 2 * mjf                  # carrier floor hole round the column (they slide together)
     D["z_skirt0"] = D["z_plate0"] - D["skirt_overlap"]
     if D["base"] == "cradle":   # no seat plate: the skirt engages the board edge only, above the cradle rim
         D["z_skirt0"] = D["z_db0"] + 0.3   # 0.3 over the cradle brackets; still 0.7 of the board edge to stop rotation
@@ -544,6 +624,8 @@ def derive(P_):
     if D["base"] == "case":
         # v0.7 top board: wide enough for the spring-contact pads on both vertical boards, and as long as the boards (local y)
         D["tb_hw"] = D["vb_contact_x"] + D["tb_pad"] / 2 + D["cu_edge"] + D["tb_tol"]
+        if D.get("top_joint") == "sockets":   # v0.8: wide enough for the sockets' pads on the underside (pin row ± pad half-width)
+            D["tb_hw"] = D["vb_pin_x"] + D["tb_sock"]["pad_hw"] + D["cu_edge"]
         D["vb_y"] = (D["vb_y_panel"][0] - D["place_y"], D["vb_y_panel"][1] - D["place_y"])
         D["db_half_w"] = D["tb_hw"]
         D["board_x0"], D["board_x1"] = -D["tb_hw"], D["tb_hw"]
@@ -724,9 +806,12 @@ def derive(P_):
         cs_y = min(cs_y, D["y_rail"] - D["rail_margin"] - br_cs)
     D["cs_y"] = cs_y
     D["cs_xy"] = [(sx, sy) for sx in (D["cs_x"], -D["cs_x"]) for sy in (D["cs_y"], -D["cs_y"])]
+    if not D.get("press_springs", True):   # v0.8 [Ed 13:16/13:18]: no press springs, grubs or inserts
+        D["cs_xy"] = []
     # skirt walls (±y only in v0.5) end this far out, short of the grubs hanging under the stations
     D["skirt_x"] = min(D["board_x1"] + D["skirt_gap"] + D["car_skirt"], D["cs_x"] - D["grub_d_model"] / 2 - 0.5)
     D["access_xy"] = list(D["cs_xy"]) if D.get("grub_access") else []   # [Ed 13:23] grub access holes (PCB + joystick board)
+                                                                        # v0.8: no grubs, so cs_xy is empty and the holes go
     if D["base"] == "cradle":
         # two segments per wall: inside the grubs, and from past the grubs to short of the corner towers
         D["skirt_x_in"] = D["cs_x"] - D["grub_d_model"] / 2 - 0.5
@@ -752,6 +837,8 @@ def derive(P_):
     D["g_sw_dist"] = min(_rect_dist(x, y, sw["w"], sw["d"], D["sw_rot"]) for x, y in D["g_xy"])
     over_sw = D["g_sw_dist"] < G["head_d"] / 2 + mjf if D["back_pk"] else abs(gx_) < D["sw_ext"] + G["head_d"] / 2
     under = D["z_sw1"] if over_sw else D["z_db1"] + D["solder_h"]
+    if D.get("cup_in_bezel") and not over_sw:   # v0.8 [A]: a keep-out on the top board under each head (no parts, no tails)
+        under = D["z_db1"] + D["guide_keepout"]
     D["g_under"] = under
     zmin = under + D["press_travel"] + mjf + G["head_k"]
     best = None
@@ -760,11 +847,14 @@ def derive(P_):
         if z0 + L <= D["g_ins_top"] - 0.2 + 1e-9 and z0 <= D["z_c0"] - 1.0:
             best = (L, z0)
     D["g_len"], D["g_z0"] = best if best else (6.0, zmin)
+    D["g_boss0"] = D["g_z0"]                                # carrier guide boss underside (v0.7: the head sat on it, the up-stop)
+    if D.get("cup_in_bezel"):
+        _upstop(D, G)                                       # v0.8: the head hangs a float + cushion below the boss
     D["g_zmin"] = zmin
     D["g_tip"] = D["g_z0"] + D["g_len"]
     D["g_engage"] = D["g_tip"] - D["g_ins_bot"]
     D["g_sleeve_len"] = D["g_ins_bot"] - D["g_z0"]
-    D["g_guide_len"] = D["z_floor1"] - D["g_z0"]
+    D["g_guide_len"] = D["z_floor1"] - D["g_boss0"]
     D["g_head0"] = D["g_z0"] - G["head_k"]
     D["g_gap_press"] = D["g_ins_bot"] - D["z_floor1"]       # roof boss bottom to the carrier floor top (must exceed the press)
     # ---- v0.5 tipping: a sideways push on the glass top, reacted by the stem at its tilt reference height, against
@@ -801,6 +891,24 @@ def derive(P_):
     den = lev - m_ * t_ * a_top
     D["spr_f_need"] = (m_ * tilt_max * (a_top + d_ref) / den / n_) if den > 0 else float("inf")
     # ---- review fix: the press peg is an M2 grub in a roof insert at the centre, set to the press gap with a feeler
+    if "peg" in D:   # v0.8: no peg (the bezel's cup ceiling sits on the stem)
+        _peg(D)
+    D["preload_max"] = 0.0
+    if D.get("cup_in_bezel"):   # v0.8: any preload on the stem comes straight off the hold-downs' restoring moment (the stem pushes up
+        # at the axis, where the hold-downs pull down): sf(F) = sf(0)·(fhd − F)/fhd. The largest preload that keeps every row >= tip_margin
+        sf0 = min(D["sf_up"], D["sf_down"], D["sf_x"], D["sf_up_mid"])
+        D["preload_max"] = max(fhd * (1 - D["tip_margin"] / sf0), 0.0)
+        D["preload_lim"] = min(D["preload_max"], D["push_frac"] * D["push_lo"])
+        _upstop_options(D)
+    D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
+    D["skirt"] = D["base"] != "case"   # v0.7: no skirt; the lip ring round the carrier is the anti-rotation stop
+    if D["base"] == "case":
+        _case_cradle(D, K)
+    return D
+
+
+def _peg(D):
+    """v0.5–v0.7 press peg: an M2 grub in a roof insert at the centre, set to the press gap with a feeler."""
     pg = D["peg"]; pi = pg["ins"]
     D["p_ins_top"] = D["z_scr0"] - 0.6
     if D["back_pk"]:   # v0.6: under the deepest back pocket at the centre; the highest stock-grub height with >= 0.3 both ways
@@ -815,11 +923,72 @@ def derive(P_):
     D["p_top"] = D["z_peg"] + D["p_len"]
     D["p_engage"] = D["p_top"] - D["p_ins_bot"]
     D["p_adjust"] = (D["p_top"] - lo_, hi_ - D["p_top"])   # how far the grub can be set down / up and keep 2 mm of thread
-    D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
-    D["skirt"] = D["base"] != "case"   # v0.7: no skirt; the lip ring round the carrier is the anti-rotation stop
-    if D["base"] == "case":
-        _case_cradle(D, K)
-    return D
+
+
+def _rss(d):
+    return math.sqrt(sum(v * v for v in d.values()))
+
+
+def _upstop(D, G):
+    """v0.8 [Ed 13:09]: the bezel rests on the stem; the guide heads hang below the carrier guide bosses with a float. A cushion ring under
+    each boss quiets the stop. The gap is sized so the cushion just reaches the head at the RSS-tight end of the stack (no preload on the
+    stem anywhere in the RSS band), with an ISO 7984 stock length keeping >= 2 mm in the insert and the tip 0.2 under its top."""
+    U = D["upstop"]
+    D["us_rss"] = _rss(U["tol"]); D["us_wc"] = sum(U["tol"].values())
+    D["g_boss0"] = D["z_floor1"] - D["guide_boss_ratio"] * G["sleeve_od"]   # boss underside (its length / sleeve OD = ratio)
+    D["us_gap"] = U["t"] + D["us_rss"]                                     # head top to boss underside, nominal
+    zh = D["g_boss0"] - D["us_gap"]
+    lo_, hi_ = D["g_ins_bot"] + 2.0, D["g_ins_top"] - 0.2
+    Ls = [L for L in (4.0, 5.0, 6.0, 8.0, 10.0) if lo_ - 1e-9 <= zh + L <= hi_ + 1e-9]
+    D["g_len"] = Ls[0] if Ls else 8.0
+    D["g_z0"] = zh
+    D["us_float"] = (D["us_gap"] - U["t"], D["us_gap"] - U["t"] - D["us_rss"], D["us_gap"] - U["t"] + D["us_rss"])   # nominal, RSS lo..hi
+    D["us_wc_comp"] = U["t"] - (D["us_gap"] - D["us_wc"])                  # cushion squeeze at the worst-case tight end (rest)
+    D["us_room"] = D["g_boss0"] - (D["g_under"] + D["press_travel"] + D["tol_mjf"] + G["head_k"])   # most gap the head can hang
+
+
+def _foam_sigma(D, cfd25, eps):
+    """kPa at strain eps from the 25 % CFD (power law, [A] foam_n); 0 below zero strain."""
+    if eps <= 0:
+        return 0.0
+    return cfd25 * (eps / 0.25) ** D["foam_n"]
+
+
+def _ring_area(od, id_):
+    return math.pi / 4 * (od * od - id_ * id_)
+
+
+def _force(D, o, comp):
+    """N for TWO cushions squeezed by comp (mm) at rest. Foam: whole ring area (upper bound). O-ring: Lindley F/L = E d (1.25 e^1.5 + 50 e^6),
+    E from Shore A (Gent), on the mean circumference. Returns (lo, typ, hi) for foams, (v, v, v) for the O-ring."""
+    if comp <= 0:
+        return (0.0, 0.0, 0.0)
+    if o["kind"] == "oring":
+        s = o["shore"]; E = 0.0981 * (56 + 7.62336 * s) / (0.137505 * (254 - 2.54 * s))   # MPa
+        e = comp / o["t"]; fl = E * o["t"] * (1.25 * e ** 1.5 + 50 * e ** 6)
+        v = 2 * fl * math.pi * (o["id"] + o["t"])
+        return (v, v, v)
+    U = D["upstop"]
+    A = min(_ring_area(D["guide"]["head_d"], U["id"]) * U["area_k"], _ring_area(U["od"], U["id"])) * 1e-6
+    e = comp / o["t"]
+    return tuple(2 * _foam_sigma(D, c, e) * 1e3 * A for c in o["cfd25"])
+
+
+def _upstop_options(D):
+    """Comparison table (Danny 13:21): each cushion at its own gap (no preload over the RSS band), the float that leaves, whether the gap
+    fits the room under the boss, the squeeze and force on the stem at the worst-case tight end, and the stop force at its c_max."""
+    rows = []
+    for o in D["upstop_options"]:
+        gap = o["t"] + D["us_rss"]
+        wc = o["t"] - (gap - D["us_wc"])
+        f_wc = _force(D, o, wc)
+        f_stop = _force(D, o, o["c_max"] * o["t"])
+        rows.append(dict(name=o["name"], t=o["t"], gap=gap, fits=gap <= D["us_room"] + 1e-9, float_nom=D["us_rss"],
+                         wc_comp=wc / o["t"], f_wc=f_wc, f_stop=f_stop, src=o["src"],
+                         ok_wc=f_wc[2] <= D["preload_lim"] + 1e-9))
+    D["us_table"] = rows
+    me = next((r for r in rows if abs(r["t"] - D["upstop"]["t"]) < 1e-9 and "HT-870" in r["name"]), rows[-1])
+    D["us_choice"] = me
 
 
 def _case_cradle(D, K):
@@ -832,6 +1001,12 @@ def _case_cradle(D, K):
     # gasket: compressed to comp_nom by the spring contacts (the band comp_lo..comp_hi is the sponge's working range)
     D["gk_nom"] = gk["t"] * (1 - gk["comp_nom"])
     D["gk_range"] = (gk["t"] * (1 - gk["comp_hi"]), gk["t"] * (1 - gk["comp_lo"]))
+    if D.get("top_joint") == "sockets":   # v0.8 [Ed 14:03]: a form-in-place bead; the boards (posts) set its squeeze, not a force
+        B = D["bead"]
+        D["gk_nom"] = B["h0"] * (1 - B["c_nom"])                       # flange top to faceplate back, nominal
+        D["gk_range"] = (B["h0"] * (1 - B["c_hi"]), B["h0"] * (1 - B["c_lo"]))   # gaps that keep the bead inside its 15–45 % band
+        D["bead_band"] = (D["gk_range"][1] - D["gk_range"][0]) / 2                # ± of gap the bead takes (before its own tolerance)
+        D["bead_band_net"] = D["bead_band"] - B["disp"]                          # less its own ±0.1 dispensed height
     D["z_fl1"] = D["z_fp0"] - D["gk_nom"]            # flange top (gasket underside)
     D["z_fl0"] = D["z_fl1"] - cc["flange_t"]          # flange underside
     D["z_lip1"] = D["z_fp1"] - cc["lip_below"]        # lip top, inside the cutout
@@ -844,6 +1019,15 @@ def _case_cradle(D, K):
     D["z_nest0"] = D["z_db0"] - 0.2                                   # hangers reach just under the board's underside
     D["z_sh0"], D["z_sh1"] = D["z_db1"], D["z_db1"] + cc["shoulder"]  # shoulder over the board edge (glued, contacts push up)
     D["sh_in"] = cc["shoulder"]                                        # shoulder overlap onto the board
+    if D.get("top_joint") == "sockets":   # v0.8 [Ed 13:46]: SMT sockets under the top board, centred on the boards' span (local y)
+        S = D["tb_sock"]
+        yc = (D["vb_y"][0] + D["vb_y"][1]) / 2
+        span = (S["n"] - 1) * S["pitch"]
+        D["sock_pin_y"] = [yc - span / 2 + k * S["pitch"] for k in range(S["n"])]
+        D["sock_len"] = S["n"] * S["pitch"] + S["len_extra"]
+        D["sock_y"] = (yc - D["sock_len"] / 2, yc + D["sock_len"] / 2)
+        D["z_sock0"] = D["z_db0"] - S["h"]                                  # socket entry (bottom face)
+        D["eng_nom"] = (S["ins"][0] + S["ins"][1]) / 2                      # [A] pins designed to the middle of the insertion range
     # flange plan limits from the case: side-wall glow coat (x), knob collar (−y), case top wall / rail strip (+y)
     xin = float(K.get("case_x_in1", 22.75)); gg, gt = float(K.get("case_glow_gap", 0.3)), float(K.get("case_glow_t", 0.35))
     D["fl_x1"] = xin - gg - gt - cc["glow_air"]
@@ -867,6 +1051,27 @@ def _case_cradle(D, K):
     E, t, b = 18000.0, D["db_t"], D["board_y1"] - D["board_y0"]   # [A] FR4 flexural modulus 18 GPa
     L = 2 * D["vb_contact_x"]; I = b * t ** 3 / 12.0
     D["tb_flex"] = D["push_hi"] * L ** 3 / (48 * E * I)
+    if D.get("top_joint") == "sockets":   # v0.8: on the posts (board planes ±16), glued along both edges under the shoulders [A]
+        D["tb_span"] = 2 * D["vb_plane_x"]
+        D["tb_flex"] = D["push_hi"] * D["tb_span"] ** 3 / (48 * E * I)
+        _top_step(D, K)
+
+
+def _top_step(D, K):
+    """v0.8 [Ed 14:02] top-edge seal: a rebate in the faceplate back round the cutout (top edge + the long sides down to the flange's end,
+    fl_y1) and a dam on the lip ring inside it; the bead sits on the dam's front face under the rebate ceiling (same squeeze as the
+    flange bead: the posts push the cradle up into both). Local frame."""
+    st = D["step"]
+    D["st_y0"] = D["fl_y1"]                                   # the step runs from here up the long sides and across the top
+    D["reb_hw"], D["reb_hh"] = D["hole_hw"] + st["w"], D["hole_hh"] + st["w"]
+    D["z_reb1"] = D["z_fp0"] + st["d"]                        # rebate ceiling (faces the back)
+    D["z_dam1"] = D["z_reb1"] - D["gk_nom"]                   # dam front face: same bead gap as the flange
+    D["z_dam0"] = D["z_fp0"] + st["dam_air"]
+    D["dam_hw"], D["dam_hh"] = D["reb_hw"] - st["c"], D["reb_hh"] - st["c"]
+    D["dam_t"] = D["z_dam1"] - D["z_dam0"]
+    D["fp_over_reb"] = D["z_fp1"] - D["z_reb1"]              # faceplate left over the rebate
+    D["step_land"] = st["w"] - st["c"]                       # bead land on the dam under the ceiling (cutout wall to dam edge)
+    D["reb_corner_r"] = D.get("corner_r", 0.0) + st["w"]
 
 
 def board_xy(D, x, y):
