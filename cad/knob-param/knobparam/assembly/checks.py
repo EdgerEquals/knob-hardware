@@ -26,7 +26,9 @@ def cross(D, parts):
     Dc = model.view(D, "control_dial")
     _arm0 = cd.arm(Dc, 0.0)                       # build once; arm(D, t) is that solid rotated about Z
     ARM = {t: Rot(0, 0, t) * _arm0 for t in TR}
-    if on:
+    if on and D.get("cart"):   # v0.24 [Ed 3 Nov 12:41-12:58] dial screen as a bezel cartridge
+        _cart_cross(D, parts, row, TR, Dc)
+    elif on:
         stat = {n: parts[n] for n in parts if n.startswith("adapter part") and not n.endswith(D["b2b_at"])}
         stat["rod + nut"] = cyl(D["nut_s"] / math.sqrt(3), D["z_board_top"], D["nut_m"])
         if "adapter cup (fixed)" in parts: stat["adapter cup (fixed)"] = parts["adapter cup (fixed)"]
@@ -191,8 +193,9 @@ def cross(D, parts):
         ri, ro = D["sleeve_id"] / 2 + D["sleeve_top_cin"], D["knob_od"] / 2 - D["sleeve_top_cout"]
     rim = cyl(ro, zi, 0.01) - cyl(ri, zi - 0.05, 0.11)   # v0.19b: thin wafer, so the 0.3 running gap to the dial lip reads as 0.3
     rb = rim.bounding_box()
-    def _hits(bb):
-        return not (bb.max.X < rb.min.X or bb.min.X > rb.max.X or bb.max.Y < rb.min.Y or bb.min.Y > rb.max.Y or bb.max.Z < rb.min.Z or bb.min.Z > rb.max.Z)
+    def _hits(bb, m=1.0):   # v0.24: 1 mm margin, so a part that starts just above the rim (the dial bezel, 0.3 up) is measured too
+        return not (bb.max.X < rb.min.X - m or bb.min.X > rb.max.X + m or bb.max.Y < rb.min.Y - m or bb.min.Y > rb.max.Y + m
+                    or bb.max.Z < rb.min.Z - m or bb.min.Z > rb.max.Z + m)
     # v0.19b [Ed 2 Nov]: the upper cap is bonded on the glass (shoulder on the face, or cone on the inner chamfer), so it is left out.
     near = [(n, s) for n, s in parts.items() if not n.startswith("knob glass") and not (sh and n.startswith("knob upper-cap"))
             and _hits(s.bounding_box())]
@@ -248,6 +251,36 @@ def cross(D, parts):
         if omin < 1e9:
             row("clear OLED vs the knob base and nearby parts", omin, 0.3, f"nearest: {owho}")
     return r
+
+def _cart_cross(D, parts, row, TR, Dc):
+    """v0.24 [Ed 3 Nov 12:41-12:58]: the strap loop swept over ±travel, the bezel over the main knob, the faceplate left where it was."""
+    from .. import control_dial as cd
+    T = D["tgt"]
+    stat = {"rod + nut": cyl(D["nut_s"] / math.sqrt(3), D["z_board_top"], D["nut_m"])}   # fixed (the strap's foot sits on the board)
+    rot = {n: parts[n] for n in parts if n.startswith("dial board") and not n.startswith("dial board (")}   # turn with the dial
+    rot["control dial"] = parts["control dial"]
+    smin, swho = 1e9, ""
+    for t in TR:
+        sb = cd.strap_loop(Dc, t)
+        for n, q in stat.items():
+            d = sb.distance_to(q)
+            if d < smin: smin, swho = d, f"{n} at {t:+.1f}°"
+        for n, q in rot.items():
+            d = sb.distance_to(Rot(0, 0, t) * q)
+            if d < smin: smin, swho = d, f"{n} at {t:+.1f}°"
+    row("strap loop vs nut / rod / dial-board parts / dial (±travel)", smin, T["strap_vs_parts"],
+        f"nearest: {swho}; ribbon z {D['strap_z0']:.2f}-{D['strap_z1']:.2f} from (0, -4.6) on the rod-link board to (0, 4.0) under the dial board (panel frame)")
+    bz = parts.get("dial bezel (printed cartridge ring)")
+    kn = {n: q for n, q in parts.items() if n.startswith(("knob glass", "knob upper-cap", "knob drip", "knob lower-cap"))}
+    if bz is not None and kn:
+        d, who = min((bz.distance_to(q), n) for n, q in kn.items())
+        row("bezel bottom vs the main knob (running gap)", d, D["knob_run"] - 0.01,
+            f"nearest: {who}; bezel underside z {D['z_lip0']:.2f} = the v0.23 lip underside, knob top {D['z_knob_top']:.2f}: the main knob does not move")
+    v0 = D["faceplate_z_v023"]; fz, fz1 = D["faceplate_z"], D.get("z_fp1", D["faceplate_z"])
+    row("faceplate front unchanged by the taller knob (|z - v0.23|)", max(abs(fz - v0), abs(fz1 - v0)), 0.001,
+        f"interface {fz:.3f}, case {fz1:.3f}, v0.23 {v0:g}: lens top {D['z_top']:.2f} (+{D['z_top'] - (v0 + 18.0):.2f}), knob_proud "
+        f"{D['knob_proud']:g}; rod-link board {D['z_floor']:.2f}-{D['z_board_top']:.2f}, main PCB front 0", higher_ok=False)
+
 
 def _arc_cross(D, parts, row, TR, ARM):
     """v0.21 [Ed 2 Nov] swept checks for the detent on the arc and the three ball tracks. Balls roll θ/2 (both races move θ

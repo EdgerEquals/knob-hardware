@@ -8,6 +8,14 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
+    # [Ed 3 Nov 12:41-12:58] v0.24 dial screen as a bezel cartridge (Waveshare Z132A2441), dial board, rod-link board, strap loop
+    (r"^dial bezel", "print", "PA-12, dyed black [A] (bezel material open: MJF to match the dial, or SLA [C])", "MJF"),
+    (r"^dial screen Z132A2441", "buy", "Waveshare Z132A2441-V0 1.32in AMOLED (lens, panel, flex, 24-pin plug) [C: bare panel source]", "buy"),
+    (r"^dial cartridge plug pad", "print", "PA-12", "MJF"),
+    (r"^dial board \(", "board", "dial board (FR-4 0.8, PCBA)", "PCBWay PCBA"),
+    (r"^dial board ", "board", "PCBA parts (ESP32-S3-PICO-1-N8R8, LDO, PHY, 24-pin 0.4 receptacle, 405 nm diode, LEDs)", "PCBWay PCBA"),
+    (r"^dial strap loop", "buy", "flex, 2-layer PI, 4 lines (2 + 2 spares)", "buy"),
+    (r"^rod-link board", "board", "rod-link board (FR-4)", "PCBWay PCBA"),
     (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
     # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick, and the joystick's case cradle / gasket / top board
     (r"^vertical board [LR] \(", "board", "vertical board (FR-4, parts on both faces)", "PCBWay PCBA"),

@@ -104,6 +104,13 @@ def _z_levels(D, JD, step):
              ((JD["z_scr0"] + JD["scr_top"]) / 2, "joystick glass"), (JD["z_knob_top"] - 0.5, "knob, top of the shell")]
     if "h_big_top" in D:
         feats.append(((D["h_big_top"] + D["h_big_bot"]) / 2, "encoder disc"))
+    if D.get("cart"):   # v0.24 [Ed 3 Nov 12:41] dial screen as a bezel cartridge
+        feats += [(D["db_z0"] - 0.5, "dial board underside: ESP32, diode, LEDs in the pocket"),
+                  ((D["db_z0"] + D["db_z1"]) / 2, "dial board on the ledge; magnets and pins in the land"),
+                  ((D["bz_boss_z"][0] + D["pad_z"][0]) / 2 + 0.2, "cartridge: bosses, plug pad, tail's lower leg"),
+                  ((D["patch_z0"] + D["lcm_z0"]) / 2, "panel's flex patches, pad arm"),
+                  ((D["bend_z"][0] + D["bend_z"][1]) / 2, "panel and its bends under the glass seat"),
+                  ((D["lens_step_z"] + D["z_top"]) / 2, "lens step in the bezel lap")]
     grid, z = [], math.floor(D["z_cover_out"] + 0.5)
     while z <= D["z_top"] - 0.5:
         grid.append(z); z += step

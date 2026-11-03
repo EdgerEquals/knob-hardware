@@ -10,8 +10,11 @@ P = dict(
     pcb_below=65.1,   # [K] dial axis to the bottom board edge (frame -y)
     h1_hole=1.8,   # [K] H1 NPTH (rod)
     # ---- screen holder + adapter ----
-    adapter_d=15.5,   # [K]/[A] (cord room over the nut [Ed])
-    adapter_fps={"J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0), "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", -2.55, -5.2, 90)},   # [K] KiCad screen-adapter v0.4 (U3/R1/R2 removed)
+    adapter_d=12.0,   # [Ed 3 Nov 12:41] v0.24: the fixed board on the tube end is now the rod-link board, Ø12 x 1.0 at 49.6-50.6 (nut on
+                      # top; still the dial up-stop). v0.23: Ø15.5 screen adapter
+    adapter_fps={},   # [Ed 3 Nov 12:41] v0.24: J1 FPC14, U1 CH32V003 and C2 dropped (the graphics MCU and the data PHY are on the dial
+                      # board). v0.23 [K] KiCad screen-adapter v0.4: {"J1": ("FPC_14P_0.5mm_Top", 0.0, 3.7, 0),
+                      # "U1": ("QFN-20_3x3", 0.0, -3.8, 0), "C2": ("C_0402", -2.55, -5.2, 90)}
     adapter_env={"FPC_14P_0.5mm_Top": (10.6, 3.6, 1.0), "QFN-20_3x3": (3.0, 3.0, 0.75), "SOT-23-6_TMAG5273": (1.6, 2.9, 1.45), "C_0402": (1.0, 0.5, 0.5), "R_0402": (1.0, 0.5, 0.35)},   # [A] envelopes
     # ---- v0.19b [Ed 2 Nov] 716 driver moved off the emitter radius (U20 DRV8837 + C20–C22, B.Cu), mechanism frame ----
     drv_xy=(-8.5, 12.0),   # [A] U20 centre: 3.6 mm from the 716 lead pads, 0.8 clear of the pads, pegs, Hall decouplers and compound gear plan

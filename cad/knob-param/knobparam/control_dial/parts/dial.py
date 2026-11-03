@@ -1,13 +1,48 @@
 """Control dial (v0.15: ball seating groove in the cone, lip bonded round the panel, Hall bar down through the cradle): tube on the thrust balls, dial half of the 45 deg cone race, hub/web/lip, Hall arm (printed in one), screen cut + FPC slot."""
 import math
 from build123d import *
-from ...common.util import A, rev, cyl
+from ...common.util import A, rev, cyl, tube
 from . import thrust, hall_arm as hall
+from .. import params as _p
 SRC_DEPS = [thrust, hall]
+
+def wedge(a0, a1, z0, h, r=60.0):
+    """Prism over the plan angles a0..a1 (degrees, a1 > a0, span < 180), from the axis out to r."""
+    n = max(2, int((a1 - a0) / 10) + 1)
+    pts = [(0.0, 0.0)] + [(r * math.cos(math.radians(a0 + (a1 - a0) * i / n)), r * math.sin(math.radians(a0 + (a1 - a0) * i / n))) for i in range(n + 1)]
+    return Pos(0, 0, z0) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), h)
+
+def ring_sector(r0, r1, a0, a1, z0, h):
+    """Exact annular sector r0..r1 over a0..a1 degrees, z0..z0+h."""
+    return tube(r0, r1, z0, h) & wedge(a0, a1, z0 - 0.01, h + 0.02, r1 + 5.0)
+
+def to_mech(D, s):
+    """v0.24: cartridge geometry is drawn in the panel frame; the control_dial parts live in the mechanism frame."""
+    return Rot(0, 0, -D["mech_rot"]) * s
+
+def cart_profile(D):
+    """v0.24 [Ed 12:58]: underside unchanged (Danny's 30° cone) out to the outer wall r 19.2; top = well floor, then the pocket on a
+    2.0 normal wall to r 16.3, the ledge (board underside) to r 17.3, the land (board top) out to the wall."""
+    ri, rt, ct = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2, D["ct"]
+    under = _p.cart_under(D)
+    top = [(ct["outer_r"], D["db_z1"]), (D["ct_land_r"], D["db_z1"]), (D["ct_land_r"], D["db_z0"]), (ct["pocket_r"], D["db_z0"])]
+    return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"])] + under + top + list(reversed(D["ct_top"]))
+
+def cart_cuts(D):
+    """Land cut to the ledge round the board's lobe, magnet pockets and pin holes in the land (panel frame)."""
+    ct, db, bz = D["ct"], D["db"], D["bz"]
+    a0, a1, rl = db["lobe"]; c = ct["lobe_clear"]; da = math.degrees(c / rl)
+    cut = ring_sector(D["ct_land_r"] - 0.01, rl + c, a0 - da, a1 + da, D["db_z0"], D["db_z1"] - D["db_z0"] + 0.5)
+    for k, a, d, (x, y) in D["cart_holes"]:
+        h = bz["mag"][1] if k == "magnet" else bz["pin"][1]
+        cut += cyl(d / 2, D["db_z1"] - h, h + 0.5, x, y)
+    return cut
 
 def profile(D):
     ri, rt, rb, rh = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2, D["dial_bore_d"] / 2, D["dial_hub_od"] / 2
     rc, rw, rl, g, f = D["r_cup"], D["r_web"], D["knob_od"] / 2, D["gusset"], D["lip_fillet"]
+    if D.get("cart"):
+        return cart_profile(D)
     if D["dial_shape"] == "cone" and D["kb_race"] == "chamfer":
         # v0.21 [Ed 2 Nov]: no steps. Underside: hub bottom, the 45° race, then one straight cone up to the lip over the glass.
         # Top: the well round the adapter board, one straight cone parallel to the underside, then the flat carrier seat.
@@ -81,6 +116,8 @@ def build(D):
     if D["kb_race"] != "chamfer": d += race_add(D)
     if D["kb_groove_h"] > 0: d -= seat_groove(D)
     d += hall.arm(D)
+    if D.get("cart"):   # v0.24 [Ed 12:58]: no lip, screen cut, bend pocket or carrier magnet / pin: the bezel cartridge sits on the land
+        return {"control dial": d - to_mech(D, cart_cuts(D))}
     d -= cyl(D["lip_id"] / 2, D["z_screen_cut"], 10, *panel_ctr(D))
     if D["screen_on_dial"]:   # v0.16 carrier magnet pocket + locating-pin hole in the dial shoulder
         md, mh = D["carr_mag"]; zh = D["z_holder0"]

@@ -7,7 +7,8 @@ from ..common import model
 ORDER = [("optics", "scanner"), ("optics", "ring_lights"), ("electronics", "pcb"), ("base_drive", "motor"), ("base_drive", "brass"), ("base_drive", "cradle"),
          ("control_dial", "thrust"), ("main_knob", "knob"), ("control_dial", "dial"), ("control_dial", "hall_arm"),
          ("electronics", "hall_sensors"), ("under_pcb", "encoder"), ("base_drive", "idlers"), ("base_drive", "feel"), ("base_drive", "mech"),
-         ("control_dial", "screen"), ("control_dial", "holder"), ("electronics", "adapter"), ("electronics", "vboards"),
+         ("control_dial", "screen"), ("control_dial", "holder"), ("control_dial", "cartridge"),   # cartridge: v0.24 dial screen
+         ("electronics", "adapter"), ("electronics", "vboards"),
          ("case", "shell")]
 PATHS = {}
 NATIVE = {}   # native brep path per part (mechanism parts in the mechanism frame, the rest in the panel frame)

@@ -14,5 +14,6 @@ P = dict(
     vb_travel_margin=0.10,   # [A] the contacts keep this much travel at each end of the RSS band
     vb_hold_margin=1.3,      # [A] net contact preload over the worst-case click (the joystick's tipping-safety margin)
     knob_hole_clear=0.4,   # [A] faceplate hole radius over the knob radius
+    faceplate_z_v023=38.8,   # [Ed 3 Nov 12:41] faceplate front in v0.23: only the knob grows (+4.4), so it must stay here (check row)
     rho=dict(glass=2.5e-3, pol=1.2e-3, tape=1.0e-3, petg=1.27e-3, ndfeb=7.5e-3, steel=7.85e-3, fpc_g=0.35),   # [A] g/mm3; FPC+B2B mass g
 )

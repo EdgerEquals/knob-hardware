@@ -10,6 +10,8 @@ MATERIALS = {
     "clear":   ("UTR-8100 clear resin (SLA)", "#d4ecf2", True),
     "glass":   ("borosilicate glass, glass spacer balls", "#eaf6fa", True),
     "oled":    ("clear OLED (transparent)", "#b9d4de", True),
+    "lens":    ("dial screen cover glass (lens)", "#a9d6ea", True),        # v0.24 Z132A2441
+    "bezel":   ("PA-12 MJF, dyed black (dial bezel) [A]", "#3a3e42", False),   # v0.24 bezel cartridge (material open [C])
     "pa12":    ("PA-12, MJF (natural grey)", "#6e7377", False),
     "petg":    ("PETG, opaque (seal ring)", "#2b3035", False),
     "asacf":   ("ASA-CF, black (back cover, screen pad)", "#1f2124", False),
@@ -37,6 +39,14 @@ def key(name):
     n = name[len("joystick: "):] if name.startswith("joystick: ") else name
     low = n.lower()
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
+    if low.startswith("dial bezel"): return "bezel"                                    # v0.24 bezel cartridge
+    if low.startswith("dial screen z132a2441 lens"): return "lens"
+    if low.startswith("dial screen z132a2441 flex"): return "flex"
+    if low.startswith("dial screen z132a2441 plug"): return "ic"
+    if low.startswith("dial board (") or low.startswith("rod-link board"): return "pcb"
+    if low.startswith("dial board led"): return "led"
+    if low.startswith("dial board 405"): return "steel"                                # TO-38 class metal can
+    if low.startswith(("dial board part", "dial board receptacle")): return "ic"
     if "o-ring" in low: return "silicone"
     if "foam pad" in low: return "foam"                       # v0.6 joystick screen pads
     if "gasket" in low: return "gasket"                       # v0.23 joystick cradle gasket

@@ -18,6 +18,41 @@ def vol_I(shape):
     g = GProp_GProps(); BRepGProp.VolumeProperties_s(shape.wrapped, g)
     return g.Mass(), g.MomentOfInertia(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)))   # mm3, mm5 (x rho -> g mm2)
 
+def _cart_mass(D, parts, rho, p, J):
+    """v0.24: mass and inertia of everything that turns with the dial (densities [A]: lens/panel glass, PA-12 printed parts at
+    the PETG figure, FR-4 1.85, parts and flex 1.4 g/cm3, NdFeB, steel)."""
+    def dens(n):
+        if "lens" in n or "panel (AMOLED)" in n: return rho["glass"]
+        if "magnet" in n: return rho["ndfeb"]
+        if "locating pin" in n or "405 nm" in n: return rho["steel"]
+        if n.startswith("dial board (") : return 1.85e-3
+        if n.startswith("dial board") or "flex" in n or "plug end" in n or "strap" in n: return 1.4e-3
+        return rho["petg"]
+    moving = [n for n in parts if n.startswith(("control dial", "dial ", "cartridge ", "hall magnet"))]
+    groups = {"dial body + Hall magnets": [n for n in moving if n.startswith(("control dial", "hall magnet"))],
+              "bezel + plug pad (printed)": [n for n in moving if n.startswith(("dial bezel", "dial cartridge plug pad"))],
+              "lens + panel + flex + plug": [n for n in moving if n.startswith("dial screen")],
+              "dial board + parts": [n for n in moving if n.startswith("dial board")],
+              "magnets, pins, strap": [n for n in moving if n.startswith(("cartridge ", "dial strap"))]}
+    p("2. DIAL SCREEN AS A BEZEL CARTRIDGE (v0.24, Waveshare Z132A2441) [Ed 3 Nov 12:41]")
+    p(f"   lens top {D['z_top']:.2f} (+4.4), bezel {D['z_lip0']:.2f}-{D['z_top']:.2f} OD {D['knob_od']:g} bore Ø{D['bz']['bore_d']:g}; dial board {D['db_z0']:.2f}-{D['db_z1']:.2f}; "
+      f"rod-link board {D['z_floor']:.2f}-{D['z_board_top']:.2f}")
+    p("   MASS / INERTIA about the dial axis ([A] densities)")
+    tm = tI = 0.0; m0 = I0 = 0.0
+    for g, ns in groups.items():
+        m = sum(vol_I(parts[n])[0] * dens(n) for n in ns); I = sum(vol_I(parts[n])[1] * dens(n) for n in ns)
+        tm += m; tI += I
+        if g.startswith("dial body"): m0, I0 = m, I
+        p(f"     {g:34s} {m:7.3f} g   {I:9.1f} g·mm²")
+    p(f"     dial unit (moving)                 {tm:7.3f} g   {tI:9.1f} g·mm²   (dial + Hall magnets only {m0:.3f} g, {I0:.1f} g·mm²; x{tI / max(I0, 1e-9):.2f})")
+    fn = H.natural_freq(tI, D["dial_spring"])
+    p(f"   spring-centred dial k = {D['dial_spring']:g} N·mm/deg [A] -> natural frequency {fn:.0f} Hz with the cartridge")
+    p(f"   strap loop: {D['ls']['lines']} lines on a ribbon standing on edge, {D['ls_L']:.1f} between its ends; strain {D['strap_strain_pct']:.3f}% at ±{D['travel_deg']:.2f}°")
+    p()
+    J["J_new"], J["J_old"], J["m_new"], J["m_old"], J["fn"] = tI, I0, tm, m0, fn
+    return tI, fn
+
+
 def main(sets):
     D = derive(apply_overrides(P, sets)); V = D["version"]; out = os.path.join(LIB, "assemblies", f"knob-stack-{V}"); os.makedirs(out, exist_ok=True)
     parts, _, _, _ = build_all(D, full_pcb=False); rho = D["rho"]; L = []; J = {}
@@ -46,52 +81,55 @@ def main(sets):
         p("   ASSEMBLY: hold the dial lip-down, fill the groove with grease, drop the balls in one by one (each self-centres in the seat),")
         p("   lower the knob on axially (its cone closes over the ring), flip the pair together, fit onto the stack."); p()
     # ---- screen on dial ----
-    S = D["S"]; th_l = S.get("stack", (0, 0, 0, 0))
-    vols = {}
-    for n, s in parts.items(): vols[n] = vol_I(s)
-    pn = [n for n in parts if n.endswith(" panel")][0]; fp = [n for n in parts if n.endswith("FPC + B2B")][0]
-    # panel mass by layers (glass = encap + LTPS incl. ledge; POL; tape) [A densities]
-    tp, te, tl, tt = th_l
-    v_pol = math.pi * (S["d_pol"] / 2) ** 2 * tp; v_tape = math.pi * (S["d_tape"] / 2) ** 2 * tt
-    v_tot, I_tot = vols[pn]; v_glass = v_tot - v_pol - v_tape
-    m_panel = v_glass * rho["glass"] + v_pol * rho["pol"] + v_tape * rho["tape"]
-    I_panel = I_tot * (m_panel / v_tot)
-    m_fpc = rho["fpc_g"]; r_fpc = math.hypot(*D["b2b_xy"]) + 4.0; I_fpc = m_fpc * r_fpc ** 2 * 0.5
-    vc, Ic = vols["screen carrier (on dial)"]; m_car, I_car = vc * rho["petg"], Ic * rho["petg"]
-    vd, Id = vols["control dial"]; m_dial, I_dial = vd * rho["petg"], Id * rho["petg"]
-    mags = [n for n in parts if n.startswith("hall magnet") or n.startswith("dial magnet")]
-    m_mag = sum(vols[n][0] for n in mags) * rho["ndfeb"]; I_mag = sum(vols[n][1] for n in mags) * rho["ndfeb"]
-    J_old = I_dial + I_mag; J_new = J_old + I_panel + I_fpc + I_car
-    m_old = m_dial + m_mag; m_new = m_old + m_panel + m_fpc + m_car
-    p("2. SCREEN TURNS WITH THE DIAL")
-    p(f"   panel {D['screen']} bonded into the lip (bond gap {D['lip_bond_gap']:g}, no running gap); lip ID Ø{D['lip_id']:.2f} centred on the panel,")
-    p(f"   panel offset {D['scr_off']:.3f} from the axis away from the FPC exit (exact solve over the COF bend arc |y|<={D['cof_half']:.1f}, step {D['offset_step']:g})")
-    p(f"   lip wall: far side {D['lip_wall']:.3f} (target {D['tgt']['lip_wall']:g}) / near side {D['lip_wall_near']:.3f}  (v0.14: 0.195)")
-    sol = math.sqrt((math.sqrt(D['R'] ** 2 - D['cof_half'] ** 2) + D['tgt']['lip_wall'] - (D['R'] - D['scr_r'] - D['lip_bond_gap']) + 0) ** 2) if False else None
-    # bend that makes the lip pass: offset <= R - scr_r - bond - lip_tgt
-    o_max = D["R"] - D["scr_r"] - D["lip_bond_gap"] - D["tgt"]["lip_wall"]
-    b_max = math.sqrt((o_max + math.sqrt(D["R"] ** 2 - D["cof_half"] ** 2)) ** 2 + D["cof_half"] ** 2) - S["r_edge"]
-    p(f"   -> lip passes 0.4 only if the offset <= {o_max:.3f}, i.e. COF bend <= {b_max:.3f} radial past the ledge (table [A] {S['bend']:.2f});")
-    p(f"      try: --set cof_bend={math.floor(b_max * 100) / 100:.2f}  (needs the vendor's minimum COF bend radius)")
-    p(f"   screen carrier (PETG [A]) bonded on the dial shoulder z {D['z_holder0']:.2f}, Ø{D['lip_id']:.2f} plate {D['z_back'] - D['z_holder0']:.3f} thick, FPC window;")
-    p(f"   fixed adapter cup (socket on the tube, adapter well) now stops at z {D['z_cup_top']:.2f}, {D['carrier_run']:g} under the carrier; adapter still clamped by the rod nut.")
-    p(f"   MASS / INERTIA about the dial axis ([A] densities g/mm3: glass {rho['glass']}, POL {rho['pol']}, tape {rho['tape']}, PETG {rho['petg']}, NdFeB {rho['ndfeb']})")
-    rows = [("control dial (PETG)", m_dial, I_dial), ("magnets (hub Ø3×1 + Hall row)", m_mag, I_mag), ("panel (glass+POL+tape)", m_panel, I_panel),
-            ("FPC fold + B2B (lumped [A])", m_fpc, I_fpc), ("screen carrier (PETG)", m_car, I_car)]
-    for n, m, I in rows: p(f"     {n:34s} {m:7.3f} g   {I:9.1f} g·mm²")
-    p(f"     dial unit v0.15 (moving)           {m_new:7.3f} g   {J_new:9.1f} g·mm²   (dial + magnets only: {m_old:.3f} g, {J_old:.1f} g·mm²; x{J_new / J_old:.2f})")
-    fn_old = H.natural_freq(J_old, D["dial_spring"]); fn = H.natural_freq(J_new, D["dial_spring"])
-    p(f"   spring-centred dial k = {D['dial_spring']:g} N·mm/deg [A] -> natural frequency {fn:.0f} Hz with the screen (was {fn_old:.0f} Hz without)")
-    J["J_new"], J["J_old"], J["m_new"], J["m_old"], J["fn"] = J_new, J_old, m_new, m_old, fn
-    p("   FPC SERVICE LOOP: diametral strap through the axis")
-    p(f"     B2B moved to {tuple(round(v, 2) for v in D['b2b_xy'])} (rotating, under the fold) opposite J1 {D['j1_xy']} (stationary, adapter board)")
-    p(f"     strap L {D['strap_L']:.1f} flat in the vertical plane, z {D['strap_z0']:.2f}-{D['strap_z1']:.2f} ({D['strap_z1'] - D['strap_z0']:.2f} wide), t {D['strap_t']:g} [A] 2-layer PI,")
-    p(f"     clear over the rod/nut (top {D['z_rod_top']:.2f}) and U3 TMAG5273; {D['strap_lines']} lines [A] (J1 14P)")
-    p(f"     at ±{D['travel_deg']:g}°: B2B end moves {D['strap_end_move']:.2f} sideways and turns {D['travel_deg']:g}° -> clamped-clamped beam with both ends on a diameter")
-    p(f"     bends to a uniform arc R {D['strap_R']:.0f} mm: strain {D['strap_strain_pct']:.3f}% (limit {D['strap_strain_max']:g}% dynamic flex) - no twist, no tension")
-    EI = 3.0e3 * (D["strap_z1"] - D["strap_z0"]) * D["strap_t"] ** 3 / 12
-    p(f"     restoring torque ≈ EI·κ = {EI * D['strap_kappa']:.3f} N·mm at ±{D['travel_deg']:g}° (PI E 3 GPa [A], EI {EI:.2f} N·mm²) = {EI * D['strap_kappa'] / (D['dial_spring'] * D['travel_deg']) * 100:.1f}% of the centring spring")
-    p()
+    if D.get("cart"):   # v0.24 [Ed 3 Nov 12:41]: dial screen as a bezel cartridge
+        J_new, fn = _cart_mass(D, parts, rho, p, J)
+    else:
+        S = D["S"]; th_l = S.get("stack", (0, 0, 0, 0))
+        vols = {}
+        for n, s in parts.items(): vols[n] = vol_I(s)
+        pn = [n for n in parts if n.endswith(" panel")][0]; fp = [n for n in parts if n.endswith("FPC + B2B")][0]
+        # panel mass by layers (glass = encap + LTPS incl. ledge; POL; tape) [A densities]
+        tp, te, tl, tt = th_l
+        v_pol = math.pi * (S["d_pol"] / 2) ** 2 * tp; v_tape = math.pi * (S["d_tape"] / 2) ** 2 * tt
+        v_tot, I_tot = vols[pn]; v_glass = v_tot - v_pol - v_tape
+        m_panel = v_glass * rho["glass"] + v_pol * rho["pol"] + v_tape * rho["tape"]
+        I_panel = I_tot * (m_panel / v_tot)
+        m_fpc = rho["fpc_g"]; r_fpc = math.hypot(*D["b2b_xy"]) + 4.0; I_fpc = m_fpc * r_fpc ** 2 * 0.5
+        vc, Ic = vols["screen carrier (on dial)"]; m_car, I_car = vc * rho["petg"], Ic * rho["petg"]
+        vd, Id = vols["control dial"]; m_dial, I_dial = vd * rho["petg"], Id * rho["petg"]
+        mags = [n for n in parts if n.startswith("hall magnet") or n.startswith("dial magnet")]
+        m_mag = sum(vols[n][0] for n in mags) * rho["ndfeb"]; I_mag = sum(vols[n][1] for n in mags) * rho["ndfeb"]
+        J_old = I_dial + I_mag; J_new = J_old + I_panel + I_fpc + I_car
+        m_old = m_dial + m_mag; m_new = m_old + m_panel + m_fpc + m_car
+        p("2. SCREEN TURNS WITH THE DIAL")
+        p(f"   panel {D['screen']} bonded into the lip (bond gap {D['lip_bond_gap']:g}, no running gap); lip ID Ø{D['lip_id']:.2f} centred on the panel,")
+        p(f"   panel offset {D['scr_off']:.3f} from the axis away from the FPC exit (exact solve over the COF bend arc |y|<={D['cof_half']:.1f}, step {D['offset_step']:g})")
+        p(f"   lip wall: far side {D['lip_wall']:.3f} (target {D['tgt']['lip_wall']:g}) / near side {D['lip_wall_near']:.3f}  (v0.14: 0.195)")
+        sol = math.sqrt((math.sqrt(D['R'] ** 2 - D['cof_half'] ** 2) + D['tgt']['lip_wall'] - (D['R'] - D['scr_r'] - D['lip_bond_gap']) + 0) ** 2) if False else None
+        # bend that makes the lip pass: offset <= R - scr_r - bond - lip_tgt
+        o_max = D["R"] - D["scr_r"] - D["lip_bond_gap"] - D["tgt"]["lip_wall"]
+        b_max = math.sqrt((o_max + math.sqrt(D["R"] ** 2 - D["cof_half"] ** 2)) ** 2 + D["cof_half"] ** 2) - S["r_edge"]
+        p(f"   -> lip passes 0.4 only if the offset <= {o_max:.3f}, i.e. COF bend <= {b_max:.3f} radial past the ledge (table [A] {S['bend']:.2f});")
+        p(f"      try: --set cof_bend={math.floor(b_max * 100) / 100:.2f}  (needs the vendor's minimum COF bend radius)")
+        p(f"   screen carrier (PETG [A]) bonded on the dial shoulder z {D['z_holder0']:.2f}, Ø{D['lip_id']:.2f} plate {D['z_back'] - D['z_holder0']:.3f} thick, FPC window;")
+        p(f"   fixed adapter cup (socket on the tube, adapter well) now stops at z {D['z_cup_top']:.2f}, {D['carrier_run']:g} under the carrier; adapter still clamped by the rod nut.")
+        p(f"   MASS / INERTIA about the dial axis ([A] densities g/mm3: glass {rho['glass']}, POL {rho['pol']}, tape {rho['tape']}, PETG {rho['petg']}, NdFeB {rho['ndfeb']})")
+        rows = [("control dial (PETG)", m_dial, I_dial), ("magnets (hub Ø3×1 + Hall row)", m_mag, I_mag), ("panel (glass+POL+tape)", m_panel, I_panel),
+                ("FPC fold + B2B (lumped [A])", m_fpc, I_fpc), ("screen carrier (PETG)", m_car, I_car)]
+        for n, m, I in rows: p(f"     {n:34s} {m:7.3f} g   {I:9.1f} g·mm²")
+        p(f"     dial unit v0.15 (moving)           {m_new:7.3f} g   {J_new:9.1f} g·mm²   (dial + magnets only: {m_old:.3f} g, {J_old:.1f} g·mm²; x{J_new / J_old:.2f})")
+        fn_old = H.natural_freq(J_old, D["dial_spring"]); fn = H.natural_freq(J_new, D["dial_spring"])
+        p(f"   spring-centred dial k = {D['dial_spring']:g} N·mm/deg [A] -> natural frequency {fn:.0f} Hz with the screen (was {fn_old:.0f} Hz without)")
+        J["J_new"], J["J_old"], J["m_new"], J["m_old"], J["fn"] = J_new, J_old, m_new, m_old, fn
+        p("   FPC SERVICE LOOP: diametral strap through the axis")
+        p(f"     B2B moved to {tuple(round(v, 2) for v in D['b2b_xy'])} (rotating, under the fold) opposite J1 {D['j1_xy']} (stationary, adapter board)")
+        p(f"     strap L {D['strap_L']:.1f} flat in the vertical plane, z {D['strap_z0']:.2f}-{D['strap_z1']:.2f} ({D['strap_z1'] - D['strap_z0']:.2f} wide), t {D['strap_t']:g} [A] 2-layer PI,")
+        p(f"     clear over the rod/nut (top {D['z_rod_top']:.2f}) and U3 TMAG5273; {D['strap_lines']} lines [A] (J1 14P)")
+        p(f"     at ±{D['travel_deg']:g}°: B2B end moves {D['strap_end_move']:.2f} sideways and turns {D['travel_deg']:g}° -> clamped-clamped beam with both ends on a diameter")
+        p(f"     bends to a uniform arc R {D['strap_R']:.0f} mm: strain {D['strap_strain_pct']:.3f}% (limit {D['strap_strain_max']:g}% dynamic flex) - no twist, no tension")
+        EI = 3.0e3 * (D["strap_z1"] - D["strap_z0"]) * D["strap_t"] ** 3 / 12
+        p(f"     restoring torque ≈ EI·κ = {EI * D['strap_kappa']:.3f} N·mm at ±{D['travel_deg']:g}° (PI E 3 GPa [A], EI {EI:.2f} N·mm²) = {EI * D['strap_kappa'] / (D['dial_spring'] * D['travel_deg']) * 100:.1f}% of the centring spring")
+        p()
     # ---- Hall ----
     a = H.analyse(D); s = D["hv_sensor"]
     p("3. HALL VERNIER")

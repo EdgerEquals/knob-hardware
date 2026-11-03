@@ -7,6 +7,8 @@ from . import screen
 SRC_DEPS = [screen]
 
 def build(D):
+    if D.get("cart"):   # v0.24 [Ed 12:58]: the printed carrier, its magnet pair and pin are gone (bezel cartridge: parts/cartridge.py)
+        return {}
     rs, rb, rl, ro, rw = D["socket_d"] / 2, D["boss_d"] / 2, D["pocket_lo_d"] / 2, D["hold_od"] / 2, D["well_od"] / 2
     z0, zc, zs, zh = D["hold_z0"], D["z_cup0"], D["hold_step"], D["z_holder0"]
     zt = D["z_cup_top"]   # v0.15: the fixed cup stops carrier_run under the rotating carrier

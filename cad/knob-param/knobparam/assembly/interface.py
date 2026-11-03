@@ -130,9 +130,11 @@ P = dict(
     adapter_t=1.0,   # [K]/[A] (cord room over the nut [Ed])
     cord_clear=3.0,   # [K]/[A] (cord room over the nut [Ed])
     # ---- screen [S] (table below) ----
-    screen="rm69330-1.39",
-    z_glass=56.8,   # [A] glass flush with the dial top (v0.12). This is the knob top the faceplate is measured from.
-    knob_proud=18.0,   # [Ed] knob screen top above the faceplate front face
+    screen="z132a2441-1.32",   # [Ed 3 Nov 12:41] Waveshare's 1.32" panel (Z132A2441-V0) in a printed bezel cartridge (v0.23: "rm69330-1.39")
+    z_glass=61.2,   # [Ed 3 Nov 12:41] lens top = the knob top: v0.23 56.8 + 4.4. Only the knob grows (faceplate, case, boards and the
+                    # main knob stay). Rebuild v0.23: --set screen=rm69330-1.39 --set z_glass=56.8 --set knob_proud=18.0
+    knob_proud=22.4,   # [Ed] knob screen top above the faceplate front face: 18.0 to v0.23; [Ed 12:41] +4.4 with the lens, so the
+                       # faceplate stays at 61.2 - 22.4 = 38.8 (assembly row "faceplate unchanged")
     faceplate_t=2.5,   # [Ed] faceplate thickness. Same resin wall as the one-piece case (sub/case-v01)
     z_holder0=54.9,   # [A] holder plate bottom (= v0.12 screen seat: cord room kept)
     cof_bend=None,   # [A] override the screen-table COF bend (radial), e.g. --set cof_bend=0.26
@@ -277,6 +279,12 @@ SCREENS = {
     "rm69330-1.39": dict(spec="screens/rm69330-1.39/SPEC.md", od=38.21, r_edge=19.725, ledge_w=12.0, t=0.664, bend=0.30,
                          fold=(25.11, 14.0, 1.10), b2b=(5.0, 2.6, 0.9), rigid=False, iface="4-wire SPI (+MIPI 1-lane), VDDIO 1.8 V",
                          stack=(0.134, 0.20, 0.20, 0.13), d_pol=37.71, encap_flat=37.79, d_tape=37.61),
+    # [Ed 3 Nov 12:41] v0.24: Waveshare ESP32-S3-Touch-AMOLED-1.32's panel [S: Waveshare STEP/drawing rev 2025-10-21, not committed].
+    # cart=True: the panel is glued into a printed bezel cartridge (control_dial zp/bz params hold its proxy). od = lens, r_edge = the
+    # bottom COF bend reach, ledge_w = that bend's width; the table fields only feed the generic knob-size rule.
+    "z132a2441-1.32": dict(spec="docs/layout-v4-2026-11-03.md (Waveshare files)", od=36.40, r_edge=18.97, ledge_w=9.0, t=1.30, bend=0.0,
+                           fold=None, b2b=(3.5, 7.7, 0.8), rigid=True, iface="QSPI (CO5300), CST820 touch, one 3.3 V rail", cart=True,
+                           reach=19.2, bore_clear=0.3),   # [S] outermost panel point (the tail's U-turn corner); [Ed 12:58] bezel bore 0.3 past it
 }
 
 
@@ -883,6 +891,9 @@ def derive(D):
     D["tgt"] = dict(D["tgt"], lip_wall=D["lip_wall_min"])
     D["scr_off_opt"], D["knob_od_min"] = _screen_knob(dict(SCREENS[D["screen"]], **({} if D["cof_bend"] is None else {"bend": D["cof_bend"]})),
                                                       D["lip_wall_min"], D["bend_clear"])
+    if SCREENS[D["screen"]].get("cart"):   # v0.24: centred panel in a bezel: bore past the panel's reach, then a printed wall
+        S_ = SCREENS[D["screen"]]
+        D["scr_off_opt"], D["knob_od_min"] = 0.0, 2 * (S_["reach"] + S_["bore_clear"] + D["print_wall_min"])
     st = D["knob_od_step"]
     screen_od = math.ceil(D["knob_od_min"] / st - 1e-9) * st
     D["knob_od_screen"] = screen_od
@@ -913,6 +924,7 @@ def derive(D):
     # ---- screen envelope ----
     S = dict(SCREENS[D["screen"]]); D["S"] = S
     if D["cof_bend"] is not None: S["bend"] = D["cof_bend"]
+    D["cart"] = bool(S.get("cart"))   # [Ed 3 Nov 12:41] v0.24: dial screen in a drop-in bezel cartridge
     # ---- mating heights ----
     D["z_top"] = D["z_glass"]
     # Faceplate front is the knob screen top, set back by knob_proud. PCB front is z = 0.

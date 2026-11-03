@@ -73,5 +73,7 @@ def strap_bent(D, travel):
     return out
 
 def build(D):
+    if D.get("cart"):   # v0.24: the Z132A2441 panel, its flex and the strap loop are built in parts/cartridge.py
+        return {}
     name = D["screen"]
     return {f"screen {name} panel": place(D, panel(D)), f"screen {name} FPC + B2B": place(D, fpc(D)), ("screen FPC service strap [A]" if D["screen_on_dial"] and D["b2b_flip"] else "screen jumper FPC [A]"): jumper(D)}

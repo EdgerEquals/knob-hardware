@@ -75,8 +75,91 @@ def _split_rows(D, row):
     row("Hall rib deflection margin (limit / deflection, x)", D["ha_rib_defl"] / max(d, 1e-9), 2.0,
         f"{d:.4f} mm at r {D['ha_rib_rload']:g} under {D['ha_rib_load']:g} N; rib top z {D['ha_rib_z_top']:.2f} [Ed 2x rule]")
 
+def _dist(a, b):
+    """min distance between two lists of solids, and the pair."""
+    best = (1e9, "", "")
+    for na, sa in a.items():
+        for nb, sb in b.items():
+            d = sa.distance_to(sb)
+            if d < best[0]: best = (d, na, nb)
+    return best
+
+
+def _short(n):
+    return n.replace("dial screen Z132A2441 ", "").replace("dial board part ", "").replace("dial board ", "").replace(" (printed cartridge ring)", "")
+
+
+def _cart_rows(D, parts, row):
+    """v0.24 [Ed 3 Nov 12:28-12:58] bezel cartridge: the reworked rows of the v0.23 screen (Kingtech panel, printed carrier, strap)."""
+    T = D["tgt"]; zp, db, ct, bz = D["zp"], D["db"], D["ct"], D["bz"]
+    P = lambda *pre: {n: s for n, s in parts.items() if n.startswith(pre)}
+    bezel = P("dial bezel"); dial = P("control dial"); pad = P("dial cartridge plug pad")
+    panel = P("dial screen Z132A2441 panel", "dial screen Z132A2441 flex", "dial screen Z132A2441 lens")
+    flex = P("dial screen Z132A2441 flex"); plug = P("dial screen Z132A2441 plug")
+    board = P("dial board (PCBA"); top = P("dial board receptacle")
+    under = {n: s for n, s in P("dial board ").items() if n not in board and n not in top}
+    from ..common.util import tube
+    ring = tube(D["R"], D["R"] + 3.0, D["z_lip0"], D["z_top"] - D["z_lip0"])       # exact: distance out to the knob OD
+    reach = D["R"] - min(s.distance_to(ring) for s in list(panel.values()) + list(plug.values()))
+    row("knob OD vs the cartridge panel (R - outermost panel point)", D["R"] - reach, T["knob_od_vs_screen"],
+        f"Z132A2441 [S] reaches r {reach:.2f} (" + ", ".join(f"{k} {v:.2f}" for k, v in D["cart_reach"].items()) + f"); knob Ø{D['knob_od']:.2f}")
+    row("bezel wall below the glass (OD - bore)", D["bz_wall"], D["print_wall_min"],
+        f"bore Ø{bz['bore_d']:g}, OD {D['knob_od']:g} [Ed 12:58]; bezel z {D['z_lip0']:.2f}-{D['z_top']:.2f} (outside = the v0.23 lip)")
+    row("bezel bore past the panel's outermost point (radial; the panel is glued in from underneath)", D["bz_bore_clear"], 0.3,
+        f"U-turn corner r {D['cart_reach']['U-turn corner']:.2f} [S], bottom bend r {zp['bend_r']:g}, top tab r {zp['tab_r']:g}; bore r {D['bz_bore_r']:.2f}")
+    d, a, b = _dist(flex, bezel)
+    row("panel flex (bends, tab, tail, patches) vs the bezel", d, 0.3 - 1e-6,
+        f"nearest: {_short(a)} / bezel; TIGHT: bends and tab start {zp['bend_top']:g} behind the lens back [A], right under the glass seat ring")
+    lap = D["bz_lap"]; glue = min(D["bz_seat_r"] - zp["lens_d"] / 2, D["bz_lap_r"] - zp["step_d"] / 2)
+    row("bezel laps the lens step: lens shoulder under the lap (radial)", lap, 0.5,
+        f"lap ID Ø{bz['lap_d']:g} over the Ø{zp['lens_d']:g} lens, 0.55 deep (step Ø{zp['step_d']:g}): no glass edge shows; glue gap {glue:.2f} round the lens")
+    d, a, b = _dist(panel, {**board, **top})
+    row("panel (lens, AMOLED, flex) vs the dial board and receptacle", d, 0.3, f"nearest: {_short(a)} / {_short(b)}; the mated plug end is not counted")
+    d, a, b = _dist(panel, dial)
+    row("panel vs the dial body (they turn together)", d, 0.3, f"nearest: {_short(a)}; land z {D['db_z1']:.2f}, lower leg z {D['leg_z0']:.2f}")
+    d, a, b = _dist(bezel, {**board, **top})
+    row("bezel (bosses) vs the dial board", d, 0.3, f"nearest: {_short(b)}")
+    row("bezel bore over the dial's outer wall (radial)", D["ct_bore_clear"], 0.3 - 1e-6,
+        f"dial r {ct['outer_r']:g} [Ed 12:58] in the r {D['bz_bore_r']:.2f} bore, TIGHT (exactly the target)")
+    d, a, b = _dist(bezel, dial)
+    row("cartridge seat: bezel bosses over the dial land (float)", d, bz["boss_gap"] - 0.01,
+        f"bosses z {D['bz_boss_z'][0]:.2f}-{D['bz_boss_z'][1]:.2f} over the land {D['db_z1']:.2f} [Ed 12:58]: the mated plug carries the cartridge, "
+        f"the magnets pull it down [C]")
+    d, a, b = _dist(pad, {**panel, **P("dial screen Z132A2441 flex")})
+    row("plug pad + arm vs the panel (not the plug end it is glued to)", d, 0.3, f"nearest: {_short(b)}; pad z {D['pad_z'][0]:.2f}-{D['pad_z'][1]:.2f}")
+    d, a, b = _dist(pad, {**board, **top, **dial})
+    row("plug pad + arm vs the dial board, receptacle and dial", d, 0.3, f"nearest: {_short(b)}")
+    row("plug pad arm to the bezel bore (glue line)", list(pad.values())[0].distance_to(list(bezel.values())[0]), bz["arm_glue"] + 0.01,
+        f"arm at {bz['arm_ang']:g}° [Ed 12:58], {bz['arm_w']:g} x {bz['arm_t']:g} [A]; glued with the cartridge seated on its dial", higher_ok=False)
+    row("plug / receptacle alignment in plan (centre offset)", D["plug_align"], 0.1,
+        f"plug ({D['plug_xy'][0]:.2f}, {D['plug_xy'][1]:.2f}) [S] over the receptacle ({db['rec'][0]:g}, {db['rec'][1]:g}); set by gluing the pad seated", higher_ok=False)
+    row("plug engagement: receptacle top - plug mating face", D["plug_engage"], 0.2,
+        f"mating face {zp['plug_face']:g} behind the lens back = z {D['plug_face_z']:.2f} [S]; receptacle top {D['rec_z1']:.2f}; mated height {zp['mated']:g} [S]")
+    lo, hi = D["ct_wall_at"]
+    row("dial wall over the 30° cone underside (pocket floor, min normal)", D["ct_wall"], ct["wall"] - 0.005,
+        f"min at r {lo:.1f}-{hi:.1f} (the whole cone run: the floor is the 2.0 offset [Ed 12:58]); well floor {D['z_well_top']:.2f}, pocket edge z {D['ct_floor_edge']:.2f}")
+    import itertools
+    sp = min(((under[a].distance_to(under[b]), a, b) for a, b in itertools.combinations(under, 2)), default=(9.9, "", ""))
+    row("dial-board underside parts: spacing (min)", sp[0], 0.2, f"{_short(sp[1])} / {_short(sp[2])}; places from the concept [Ed 12:58], bodies [A] except the ESP32 [S]")
+    d, a, b = _dist(under, dial)
+    row("dial-board underside parts vs the pocket floor", d, ct["parts_clear"],
+        f"nearest: {_short(a)}; ESP32 7 x 7 x 0.96 [S] at (0, 10.5), diode Ø3.8 x 2.5, LEDs at r 13.5 [A 2020]")
+    row("dial board rim resting on the ledge (radial)", D["db_on_ledge"], 0.4,
+        f"board Ø{db['d']:g} [A] on the ledge r {ct['pocket_r']:g}-{D['ct_land_r']:.1f} at z {D['db_z0']:.2f}; edge {D['db_to_step']:.2f} from the land step, lobe {ct['lobe_clear']:g} in its cut")
+    row("dial land: wall round the magnet pockets and pin holes (min)", D["ct_hole_wall"], 0.3,
+        f"Ø1 holes at r {bz['mag_r']:g} in the {D['ct_land_w']:.1f}-wide land (r {D['ct_land_r']:.1f}-{ct['outer_r']:g}); floor under them {D['ct_hole_floor']:.2f}")
+    row("cartridge magnets: stray field at the Hall row (worst sensor) / range", D["carr_stray_mt"] / D["carr_stray_rng"], D["carr_stray_max"],
+        f"{D['carr_stray_to']}: {D['carr_stray_mt'] * 1e3:.1f} µT of ±{D['carr_stray_rng']:g} mT ({D['cart_stray_n']} x Ø{bz['mag'][0]:g}x{bz['mag'][1]:g} N52 "
+        f"~55 mm above, dipoles); it changes {D['cart_stray_dB'] * 1e3:.2f} µT over ±travel", higher_ok=False)
+    row("strap loop bend strain at ±travel (%)", D["strap_strain_pct"], D["strap_strain_max"],
+        f"ribbon on edge, {D['ls_L']:.1f} between the ends, t {D['strap_t']:g}; dial end moves {D['strap_end_move']:.2f} sideways and turns ±{D['travel_deg']:.1f}°; "
+        f"R {D['strap_R']:.0f} mm", higher_ok=False)
+
+
 def checks(D, parts):
     T = D["tgt"]; r = Rows("control_dial"); row = r.row
+    if D.get("cart"):
+        return _cart_tail(D, parts, r)
     scr = [s for n, s in parts.items() if n.startswith("screen ") and "jumper" not in n]
     r_max = max([D["scr_far"]] + [maxr(s) for s in scr])
     row("knob OD vs screen (R - outermost screen point)", D["R"] - r_max, T["knob_od_vs_screen"], f"knob Ø{D['knob_od']:.2f}, screen offset {D['scr_off']:.2f} from the FPC exit")
@@ -111,6 +194,19 @@ def checks(D, parts):
         row("panel vs dial lip (running gap)", parts[pn].distance_to(dial), D["run_gap"] - 0.01)
     row(f"screen carrier magnet: stray field at the {D['carr_stray_to']} / range", D["carr_stray_mt"] / D["carr_stray_rng"], D["carr_stray_max"],
         f"{D['carr_stray_mt']:.3f} mT on-axis dipole worst case" + ("; co-rotates with the sensor -> fixed offset, calibrated out" if D["rel_sensor"] else "; turns ±travel over a fixed sensor -> tiny, calibrated"), higher_ok=False)
+    return _tail(D, parts, r)
+
+
+def _cart_tail(D, parts, r):
+    row = r.row
+    _cart_rows(D, parts, row)
+    row("dial up-stop: free lift to the rod-link board", D["dial_lift"], 0.1, "board clamped by the rod nut; 45° race carries the knob up-load into the dial")
+    row("dial up-stop: free lift (max)", D["dial_lift"], 0.5, "", higher_ok=False)
+    return _tail(D, parts, r)
+
+
+def _tail(D, parts, r):
+    T = D["tgt"]; row = r.row; TR = (-D["travel_deg"], 0, D["travel_deg"])
     if D["hall_layout"] == "vernier":
         row("Hall bar vs ring tips (radial)", D["skirt_id"] / 2 - D["hv_r_out"] - D["hv_pad_r"], T["arm_vs_ring"], f"outer magnet r {D['hv_r_out']:.2f}")
         tc = [parts[n] for n in parts if n.startswith("thrust")]
@@ -134,7 +230,11 @@ def checks(D, parts):
             f"groove R{D['kb_seat_r']:g} centred {D['kb_seat_r'] - D['kb_ball_d'] / 2:.2f} past the ball centre on the 45° line", higher_ok=False)
         row("seat: groove rim half-width - ball chord at the cone face", D["kb_seat_w"] - D["kb_ball_cap_w"], 0.0,
             f"depth {D['kb_groove_h']:.3g}: groove ±{D['kb_seat_w']:.3f}, ball ±{D['kb_ball_cap_w']:.3f}")
-        if D["kb_race"] == "chamfer" and D["dial_shape"] == "cone":   # v0.21 [Ed 2 Nov]: straight parallel cones, no steps
+        if D["kb_race"] == "chamfer" and D["dial_shape"] == "cone" and D.get("cart"):   # v0.24: the cone wall row is in _cart_rows
+            row("dial: hub between the gap face and the well floor", D["z_well_top"] - D["z_hub0"], 1.5)
+            row("dial: cone underside meets the flat underside inside the outer wall", D["ct"]["outer_r"] - D["cone_lip_r"], 1.0,
+                f"cone to r {D['cone_lip_r']:.2f}, flat at z {D['z_lip0']:.2f} to r {D['ct']['outer_r']:g} (the v0.23 lip underside)")
+        elif D["kb_race"] == "chamfer" and D["dial_shape"] == "cone":   # v0.21 [Ed 2 Nov]: straight parallel cones, no steps
             row("dial: cone wall (normal), parallel faces", D["cone_dial_wall"], 1.5,
                 f"{D['cone_deg']:g}°; underside r {D['cone_under_r0']:.2f}–{D['cone_lip_r']:.2f}, top r {D['cone_well_r']:.2f}–{D['cone_seat_r']:.2f}")
             row("dial: material under the adapter-board corner (well floor to the underside)", D["cone_dial_corner"], 1.5,
