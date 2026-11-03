@@ -1,4 +1,13 @@
-"""Top-screen joystick stack v0.6 — params + derive.
+"""Top-screen joystick stack v0.7 — params + derive.
+
+v0.7 (3 Nov 2026, layout v4 step 1, Ed 09:47–11:32): base "case". The printed cradle glued to the main PCB, its dowels, the two
+2x5 H11 sockets and the long-pin headers go: the H7B0 takes their place on the main PCB, and two vertical boards (electronics sub,
+x ±16) carry the signals up. The daughterboard becomes the TOP BOARD: it rests on the vertical boards' spring contacts and is glued
+into a new clear SLA cradle that is captured by the case: a flange behind the faceplate (on a thin gasket) and a lip up into the
+faceplate's joystick cutout. The lip shares the cutout with the carrier, so the carrier narrows by lip + clearance (the cutout and
+the grip block keep their size, so the block still covers the cutout by fp_overlap); the balls follow the carrier corners in. The
+carrier skirt goes: the lip ring is the anti-rotation stop. On the +y side the faceplate sits on the rail strip, so the flange
+cannot get behind it there: the lip ring closes across the top inside the cutout only.
 
 v0.6 (2 Nov 2026, Ed 16:14–16:33): the screen is the DWO DO0164FMST02 (geometry from Waveshare's STEP of the ESP32-S3-Touch-
 AMOLED-1.64). Its flex leaves the -x end [Ed 16:18] and folds under the panel; a 30-pin 0.4 mm B2B header sits 2.15 behind the
@@ -42,7 +51,7 @@ import os
 import sys
 
 P = dict(
-    version="v0.6",
+    version="v0.7",
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
     knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
@@ -153,9 +162,36 @@ P = dict(
     sock=dict(part="2.54 mm 2x5 female socket, 11 mm (hanxia PM2.54 H11 family, 2x5 part to pick)", lcsc="TBC", h=11.0, tail=3.2, n=5, rows=2),  # [A] v0.5 (v0.4: 1x3 C41427518)
     # v0.5 base [Ed 2 Nov 12:17]: a printed cradle glued to the main PCB (two locating dowels) replaces the four standoffs and
     # the seat plate. The joystick board is glued on its rim. The lower ball seats stand on towers at its extreme corners.
-    base="cradle",
+    base="case",   # [Ed 3 Nov 11:03] v0.7 layout v4: "case" = top board on the vertical boards' spring contacts, nested in a cradle
+                   # captured by the case (flange + lip). "cradle" = v0.5/v0.6 printed cradle glued to the main PCB (kept for history)
     cradle=dict(part="joystick cradle, MJF PA-12, glued to the main PCB and to the joystick board", h=30.0, wall=1.5, wall_top=1.0,
                 land=0.7, tower_z0=22.5, pin=dict(part="ISO 8734 1.5x5 stainless dowel", d=1.5, len=5.0, in_pcb=1.6)),   # [A]
+    # ---- v0.7 [Ed 3 Nov] top board on the vertical boards, case cradle ----
+    tb_z0=30.0,             # [A] top board underside, kept at the v0.6 daughterboard height so the switch / carrier / bezel stack does
+                            # not move. electronics vb.top_board_z must match (assembly cross-check)
+    vb_y_panel=(26.5, 48.4),   # [Ed 09:47] the vertical boards' y span, panel frame (mirror of electronics vb.y; assembly cross-check).
+                               # The top board covers their top edges so the spring contacts can run the whole length
+    vb_contact_x=17.5,      # [A] mirror of electronics: the spring-contact plunger line (board plane ±16.0, outer face ±16.5, contact
+                            # strip body 2.0 on the outer face, plungers on its middle). Outer face: the inner face is 2.0 from the
+                            # hold-down springs. Assembly cross-check against electronics
+    tb_pad=1.6,             # [A] ENIG pad Ø under the top board for each spring contact
+    tb_tol=0.30,            # [A] contact position in plan (vertical-board solder position + cradle location in the cutout)
+    tb_y_over=0.40,         # [A] top board past each end of the vertical boards
+    cc=dict(part="joystick case cradle, UTR-8100 clear resin (SLA), lip in the faceplate cutout, flange on a gasket",
+            lip_c=0.20,     # [A] lip to the cutout wall, each side ("about 0.2 a side"; SLA case ±0.20 and SLA cradle ±0.20: fit-check)
+            lip_t=1.0,      # [A] lip wall (SLA minimum 0.8 [S])
+            lip_below=0.5,  # [A] lip top this far under the faceplate front (the grip block covers the cutout, so it is never seen)
+            flange_t=1.2,   # [A] flange behind the faceplate
+            wall=1.0,       # [A] hangers / end walls round the top board
+            nest_c=0.20,    # [A] top board edge to the nest walls
+            shoulder=1.0,   # [A] shoulder over the top board's edge (the board is glued to it; the spring contacts push it up)
+            seat_above=1.0, # [A] lower ball-seat bosses start this far above the top board's top face (parts under them stay lower)
+            collar_air=0.5, # [A] flange −y edge to the knob collar (case collar_r)
+            glow_air=0.20,  # [A] flange ±x edge to the case side-wall glow coat (the coat is modelled 0.3 off the wall, 0.35 thick)
+            top_air=0.20),  # [A] flange +y end to the case top wall inner face (no contact: the lip ring locates in y)
+    gasket=dict(part="closed-cell silicone sponge gasket, 0.8 thick, die-cut, adhesive one side [A]", t=0.80,
+                comp_nom=0.25, comp_lo=0.10, comp_hi=0.50,   # [A] compression: nominal, and the working band of the sponge
+                land_min=0.75),   # [A] narrowest gasket land under the faceplate that is still a die-cut strip
     ball_x=17.8,            # [Ed 2 Nov 12:22] balls at the extreme corners: x as far out as the carrier allows (cup boss inside it)
     ball_y_bot=10.3,        # [Ed] knob-side row; the carrier outline (±13.02) less the cup boss is the limit. The top row: rail strip
     # round female-female brass. Body is the riser. An ISO 4762 screw goes in each end.
@@ -214,7 +250,7 @@ def _knob_data():
     # v0.5: the case owns the panel layout. It publishes the faceplate z, the joystick place_y (rail rule), the
     # rail strip and the main-PCB nest. Read as data; the joystick keeps its own copy only as a fallback.
     for k in ("faceplate_z", "place_y", "panel_y1", "rail_clear", "pcb_y1", "pcb_x1", "y_in1", "rail_y_top",
-              "rail_keep_d", "rail_x_top"):
+              "rail_keep_d", "rail_x_top", "x_in1", "glow_gap", "glow_t", "collar_r", "z_fp0"):   # v0.7: the case cradle's limits
         if k in D:
             out["case_" + k] = D[k]
     return out
@@ -323,6 +359,16 @@ def derive(P_):
     D["hole_hh"] = D["half_h"] - D["fp_overlap"]
     D["car_hw"] = D["hole_hw"] - D["slide"] - sla
     D["car_hh"] = D["hole_hh"] - D["slide"] - sla
+    if D["base"] == "case":
+        # v0.7 [Ed 11:03]: the cradle's lip shares the cutout with the carrier. The cutout cannot grow (the grip block's 0.9 cover over
+        # it would go: a 1.2 growth leaves −0.3 at rest), so the carrier narrows by lip clearance + lip wall and keeps the same
+        # tol_sla to the lip's inner face at the full slide that it had to the cutout.
+        cc = D["cc"]
+        D["lip_out_hw"], D["lip_out_hh"] = D["hole_hw"] - cc["lip_c"], D["hole_hh"] - cc["lip_c"]
+        D["lip_in_hw"], D["lip_in_hh"] = D["lip_out_hw"] - cc["lip_t"], D["lip_out_hh"] - cc["lip_t"]
+        D["car_hw"] = D["lip_in_hw"] - D["slide"] - sla
+        D["car_hh"] = D["lip_in_hh"] - D["slide"] - sla
+        D["car_narrow"] = cc["lip_c"] + cc["lip_t"]
     D["cs_x"] = D["car_hw"] - cs["od"] / 2 - sla
     D["cs_y"] = D["car_hh"] - cs["od"] / 2 - sla
     D["car"] = (2 * D["half_w"], 2 * D["half_h"])
@@ -335,6 +381,8 @@ def derive(P_):
     D["knob_proud_live"] = "knob_proud" in K
     D["knob_proud_in"] = D["knob_proud"]
     D["z_db0"] = D["cradle"]["h"] if D["base"] == "cradle" else so["length"]   # v0.5: the cradle height is the riser
+    if D["base"] == "case":   # v0.7: the top board sits where the v0.6 daughterboard was
+        D["z_db0"] = D["tb_z0"]
     D["z_db1"] = D["z_db0"] + D["db_t"]
     D["z_sw1"] = D["z_db1"] + sw["h"]
     D["z_stem_top"] = D["z_db1"] + sw["stem_top"]
@@ -370,7 +418,7 @@ def derive(P_):
     D["knob_proud"] = D["z_knob_top"] - D["z_fp1"]
     D["z_glass"] = D["z_knob_top"] + 4.3   # [A] v0.18: glass 56.8 = knob shell top 52.5 + 4.3
     D["riser_h"] = D["z_db0"]
-    D["riser_catalog"] = D["cradle"]["h"] if D["base"] == "cradle" else so["length"]
+    D["riser_catalog"] = D["cradle"]["h"] if D["base"] == "cradle" else (D["tb_z0"] if D["base"] == "case" else so["length"])
     D["z_hdr_tip"] = D["z_db0"] - hd["ins"] - hd["mate"]
     D["mate_air"] = D["riser_h"] - hd["ins"] - sk["h"]
     D["mate_in"] = hd["mate"] - D["mate_air"]
@@ -493,8 +541,16 @@ def derive(P_):
     # no round stop: the board is symmetric. The v0.3 -y tab existed only for that stop
     D["board_x0"], D["board_x1"] = -D["db_half_w"], D["db_half_w"]
     D["board_y0"], D["board_y1"] = -D["db_half_h"], D["db_half_h"]
+    if D["base"] == "case":
+        # v0.7 top board: wide enough for the spring-contact pads on both vertical boards, and as long as the boards (local y)
+        D["tb_hw"] = D["vb_contact_x"] + D["tb_pad"] / 2 + D["cu_edge"] + D["tb_tol"]
+        D["vb_y"] = (D["vb_y_panel"][0] - D["place_y"], D["vb_y_panel"][1] - D["place_y"])
+        D["db_half_w"] = D["tb_hw"]
+        D["board_x0"], D["board_x1"] = -D["tb_hw"], D["tb_hw"]
+        D["board_y0"], D["board_y1"] = D["vb_y"][0] - D["tb_y_over"], D["vb_y"][1] + D["tb_y_over"]
+        D["db_half_h"] = max(-D["board_y0"], D["board_y1"])
     D["db"] = (D["board_x1"] - D["board_x0"], D["board_y1"] - D["board_y0"], D["db_t"])
-    D["db_xy"] = (0.0, 0.0)
+    D["db_xy"] = (0.0, (D["board_y0"] + D["board_y1"]) / 2)
     D["sx"] = D["db_half_w"] - inset
     sy_corner = D["db_half_h"] - inset
     sy_pad = D["y_pcb"] - D["pcb_edge"] - D["pad_m2"] / 2
@@ -506,8 +562,8 @@ def derive(P_):
     D["sy_corner"] = sy_corner
     D["sy_pad"] = sy_pad
     D["sy_head"] = sy_head
-    D["standoff_xy"] = [] if D["base"] == "cradle" else [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
-    D["hdr_xy"] = [(D["hx"], 0.0), (-D["hx"], 0.0)]
+    D["standoff_xy"] = [] if D["base"] in ("cradle", "case") else [(sx, sy) for sx in (D["sx"], -D["sx"]) for sy in (D["sy"], -D["sy"])]
+    D["hdr_xy"] = [] if D["base"] == "case" else [(D["hx"], 0.0), (-D["hx"], 0.0)]   # v0.7: no 2x5 headers / H11 sockets
     # shallow spherical cups, same above and below. The ratio is the smallest cup radius
     # that still keeps cup_margin at the full slide. A ratio near 1.05 only allows ~0.15 mm.
     Rb = D["ball_d"] / 2.0
@@ -547,16 +603,20 @@ def derive(P_):
         D["by_top"] = D["y_rail"] - D["rail_margin"] - D["boss_r"]
         D["by_bot"] = D["ball_y_bot"]
         D["by"] = D["by_top"]
+    if D["base"] == "case":   # v0.7: same [Ed] rule (extreme corners, as far out as the carrier allows), on the narrower carrier
+        D["by_top"] = min(D["y_rail"] - D["rail_margin"] - D["boss_r"], D["car_hh"] - D["boss_r"])
+        D["by_bot"] = D["car_hh"] - D["boss_r"]
+        D["by"] = D["by_top"]
     need = D["cut_r"] + D["boss_r"] + D["part_gap"]
     bx_min = math.sqrt(max(need ** 2 - D["by"] ** 2, 0.0))
     bx_max = D["sx"] - D["standoff_d"] / 2 - D["part_gap"] - D["boss_r"]
     D["bx"] = bx_max          # as far toward the plate corners as the standoffs allow
     D["balls"] = [(bx, by) for bx in (D["bx"], -D["bx"]) for by in (D["by"], -D["by"])]
-    if D["base"] == "cradle":
-        D["bx"] = D["ball_x"]
+    if D["base"] in ("cradle", "case"):
+        D["bx"] = D["ball_x"] if D["base"] == "cradle" else D["car_hw"] - D["boss_r"]   # v0.7: the carrier corner less the cup boss
         D["balls"] = [(bx, by) for bx in (D["bx"], -D["bx"]) for by in (D["by_top"], -D["by_bot"])]
         D["by_bot_s"] = -D["by_bot"]
-        D["cr_pins"] = [(D["bx"], -D["by_bot"]), (-D["bx"], -D["by_bot"])]   # dowels in the knob-side towers
+        D["cr_pins"] = [(D["bx"], -D["by_bot"]), (-D["bx"], -D["by_bot"])] if D["base"] == "cradle" else []   # v0.7: no dowels
     else:
         D["by_top"] = D["by_bot"] = D["by"]
     # hold-downs stay inboard of the FPC drop and under the bezel. The old pair at x=±22.5
@@ -572,7 +632,7 @@ def derive(P_):
         # runs along y (the flex width), so the flex drops straight onto it. The carrier skirt is notched over the tab.
         sl_, ss_, sz_ = D["db_fpc_sock"]
         D["db_sock_x"] = D["sx"] + D["standoff_d"] / 2 + D["part_gap"] + ss_ / 2
-        if D["base"] == "cradle":   # beyond the +x hold-down bores
+        if D["base"] in ("cradle", "case"):   # beyond the +x hold-down bores (v0.7: same place, now inside the top board)
             D["db_sock_x"] = D["spr_xy"][0] + D["spr_bore"] / 2 + 0.3 + ss_ / 2
         D["tab_x1"] = D["db_sock_x"] + ss_ / 2 + D["cu_edge"]
         D["tab_hy"] = sl_ / 2 + D["cu_edge"]
@@ -658,7 +718,7 @@ def derive(P_):
     D["cs_bossr"] = br_cs
     D["cs_x"] = D["car_hw"] - br_cs - sla
     cs_y = D["car_hh"] - br_cs - sla
-    if D["base"] == "cradle":   # [Ed 2 Nov] press springs inside the corner balls
+    if D["base"] in ("cradle", "case"):   # [Ed 2 Nov] press springs inside the corner balls (v0.7: unchanged)
         D["cs_x"], cs_y = D["cs_xy_v05"]
     if D["z_ins0"] < D["z_fp0"]:
         cs_y = min(cs_y, D["y_rail"] - D["rail_margin"] - br_cs)
@@ -756,7 +816,57 @@ def derive(P_):
     D["p_engage"] = D["p_top"] - D["p_ins_bot"]
     D["p_adjust"] = (D["p_top"] - lo_, hi_ - D["p_top"])   # how far the grub can be set down / up and keep 2 mm of thread
     D["board_xy"] = (D["axis_bx"], D["axis_by"] - D["place_y"])
+    D["skirt"] = D["base"] != "case"   # v0.7: no skirt; the lip ring round the carrier is the anti-rotation stop
+    if D["base"] == "case":
+        _case_cradle(D, K)
     return D
+
+
+def _case_cradle(D, K):
+    """v0.7 [Ed 3 Nov 11:03] the case cradle, local frame (joystick axis at 0, 0; z from the main-PCB front).
+    Flange behind the faceplate on a gasket (−y, +x, −x sides: the +y side is over the rail strip), a lip ring up into the cutout
+    (closed across +y inside the cutout only), hangers and end walls round the top board with shoulders over its edge, and the four
+    lower ball seats on brackets from the hangers."""
+    cc, gk, sla = D["cc"], D["gasket"], D["tol_sla"]
+    D["z_fp0_case"] = float(K.get("case_z_fp0", D["z_fp0"]))
+    # gasket: compressed to comp_nom by the spring contacts (the band comp_lo..comp_hi is the sponge's working range)
+    D["gk_nom"] = gk["t"] * (1 - gk["comp_nom"])
+    D["gk_range"] = (gk["t"] * (1 - gk["comp_hi"]), gk["t"] * (1 - gk["comp_lo"]))
+    D["z_fl1"] = D["z_fp0"] - D["gk_nom"]            # flange top (gasket underside)
+    D["z_fl0"] = D["z_fl1"] - cc["flange_t"]          # flange underside
+    D["z_lip1"] = D["z_fp1"] - cc["lip_below"]        # lip top, inside the cutout
+    D["z_lipb"] = D["z_fp0"] + 0.02                   # where the lip ring is not over a flange (+y), it starts in the cutout
+    D["lip_engage"] = D["z_lip1"] - D["z_fp0"]        # lip height inside the faceplate
+    D["lip_corner_r"] = max(D.get("corner_r", 0.0) - cc["lip_c"], 0.2)
+    # nest round the top board
+    D["nest_hw"] = D["board_x1"] + cc["nest_c"]                       # hanger inner face (x)
+    D["nest_y0"], D["nest_y1"] = D["board_y0"] - cc["nest_c"], D["board_y1"] + cc["nest_c"]
+    D["z_nest0"] = D["z_db0"] - 0.2                                   # hangers reach just under the board's underside
+    D["z_sh0"], D["z_sh1"] = D["z_db1"], D["z_db1"] + cc["shoulder"]  # shoulder over the board edge (glued, contacts push up)
+    D["sh_in"] = cc["shoulder"]                                        # shoulder overlap onto the board
+    # flange plan limits from the case: side-wall glow coat (x), knob collar (−y), case top wall / rail strip (+y)
+    xin = float(K.get("case_x_in1", 22.75)); gg, gt = float(K.get("case_glow_gap", 0.3)), float(K.get("case_glow_t", 0.35))
+    D["fl_x1"] = xin - gg - gt - cc["glow_air"]
+    D["fl_y0"] = (float(K.get("case_collar_r", 23.7)) + cc["collar_air"]) - D["place_y"]
+    y_top_wall = float(K["case_y_in1"]) - D["place_y"] if "case_y_in1" in K else 99.0
+    D["fl_y1"] = min(y_top_wall - cc["top_air"], D["y_rail"] - D["rail_margin"])
+    # the hangers and the +y end wall are inside the case's joystick cut (|x| < hole_hw), so only the flange (out to fl_x1) has to
+    # stop short of the case top wall; the end wall only has to stay under the rail strip (rail check)
+    # gasket land under the faceplate: ±x sides from the cutout edge to the flange edge, −y side from the cutout edge to the flange edge
+    D["gk_land_x"] = D["fl_x1"] - D["hole_hw"]
+    D["gk_land_y"] = -D["hole_hh"] - D["fl_y0"]
+    D["gk_land_min"] = min(D["gk_land_x"], D["gk_land_y"])
+    # lower ball seats: bosses from just above the top board's top face up to the lower cup rim, bracketed to the hangers
+    D["z_seat0"] = D["z_db1"] + cc["seat_above"]
+    D["seat_gap_press"] = D["z_rim_hi"] - D["z_rim_lo"]               # carrier cup boss over the seat boss (carrier does not move in z)
+    # the grip block over the lip and the cutout
+    D["block_cover_rest"] = D["half_w"] - D["hole_hw"]                 # = fp_overlap
+    D["block_cover_slide"] = D["block_cover_rest"] - D["slide"]
+    D["block_lip_press"] = D["z_bz0"] - D["press_travel"] - D["z_lip1"]
+    # top board flex at a worst-case click: simply supported on the contact lines (±vb_contact_x), whole board width [A]
+    E, t, b = 18000.0, D["db_t"], D["board_y1"] - D["board_y0"]   # [A] FR4 flexural modulus 18 GPa
+    L = 2 * D["vb_contact_x"]; I = b * t ** 3 / 12.0
+    D["tb_flex"] = D["push_hi"] * L ** 3 / (48 * E * I)
 
 
 def board_xy(D, x, y):

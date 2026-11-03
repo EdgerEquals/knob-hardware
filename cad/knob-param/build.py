@@ -132,6 +132,9 @@ def main():
         t = time.time()
         import importlib
         cmods = [check] + [importlib.import_module(f"knobparam.{s}.checks") for s in model.ALL]
+        if not a.sub:   # v0.23: the joystick cross rows depend on the joystick model's source too
+            from knobparam.assembly import joystick as _js
+            cmods += [_js] + _js.src_modules()
         rk = cache._h(["rows", a.sub, sorted(keys.items()), {k: D[k] for k in sorted(D)}, [cache.src_hash(m) for m in cmods]])
         rp = os.path.join(cache.CACHE, f"rows_{rk}.json")
         if os.path.exists(rp):
@@ -142,6 +145,9 @@ def main():
                 from knobparam.assembly.build import view
                 pm, _ = view(parts, keys, D, "mech")   # v0.19: mechanism checks build D solids in the mechanism frame
                 rows += check.cross(D, pm)
+                from knobparam.assembly import joystick as js   # [Ed 3 Nov] v4: knob model vs joystick cross-checks (panel frame)
+                pp, _ = view(parts, keys, D, "panel"); jp, JD = js.placed()
+                rows += js.cross(D, pp, jp, JD)
             os.makedirs(cache.CACHE, exist_ok=True)
             json.dump(rows, open(rp, "w"))
         t_gaps = time.time() - t

@@ -1,6 +1,6 @@
 # Run from cad/knob-param:  PYTHONPATH=. python tools/pcb_windows.py out.json [--keep 22] [--margin 0.5] [--web 6] [--ab-top Y] [--table]
 #   (then paste the polygons into electronics pcb_windows; --table prints the keep-out / margin trade-off and writes nothing)
-"""PCB see-through windows A, B, C, E (+ D under the clear OLED, notched for the LQFP100), panel frame.
+"""PCB see-through windows A, B, C, E (+ D under the clear OLED), panel frame.
 
 Windows v2 ([Ed] 2 Nov: "these windows can be much bigger"): every window goes out to the REAL limits, each with a margin M
 (default 0.5; v0.20 used 1.0 and a 24.1 knob keep-out):
@@ -11,13 +11,14 @@ Obstacles (panel frame):
   posts       the cover's corner-column ring that bears on the board round each notch (r notch_r + tube_press) + M
   encoder     convex hull of the encoder daughterboard, its header and its standoff (their pins land on the main PCB) + M
   bearing 2   the printed seat round H2 + M (inside the knob keep-out at present)
-  joystick    the printed cradle's footprint on the PCB (section of the real part at z 0.05: ring + the knob-side ball towers)
-              ∪ geom.json cradle_ring outer ∪ geom.json main_pcb_holes (hold-down bores, dowel NPTHs), all + M
+  joystick    [Ed 3 Nov] layout v4: what touches the main board now: the joystick's main-PCB holes (hold-down spring bores,
+              press-spring grub access; live from cad/joystick-param) and the two vertical boards' feet (board edge, right-angle
+              header body and pads; electronics vb), all + M. v0.6 used the printed cradle glued to the board (gone in v4).
   J10         KiCad J10 pad field if it lands on the board (stale v0.11 position, outside the board now)
   clear OLED  D = OLED inset by its 1.6 ledge [Ed v0.19b]; C and E stop M short of the OLED's top edge
-  MCU         [Ed 18:34] electronics mcu (LQFP100 + caps, court 17.2 [A]) at the low middle: court + margin is notched out of
-              the bottom of D. --no-mcu leaves D whole.
-  A/B web     a board strip of width WEB on x = 0 from the knob keep-out up to the joystick cradle, so A (left) and B
+  MCU         electronics mcu (LQFP100 + caps, court 17.2 [A]): court + margin is cut out of any window it actually overlaps
+              ([Ed 3 Nov] v4: front, (0, 37), under the joystick: with --ab-top 26.06 it overlaps none). --no-mcu ignores it.
+  A/B web     a board strip of width WEB on x = 0 from the knob keep-out up to the joystick's board features, so A (left) and B
               (right) stay two windows and the knob region keeps a direct link to the top of the board [A]."""
 import math, json, sys, argparse, os
 from shapely.geometry import box, Point, Polygon, MultiPoint
@@ -69,27 +70,34 @@ for _n in ("encoder header", "encoder daughterboard", "encoder standoff"):
     if _n in _ps:
         _s = Rot(0, 0, D["mech_rot"]) * _ps[_n]
         HARD.append((_n, MultiPoint([(v.X, v.Y) for v in _s.vertices()]).convex_hull))
-# joystick: cradle footprint on the PCB (real part, cut at z 0.05) + geom.json ring and main-PCB holes
+# joystick: [Ed 3 Nov] v4: its holes in the main PCB (live from the joystick derive) and the vertical boards' feet (electronics)
 from knobparam.assembly import joystick as _js
 sys.path.insert(0, _js._jsdir())
-from jsparam import params as _jp, parts as _jparts
-from knobparam.assembly.plan_sheet import _cut_faces
+from jsparam import params as _jp
 JD = _jp.derive(_jp.P); py = JD["place_y"]
-tris = _cut_faces(_jparts.cradle(JD), "z", 0.05)
-cr = unary_union([Polygon(t).buffer(1e-4) for t in tris if Polygon(t).area > 1e-9])
-HARD.append(("joystick cradle", affinity.translate(cr, 0, py)))
-G = json.load(open(os.path.join("knobparam", "electronics", "kicad", "joystick-daughterboard", "geom.json")))
-ox_, oy0_, oy1_ = G["cradle_ring"]["outer"]
-HARD.append(("joystick cradle ring (geom.json)", box(-ox_, py + oy0_, ox_, py + oy1_)))
-for h in G["main_pcb_holes"]:
-    HARD.append((h["what"], Point(h["x"], h["y"]).buffer(h["d"] / 2, 64)))
+JS_ON_BOARD = []
+for what, d, pts in (("hold-down spring bore", JD["spr_bore"], JD["springs"]), ("press-spring grub access", JD["grub_access_d"], JD.get("access_xy", [])),
+                     ("joystick standoff screw", JD["drill_m2"], JD["standoff_xy"]), ("joystick cradle dowel", JD["cradle"]["pin"]["d"] + 0.05, JD.get("cr_pins", []))):
+    for x, y in pts:
+        JS_ON_BOARD.append((what, Point(x, y + py).buffer(d / 2, 64)))
+if JD.get("base") == "cradle":   # v0.6 history: the printed cradle's footprint on the PCB (real part, cut at z 0.05)
+    from jsparam import parts as _jparts
+    from knobparam.assembly.plan_sheet import _cut_faces
+    tris = _cut_faces(_jparts.cradle(JD), "z", 0.05)
+    cr = unary_union([Polygon(t).buffer(1e-4) for t in tris if Polygon(t).area > 1e-9])
+    JS_ON_BOARD.append(("joystick cradle", affinity.translate(cr, 0, py)))
+from knobparam.electronics.parts import pcb as _pcb
+for x0_, x1_, y0_, y1_ in _pcb.vb_footprint(D):
+    JS_ON_BOARD.append(("vertical board foot", box(x0_, y0_, x1_, y1_)))
+HARD += JS_ON_BOARD
+y_js = min(g.bounds[1] for _, g in JS_ON_BOARD)   # lowest joystick / vertical-board feature on the board
 ow, oh, _ = D["clear_oled"]; ox, oy = D["clear_oled_xy"]
 oled = box(ox - ow / 2, oy - oh / 2, ox + ow / 2, oy + oh / 2)
 
 
 def windows(keep, M, web, ab_top=None):
     blk = unary_union([g.buffer(M, 64) for _, g in HARD] + [Point(0, 0).buffer(keep, 256)])
-    ytop = (py + oy0_) + M   # the web runs from the knob up into the cradle ring
+    ytop = y_js + M   # the web runs from the knob up to the joystick's lowest board feature
     blk = blk.union(box(-web / 2, 0, web / 2, ytop)) if web > 0 else blk
     if ab_top is not None:   # option: A and B stop at a fixed height (board above it kept)
         blk = blk.union(box(-50, ab_top, 50, 80))
@@ -100,9 +108,12 @@ def windows(keep, M, web, ab_top=None):
     Z["E"] = (lower & board).difference(blk) & box(-50, y_ce, 0, 0)
     Z["C"] = (lower & board).difference(blk) & box(0, y_ce, 50, 0)
     Z["D"] = (oled.buffer(-LEDGE, join_style=2) & board & lower).difference(blk)
-    if D.get("mcu") and not a.no_mcu:   # [Ed 18:34] LQFP100 at the low middle: its courtyard + margin notched out of D
+    if D.get("mcu") and not a.no_mcu:   # MCU courtyard + margin cut out of any window it overlaps (v4: none, with --ab-top 26.06)
         (mx, my), hc = D["mcu"]["xy"], D["mcu"]["court"] / 2 + D["mcu"]["margin"]
-        Z["D"] = Z["D"].difference(box(mx - hc, my - hc, mx + hc, my + hc))
+        mb = box(mx - hc, my - hc, mx + hc, my + hc)
+        for k in list(Z):
+            if Z[k].intersects(mb):
+                Z[k] = Z[k].difference(mb)
     out, area = {}, {}
     for k in sorted(Z):
         g = Z[k]

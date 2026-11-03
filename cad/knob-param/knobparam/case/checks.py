@@ -26,7 +26,8 @@ def checks(D, parts):
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
     if D["top_corners"]:
         row("top posts stop under the joystick board", D["joy_board_z"] - D["z_post_top"], 1.0,
-            f"post top z {D['z_post_top']:.2f}; joystick daughterboard about z {D['joy_board_z']:.1f} [A]")
+            f"post top z {D['z_post_top']:.2f}; lowest part over them about z {D['joy_board_z']:.1f} [A] (v0.23: the vertical boards' "
+            "contact strip; the assembly row measures the real parts)")
     row("resin wall round the insert", D["insert_wall"], 1.2, f"M{D['screw_d']:g} insert Ø{D['insert_od']:.1f} in a Ø{2 * D['screw_boss_r']:.1f} boss")
     if D["back_screens"] == "amoled2":
         x0, x1, y0, y1 = D["amo_upper"]; lx0, lx1, ly0, ly1 = D["amo_lower"]

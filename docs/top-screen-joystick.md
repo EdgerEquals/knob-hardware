@@ -265,3 +265,15 @@ Model: `cad/joystick-param/` (v0.6). Images: `cad/assemblies/joystick-v0.6/joyst
   Loop 0.30 clear at the full slide. No microcontroller, no main-PCB change, the daughterboard keeps its socket.
   [C] daughterboard parts under the loop (x 9–18.5, y −4.5..−2.7) stay under 0.6 mm. View: `joystick-v0.6-jumper-loop.png`.
 - Checks **101/101**, 0 clashes; joystick vs knob none.
+
+## v0.7 build (3 Nov 2026): case cradle on the vertical boards [Ed 09:47–11:32, layout v4 step 1]
+Details and numbers: `docs/layout-v4-2026-11-03.md`, "Step 1 in the model". Picture: `docs/img/layout-v4-step1.png`.
+- **Gone:** the printed cradle glued to the main PCB, its two dowels, the two 2×5 H11 sockets and the long-pin headers. The H7B0 sits
+  where the sockets were; two vertical boards (knob-param electronics, x ±16) carry the signals up.
+- **Top board** (was the daughterboard): same height (z 30–31), now 37.8 × 22.7 so it covers both vertical boards' spring-contact strips
+  (16 contacts [A]); glued under the shoulders of the new cradle.
+- **Case cradle** (clear SLA): lip ring 1.0 thick, 0.2 in the faceplate cutout; 1.2 flange behind the faceplate on a 0.8 gasket on the knob
+  side and both long sides (the +y side is over the rail strip: the ring closes across inside the cutout only); the four lower ball seats.
+- **The cutout and the grip block are unchanged; the carrier narrows** 1.2 each side (±19.26 × ±11.82) to make room for the lip, and the
+  balls move in with its corners: (±16.64, +8.45 / −9.20). No skirt: the lip ring is the anti-rotation stop.
+- Checks **105/105** (v0.6 101/101). Tipping toward the knob 1.61 → 1.43, left/right 2.78 → 2.60 (both over 1.3).

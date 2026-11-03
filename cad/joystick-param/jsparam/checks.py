@@ -3,7 +3,7 @@ springs, preloaded by grub screws that are reached on the sub-assembly. The four
 springs are unchanged in kind from v0.3."""
 import math, itertools
 from build123d import Pos, Rot
-from .parts import cyl as cyl_
+from .parts import cyl as cyl_, DB_NAME, CC_NAME, GK_NAME
 
 def _mirror_ok(pts, tol=1e-6):
     s = {(round(x, 4), round(y, 4)) for x, y in pts}
@@ -20,9 +20,11 @@ def run(D, P):
     car = P["joystick carrier (printed)"]
     bez = P["screen carrier (printed)"]
     cradle_on = D.get("base") == "cradle"
-    plate = P["joystick cradle (printed, glued)"] if cradle_on else P["seat plate (printed, glued)"]   # v0.5: the cradle carries the seats
+    case_on = D.get("base") == "case"   # v0.7 layout v4: top board on the spring contacts, cradle captured by the case
+    plate = (P[CC_NAME] if case_on else P["joystick cradle (printed, glued)"] if cradle_on
+             else P["seat plate (printed, glued)"])   # v0.5: the cradle carries the seats; v0.7: the case cradle does
     stem = P["SW1 SKRHADE010 stem"]
-    db = P["joystick daughterboard"]
+    db = P[DB_NAME] if case_on else P["joystick daughterboard"]
     pcb = P["main PCB (proxy, local patch)"]
     fpc = P["screen FPC [A]"] if "screen FPC [A]" in P else P["screen jumper FPC [A]"]
     scr = [P[n] for n in P if n.startswith("top screen")][0]
@@ -105,6 +107,8 @@ def run(D, P):
         f"carrier ±{D['car_hw']:.2f} x ±{D['car_hh']:.2f}, hole ±{D['hole_hw']:.2f} x ±{D['hole_hh']:.2f}, slide {D['slide']:.2f}")
     row("bezel lip bigger than the hole", D["half_w"] - D["hole_hw"], ">= 0.6",
         D["half_w"] - D["hole_hw"] >= 0.6, "the lip cannot fall through. It is fitted from the front")
+    if case_on:
+        _case_rows(D, P, row, car, bez, plate, db)
     gaps = []
     for deg in range(0, 360, 45):
         a = math.radians(deg)
@@ -112,14 +116,22 @@ def run(D, P):
         moved = Pos(dx, dy, 0) * car
         gaps.append(min(moved.distance_to(plate), moved.distance_to(db)))   # v0.5: the daughterboard tab passes the skirt notch
     gmin = min(gaps)
-    row("skirt clear at switch end of travel", gmin, f">= {D['tol_mjf']:.2f}", gmin >= D["tol_mjf"] - 1e-4,
-        f"skirt gap {D['skirt_gap']:.2f}, slide {D['slide']:.2f}, remaining {D['tol_mjf']:.2f}. "
-        "gaps " + ", ".join(f"{v:.3f}" for v in gaps))
-    rot = min((Rot(0, 0, 3) * car).distance_to(plate), (Rot(0, 0, 3) * car).distance_to(db))
-    row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
-        "the skirt is the anti-rotation stop. It is not the tilt stop")
+    if case_on:   # v0.7: no skirt. The carrier slides inside the lip ring, which is also the anti-rotation stop
+        row("carrier clear of the cradle's lip ring at full slide (every 45°)", gmin, f">= {D['tol_sla']:.2f}", gmin >= D["tol_sla"] - 1e-4,
+            f"carrier ±{D['car_hw']:.2f} × ±{D['car_hh']:.2f} (v0.6 ±20.46 × ±13.02: narrowed {D['car_narrow']:.2f} by the lip and its "
+            f"clearance), lip inner face ±{D['lip_in_hw']:.2f} × ±{D['lip_in_hh']:.2f}; gaps " + ", ".join(f"{v:.3f}" for v in gaps))
+        rot = (Rot(0, 0, 3) * car).distance_to(plate)
+        row("3° carrier rotation meets the lip ring (anti-rotation stop)", rot, "< 0.05", rot < 0.05,
+            "the lip ring replaces the v0.6 skirt as the anti-rotation stop. It is not the tilt stop (the switch is)")
+    else:
+        row("skirt clear at switch end of travel", gmin, f">= {D['tol_mjf']:.2f}", gmin >= D["tol_mjf"] - 1e-4,
+            f"skirt gap {D['skirt_gap']:.2f}, slide {D['slide']:.2f}, remaining {D['tol_mjf']:.2f}. "
+            "gaps " + ", ".join(f"{v:.3f}" for v in gaps))
+        rot = min((Rot(0, 0, 3) * car).distance_to(plate), (Rot(0, 0, 3) * car).distance_to(db))
+        row("3° carrier rotation hits the rectangular skirt", rot, "< 0.05", rot < 0.05,
+            "the skirt is the anti-rotation stop. It is not the tilt stop")
     # 4 grub screws: on the sub-assembly only. No hole in the plate or the daughterboard
-    if cradle_on:   # v0.5: the press springs sit inside the corner balls; the grubs stay reachable from underneath
+    if cradle_on or case_on:   # v0.5: the press springs sit inside the corner balls; the grubs stay reachable from underneath
         from build123d import Pos as _P
         hits, who = 0.0, "none"
         grub_names = [n for n in P if n.startswith("grub screw")]
@@ -161,8 +173,14 @@ def run(D, P):
     fb = fpc.distance_to(pcb)
     row("FPC vs PCB slot at full slide", fb - D["slide"], ">= 0.2", fb - D["slide"] >= 0.2 - 1e-6,
         f"hole x {D['hole_x0']:.1f}-{D['hole_x1']:.1f}, ±{D['hole_hy']:.2f}")
-    row("FPC vs daughterboard", fpc.distance_to(db), ">= 1.0", fpc.distance_to(db) >= 1.0)
-    row("FPC vs seat plate", fpc.distance_to(plate), ">= 1.0", fpc.distance_to(plate) >= 1.0)
+    row("FPC vs daughterboard" if not case_on else "FPC vs the top board", fpc.distance_to(db), ">= 1.0", fpc.distance_to(db) >= 1.0)
+    if case_on:   # v0.7: the jumper's S1 leg (x 18.5) runs beside the +x hanger of the case cradle (no moving part between them)
+        fp_ = fpc.distance_to(plate)
+        row("FPC vs the case cradle (hanger beside the S1 leg)", fp_, f">= {T['cable_min']:.2f}", fp_ >= T["cable_min"] - 1e-6,
+            f"S1 leg at x {D['jmp_xv']:g}, hanger inner face x {D['nest_hw']:.2f}; both fixed (the leg's moving end is above the "
+            "cradle, inside the lip ring)")
+    else:
+        row("FPC vs seat plate", fpc.distance_to(plate), ">= 1.0", fpc.distance_to(plate) >= 1.0)
     # 6 hold-down springs, kept
     sm = D["spr_bore"] / 2 - D["spr_d"] / 2 - D["slide"]
     row("hold-down spring vs bore at full slide", sm, f">= {T['spring_min']}", sm >= T["spring_min"],
@@ -176,16 +194,18 @@ def run(D, P):
     row("compression spring clear of the plate", min(c.distance_to(plate) for c in css), ">= 1.0",
         min(c.distance_to(plate) for c in css) >= 1.0)
     # 7 daughterboard, headers, standoffs, plate
-    row("daughterboard vs plate (glued, faces touch)", db.distance_to(plate), "<= 0.02",
-        db.distance_to(plate) <= 0.02,
-        f"board {D['db'][0]:.2f} x {D['db'][1]:.2f} x {D['db_t']:g}. The v0.3 -y stop tab is gone")
+    row("top board on the cradle shoulders (glued, faces touch)" if case_on else "daughterboard vs plate (glued, faces touch)",
+        db.distance_to(plate), "<= 0.02", db.distance_to(plate) <= 0.02,
+        f"board {D['db'][0]:.2f} x {D['db'][1]:.2f} x {D['db_t']:g}" + (f" at y {D['board_y0']:.2f}..{D['board_y1']:.2f}; the spring "
+        "contacts push it up against the shoulders" if case_on else ". The v0.3 -y stop tab is gone"))
     row("switch opening in the plate", body.distance_to(plate), f">= {T['board_min']}",
         body.distance_to(plate) >= T["board_min"] - 1e-6,
         f"opening Ø{2 * D['cut_r']:.2f} over the land extent {D['sw_ext']:.2f}")
-    hb = min(h.distance_to(car) for h in hdrs)
-    row("header body vs carrier", hb, ">= 1.0", hb >= 1.0, "headers are on the underside; trim the 2.79 mm tails flush")
-    row("switch body vs headers", min(body.distance_to(h) for h in hdrs), ">= 0.3",
-        min(body.distance_to(h) for h in hdrs) >= 0.3, "the switch is on top, the headers underneath")
+    if hdrs:
+        hb = min(h.distance_to(car) for h in hdrs)
+        row("header body vs carrier", hb, ">= 1.0", hb >= 1.0, "headers are on the underside; trim the 2.79 mm tails flush")
+        row("switch body vs headers", min(body.distance_to(h) for h in hdrs), ">= 0.3",
+            min(body.distance_to(h) for h in hdrs) >= 0.3, "the switch is on top, the headers underneath")
     bots = [P[n] for n in P if n.startswith("M2 socket screw bottom")]
     tops = [P[n] for n in P if n.startswith("M2 socket screw top")]
     if cradle_on:
@@ -268,6 +288,10 @@ def run(D, P):
         row("stock standoff is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}",
             abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
             f"{D['standoff']['part']} ({D['standoff']['lcsc']}), Ø{D['standoff_d']:.1f} female-female brass")
+    elif case_on:
+        row("top board underside at its set height", D["riser_h"], f"{D['riser_catalog']:.2f}", abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
+            "v0.7: tb_z0, the v0.6 daughterboard height (the switch, carrier and bezel stack is unchanged); electronics "
+            "vb.top_board_z must match (assembly cross-check)")
     else:
         row("cradle height is the riser", D["riser_h"], f"{D['riser_catalog']:.2f}", abs(D["riser_h"] - D["riser_catalog"]) <= 0.05,
             "printed, so any height works; 30 keeps the v0.5 lift")
@@ -277,12 +301,17 @@ def run(D, P):
         f"faceplate front z {D['z_fp1']:.2f} = knob top {D['z_knob_top']:.2f} − {D['knob_proud']:.2f}. "
         f"Parameter was {D['knob_proud_in']:.2f}"
         f"{'' if not D['knob_proud_live'] else ' from knob-param'}")
-    row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
+    if case_on:
+        gone = [n for n in P if n.startswith(("header ", "socket ", "cradle locating", "joystick cradle (printed", "brass standoff"))]
+        row("no H11 sockets, long-pin headers, dowels or glued cradle (layout v4)", len(gone), "0", not gone,
+            "[Ed 3 Nov] the vertical boards carry the signals (spring contacts under the top board); the H7B0 sits where the sockets were")
+    else:
+      row("header mates the H11 socket", D["mate_in"], f"{T['mate_min']}-{T['mate_max']}",
         T["mate_min"] <= D["mate_in"] <= T["mate_max"],
         f"{D['hdr']['part']} pin {D['hdr']['mate']:.2f} into {D['sock']['part']} ({D['sock']['lcsc']}); "
         f"air {D['mate_air']:.2f}, derived riser {D['riser_h']:.2f} mm, pin tip z {D['z_hdr_tip']:.2f}. "
         + ("" if cradle_on else f"Catalog {D['standoff']['part']} body is {D['riser_catalog']:.0f} mm"))
-    row("socket count matches the headers", len(socks), "2", len([n for n in P if n.startswith("socket ") and "H11" in n]) == 2 and len(hdrs) == 2,
+      row("socket count matches the headers", len(socks), "2", len([n for n in P if n.startswith("socket ") and "H11" in n]) == 2 and len(hdrs) == 2,
         f"two {D['hdr'].get('rows', 1)}x{D['hdr']['n']}, one each side of the switch: "
         f"{2 * D['hdr'].get('rows', 1) * D['hdr']['n']} pins: 10 signals, 3.3 V and grounds" + ("" if cradle_on else "; the standoffs are GND too"))
     # 8 centring and symmetry
@@ -290,7 +319,7 @@ def run(D, P):
     row("switch on the carrier axis", off, "0", off <= 1e-6, "dead centre")
     xmir = lambda pts: {(round(-x, 4), round(y, 4)) for x, y in pts} == {(round(x, 4), round(y, 4)) for x, y in pts}
     sym = (_mirror_ok(D["standoff_xy"]) and _mirror_ok(D["hdr_xy"])
-           and (xmir(D["balls"]) if cradle_on else _mirror_ok(D["balls"]))   # v0.5: the top ball row is set by the rail strip
+           and (xmir(D["balls"]) if (cradle_on or case_on) else _mirror_ok(D["balls"]))   # v0.5: the top ball row is set by the rail strip
            and _mirror_ok(D["springs"]) and _mirror_ok(D["cs_xy"]))
     row("standoffs, headers, balls and both spring sets symmetric", 1.0 if sym else 0.0, "mirror", sym,
         f"standoffs (±{D['sx']:.2f}, ±{D['sy']:.2f}), compression springs (±{D['cs_x']:.2f}, ±{D['cs_y']:.2f})")
@@ -326,18 +355,20 @@ def run(D, P):
     row("socket-screw heads / cradle dowels on the main PCB", 1.0 if nuts_on else 0.0, "on", nuts_on,
         (f"two Ø{D['cradle']['pin']['d']:g} dowels" if cradle_on else
          f"head Ø{D['shcs']['head_d']:.1f} needs the screws at y ±{D['sy']:.2f} (the pad alone would have allowed ±{D['sy_pad']:.2f})"))
-    row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
-        f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
+    if D.get("skirt", True):
+        row("carrier skirt above the rail", D["z_skirt0"] - D["rail_z"], ">= 0", D["z_skirt0"] >= D["rail_z"],
+            f"skirt bottom z {D['z_skirt0']:.2f}, rail z {D['rail_z']:g} [A]")
     # 12 walls, floor, volumes
     row("bezel lip", D["bz_lip"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_lip"] <= 1.5 + 1e-9,
         f"matches the other bezel. Glue gap around the glass is {D['glue']:.2f}")
     row("carrier floor", D["car_floor"], f">= {D['print_min']}", D["car_floor"] >= D["print_min"] - 1e-9,
         f"floor is the print minimum. Derived riser {D['riser_h']:.2f} mm. Screen top {D['scr_top']:.2f}")
-    if not cradle_on:
+    if not cradle_on and not case_on:
         row("plate frame outside the switch opening", D["db_half_h"] - D["cut_r"], f">= {D['print_min']}",
             D["db_half_h"] - D["cut_r"] + 1e-9 >= D["print_min"], "thinnest on the axis, where the land is widest")
-    row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],
-        "anti-rotation skirt")
+    if D.get("skirt", True):
+        row("skirt wall", D["car_skirt"], f">= {D['print_min']}", D["car_skirt"] + 1e-9 >= D["print_min"],
+            "anti-rotation skirt")
     z_well = (max(D["z_roof"], D["z_scr0"]) + D["z_bz1"]) / 2   # v0.5: the glass pocket band, above the roof plate
     x_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
     y_wall = (D["half_h"] + D["pocket"][1] / 2) / 2
@@ -465,7 +496,7 @@ def run(D, P):
         mv = [n for n in P if n.startswith(("joystick carrier", "brass insert", "grub screw", "guide screw", "guide sleeve",
                                             "compression spring", "screen carrier"))]
         fx_ = [n for n in P if n.startswith(("joystick daughterboard", "joystick cradle", "hold-down spring", "screen FPC socket",
-                                             "SW1", "header", "cradle locating"))]
+                                             "SW1", "header", "cradle locating", "joystick top board", "joystick case cradle"))]
         low = jf & (_Pos(0, 0, D["z_c0"] - 0.01) * Box(80, 60, 30, align=(Align.CENTER, Align.CENTER, Align.MAX)))   # the loop under the carrier
         worst = min([(low.distance_to(P[n]), n) for n in fx_]
                     + [(low.distance_to(_Pos(dx, dy, 0) * P[n]), n + f" at ({dx:+.2f},{dy:+.2f})") for n in mv
@@ -477,6 +508,63 @@ def run(D, P):
     # silence a lint-level unused local if the wall probe x is kept only as documentation
     _ = x_wall
     return rows
+
+def _case_rows(D, P, row, car, bez, plate, db):
+    """v0.7 [Ed 3 Nov 11:03] the case cradle: lip in the faceplate cutout, flange on a gasket, top board in its nest."""
+    cc, gk, sla = D["cc"], D["gasket"], D["tol_sla"]
+    fp = P["faceplate (case proxy, UTR-8100)"]
+    gas = P[GK_NAME]
+    d = plate.distance_to(fp)
+    row("case cradle lip to the faceplate cutout (each side)", d, f">= {cc['lip_c'] - 0.01:.2f}", d >= cc["lip_c"] - 0.01,
+        f"lip ±{D['lip_out_hw']:.2f} × ±{D['lip_out_hh']:.2f} in the ±{D['hole_hw']:.2f} × ±{D['hole_hh']:.2f} cutout; flange "
+        f"{D['z_fp0'] - D['z_fl1']:.2f} under the faceplate. [A] 0.2 is one SLA tolerance: with the case and the cradle both at ±0.20 "
+        "the lip can bind. Fit-check and sand the lip")
+    row("case cradle lip in the cutout (engagement)", D["lip_engage"], ">= 1.0", D["lip_engage"] >= 1.0 - 1e-9,
+        f"lip z {D['z_fp0']:.2f}→{D['z_lip1']:.2f} inside the {D['fp_t']:g} faceplate; it locates the cradle in x and y")
+    row("case cradle walls ≥ SLA minimum (lip, flange, hangers, shoulders)", min(cc["lip_t"], cc["flange_t"], cc["wall"], cc["shoulder"]),
+        ">= 0.80", min(cc["lip_t"], cc["flange_t"], cc["wall"], cc["shoulder"]) >= 0.8 - 1e-9,
+        f"{cc['part']}: lip {cc['lip_t']:g}, flange {cc['flange_t']:g}, hangers {cc['wall']:g}, shoulders {cc['shoulder']:g} [S SLA 0.8]")
+    row("grip block covers the cutout (and the lip in it) at full slide", D["block_cover_slide"], f">= {sla:.2f}",
+        D["block_cover_slide"] >= sla - 1e-9,
+        f"cover {D['block_cover_rest']:.2f} at rest (fp_overlap, unchanged: the cutout keeps its size), {D['block_cover_slide']:.2f} at the "
+        f"{D['slide']:.2f} slide; the lip is {cc['lip_c']:.2f}..{cc['lip_c'] + cc['lip_t']:.2f} inside the cutout edge")
+    row("grip block clear of the lip top at full press", D["block_lip_press"], f">= {sla:.2f}", D["block_lip_press"] >= sla - 1e-9,
+        f"block underside z {D['z_bz0']:.2f} − press {D['press_travel']:.2f}; lip top z {D['z_lip1']:.2f}")
+    lo, hi = gk["comp_lo"], gk["comp_hi"]
+    row("gasket compression at nominal inside its working band", gk["comp_nom"], f"{lo:.2f}-{hi:.2f}", lo <= gk["comp_nom"] <= hi,
+        f"{gk['part']}: {gk['t']:g} free, {D['gk_nom']:.2f} at nominal; the band is {D['gk_range'][0]:.2f}-{D['gk_range'][1]:.2f} "
+        f"(±{(D['gk_range'][1] - D['gk_range'][0]) / 2:.2f} of cradle height). The spring contacts set the force, not the stack")
+    dg = max(gas.distance_to(fp), gas.distance_to(plate))
+    row("gasket between the flange and the faceplate back", dg, "<= 0.02", dg <= 0.02,
+        f"flange top z {D['z_fl1']:.2f}, faceplate back z {D['z_fp0']:.2f}; −y and ±x sides only (the +y side is over the rail strip)")
+    row("gasket land under the faceplate (narrowest)", D["gk_land_min"], f">= {gk['land_min']:.2f}", D["gk_land_min"] >= gk["land_min"] - 1e-9,
+        f"±x sides {D['gk_land_x']:.2f} (flange edge x {D['fl_x1']:.2f}: case side-wall glow coat), knob side {D['gk_land_y']:.2f} "
+        f"(flange edge to the knob collar + {cc['collar_air']:g}). Tight on the sides")
+    bx = D["board_x1"] - D["vb_contact_x"] - D["tb_pad"] / 2 - D["tb_tol"]
+    by = D["tb_y_over"]
+    row("top board covers the spring-contact pads (copper to the edge)", min(bx, by + 0.6), f">= {D['cu_edge']:.2f}",
+        min(bx, by + 0.6) >= D["cu_edge"] - 1e-9,
+        f"board ±{D['board_x1']:.2f} × {D['board_y0']:.2f}..{D['board_y1']:.2f}; contact line x ±{D['vb_contact_x']:g} [A mirror of "
+        f"electronics], pads Ø{D['tb_pad']:g} ± {D['tb_tol']:g}; the board runs {by:g} past each end of the vertical boards")
+    row("top board edges clear of the nest walls", cc["nest_c"], f">= {sla:.2f}", cc["nest_c"] >= sla - 1e-9,
+        f"nest ±{D['nest_hw']:.2f} × {D['nest_y0']:.2f}..{D['nest_y1']:.2f}")
+    sg = D["z_seat0"] - D["z_db1"]
+    row("lower ball seats clear of the top board", sg, ">= 1.0", sg >= 1.0 - 1e-9,
+        f"seat bosses from z {D['z_seat0']:.2f}, board top z {D['z_db1']:.2f}: top-board parts under the seats stay under "
+        f"{sg - 0.3:.1f} mm [C]; balls at (±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}) (v0.6 ±17.80, +8.45 / −10.30)")
+    row("top board flex at a worst-case click (on the contact lines)", D["tb_flex"], "<= 0.10", D["tb_flex"] <= 0.10,
+        f"{D['push_hi']:.2f} N at the centre, {D['db_t']:g} FR4 spanning {2 * D['vb_contact_x']:g} [A E 18 GPa]; adds to the "
+        f"{D['press_travel']:.2f} press. A 1.6 board would flex about {D['tb_flex'] / (1.6 / D['db_t']) ** 3:.3f}")
+    cb_ = min(D["car_hw"] - (abs(x) + D["boss_r"]) for x, _ in D["balls"])
+    cby = min(D["car_hh"] - (abs(y) + D["boss_r"]) for _, y in D["balls"])
+    row("carrier cup bosses inside the carrier outline", min(cb_, cby), ">= 0", min(cb_, cby) >= -1e-6,
+        f"v0.7: the balls follow the narrower carrier's corners in ([Ed] 'as far out as the carrier allows'): "
+        f"(±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}), cup boss r {D['boss_r']:.2f}")
+    fits = D["car_hw"] + D["slide"] + sla <= D["lip_in_hw"] + 1e-9 and D["car_hh"] + D["slide"] + sla <= D["lip_in_hh"] + 1e-9
+    row("carrier drops through the lip ring", 1.0 if fits else 0.0, "fits", fits,
+        f"carrier ±{D['car_hw']:.2f} × ±{D['car_hh']:.2f} + slide {D['slide']:.2f} + {sla:.2f} inside the lip ±{D['lip_in_hw']:.2f} × "
+        f"±{D['lip_in_hh']:.2f}: the joystick goes in from the front after the cradle is in from the back")
+
 
 def clashes(P, tol=1e-3):
     names = list(P); out = {}

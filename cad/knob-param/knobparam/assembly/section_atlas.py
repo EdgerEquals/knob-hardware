@@ -26,7 +26,7 @@ def _parts():
     parts, keys = view(parts, keys, D, "panel")
     jp, JD = js.placed()
     parts = dict(parts); parts.update(jp)
-    # [Ed 18:34] the H7B0 (LQFP100) is an electronics part now: board back at the low middle, D notched round it
+    # [Ed 3 Nov] v0.23: the H7B0 (LQFP100) is an electronics part on the board front under the joystick; D is whole
     return D, JD, parts
 
 
@@ -94,9 +94,11 @@ def _z_levels(D, JD, step):
     """A slice every 'step' mm from the back cover to the knob screen, with the key feature levels swapped in."""
     feats = [(D["amo_upper_z"][0] + D["amo_t"] / 2, "rear AMOLED"), (D["amo_lower_z"][0] + D["amo_t"] / 2, "front AMOLED"),
              ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear"), (D["z_pcb_back"] - 0.6, "PCB back: emitters"),
-             (D["z_pcb_back"] / 2, "main PCB (windows)"), (0.5, "PCB front: Hall sensors, clear OLED"),
+             (D["z_pcb_back"] / 2, "main PCB (windows)"), (0.5, "PCB front: Hall sensors, clear OLED, H7B0, vertical-board headers"),
              (D["hb_mid"], "herringbone ring band"), (5.0, "Hall arm, detent, lever"), (12.0, "1220 and 716 cans"),
-             (20.0, "jack bodies, knob shell"), ((JD["z_db0"] + JD["z_db1"]) / 2, "joystick board on the cradle"),
+             (20.0, "jack bodies, knob shell"), ((JD["z_db0"] + JD["z_db1"]) / 2, "joystick top board on the vertical boards' contacts"),
+             (D["vb_standoff"]["z"], "vertical boards and their standoff"), (D["vb_z1"] - 1.2, "vertical boards' spring-contact strips"),
+             ((JD["z_fl0"] + JD["z_fl1"]) / 2, "joystick case cradle: flange behind the faceplate"),
              (JD["z_sw1"] - 0.3, "joystick switch, guide heads"), (JD["z_ball"], "joystick balls in their cups"),
              ((D["z_fp0"] + D["z_fp1"]) / 2, "faceplate, joystick carrier floor"), ((JD["z_bz0"] + JD["z_roof"]) / 2, "joystick grip block"),
              ((JD["z_scr0"] + JD["scr_top"]) / 2, "joystick glass"), (JD["z_knob_top"] - 0.5, "knob, top of the shell")]
@@ -130,7 +132,7 @@ def sheet_horizontal(D, JD, parts, out, step=2.5):
     _save(fig, out)
 
 
-def sheet_long(D, parts, out, xs=(-20, -15, -10, -5, 0, 5, 10, 15, 20)):
+def sheet_long(D, parts, out, xs=(-20, -16, -15, -10, -5, 0, 5, 10, 15, 16, 20)):
     ncol = 3
     nrow = math.ceil(len(xs) / ncol)
     fig = plt.figure(figsize=(ncol * 8.2, nrow * 5.6 + 1.5), dpi=100)
@@ -151,11 +153,12 @@ def sheet_long(D, parts, out, xs=(-20, -15, -10, -5, 0, 5, 10, 15, 20)):
 def sheet_across(D, JD, parts, out):
     py = D["place_y"]
     a = math.radians(D["mech_rot"]); ex, ey = D["enc_xy"]; enc_y = math.sin(a) * ex + math.cos(a) * ey
-    cuts = [(py + JD["by_top"], "joystick top balls and cradle towers"), (py + 5.6, "joystick press springs (top pair)"),
-            (py, "joystick axis: switch, guides, peg, headers"), (py - JD["by_bot"], "joystick knob-side balls and dowels"),
+    cuts = [(py + JD["by_top"], "joystick top balls and their seats on the case cradle"), (py + 5.6, "joystick press springs (top pair)"),
+            (py, "joystick axis: switch, guides, peg, hold-down springs"), (py - JD["by_bot"], "joystick knob-side balls and seats"),
+            (D["vb_standoff"]["y"], "vertical boards' standoff, header legs"),
             (enc_y, "encoder wheel"), (0.0, "knob axis"), (-10.0, "1220 motor and lower knob"),
-            (D["clear_oled_xy"][1], "clear OLED centre, window D over the top of the H7B0"),
-            (D["mcu"]["xy"][1], "the H7B0 (LQFP100), low middle, under the notch in D"),
+            (D["clear_oled_xy"][1], "clear OLED centre, window D (whole again)"),
+            (D["mcu"]["xy"][1], "the H7B0 (LQFP100) on the board front under the joystick, between the vertical boards"),
             (D["jack_y"], "jacks"), (D["usb_xy"][1], "USB-C"),
             (D["corners"][0][1], "bottom corner posts")]
     ncol = 4
@@ -189,7 +192,7 @@ def sheet_oblique(D, JD, parts, out):
                                          "toward the knob as it comes out of the panel"),
             ("v", D["mcu"]["xy"][0], D["mcu"]["xy"][1], 25, "through the H7B0 (LQFP100), 25°"),
             ("v", D["mcu"]["xy"][0], D["mcu"]["xy"][1], 155, "through the H7B0 (LQFP100), 155°"),
-            ("t", D["mcu"]["xy"][1], -1.0, 35, f"tilted plane through the board back at y {D['mcu']['xy'][1]:g} (the H7B0), leaning 35°\n"
+            ("t", D["mcu"]["xy"][1], 0.8, 35, f"tilted plane through the board front at y {D['mcu']['xy'][1]:g} (the H7B0), leaning 35°\n"
                                               "toward the knob as it comes out of the panel")]
     ncol = 3
     nrow = math.ceil(len(jobs) / ncol)
@@ -274,7 +277,7 @@ def sheet_overall(D, parts, out, tol=0.08):
         l, _c = colour(n); legend.setdefault(l, _c)
     fig.legend(handles=[Patch(fc=c, ec="k", lw=0.3, label=l) for l, c in sorted(legend.items())], loc="lower center", ncol=4,
                fontsize=11, frameon=False)
-    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.6; H7B0 LQFP100 on the board back, low middle). "
+    fig.suptitle(f"Knob module {D['version']}: complete assembly (knob stack, case, joystick v0.7 on the vertical boards; H7B0 LQFP100 on the board front under the joystick). "
                  "Resin case drawn see-through.",
                  fontsize=16, x=0.01, ha="left")
     fig.subplots_adjust(bottom=0.08, left=0.01, right=0.99)
