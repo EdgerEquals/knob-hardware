@@ -38,11 +38,18 @@ P = dict(
     enc_pip_h=0.60,   # [A] that boss height
     enc_tip_relief=0.9,   # [A] tooth-tip underside opened this far in, clear of the thrust balls
     enc_pin_gap=0.05,   # [A] header and standoffs stop this short of the main PCB
+    # v0.24 [Ed 3 Nov 13:35-13:39] the riser hangs on its header alone: through-hole pins at the inner end (the main-board front is clear
+    # there), surface-mount pins at the outer end, which sits under vertical board R's foot (nothing may come through there). No standoffs
+    enc_standoffs=False,     # [Ed 13:39] no standoffs (True = v0.17-v0.23)
+    enc_header_tht=(4, 5),   # [Ed 13:35] header pins (0 = outer end, 5 = inner end) that go through the main board; the rest are SMT
+    enc_tht_drill=0.9,       # [A] main-board PTH for a 0.64 header pin
+    enc_tht_tail=1.0,        # [A] tail past the main-board front
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "main_knob": ["hb_mid"]}
-EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot"]   # -> electronics (J2 pads below the wheel)
+EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot",   # -> electronics (J2 pads below the wheel)
+           "enc_tht_xy"]                             # -> electronics (v0.24: main-board holes for the riser's THT pins, mechanism frame)
 
 
 def derive(D):
@@ -90,4 +97,13 @@ def derive(D):
     D["wheel_ring_r0"] = D["rim_r0"] - D["wheel_ring_in"]
     D["counts_knob"] = 4 * D["n_win"] * D["z_ring"] / D["z_enc_pinion"]
     D["sens_xy"] = (ex + D["sens_r"] * math.cos(math.radians(D["sens_dir"])), ey + D["sens_r"] * math.sin(math.radians(D["sens_dir"])))
+    # v0.24 [Ed 13:35]: header pin positions (mechanism frame) and which go through the main board
+    a = math.radians(D["sens_dir"] - 270.0); c, s_ = math.cos(a), math.sin(a)
+    n, pitch = D["enc_header_n"], D["enc_header_pitch"]
+    pts = []
+    for k in range(n):
+        lx, ly = (k - (n - 1) / 2) * pitch, -D["sens_r"]
+        pts.append((ex + c * lx - s_ * ly, ey + s_ * lx + c * ly))
+    D["enc_pin_xy"] = pts
+    D["enc_tht_xy"] = [(x, y, D["enc_tht_drill"]) for k, (x, y) in enumerate(pts) if k in D["enc_header_tht"]]
     return D

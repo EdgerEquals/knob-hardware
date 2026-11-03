@@ -96,8 +96,9 @@ def _z_levels(D, JD, step):
              ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear"), (D["z_pcb_back"] - 0.6, "PCB back: emitters"),
              (D["z_pcb_back"] / 2, "main PCB (windows)"), (0.5, "PCB front: Hall sensors, clear OLED, H7B0, vertical-board headers"),
              (D["hb_mid"], "herringbone ring band"), (5.0, "Hall arm, detent, lever"), (12.0, "1220 and 716 cans"),
-             (20.0, "jack bodies, knob shell"), ((JD["z_db0"] + JD["z_db1"]) / 2, "joystick top board on the vertical boards' contacts"),
-             (D["vb_standoff"]["z"], "vertical boards and their standoff"), (D["vb_z1"] - 1.2, "vertical boards' spring-contact strips"),
+             (20.0, "jack bodies, knob shell"), ((JD["z_db0"] + JD["z_db1"]) / 2, "joystick top board on the vertical boards' end tabs"),
+             (15.0, "vertical boards (no standoff since v0.24)"), (D["vb_ze"] - 1.0, "vertical boards' male 1.27 headers"),
+             ((JD["z_sock0"] + JD["z_db0"]) / 2, "1.27 pins in the top board's sockets, the end tabs (posts)"),
              ((JD["z_fl0"] + JD["z_fl1"]) / 2, "joystick case cradle: flange behind the faceplate"),
              (JD["z_sw1"] - 0.3, "joystick switch, guide heads"), (JD["z_ball"], "joystick balls in their cups"),
              ((D["z_fp0"] + D["z_fp1"]) / 2, "faceplate, joystick carrier floor"), ((JD["z_bz0"] + JD["z_roof"]) / 2, "joystick grip block"),
@@ -153,9 +154,9 @@ def sheet_long(D, parts, out, xs=(-20, -16, -15, -10, -5, 0, 5, 10, 15, 16, 20))
 def sheet_across(D, JD, parts, out):
     py = D["place_y"]
     a = math.radians(D["mech_rot"]); ex, ey = D["enc_xy"]; enc_y = math.sin(a) * ex + math.cos(a) * ey
-    cuts = [(py + JD["by_top"], "joystick top balls and their seats on the case cradle"), (py + 5.6, "joystick press springs (top pair)"),
-            (py, "joystick axis: switch, guides, peg, hold-down springs"), (py - JD["by_bot"], "joystick knob-side balls and seats"),
-            (D["vb_standoff"]["y"], "vertical boards' standoff, header legs"),
+    cuts = [(py + JD["by_top"], "joystick top balls and their seats on the case cradle"), (py + 3.0, "joystick guide (+x): head, cushion, sleeve"),
+            (py, "joystick axis: switch, the bezel's cup, guides, hold-down springs"), (py - JD["by_bot"], "joystick knob-side balls and seats"),
+            (D["vb_legs"][1][3][1], "vertical boards' hybrid headers (R: SMT legs over the encoder riser)"),
             (enc_y, "encoder wheel"), (0.0, "knob axis"), (-10.0, "1220 motor and lower knob"),
             (D["clear_oled_xy"][1], "clear OLED centre, window D (whole again)"),
             (D["mcu"]["xy"][1], "the H7B0 (LQFP100) on the board front under the joystick, between the vertical boards"),

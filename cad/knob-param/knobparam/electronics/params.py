@@ -27,8 +27,10 @@ P = dict(
                     # rail, screen edges ±19.36, D = clear OLED less its 1.6 ledge, C/E 0.5 short of the OLED edge, 6 mm A/B web on x = 0 [A].
                     # [Ed 3 Nov] layout v4: A and B stop at the joystick grip block's edge (y 26.06; A 202.9 -> 127.5, B 159.1 -> 107.3; A
                     # loses 0.7 more because the vertical board L's header body at y 26.5 keeps its 0.5), D is whole again (917.5; the
-                    # H7B0 left it for the board front under the joystick). A, B: rear AMOLED; C, E: front AMOLED; D: clear OLED
-        "A": [(-19.36, 13.75), (-19.32, 25.29), (-19.13, 25.63), (-18.83, 25.88), (-18.46, 26), (-15.49, 26), (-15.08, 26.06), (-3.8, 26.04), (-3.29, 25.77), (-3.02, 25.26), (-3.02, 22.45), (-3.23, 22.01), (-3.63, 21.72), (-5.86, 21.2), (-7.79, 20.58), (-9.77, 19.71), (-11.54, 18.73), (-13.32, 17.51), (-14.87, 16.21), (-16.3, 14.78), (-17.7, 13.1), (-18.04, 12.91), (-18.53, 12.87), (-18.82, 12.96), (-19.13, 13.21)],
+                    # H7B0 left it for the board front under the joystick). A, B: rear AMOLED; C, E: front AMOLED; D: clear OLED.
+                    # v0.24: regenerated for the hybrid two-row header (vertical boards), no encoder standoffs and no grub-access holes:
+                    # A 127.5 -> 127.7 (L's header corner), B-E unchanged (the riser's header and board still set B's edge)
+        "A": [(-17.56, 13.25), (-18.04, 12.91), (-18.63, 12.89), (-19.13, 13.21), (-19.36, 13.75), (-19.36, 25), (-19.24, 25.47), (-18.99, 25.77), (-18.65, 25.96), (-18.36, 26), (-4, 26.06), (-3.62, 25.98), (-3.23, 25.69), (-3, 25.16), (-3, 22.65), (-3.12, 22.17), (-3.38, 21.87), (-3.73, 21.69), (-5.86, 21.2), (-7.79, 20.58), (-9.65, 19.77), (-11.42, 18.8), (-13.21, 17.59), (-14.77, 16.3), (-16.21, 14.88)],
         "B": [(3.83, 21.66), (3.3, 21.93), (3.02, 22.45), (3, 25.06), (3.08, 25.44), (3.23, 25.69), (3.53, 25.94), (3.9, 26.06), (11.23, 26.02), (11.64, 25.77), (14.36, 22.54), (14.65, 22.38), (15.02, 22.46), (16.57, 23.7), (16.95, 23.78), (17.42, 23.67), (17.73, 23.43), (19.15, 21.76), (19.34, 21.33), (19.36, 13.85), (19.24, 13.38), (18.98, 13.07), (18.53, 12.87), (18.14, 12.88), (17.77, 13.04), (16.03, 15.07), (14.37, 16.66), (12.45, 18.14), (10.37, 19.4), (8.79, 20.17), (7.16, 20.8), (5.48, 21.31)],
         "C": [(10.43, -19.46), (12.67, -17.99), (14.47, -16.57), (16.02, -15.07), (17.78, -13.04), (18.14, -12.88), (18.53, -12.87), (18.9, -13.01), (19.19, -13.29), (19.36, -13.85), (19.36, -20.08), (19.24, -20.55), (18.92, -20.91), (18.36, -21.08), (11.02, -21.06), (10.51, -20.79), (10.24, -20.28), (10.29, -19.71)],
         "D": [(19.36, -45.9), (19.28, -46.28), (19.07, -46.61), (18.74, -46.82), (18.36, -46.9), (-18.36, -46.9), (-18.83, -46.78), (-19.24, -46.37), (-19.36, -45.9), (-19.36, -24.18), (-19.24, -23.71), (-18.83, -23.3), (-18.36, -23.18), (18.36, -23.18), (18.83, -23.3), (19.24, -23.71), (19.36, -24.18)],
@@ -50,31 +52,32 @@ P = dict(
             t=1.0,           # [A] FR4
             y=(26.5, 48.4),  # [Ed 09:47] span: above windows A/B (capped at the grip block's edge, 26.06) to 0.6 under the PCB top edge
             z0=0.02,         # [A] bottom edge seated on the main-board front (0.02 model gap)
-            top_board_z=30.0,   # [A] the joystick top board's underside (joystick tb_z0; assembly cross-check). The contacts reach it
+            top_board_z=30.0,   # [A] the joystick top board's underside (joystick tb_z0; assembly cross-check). v0.24: the end tabs bear on it
             env=1.5,         # [A] parts envelope on each face, used only for the room checks (not modelled as a solid)
             roles=("power", "CAN + joystick lines")),
-    vb_hdr=dict(part="right-angle 2.54 mm single-row pin header, body on the main board against the vertical board's outer face [A]",
-                pitch=2.54, body_x=2.5, body_z=2.5,   # [A] insulator 2.5 x 2.5
-                row=1.27,       # [A] the legs into the main board, this far out from the outer face (x ±17.77)
-                drill=1.0, pad=1.7, pin=0.64, tail=1.0,   # [A] PTH, pad, square pin, tail past the main-board back
-                end=1.0,        # [A] first pin centre this far in from the board's −y end
-                y_max=41.1,     # [A] last pin centre at or below this y: its pad stays 1.0 from the top corner PCB notch [brief]
-                                # (case corners (±21.2, 45.35), notch r 3.55; assembly cross-check). Above it the corner post is in the way
-                skip=((1, 26.0, 31.3),)),   # [A] (board side, y from, y to): no legs there. R (+x): the encoder daughterboard's standoff
-                                # (Ø2.5 at (17.57, 28.64)) sits on the main-board back under R's foot; legs keep pad + 0.5 off it
-                                # (assembly cross-check). L has nothing behind it
-    vb_pogo=dict(part="right-angle spring-contact (pogo) strip, 2.54 mm, soldered along the outer face's top edge [A]; part to pick",
-                 pitch=2.54,    # [A] 8 per board over the 21.9 mm edge = 16 (doc: about 16-20)
-                 body_x=2.0, body_z=2.4,   # [A] insulator on the outer face; the plungers run up its middle (x ±17.5)
-                 plunger=0.9,   # [A] plunger Ø
-                 free=1.5,      # [A] plunger tip above the body top when free
-                 travel=1.0,    # [Ed 11:25] "about 1 mm of travel" [A]
-                 work=0.5,      # [A] compression at the nominal stack: the middle of the travel
-                 f_lo=0.5, f_nom=0.75),   # [A] N per contact at the least compression in the stack band / at nominal (doc: 0.5-1 N)
-    vb_standoff=dict(part="M2 female-female brass standoff Ø3.2, cut to the 31.0 gap between the boards (stock 30/32 + shim, or printed) [A]",
-                     y=31.0, z=15.0,   # [Ed brief] about y 31, z 15: clear of the chip (z 0-1.6) and of the hold-down springs (y 38-43)
-                     od=3.2,
-                     screw=dict(part="ISO 7984 M2x4 A2 low-head socket screw", head_d=3.8, head_k=1.6, hole=2.4, d_model=1.7)),
+    # [Ed 13:31-13:39] bottom joint: a hybrid right-angle header, two rows at 1.27 (2.54 cannot carry ~20 lines in the length): through-hole
+    # legs where the main-board back is clear, surface-mount legs where it is not (R over the encoder riser's pads). No standoff [Ed 13:39]
+    vb_hdr=dict(part="right-angle 1.27 mm two-row pin header, hybrid THT / SMT legs into the main board, insulator on the main board "
+                     "against the vertical board's outer face [A]; part to pick",
+                pitch=1.27, rows=2,
+                row0=0.90,      # [A] first leg row this far out from the outer face (the second row 1.27 further)
+                body_x=3.0, body_z=2.6,   # [A] insulator
+                drill=0.70, pad=0.95, pin=0.40, tail=1.0,   # [A] PTH for the 0.4 square legs (SMT legs use the same 0.95 pads)
+                end=0.635,      # [A] first leg this far in from the board's -y end
+                y_max=(40.5, 40.5),   # [A] last leg per row (inner, outer): pads stay 1.0 from the top corner PCB notch and the 3.0 body
+                                      # stays 1.0 from the top corner post (assembly cross-checks); 11 legs a row
+                smt=((1, 26.5, 32.0),)),   # [Ed 13:31] (board side, y from, y to): SMT legs. R (+x) over the encoder riser's SMT pads on the
+                                           # main-board back (y 26.5-32); L (-x) all through-hole (its back is clear) [A]
+    # [Ed 13:46/14:08] top joint: male 1.27 pins on the top edge into sockets under the top board; the boards' end tabs bear on the top board
+    vb_pin=dict(part="right-angle 1.27 mm single-row male header, SMT on the outer face at the top edge, pins up [A]; part to pick",
+                pitch=1.27, n=13,  # [A] 13 a board (26): doc about 16-20 [Ed 11:25]; R: ~10 joystick lines + 3.3 V + grounds
+                off=1.0,           # [A] pin row this far out from the outer face (x ±17.5, the v0.7 contact line)
+                body_x=1.6, body_z=2.0, pin=0.40,   # [A] insulator on the face under the board's lowered edge; square pins
+                len_extra=0.40,    # [A] mirror of the joystick socket: body length = n × pitch + this
+                sock_h=3.4,        # [S] mirror of the joystick socket height (XFCN PM127V-11-xxP-H34 class, 3.4)
+                sock_ins=(1.83, 3.00),   # [S]/[A] mirror of the joystick socket insertion range (Samtec FLE 1.83 min; 0.4 short of the body)
+                sock_clear=0.30,   # [A] board edge under the sockets, and the tabs, this far from the socket body
+                tab_min=2.0),      # [A] narrowest end tab (post) that bears on the top board
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side
     hall_z=0.65,   # [A] TMAG5273 element above the adapter top
@@ -85,7 +88,7 @@ P = dict(
     hv_flick=3000.0,   # [A] fast flick peak angular velocity (deg/s)
 )
 
-IMPORTS = {"under_pcb": ["d_big_tip"]}
+IMPORTS = {"under_pcb": ["d_big_tip", "enc_tht_xy"]}   # enc_tht_xy: v0.24 encoder-riser THT pins (main-board holes, build time only)
 EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> under_pcb (big-gear size from the board outline)
            "clear_oled", "clear_oled_xy",                 # -> case (ledge relief round the clear OLED)
            "adapter_d", "adapter_fps", "adapter_env"]   # -> control_dial (cup pocket, J1/U3 positions, strap height)
@@ -109,23 +112,38 @@ def derive(D):
     D["pcb_kicad"] = json.load(open(pj)) if os.path.exists(pj) else {}
     gj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "joystick-daughterboard", "geom.json")
     D["js_pcb_holes"] = json.load(open(gj)).get("main_pcb_holes", []) if os.path.exists(gj) else []   # joystick build output
-    # [Ed 3 Nov] layout v4: the vertical boards' header pins, spring contacts and standoff (panel frame)
-    V, H, G = D["vb"], D["vb_hdr"], D["vb_pogo"]
+    # [Ed 3 Nov] layout v4: the vertical boards (panel frame). v0.24 [Ed 13:31-14:08]: a hybrid two-row 1.27 header at the bottom, male
+    # 1.27 pins on the top edge into the top board's sockets, end tabs that bear on the top board (the posts); no standoff
+    V, H, Q = D["vb"], D["vb_hdr"], D["vb_pin"]
     D["vb_face_out"] = V["x"] + V["t"] / 2
     D["vb_face_in"] = V["x"] - V["t"] / 2
-    D["vb_z1"] = V["top_board_z"] - (G["free"] - G["work"])           # board top edge = contact body top
-    D["vb_contact_x"] = D["vb_face_out"] + G["body_x"] / 2
     y0, y1 = V["y"]
-    D["vb_pin_x"] = D["vb_face_out"] + H["row"]
-    npin = int((H["y_max"] - (y0 + H["end"])) / H["pitch"] + 1e-9) + 1
-    grid = [y0 + H["end"] + k * H["pitch"] for k in range(npin)]
-    D["vb_pins"] = {sx: [y for y in grid if not any(s_ == sx and a <= y <= b for s_, a, b in H.get("skip", ()))] for sx in (-1, 1)}
-    D["vb_pin_y"] = grid                                                # the leg grid (both boards); vb_pins: the legs each board has
-    D["vb_hdr_y1"] = grid[-1] + H["pitch"] / 2
-    n = int((y1 - y0 - 2 * 1.0) / G["pitch"] + 1e-9) + 1                # contacts at least 1.0 in from each end, centred
-    span = (n - 1) * G["pitch"]
-    D["vb_contact_y"] = [(y0 + y1) / 2 - span / 2 + k * G["pitch"] for k in range(n)]
-    D["vb_n_contacts"] = 2 * n
+    D["vb_z1"] = V["top_board_z"]                                       # the tabs' top edges bear on the top board's underside
+    D["vb_ze"] = V["top_board_z"] - Q["sock_h"] - Q["sock_clear"]       # the edge under the sockets (the male header sits under it)
+    D["vb_top_x"] = D["vb_face_out"] + Q["off"]                          # male pin row
+    yc, span = (y0 + y1) / 2, (Q["n"] - 1) * Q["pitch"]
+    D["vb_top_y"] = [yc - span / 2 + k * Q["pitch"] for k in range(Q["n"])]
+    sl = Q["n"] * Q["pitch"] + Q["len_extra"]
+    D["vb_sock_y"] = (yc - sl / 2, yc + sl / 2)                          # the joystick socket's body (mirror; assembly cross-check)
+    D["vb_tabs"] = ((y0, D["vb_sock_y"][0] - Q["sock_clear"]), (D["vb_sock_y"][1] + Q["sock_clear"], y1))
+    D["vb_n_top"] = 2 * Q["n"]
+    D["vb_eng_nom"] = (Q["sock_ins"][0] + Q["sock_ins"][1]) / 2         # [A] pins to the middle of the insertion range
+    D["vb_tip_z"] = V["top_board_z"] - Q["sock_h"] + D["vb_eng_nom"]
+    # bottom header legs: two rows, a 1.27 grid from the -y end; each row stops at its y_max; SMT inside the smt ranges, THT elsewhere
+    legs = {}
+    for sx in (-1, 1):
+        L = []
+        for r in range(H["rows"]):
+            x = sx * (D["vb_face_out"] + H["row0"] + r * H["pitch"])
+            k = 0
+            while y0 + H["end"] + k * H["pitch"] <= H["y_max"][r] + 1e-9:
+                y = y0 + H["end"] + k * H["pitch"]
+                smt = any(s_ == sx and a <= y <= b for s_, a, b in H.get("smt", ()))
+                L.append((x, y, "smt" if smt else "tht"))
+                k += 1
+        legs[sx] = L
+    D["vb_legs"] = legs
+    D["vb_hdr_y1"] = max(y for L in legs.values() for _, y, _ in L) + H["pitch"] / 2
     from .parts import pcb as _pcb   # v0.19b: KiCad back parts that now sit in a window (move them when the board is regenerated)
     D["pcb_win_displaced"] = _pcb.window_hits(D, D["pcb_kicad"])
     D["pcb_hole_displaced"] = _pcb.hole_hits(D, D["pcb_kicad"])   # v4: stale KiCad joystick holes / slot under the chip or the vertical boards

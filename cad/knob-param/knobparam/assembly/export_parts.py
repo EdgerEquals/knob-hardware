@@ -11,7 +11,12 @@ RULES = [
     (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
     # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick, and the joystick's case cradle / gasket / top board
     (r"^vertical board [LR] \(", "board", "vertical board (FR-4, parts on both faces)", "PCBWay PCBA"),
-    (r"^vertical board [LR] header", "buy", "right-angle 2.54 mm pin header (on the PCBA)", "on the PCBA"),
+    (r"^vertical board [LR] header", "buy", "right-angle 1.27 mm two-row hybrid THT / SMT header (on the PCBA)", "on the PCBA"),
+    # v0.24 [Ed 13:31-14:08]: pins into sockets, the bead, the up-stop cushions
+    (r"^vertical board [LR] male pins", "buy", "right-angle 1.27 mm single-row male header, SMT (on the PCBA)", "on the PCBA"),
+    (r"top-board socket", "buy", "1.27 mm single-row female socket 3.4, SMT (on the top-board PCBA)", "on the PCBA"),
+    (r"form-in-place", "buy", "form-in-place silicone bead (dispensed)", "dispense"),
+    (r"up-stop cushion", "buy", "BISCO HT-870 silicone sponge ring 1.59, die-cut", "buy"),
     (r"^vertical board [LR] spring contacts", "buy", "right-angle spring-contact (pogo) strip (on the PCBA)", "on the PCBA"),
     (r"^vertical boards' standoff", "buy", "M2 female-female brass standoff", "buy"),
     (r"case cradle", "print", "UTR-8100 clear resin", "SLA"),

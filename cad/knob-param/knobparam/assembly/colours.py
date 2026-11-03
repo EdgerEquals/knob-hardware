@@ -29,6 +29,7 @@ MATERIALS = {
     "silicone": ("silicone O-ring (black)", "#141414", False),
     "foam":    ("foam tape pads (black)", "#3a3a3a", False),
     "gasket":  ("silicone sponge gasket (grey)", "#8a8f94", False),
+    "bead":    ("form-in-place silicone bead (dark grey)", "#55595e", False),   # v0.24 joystick cradle bead
     "other":   ("unassigned (check the material rules)", "#ff00ff", False),
 }
 
@@ -39,6 +40,10 @@ def key(name):
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if "o-ring" in low: return "silicone"
     if "foam pad" in low: return "foam"                       # v0.6 joystick screen pads
+    if "form-in-place" in low: return "bead"                  # v0.24 joystick cradle bead
+    if "up-stop cushion" in low: return "gasket"              # v0.24 silicone sponge rings under the guide bosses
+    if low.startswith("top-board socket"): return "ic"        # v0.24 1.27 sockets under the joystick top board
+    if low.startswith("vertical board") and "male pins" in low: return "ic"   # v0.24 male 1.27 headers
     if "gasket" in low: return "gasket"                       # v0.23 joystick cradle gasket
     if low.startswith("vertical board") and ("header" in low or "spring contacts" in low): return "ic"   # v0.23 (contacts: black body)
     if low.startswith("vertical board") and "fr4" in low or "top board" in low: return "pcb"           # v0.23 boards

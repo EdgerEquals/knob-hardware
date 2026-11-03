@@ -179,8 +179,11 @@ P = dict(
     amo_upper_top_up=109.0,   # [Ed 2 Nov] upper screen top edge above the panel bottom; 4 mm higher, same reason (v0.19: 105.0); overlap ~13.6
     screen_air=1.0,        # [Ed] minimum air from any part behind the PCB to a screen; the cover depth is worked back from it
     ledge_knob_clear=0.3,  # [A] side ledge cut back this far past the knob hole radius round the knob base
-    joy_board_z=26.6,      # [A] v0.23 layout v4: the lowest part over the top posts is the vertical boards' spring-contact strip
-                           # (electronics vb, body bottom z 26.6; the joystick top board is at z 30). v0.20: 27.46, the 2x5 header bodies
+    joy_board_z=24.3,      # [A] v0.24: the lowest part over the top posts is the vertical boards' male 1.27 header body (electronics
+                           # vb_pin, z 24.3-26.3 under the top board's sockets). v0.23: 26.6, the spring-contact strip; v0.20: 27.46
+    joy_step=dict(w=1.20,  # [Ed 14:02] top-edge seal: a rebate in the joystick cutout wall, this wide past it (mirror of the joystick step)
+                  d=1.45,  # [A] this deep into the faceplate back (2.5 wall: 1.05 left over it)
+                  y_in=0.20),   # [A] it starts this far under the top wall's inner face (y_in1), where the cradle's flange ends
     joy_lip=1.20,          # [J] v0.7 joystick snapshot: the case cradle's lip (0.20 clearance + 1.0 wall) sits in the cutout, so the
                            # carrier is this much narrower each side than the cutout rule alone (the cutout itself is unchanged)
     cover_clamp="tubes",   # [Ed] PETG corner tubes press the PCB back (no perimeter land under the emitters)
@@ -333,6 +336,7 @@ def derive(D):
     D["car_hw"] = D["hole_hw"] - D.get("joy_lip", 0.0) - D["slide"] - D["tol_sla"]   # v0.23: inside the joystick cradle's lip
     D["car_hh"] = D["hole_hh"] - D.get("joy_lip", 0.0) - D["slide"] - D["tol_sla"]
     D["joy_hole"] = (2 * D["hole_hw"], 2 * D["hole_hh"])
+    D["joy_reb"] = (2 * (D["hole_hw"] + D["joy_step"]["w"]), 2 * (D["hole_hh"] + D["joy_step"]["w"]))   # v0.24 top-edge step (rebate)
     # press rebate, same stack as the joystick proxy
     D["press_travel"] = D["tol_sla"] + D["sw_push"]
     D["fp_rebate"] = D["press_travel"] + D["tol_sla"]
@@ -377,6 +381,7 @@ def derive(D):
     D["x_in1"] = D["x_out1"] - D["wall"]
     D["x_in0"] = -D["x_in1"]
     D["y_in1"] = D["body_y1"] - D["wall"]
+    D["joy_step_y0"] = D["y_in1"] - D["joy_step"]["y_in"]   # v0.24 [Ed 14:02]: the rebate runs from here up the long sides and across the top
     D["y_in0"] = D["body_y0"] + D["wall"]
     D["pcb_x1"] = D["x_in1"] - D["pcb_clear"]
     D["pcb_y1"] = D["y_in1"] - D["pcb_clear"]

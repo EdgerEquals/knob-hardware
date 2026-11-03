@@ -37,6 +37,8 @@ def build(D):
     mc += _em_cutters(D, t, 1.0)
     if D.get("sp_access_d"):   # v0.22b [Ed 15:50]: key hole for the detent-pedestal grub (mechanism frame)
         mc.append(cyl(D["sp_access_d"] / 2, -t - 1, t + 2, *D["sp_grub_xy"]))
+    for x, y, d in D.get("enc_tht_xy", []):   # v0.24 [Ed 13:35]: the encoder riser's through-hole pins (mechanism frame)
+        mc.append(cyl(d / 2, -t - 1, t + 2, x, y))
     M = D["motor"]
     for s in (-1, 1):                                                                 # M1 tab slots
         c = D["pcb_slot_clear"]
@@ -54,10 +56,11 @@ def build(D):
         b -= Pos(sl["x"], sl["y"], -t - 1) * extrude(SlotOverall(max(dx, dy), 2 * r, rotation=0 if dx >= dy else 90), t + 2)
     for h in D.get("js_pcb_holes", []):   # v0.19b: joystick standoff screws + hold-down springs (cad/joystick-param geom.json)
         b -= cyl(h["d"] / 2, -t - 1, t + 2, h["x"], h["y"])
-    if D.get("vb"):   # [Ed 3 Nov] v4: PTH for the vertical boards' right-angle header legs
+    if D.get("vb"):   # [Ed 3 Nov] v4: PTH for the vertical boards' right-angle header legs (v0.24: the THT ones of the hybrid header)
         for sx in (-1, 1):
-            for y in D["vb_pins"][sx]:
-                b -= cyl(D["vb_hdr"]["drill"] / 2, -t - 1, t + 2, sx * D["vb_pin_x"], y)
+            for x, y, kind in D["vb_legs"][sx]:
+                if kind == "tht":
+                    b -= cyl(D["vb_hdr"]["drill"] / 2, -t - 1, t + 2, x, y)
     for k, poly in D["pcb_windows"].items():   # v0.19b [Ed 2 Nov]: see-through windows (panel frame, not turned)
         b -= Pos(0, 0, -t - 1) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in poly], close=True)), t + 2, dir=(0, 0, 1))
     # back-side parts: Hall decouplers behind each sensor [K positions follow the params]; the rest from KiCad (pcb_proxy.json)
@@ -132,8 +135,8 @@ def vb_footprint(D):
         xs = sorted((sx * fi, sx * (fo + H["body_x"])))
         out.append((xs[0], xs[1], y0, D["vb_hdr_y1"]))
         out.append((min(sx * fi, sx * fo), max(sx * fi, sx * fo), y0, y1))
-        for y in D["vb_pins"][sx]:
-            out.append((sx * D["vb_pin_x"] - r, sx * D["vb_pin_x"] + r, y - r, y + r))
+        for x, y, _ in D["vb_legs"][sx]:   # THT and SMT pads alike
+            out.append((x - r, x + r, y - r, y + r))
     return out
 
 

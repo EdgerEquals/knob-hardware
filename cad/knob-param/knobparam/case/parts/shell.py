@@ -207,6 +207,12 @@ def build(D):
     joy = _plate(D["joy_hole"][0], D["joy_hole"][1], D["hole_corner_r"], D["z_seat"] - sl, D["z_fp1"] + sl,
                  D["ox"], D["place_y"])
     case = _sub(case, joy)
+    if D.get("joy_step"):   # v0.24 [Ed 14:02] top-edge seal: a rebate in the cutout wall from the faceplate back (top edge and the long sides
+        # above where the joystick cradle's flange ends); the cradle's dam sits in it with the bead on its front face
+        rw, rh = D["joy_reb"]; st = D["joy_step"]
+        reb = _plate(rw, rh, D["hole_corner_r"] + st["w"], D["z_fp0"] - sl, D["z_fp0"] + st["d"], D["ox"], D["place_y"])
+        reb = reb & _box(-60.0, 60.0, D["joy_step_y0"], D["panel_y1"] + 5.0, D["z_fp0"] - 2 * sl, D["z_fp0"] + st["d"] + sl)
+        case = _sub(case, reb)
     # rail holes through the flat face. No rebate, no light-pipe step, no thinned bridge.
     if D["rail_top_ok"]:
         for x in D["rail_x_top"]:
