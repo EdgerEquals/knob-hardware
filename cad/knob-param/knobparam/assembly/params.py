@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.24",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.25",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.25 [Ed 3 Nov evening]: review decisions: spur gears + hub m0.75 12/17 nylon in a split clear cap,
+                       # cradle printed into the case, dial split, detent block, cartridge sideways magnets + key
                        # v0.24 [Ed 3 Nov]: dial bezel cartridge (+4.4, job 1) + joystick v0.8 step-1 follow-ups (job 2)
                        # v0.23 [Ed 3 Nov]: layout v4 step 1 (H7B0 on the front under the joystick, vertical boards, case cradle)
     # ---- [Ed 3 Nov] layout v4 step 1: cross-check inputs for the vertical boards' spring contacts under the joystick top board ----
