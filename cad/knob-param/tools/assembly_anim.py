@@ -509,8 +509,9 @@ class Checker:
             return "occ-fail"
         return "contact"
 
-    def step_events(self, moving, fixed, d, L):
-        """Every (moving, fixed) pair met on the way in."""
+    def step_events(self, moving, fixed, d, L, expect=()):
+        """Every (moving, fixed) pair met on the way in. `expect` (from the step rule): [(rx moving, rx fixed, kind, why)]
+        marks overlaps that are not a blocked path (a flex that bends on the way in, a screw cutting its thread)."""
         ev = []
         for m in moving:
             sw = _union([self.BB[m], _bb_off(self.BB[m], -L * d)])
@@ -520,9 +521,15 @@ class Checker:
                 res = self.pair(m, f, d, L)
                 c = self.classify(m, f, res)
                 if c:
+                    why = ""
+                    if c == "clash":
+                        for rm, rf, kind, w in expect:
+                            if re.search(rm, m, re.I) and re.search(rf, f, re.I):
+                                c, why = kind, w
+                                break
                     good = [e for e in res["exact"] if e[1] > self.thr]
                     vmax = max([e[1] for e in res["exact"]] + [0.0])
-                    ev.append(dict(moving=m, fixed=f, kind=c, s_first=res["hits"][0], s_last=res["hits"][-1],
+                    ev.append(dict(moving=m, fixed=f, kind=c, why=why, s_first=res["hits"][0], s_last=res["hits"][-1],
                                    n_hits=len(res["hits"]), vmax=vmax, s_confirmed=[e[0] for e in good],
                                    depth=max([e[2] for e in good] + [0.0])))
         return ev
@@ -563,7 +570,8 @@ def run_order(plan, ck, order, dirs=None, label=""):
     """Check a step order (list of step indices into plan.steps); returns {k: events}. The pair sweeps run in parallel first."""
     seq = _order_steps(plan, ck, order, dirs)
     ck.prefetch([t for k, mv, fx, d, L in seq if L is not None for t in ck.step_tasks(mv, fx, d, L)], label)
-    return {k: (ck.step_events(mv, fx, d, L) if L is not None else []) for k, mv, fx, d, L in seq}
+    return {k: (ck.step_events(mv, fx, d, L, plan.steps[k].get("expect", ())) if L is not None else [])
+            for k, mv, fx, d, L in seq}
 
 
 def _placed_in(plan, k, f):
@@ -575,7 +583,7 @@ def _placed_in(plan, k, f):
     return None
 
 
-def stage_check(plan, idx, out):
+def stage_check(plan, idx, out, alts_on=False):
     t0 = time.time()
     thr = float(idx["meta"].get("clash_mm3", 1e-3))
     ck = Checker(idx, os.path.join(cache_dir(), "check_memo.json"), thr)
@@ -600,9 +608,9 @@ def stage_check(plan, idx, out):
     ck.save()
     home_clash = [h for h in home if h["vol"] > thr or h["vol"] < 0]
     log(f"  {len(home)} touching pairs at home, {len(home_clash)} with volume > {thr} mm³")
-    # alternatives for blocked steps
+    # alternatives for blocked steps (--alts: every other axis, and the step moved before each blocker; slow)
     alts = {}
-    for k in order:
+    for k in (order if alts_on else []):
         bad = [e for e in ev[k] if e["kind"] == "clash"]
         if not bad:
             continue
@@ -654,9 +662,13 @@ def report_text(plan, res):
             kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
         tag = "CLASH" if bad else ("ok" if not ev else "ok (" + ", ".join(f"{v} {k}" for k, v in kinds.items()) + ")")
         L.append(f"{S['k'] + 1:2d}. [{S['sub']}] {S['name']}: {dir_label(S['d'])}, {S['check_travel']:.0f} mm checked -> {tag}")
-        for e in bad:
+        for e in sorted(bad, key=lambda e: -e["vmax"]):
             L.append(f"      {e['moving']}  x  {e['fixed']}: up to {e['vmax']:.3f} mm³, depth {e['depth']:.2f}, "
                      f"from {e['s_first']:.2f} to {e['s_last']:.2f} mm before home")
+        for e in ev:
+            if e["kind"] not in ("clash", "contact"):
+                L.append(f"      ({e['kind']}) {e['moving']}  x  {e['fixed']}: {e['vmax']:.3f} mm³"
+                         + (f"; {e['why']}" if e.get("why") else ""))
         if S["id"] in res.get("alts", {}):
             A = res["alts"][S["id"]]
             L.append(f"      other directions (clashes): {A['dirs']}")
@@ -778,7 +790,9 @@ def _step_lines(S, n_steps, ev):
         L.append((f"CLASH on the way in: {e['moving'][:48]} x {e['fixed'][:48]} ({e['vmax']:.2f} mm³)"
                   + (f" +{len(bad) - 1} more" if len(bad) > 1 else ""), "#c00000"))
     elif S["id"] in ev:
-        L.append(("insertion path clear", "#1a7f37"))
+        soft = sorted({(e["kind"], e.get("why", "")) for e in ev[S["id"]] if e["kind"] not in ("clash", "contact")})
+        L.append(("insertion path clear" + (": " + "; ".join(f"{k}{' (' + w + ')' if w else ''}" for k, w in soft)[:110]
+                                            if soft else ""), "#1a7f37"))
     return L
 
 
@@ -892,6 +906,7 @@ def main():
     ap.add_argument("--rules", default=os.path.join(HERE, "assembly_steps.py"))
     ap.add_argument("--out", default=os.path.join(REPO, "cad", "assemblies", "assembly-anim-" + time.strftime("%Y-%m-%d")))
     ap.add_argument("--quick", action="store_true", help="low-res, low-fps video for a look")
+    ap.add_argument("--alts", action="store_true", help="check: also try other directions / earlier slots for blocked steps (slow)")
     a = ap.parse_args()
     if a.stage in ("cache", "all"):
         stage_cache(a.rebuild)
@@ -903,7 +918,7 @@ def main():
     if not ok:
         sys.exit("fix the rules first: every part must be in exactly one step")
     if a.stage in ("check", "all"):
-        stage_check(plan, idx, a.out)
+        stage_check(plan, idx, a.out, a.alts)
     if a.stage in ("sheet", "all"):
         stage_sheet(plan, idx, a.out)
     if a.stage in ("video", "all"):
