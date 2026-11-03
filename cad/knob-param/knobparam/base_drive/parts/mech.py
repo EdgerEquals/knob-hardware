@@ -16,17 +16,38 @@ def _arc(D): return D["arm_det"] in ("arc", "split") and D["ad_r"] is not None
 
 def _split(D): return D["arm_det"] == "split" and D["ad_r"] is not None
 
+def _block(D):
+    return D["arm_det"] == "split" and D["ad_r"] is not None and D.get("dt_block")
+
 def split_mount(D):
     """v0.22 [Ed 2 Nov 15:27]: the wall outboard of the flange sweep from the plate to the boss top, the radial bracket and the
-    boss with the plunger bore (bore cut in cradle_cut). The pedestal is a separate block (v0.22b, split_pedestal)."""
+    boss with the plunger bore (bore cut in cradle_cut). The pedestal is a separate block (v0.22b, split_pedestal).
+    v0.25 [Ed 18:15]: this is the outside of the separate detent block (detent_block); its foot sits on the plate top."""
     a, r = D["ad_ang"], D["ad_r"]; pt = D["plate_t"]
-    a0, a1 = D["sp_wall_a"]; r0, r1 = D["sp_wall_r0"], D["sp_wall_r1"]; z0, z1 = D["det_z0"], D["det_z1"]
-    s = sector(r0, r1, (a1 - a0) / 2, pt - 0.01, z1 - pt + 0.01, (a0 + a1) / 2, n=64)
+    a0, a1 = D["sp_wall_a"]; r0, r1 = D["sp_wall_r0"], D["sp_wall_r1_used"]; z0, z1 = D["det_z0"], D["det_z1"]
+    zs = pt if _block(D) else pt - 0.01   # a separate block stands on its seat; the v0.24 wall was fused into the plate
+    s = sector(r0, r1, (a1 - a0) / 2, zs, z1 - zs, (a0 + a1) / 2, n=64)
     x, y = _pol(r, a)
     s += cyl(D["det_boss_d"] / 2, z0, z1 - z0, x, y)
+    if _block(D):   # v0.25: the head (bracket) is a sector from the boss's inner edge to the wall, +-dt_head_half about the boss
+        ri = r - D["det_boss_d"] / 2
+        return s + sector(ri, (r0 + r1) / 2, D["dt_head_half"], z0, z1 - z0, a, n=48)
     rb = (r0 + r1) / 2
     s += Rot(0, 0, a) * Pos((r + rb) / 2, 0, z0) * Box(rb - r, D["sp_brk_w"], z1 - z0, align=A)
     return s
+
+def detent_block(D):
+    """v0.25 [Ed 18:15]: the detent block (UTR-8100, like the cradle): wall, bracket and boss with the plunger bore and the
+    tapped grub thread; two pin holes up into the foot. Glued on its flat seat on the plate top [A, Ed 18:15 fallback]."""
+    pd, _pp, pe = D["dt_pin"]
+    s = split_mount(D) - det_bore(D, D["ad_ang"])
+    for x, y in D["dt_pin_xy"]:
+        s -= cyl(pd / 2 + D["dt_pin_clear"], D["plate_t"] - 0.01, pe + 0.11, x, y)
+    return s
+
+def detent_pins(D):
+    pd, pp, pe = D["dt_pin"]
+    return [cyl(pd / 2, D["plate_t"] - pp, pp + pe, x, y) for x, y in D["dt_pin_xy"]]
 
 def arc_bridge(D):
     """v0.21: two columns on the plate (one each side of the arm sweep), a link from each to the boss over the detent.
@@ -111,6 +132,7 @@ def stop_blocks(D):
 
 def cradle_add(D):
     s = stop_blocks(D)
+    if _block(D): return s   # v0.25: the wall, bracket and boss are the separate detent block
     if _split(D): return s + split_mount(D)
     if _arc(D): return s + arc_bridge(D)
     for a in D["det_angs"]: s += det_block(D, a)
@@ -118,7 +140,11 @@ def cradle_add(D):
 
 def cradle_cut(D):
     s = split_cuts(D) if _split(D) else track_grooves(D)
-    for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
+    if _block(D):   # v0.25: the bore is in the block; the plate takes the block's two locating pins
+        for x, y in D["dt_pin_xy"]:
+            s += cyl(D["dt_pin"][0] / 2, D["plate_t"] - D["dt_pin"][1], D["dt_pin"][1] + 0.01, x, y)
+    else:
+        for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
     for (px, py) in D["sl_anchor_xy"]:
         z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
         s += cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post + 0.01, px, py)   # anchor pin press hole
@@ -178,6 +204,10 @@ def build(D):
         blk, grub = split_pedestal(D)
         out["detent train pedestal (SLA, grub-set)"] = blk
         out[f"detent pedestal grub M{D['sp_grub'][0]:g}x{D['sp_grub'][1]:g}"] = grub
+    if _block(D):   # v0.25 [Ed 18:15]
+        out["detent block (UTR-8100: wall, bracket, boss; glued on two pins)"] = detent_block(D)
+        for k, p in enumerate(detent_pins(D), 1):
+            out[f"detent block locating pin {k} Ø{D['dt_pin'][0]:g}"] = p
     if D["cu_on"]:
         md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
         for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):

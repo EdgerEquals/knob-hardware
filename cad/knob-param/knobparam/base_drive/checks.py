@@ -31,10 +31,29 @@ def _split_rows(D, parts, r):
     """v0.22 [Ed 2 Nov 15:27]: detent boss on a bracket into a wall outboard of the flange; the train's pedestal on solid plate."""
     import math
     from .parts import mech, hall_slot
-    r.row("split detent: boss lift under the spring, grub fully in, ball on a dimple rim (mm)", D["sp_lift"], D["sp_lift_max"],
-          f"{D['det_force_max']:.2f} N; wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}, {D['sp_wall_a'][0]:g}-{D['sp_wall_a'][1]:g}°, "
-          f"I {D['sp_wall_I']:.1f} mm⁴, lever {D['sp_wall_e']:.2f}, height {D['sp_wall_h']:.1f}; E {D['ad_E'] / 1000:g} GPa [A]; "
-          f"physical limit {D['ad_defl_max']:g} (20% of the dimple depth): margin {D['ad_defl_max'] / max(D['sp_lift'], 1e-9):.1f}x", higher_ok=False)
+    if D.get("dt_block"):   # v0.25 [Ed 18:15]: separate block, glued on its seat (the screw from behind does not fit the foot)
+        p = D["dt_lift_parts"]; r0, r1, a0, a1 = D["dt_seat"]
+        r.row("detent block: boss lift under the spring (wall + head + bond + plate), grub fully in, ball on a dimple rim (mm)",
+              D["dt_lift"], D["sp_lift_max"],
+              f"{D['det_force_max']:.2f} N at r {D['ad_r']:g}, lever {D['sp_wall_e']:.2f} to the seat's centroid: wall {p['wall'] * 1e3:.2f} µm "
+              f"(I {D['dt_I_seat']:.1f} mm⁴, z {D['plate_t']:g}-{D['det_z0']:.2f}), head {p['head'] * 1e3:.2f} (I {D['dt_I_head']:.0f}), "
+              f"bond {p['bond'] * 1e3:.2f} ({D['dt_glue']:g} epoxy), plate + PCB under the seat {p['plate'] * 1e3:.2f} (as columns of the seat, "
+              f"conservative); one-piece v0.24 formula at this wall {D['sp_lift'] * 1e3:.1f} µm; E {D['ad_E'] / 1000:g} GPa [A]; "
+              f"physical limit {D['ad_defl_max']:g}: margin {D['ad_defl_max'] / max(D['dt_lift'], 1e-9):.1f}x", higher_ok=False)
+        r.row("detent block: seat bond peak tension under the spring vs the epoxy allowable (MPa)", D["dt_bond_sigma"], D["dt_glue_lap"] / 4,
+              f"flat seat r {r0:.2f}-{r1:.3f} x {a0:g}-{a1:g}° = {D['dt_seat_area']:.1f} mm² on the plate top z {D['plate_t']:g}; "
+              f"{D['dt_glue_lap']:g} MPa [A] / 4", higher_ok=False)
+        r.row("detent block: outer face inside the cradle OD (mm)", D["r_out"] - r1, 0.0,
+              f"block r1 {r1:.3f}, cradle r_out {D['r_out']:.3f} (the v0.24 wall's 16.89 stood 0.035 past the v0.25 cradle)")
+        r.row("detent block: foot round each locating-pin hole (radial, mm)", D["dt_pin_wall"], 0.3,
+              f"Ø{D['dt_pin'][0]:g} pins at r {(r0 + r1) / 2:.2f}, " + ", ".join(f"{a:g}°" for a in D["dt_pin_angs"])
+              + f" in a {r1 - r0:.3f}-wide foot (same 0.3 floor as the dial land's Ø1 holes); {D['dt_pin_end']:.2f} to the foot ends. "
+              f"A tapped screw from behind needs {D['dt_screw_need']['M1.6']:.2f} (M1.6) / {D['dt_screw_need']['M2']:.2f} (M2): does not fit [C]")
+    else:
+        r.row("split detent: boss lift under the spring, grub fully in, ball on a dimple rim (mm)", D["sp_lift"], D["sp_lift_max"],
+              f"{D['det_force_max']:.2f} N; wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}, {D['sp_wall_a'][0]:g}-{D['sp_wall_a'][1]:g}°, "
+              f"I {D['sp_wall_I']:.1f} mm⁴, lever {D['sp_wall_e']:.2f}, height {D['sp_wall_h']:.1f}; E {D['ad_E'] / 1000:g} GPa [A]; "
+              f"physical limit {D['ad_defl_max']:g} (20% of the dimple depth): margin {D['ad_defl_max'] / max(D['sp_lift'], 1e-9):.1f}x", higher_ok=False)
     gd, gl = D["sp_grub"]
     r.row("split detent: pedestal grub adjustment (down / up, mm)", min(D["sp_adj_down"], D["sp_adj_up"]), 0.2,
           f"down {D['sp_adj_down']:.2f} (block to the pocket floor), up {D['sp_adj_up']:.2f} (keeping {D['sp_thread_min']:g} of M{gd:g} thread); "

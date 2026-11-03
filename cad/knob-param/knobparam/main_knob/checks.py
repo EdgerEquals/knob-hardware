@@ -7,7 +7,7 @@ def checks(D, parts):
     if D["kb_race"] == "chamfer":
         r.row("knob hub wall (hub-gear root over the bore)", D["race_wall"], T["race_wall"],
               f"bore Ø{2 * D['r_knob_bore']:.2f} on the Ø{2 * D['kb_rt']:.2f} dial tube; root Ø{D['d_hg_root']:.2f} "
-              f"(m{D['hub_mod']:g} {D['z_hub_gear']}T, x {D['hub_x_gear']:+.3f}); v0.25 all PA-12 (the hub-gear ring)")
+              f"(m{D['hub_mod']:g} {D['z_hub_gear']}T, x {D['hub_x_gear']:+.3f}); v0.25 all PA-12 ({'the inner cap hub' if D.get('cs_on') else 'the hub-gear ring'})")
     else:
         r.row("knob race wall (hub-gear root over the cone)", D["race_wall"], T["race_wall"])
     r.row(f"knob ring wall ({D['z_ring']}T root to the cap)", D["ring_wall"], D["hb_wall_min"],
@@ -52,7 +52,24 @@ def checks(D, parts):
     r.row("cap engagement leaves an open bore between the plugs", D["sleeve_len"] - 2 * D["sleeve_insert"], D["sleeve_insert"])
     if D["glass_to_dial"]:
         from ..common.process import PROCESS
-        if "hg_collar_r" in D:   # v0.25 [Ed 19:00-19:10]: PA-12 hub-gear ring glued into a clear cap
+        if D.get("cs_on") and "cs_r" in D and "cs_z_step" in D:   # v0.25 [Ed 19:46]: PA-12 inner hub keyed into the clear cap
+            sla, mjf = PROCESS[D["cap_proc"]]["wall"], PROCESS["mjf"]["wall"]
+            r.row("upper cap split: key bearing stress at the joint design torque vs UTR-8100 (MPa)", D["cs_key_bearing"], D["utr_uts"],
+                  f"{D['hg_keys']} keys {D['hg_key_w']:g} x {D['hg_key_h']:g} x {D['cs_key_len']:.2f} on the PA-12 hub's Ø{2 * D['cs_r']:.1f} rim; "
+                  f"{D['cs_T']:.0f} mNm = the {D['hub_i_limit']:g} mNm limit x {D['ratio_knob_motor']:.3f} x SF {D['sf_static']:g} (the knob's break torque): "
+                  f"{D['cs_key_F']:.1f} N a key, key shear {D['cs_key_shear']:.1f} MPa (PA-12 {D['pa12_uts']:g}); margin "
+                  f"{D['utr_uts'] / D['cs_key_bearing']:.0f}x; glue {D['hg_glue']:g} radial / {D['hg_glue_ax']:g} on the step over "
+                  f"{D['cs_bond_area']:.0f} mm² (retention, not counted)", higher_ok=False)
+            r.row("upper cap split: clear ledge under the PA-12 hub's flange vs the SLA wall (mm)", D["cs_ledge"], sla,
+                  f"step z {D['cs_z_step']:.2f} at r {D['cs_r']:g}-{D['cs_r_flange']:g}; the race load only pushes the hub down: it goes "
+                  f"through in bearing on this ledge")
+            r.row("upper cap split: PA-12 flange over the step vs the MJF wall (mm)", D["cs_flange"], mjf,
+                  f"30° cone top over the step at r {D['cs_r']:g}")
+            r.row("upper cap split: PA-12 from the race groove to the joint vs the MJF wall (mm)", D["cs_groove_wall"], mjf,
+                  f"Ø{2 * D['kb_seat_r']:g} groove at r {D['kb_seat_c_knob'][0]:.2f}; the 53 Ø1 steel balls roll on PA-12, not resin [Ed 19:46]")
+            r.row("upper cap split: clear web outside the key slots (the torque path to the glass, mm)", D["cs_neck"], 1.5,
+                  f"slots to r {D['cs_slot_r']:.2f}; same 1.5 floor as the v0.24-v0.25 neck rows (v0.25 collar neck {D['hg_neck']:.2f})")
+        elif "hg_collar_r" in D:   # v0.25 [Ed 19:00-19:10]: PA-12 hub-gear ring glued into a clear cap
             sla = PROCESS[D["cap_proc"]]["wall"]
             r.row("upper cap (clear): neck outside the hub-gear pocket (underside to the cap top)", D["hg_neck"], 1.5,
                   f"the torque path out of the keys; pocket r {D['hg_pocket_r']:.2f} (slots r {D['hg_slot_r']:.2f}), flat underside z "

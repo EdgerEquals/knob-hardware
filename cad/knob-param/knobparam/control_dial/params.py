@@ -164,20 +164,40 @@ P = dict(
             bore_d=39.0,                     # [Ed 12:58] bore below the glass (wall 1.5 at OD 42); the panel is glued in from underneath
             seat_d=36.50,                    # [Ed 12:58] glass seat, from the lens back up the lens's 0.75 shoulder
             lap_d=34.40,                     # [Ed 12:58] lap over the lens step, ID 34.40, 0.55 deep: no glass edge or gap shows
-            boss_r=(17.4, 19.5),             # [Ed 12:58] magnet / pin bosses
-            boss_gap=0.1,                    # [Ed 12:58] boss bottom 56.0 = land + 0.1
-            boss_top=1.5,                    # [Ed 12:58] boss top 58.4 = 1.5 behind the lens back
-            boss_wall=0.5,                   # [A] boss width = hole + 2 x this
-            mag=(1.0, 1.0),                  # [A] N52 pairs Ø1 x 1 (concept Ø2 x 1 [Ed 12:58]: a Ø2 at r 18.3 is 0.1 wider than the 1.9 land
-                                             # (r 17.3-19.2), so it broke through the dial's outer wall and the ledge step; Ø1 fits like the pins)
-            mag_r=18.3, mag_angs=(30.0, 150.0, 240.0),   # [Ed 12:58]
+            # v0.25 [Ed 18:26]: no bosses, no pins; the bezel is a plain ring with a key rib (+ two seat ribs [A]) and the sideways
+            # magnets in its skirt. Sketch docs/img/cart-side-magnets-v024.png.
+            mag=(1.0, 0.8),                  # [A] N52 Ø1 x 0.8 (Ø1 x 1 leaves 0.5 of skirt skin outside it, 0.8 leaves 0.7; PCBWay MJF wall 1.0)
+            mag_angs=(30.0, 150.0, 240.0),   # [A] three pairs (the v0.24 angles): clear of the plug lobe and pad arm (290-330°, 305°),
+                                             # the bends, tab and U-turn are all above the land, 2+ mm over the magnets
+            mag_dz=+0.4,                     # [A, Ed 18:26 "~0.4 lower"] skirt magnet this far ABOVE the dial magnet, poles attracting:
+                                             # an attracting partner 0.4 lower pulls the cartridge UP; above, it pulls it down
             mag_press=0.05,                  # [A] pocket oversize (glued)
-            pin=(1.0, 1.0, 0.8),             # [Ed 12:58] Ø1 steel pins; [A] pressed 1.0 into the land, 0.8 into the boss
-            pin_angs=(90.0, 180.0),          # [Ed 12:58] at r mag_r
-            pin_clear=0.05,                  # [A] boss hole over the pin
+            rib_angs=(180.0, 60.0, 340.0),   # [Ed 18:26] key (first) + [A] two seat ribs: one rib cannot seat a Ø42 ring without tilting
+                                             # onto the plug; uneven spacing so the cartridge goes on one way only
+            rib_w=1.2,                       # [A] rib width (tangential)
+            rib_r_in=18.6,                   # [Ed 18:26 "nothing inside r 18.5 below the glass"] rib inner face
+            rib_clear=(0.05, 0.25),          # [A] tangential clearance a side: key (sets the angle) / seat ribs (seat only)
+            slot_depth=2.0,                  # [A] slot floor this far under the land top = the axial seat [Ed 19:12 item 2]
+            slot_r_clear=0.1,                # [A] slot's inner face inside the rib's
+            plug_standoff=0.10,              # [A] with the ribs seated the plug stands this far off full mate (inside its wipe): it never
+                                             # carries the cartridge [Ed 19:12 item 2]; set by gluing the pad with a 0.1 shim
             pad_top=1.6,                     # [Ed 12:58] printed plug pad 56.8-58.3: from the plug's flex up to 1.6 behind the lens back
             arm_ang=305.0, arm_w=2.0, arm_t=1.0,   # [Ed 12:58] arm from the pad to the bezel at ~305°; [A] 2.0 wide, 1.0 thick under the pad top
             arm_glue=0.05),                  # [A] glue line between the arm end and the bezel bore
+    # ---- v0.25 [Ed 3 Nov 18:12] the dial in two MJF PA-12 parts, split at the top of the tube (the dish's underside, z_hub0, 0.3
+    # over the knob's upper cap): the lower part (tube, Hall and detent spokes, lever) goes in first, the cap goes on over the
+    # tube, then the balls, then the dish is bonded on: the tube end runs up a through socket in the dish's hub, a flat keys it.
+    # The dish sits on the balls (the race centres it) and the lower part on the train, so the bond takes up their height
+    # difference: the stack the pedestal grub used to set no longer fights the race. Cartridge dial only (cart). ----
+    dsp=dict(on=True,                       # [Ed 18:12]
+             glue=0.10,                     # [A] radial bond line in the socket (as the v0.25 hub-gear ring)
+             top_below=0.10,                # [A] tube end this far under the well floor, so it never takes the 0.3 lift gap to the rod-link board
+             flat=0.30,                     # [A] key flat this deep into the tube OD over the socket length (tube wall at the flat 1.20)
+             flat_ang=None,                 # [A] flat facing the Hall spoke (None = ha_ang0, mechanism frame)
+             engage_min=2.5,                # [A] check: tube engagement in the socket ("~3" [Ed 18:12])
+             T_design=241.0,                # [A] dial design torque, mNm: a hand twisting the bezel at the hard stop, taken as the knob's
+                                            # 241 (v0.25 gears: the 85 mNm limit x 1.417 x SF 2 = the knob's break torque)
+             bond_allow=3.0),               # [A] epoxy on MJF PA-12 (bead-blasted), shear allowable MPa (PA-12 bonds poorly)
     ls=dict(a=(0.0, -4.6), b=(0.0, 4.0),    # [Ed 12:58] strap from the rod-link board (fixed) to the dial board underside (turns with the dial)
             lines=4,                         # [Ed 12:58] 2 lines (rod = VBUS + data, tube = GND) + 2 spares
             w=2.0,                           # [A] ribbon width (4 traces)
@@ -419,15 +439,15 @@ def _cart(D):
     D["db_z1"] = zb - db["behind"]                                         # 55.90 board top = the dial land
     D["db_z0"] = D["db_z1"] - db["t"]                                      # 55.10 board underside = the ledge
     D["rec_z1"] = D["db_z1"] + db["rec"][4]                                # 56.45 receptacle top
-    D["plug_flex_z"] = D["db_z1"] + zp["mated"]                            # 56.70 plug's flex, mated
-    D["plug_face_z"] = zb - zp["plug_face"]                                # 56.08 plug mating face [S]
+    # v0.25 [Ed 19:12 item 2]: the ribs seat the cartridge; the plug stands plug_standoff off full mate (pad glued with a shim)
+    D["plug_flex_z"] = D["db_z1"] + zp["mated"] + bz["plug_standoff"]      # 56.80 plug's flex (56.70 at full mate)
+    D["plug_face_z"] = zb - zp["plug_face"] + bz["plug_standoff"]          # 56.18 plug mating face (56.08 [S] at full mate)
     D["plug_engage"] = D["rec_z1"] - D["plug_face_z"]                      # plug inside the receptacle
     D["plug_xy"] = ((zp["plug"][0] + zp["plug"][1]) / 2, (zp["plug"][2] + zp["plug"][3]) / 2)
     D["plug_align"] = math.dist(D["plug_xy"], db["rec"][:2])               # plan offset plug vs receptacle (glued in place seated)
     # ---- bezel ----
     D["bz_bore_r"], D["bz_seat_r"], D["bz_lap_r"] = bz["bore_d"] / 2, bz["seat_d"] / 2, bz["lap_d"] / 2
     D["bz_wall"] = D["R"] - D["bz_bore_r"]                                 # 1.5
-    D["bz_boss_z"] = (D["db_z1"] + bz["boss_gap"], zb - bz["boss_top"])    # 56.0-58.4
     D["pad_z"] = (D["plug_flex_z"] + zp["flex_t"], zb - bz["pad_top"])     # 56.8-58.3
     D["bz_lap"] = (zp["lens_d"] - bz["lap_d"]) / 2                         # lens shoulder under the lap (radial)
     uturn_corner = max(math.hypot(zp["uturn_x"], y) for y in zp["tail_y"])
@@ -435,10 +455,7 @@ def _cart(D):
     D["cart_reach_max"] = max(D["cart_reach"].values())
     D["bz_bore_clear"] = D["bz_bore_r"] - D["cart_reach_max"]
     D["ct_bore_clear"] = D["bz_bore_r"] - ct["outer_r"]                    # bezel bore over the dial's outer wall
-    holes = [("magnet", a, bz["mag"][0] + bz["mag_press"]) for a in bz["mag_angs"]] + [("pin", a, bz["pin"][0]) for a in bz["pin_angs"]]
-    D["cart_holes"] = [(k, a, d, pol(bz["mag_r"], a)) for k, a, d in holes]   # kind, panel angle, hole Ø in the dial land, (x, y)
-    D["boss_half"] = {k: math.degrees((d / 2 + bz["boss_wall"]) / bz["mag_r"]) for k, d in
-                      (("magnet", bz["mag"][0] + bz["mag_press"]), ("pin", bz["pin"][0] + 2 * bz["pin_clear"]))}
+    _cart_mag_key(D)   # v0.25 [Ed 18:26]: sideways magnet pairs, key + seat ribs (no bosses, no pins)
     # ---- dial top: well floor, then the pocket on a 2.0 normal wall over the unchanged underside, ledge, land ----
     U = cart_under(D); w = ct["wall"]
     D["ct_land_r"] = ct["pocket_r"] + ct["ledge_w"]                        # 17.30
@@ -455,10 +472,6 @@ def _cart(D):
     D["ct_wall_at"] = (min(near), max(near))
     D["ct_floor_edge"] = top[-1][1]                                        # pocket floor at the pocket edge (54.09)
     D["ct_land_w"] = ct["outer_r"] - D["ct_land_r"]                        # 1.9
-    rm = bz["mag_r"]
-    D["ct_hole_wall"] = min(min(rm - d / 2 - D["ct_land_r"], ct["outer_r"] - rm - d / 2) for _, _, d, _ in D["cart_holes"])
-    D["ct_hole_floor"] = min(_poly_d((rm + s * d / 2, D["db_z1"] - (bz["mag"][1] if k == "magnet" else bz["pin"][1])), U)
-                             for k, _, d, _ in D["cart_holes"] for s in (-1, 1))   # pocket bottom corners to the underside
     D["db_r"] = db["d"] / 2
     D["db_on_ledge"] = min(D["db_r"], D["ct_land_r"]) - ct["pocket_r"]     # board rim resting on the ledge
     D["db_to_step"] = D["ct_land_r"] - D["db_r"]                           # board edge to the land step
@@ -480,20 +493,21 @@ def _cart(D):
     D["strap_end_move"] = dlt
     D["strap_L"] = L; D["strap_z0"], D["strap_z1"] = D["ls_run_z"]; D["strap_lines"] = ls["lines"]
     # ---- magnet stray field at the Hall row (dipoles; the magnets turn with the dial over a fixed sensor row) ----
-    m = D["hv_br"] / (4e-7 * math.pi) * math.pi * (bz["mag"][0] / 2e3) ** 2 * (bz["mag"][1] / 1e3)   # A·m² each, axial (+z)
+    # v0.25: the pairs face sideways (radial moments, both pointing out: attracting across the gap)
+    m = D["hv_br"] / (4e-7 * math.pi) * math.pi * (bz["mag"][0] / 2e3) ** 2 * (bz["mag"][1] / 1e3)   # A·m² each, radial (out)
     mags = []
-    for k, a, d, _ in D["cart_holes"]:
-        if k != "magnet": continue
+    for a, (rd, zd), (rs, zs) in D["cart_mags"]:
         am = a - D["mech_rot"]                                             # mechanism frame
-        mags += [(bz["mag_r"], am, D["db_z1"] - bz["mag"][1] / 2), (bz["mag_r"], am, D["bz_boss_z"][0] + bz["mag"][1] / 2)]
+        mags += [(rd, am, zd), (rs, am, zs)]
     def field(p, th_deg):
-        bx = by = bz_ = 0.0
+        b = [0.0, 0.0, 0.0]
         for r, a, z in mags:
-            q = (r * math.cos(math.radians(a + th_deg)), r * math.sin(math.radians(a + th_deg)), z)
+            t = math.radians(a + th_deg); u = (math.cos(t), math.sin(t), 0.0)
+            q = (r * u[0], r * u[1], z)
             v = [(p[i] - q[i]) / 1e3 for i in range(3)]; rr = math.sqrt(sum(x * x for x in v)); n_ = [x / rr for x in v]
-            f = 1e-7 * m / rr ** 3
-            bx += f * 3 * n_[2] * n_[0]; by += f * 3 * n_[2] * n_[1]; bz_ += f * (3 * n_[2] * n_[2] - 1)
-        return (bx * 1e3, by * 1e3, bz_ * 1e3)                             # mT
+            mn = sum(u[i] * n_[i] for i in range(3)); f = 1e-7 * m / rr ** 3
+            for i in range(3): b[i] += f * (3 * mn * n_[i] - u[i])
+        return tuple(x * 1e3 for x in b)                                   # mT
     res = []
     for i, (r, a) in enumerate(zip(D["hv_r"], D["hv_phi_s"])):
         p = (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), D["hv_z_elems"][i])
@@ -505,9 +519,85 @@ def _cart(D):
     _, D["carr_stray_mt"], k_, D["carr_stray_rng"], D["cart_stray_dB"] = max(res)
     D["carr_stray_to"] = f"Hall-row sensor H{k_ + 1} ({D['hv_parts'][k_].split()[0]})"
     D["cart_stray_n"] = len(mags)
+    # ---- v0.25 [Ed 18:12] dial split at the top of the tube ----
+    s = D["dsp"]
+    if s["on"]:
+        rt, ri = D["dial_tube_od"] / 2, D["dial_tube_id"] / 2
+        D["dsp_z0"] = D["z_hub0"]                                          # the dish's underside = the split
+        D["dsp_z1"] = D["z_well_top"] - s["top_below"]                     # tube end
+        D["dsp_engage"] = D["dsp_z1"] - D["dsp_z0"]
+        D["dsp_r_sock"] = rt + s["glue"]
+        D["dsp_flat_d"] = rt - s["flat"]                                   # flat's distance from the axis
+        D["dsp_flat_ang"] = D["ha_ang0"] if s["flat_ang"] is None else s["flat_ang"]
+        D["dsp_tube_wall_flat"] = D["dsp_flat_d"] - ri
+        D["dsp_dish_wall"] = D["dial_hub_od"] / 2 - D["dsp_r_sock"]       # thinnest: at the dish's underside, hub OD to the socket
+        D["dsp_bond_area"] = 2 * math.pi * rt * D["dsp_engage"]
+        D["dsp_bond_tau"] = s["T_design"] / (2 * math.pi * rt * rt * D["dsp_engage"])   # MPa (N·mm over mm³)
     # ---- names the v0.23 renders / report read ----
     D["scr_off"] = 0.0; D["lip_wall"] = D["bz_wall"]; D["lip_id"] = bz["bore_d"]; D["scr_r"] = zp["lens_d"] / 2
     D["z_back"] = D["lcm_z0"]; D["z_screen_cut"] = D["db_z0"]
+
+
+def _pair_force(d, h, gap, dz, br, dy=0.0, n_r=8, n_t=32):
+    """Two Ø d x h magnets on one axis (x), faces gap apart, the second centred dz higher, poles attracting. Surface-charge
+    model (uniform M = Br/µ0, µr = 1; each end face a sheet ±M, discretised into rings x sectors). Returns the force on the
+    second magnet (Fx along the axis, away from the first; Fy sideways, for a dy offset; Fz up), N."""
+    pts, w = [], []
+    for i in range(n_r):
+        r0, r1 = d / 2 * i / n_r, d / 2 * (i + 1) / n_r; rm = (r0 + r1) / 2
+        for k in range(n_t):
+            t = 2 * math.pi * (k + 0.5) / n_t
+            pts.append((rm * math.cos(t), rm * math.sin(t))); w.append(math.pi * (r1 * r1 - r0 * r0) / n_t)
+    import numpy as np
+    P = np.array(pts); W = np.array(w)
+    def faces(cx, cy, cz):
+        out = []
+        for fx, sg in ((cx + h / 2, 1.0), (cx - h / 2, -1.0)):
+            out.append((np.column_stack([np.full(len(P), fx), cy + P[:, 0], cz + P[:, 1]]), sg * W))
+        return out
+    A = faces(-h / 2, 0.0, 0.0); B = faces(gap + h / 2, dy, dz)
+    F = np.zeros(3)
+    for pb, qb in B:
+        for pa, qa in A:
+            dd = (pb[:, None, :] - pa[None, :, :]) * 1e-3
+            r3 = np.linalg.norm(dd, axis=2) ** 3
+            F += ((qb[:, None] * qa[None, :])[:, :, None] * dd / r3[:, :, None]).sum(axis=(0, 1))
+    F *= br ** 2 / (4 * math.pi * 4e-7 * math.pi) * 1e-12
+    return float(F[0]), float(F[1]), float(F[2])
+
+
+def _cart_mag_key(D):
+    """v0.25 [Ed 18:26]: one magnet in the dial's outer wall facing out, its partner in the bezel skirt facing in across the 0.3
+    gap, mag_dz above it (attracting); a key rib on the skirt's inside in a slot in the dial wall, plus two seat ribs [A]; the rib
+    bottoms are the axial seat [Ed 19:12 item 2]. Panel frame."""
+    bz, ct, zp = D["bz"], D["ct"], D["zp"]
+    d, h = bz["mag"]; dp = d + bz["mag_press"]; ro, rb = ct["outer_r"], D["bz_bore_r"]
+    zd = (D["z_lip0"] + D["db_z1"]) / 2; zs = zd + bz["mag_dz"]           # dial magnet centred in the outer wall
+    rd, rs = ro - h / 2, rb + h / 2
+    D["cart_mags"] = [(a, (rd, zd), (rs, zs)) for a in bz["mag_angs"]]
+    D["cm_gap"] = rb - ro
+    D["cm_skin_out"] = D["R"] - (rb + h)                                   # skirt skin outside the bezel magnet
+    D["cm_skin_dial"] = min(D["db_z1"] - (zd + dp / 2), zd - dp / 2 - D["z_lip0"])   # dial wall over / under its pocket
+    fr, _fy, fz = _pair_force(d, h, D["cm_gap"], bz["mag_dz"], D["hv_br"])
+    D["cm_F_pair"] = (fr, fz)                                              # on the bezel magnet: fr < 0 = pulled in, fz < 0 = down
+    n = len(bz["mag_angs"]); D["cm_hold"] = -fz * n
+    # radial and tangential stiffness of one pair (finite differences), then the ring of n pairs (n >= 3, even spacing): K = n/2 (kx + ky)
+    e = 0.02
+    kx = (_pair_force(d, h, D["cm_gap"] + e, bz["mag_dz"], D["hv_br"])[0] - _pair_force(d, h, D["cm_gap"] - e, bz["mag_dz"], D["hv_br"])[0]) / (2 * e)
+    ky = (_pair_force(d, h, D["cm_gap"], bz["mag_dz"], D["hv_br"], dy=e)[1] - _pair_force(d, h, D["cm_gap"], bz["mag_dz"], D["hv_br"], dy=-e)[1]) / (2 * e)
+    D["cm_k_pair"] = (kx, ky)
+    D["cm_K_ring"] = n / 2 * (kx + ky)                                     # dF/dx of the ring, N/mm: > 0 = de-centring (attracting pairs)
+    D["cm_mass_g"] = 8.0                                                   # [A, v0.24 doc] cartridge (bezel, glass, panel, flex, pad) ~8 g
+    # ---- key + seat ribs, slots in the dial's outer wall ----
+    D["rib_z0"] = D["db_z1"] - bz["slot_depth"]                            # rib bottom = slot floor = the axial seat
+    D["cart_ribs"] = [(a, bz["rib_clear"][0 if i == 0 else 1], "key" if i == 0 else "seat") for i, a in enumerate(bz["rib_angs"])]
+    D["rib_slot_r0"] = bz["rib_r_in"] - bz["slot_r_clear"]
+    D["rib_engage_r"] = ro - bz["rib_r_in"]                                # rib inside the slot, radially
+    D["rib_floor_wall"] = D["rib_z0"] - D["z_lip0"]                        # dial material under the slot floor
+    rc = (bz["rib_r_in"] + ro) / 2
+    D["rib_F"] = D["dsp"]["T_design"] / rc                                 # N on the key at the dial design torque
+    D["rib_bearing"] = D["rib_F"] / (bz["slot_depth"] * D["rib_engage_r"])
+    D["rib_inner_min"] = bz["rib_r_in"]
 
 
 def bar_samples(D, n=8):

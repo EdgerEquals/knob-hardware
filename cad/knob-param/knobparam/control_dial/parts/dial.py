@@ -28,14 +28,25 @@ def cart_profile(D):
     top = [(ct["outer_r"], D["db_z1"]), (D["ct_land_r"], D["db_z1"]), (D["ct_land_r"], D["db_z0"]), (ct["pocket_r"], D["db_z0"])]
     return [(ri, D["dial_z_base"]), (rt, D["dial_z_base"])] + under + top + list(reversed(D["ct_top"]))
 
+def radial_cyl(r_in, r_out, d, z, a):
+    """Cylinder of diameter d on the radial line at panel angle a (deg), from radius r_in to r_out, axis at height z."""
+    return Rot(0, 0, a) * Pos(r_in, 0, z) * Rot(0, 90, 0) * Cylinder(d / 2, r_out - r_in, align=(Align.CENTER, Align.CENTER, Align.MIN))
+
+def rib_box(r0, r1, w, z0, z1, a):
+    """Radial block at panel angle a: r0..r1, tangential width w, z0..z1."""
+    return Rot(0, 0, a) * Pos(r0, -w / 2, z0) * Box(r1 - r0, w, z1 - z0, align=(Align.MIN, Align.MIN, Align.MIN))
+
 def cart_cuts(D):
-    """Land cut to the ledge round the board's lobe, magnet pockets and pin holes in the land (panel frame)."""
+    """Land cut to the ledge round the board's lobe; v0.25 [Ed 18:26]: sideways magnet pockets in the outer wall (open outward)
+    and the slots for the key and seat ribs (open at the top and outward). Panel frame."""
     ct, db, bz = D["ct"], D["db"], D["bz"]
     a0, a1, rl = db["lobe"]; c = ct["lobe_clear"]; da = math.degrees(c / rl)
     cut = ring_sector(D["ct_land_r"] - 0.01, rl + c, a0 - da, a1 + da, D["db_z0"], D["db_z1"] - D["db_z0"] + 0.5)
-    for k, a, d, (x, y) in D["cart_holes"]:
-        h = bz["mag"][1] if k == "magnet" else bz["pin"][1]
-        cut += cyl(d / 2, D["db_z1"] - h, h + 0.5, x, y)
+    d, h = bz["mag"]; ro = ct["outer_r"]
+    for a, (rd, zd), _ in D["cart_mags"]:
+        cut += radial_cyl(ro - h, ro + 0.5, d + bz["mag_press"], zd, a)
+    for a, cl, _k in D["cart_ribs"]:
+        cut += rib_box(D["rib_slot_r0"], ro + 0.5, bz["rib_w"] + 2 * cl, D["rib_z0"], D["db_z1"] + 0.5, a)
     return cut
 
 def profile(D):
@@ -109,12 +120,31 @@ def bend_pocket(D):   # v0.16 closed lip: blind pocket in the lip ID for the led
     a = math.radians(D["tail_ang"]); o = D["scr_off"]
     return Pos(-o * math.cos(a), -o * math.sin(a), 0) * Rot(0, 0, D["tail_ang"]) * led
 
+def _flat_cut(D, r_flat, z0, h):
+    """Half-space slab beyond the key flat (distance r_flat from the axis, facing dsp_flat_ang), z0..z0+h."""
+    return Rot(0, 0, D["dsp_flat_ang"]) * Pos(r_flat, -10, z0) * Box(10, 20, h, align=(Align.MIN, Align.MIN, Align.MIN))
+
+def split_parts(D, body):
+    """v0.25 [Ed 18:12]: body = the one-piece dial (revolved profile, race groove cut). Lower part: the tube up to dsp_z1 with
+    the key flat over the socket length, plus the Hall arm, detent spoke and lever. Dish: everything from the split up, less the
+    through socket (tube OD + bond line, with the matching flat) and the cartridge cuts."""
+    ri, rt = D["dial_tube_id"] / 2, D["dial_tube_od"] / 2; z0, z1 = D["dsp_z0"], D["dsp_z1"]; g = D["dsp"]["glue"]
+    lower = rev([(ri, D["dial_z_base"]), (rt, D["dial_z_base"]), (rt, z1), (ri, z1)])
+    lower -= _flat_cut(D, D["dsp_flat_d"], z0 - 0.3, z1 - z0 + 0.4)
+    lower += hall.arm(D)
+    sock = cyl(D["dsp_r_sock"], z0 - 0.5, D["z_well_top"] - z0 + 1.0) - _flat_cut(D, D["dsp_flat_d"] + g, z0 - 0.6, D["z_well_top"] - z0 + 1.2)
+    dish = body - cyl(40, D["dial_z_base"] - 1.0, z0 - D["dial_z_base"] + 1.0) - sock
+    return {"control dial lower part (tube, Hall and detent spokes, lever)": lower,
+            "control dial dish (bonded on the tube)": dish - to_mech(D, cart_cuts(D))}
+
 def build(D):
     d = rev(profile(D))
     if D["tb_on"]: d -= thrust.groove(D)   # v0.19b [Ed]: no thrust ring, the tube end is plain over an air gap
     if D["rel_sensor"]: d -= tm_pocket(D)   # v0.16b [Ed]: relative sensor removed -> no pocket
     if D["kb_race"] != "chamfer": d += race_add(D)
     if D["kb_groove_h"] > 0: d -= seat_groove(D)
+    if D.get("cart") and D["dsp"]["on"]:   # v0.25 [Ed 18:12]: two parts, split at the dish's underside
+        return split_parts(D, d)
     d += hall.arm(D)
     if D.get("cart"):   # v0.24 [Ed 12:58]: no lip, screen cut, bend pocket or carrier magnet / pin: the bezel cartridge sits on the land
         return {"control dial": d - to_mech(D, cart_cuts(D))}

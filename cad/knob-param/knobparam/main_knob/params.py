@@ -34,6 +34,15 @@ P = dict(
     hg_glue=0.10,   # [A] radial bond line round the collar and keys (epoxy; MJF surface)
     hg_glue_ax=0.05,   # [A] axial bond line on the collar top
     utr_uts=41.56,   # [S] UTR-8100 tensile strength, MPa (PCBWay material page, 3 Nov 2026); flexural 75.95, HDT 50-52 °C
+    # ---- v0.25 [Ed 3 Nov 19:46] the upper cap in two parts: an inner PA-12 (MJF) hub with the hub-gear teeth (it absorbs the
+    # hub-gear ring) and the 45° race the 53 Ø1 steel balls roll on (steel balls should not roll on bare resin), keyed and glued
+    # into an outer clear UTR-8100 part (the web out to the glass, the plug and the seat in the glass top). The joint now carries
+    # the full knob torque (1220 -> teeth -> joint -> clear web -> glass). A top-hat joint: below the step a cylinder with the keys
+    # (same keys as the v0.25 collar: hg_keys x hg_key_w x hg_key_h, bond hg_glue radial / hg_glue_ax axial), above it the hub's
+    # flange sits on a clear ledge, so the race load (it only pushes the hub down in the cap) goes through in bearing, not glue. ----
+    cs_on=True,   # [Ed 19:46]
+    cs_r=10.7,   # [A] joint cylinder radius: 1.35 of PA-12 outside the race groove; keys out to 11.3 keep the resin bearing low
+    cs_step_w=1.0,   # [A] the hub's flange over the clear ledge (radial)
 )
 
 IMPORTS = {"control_dial": ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_fillet",   # the knob follows the dial underside
@@ -137,4 +146,37 @@ def derive(D):
         D["hg_key_shear"] = D["hg_key_F"] / (D["hg_key_w"] * D["hg_collar_h"])
         r0, r1 = D["r_knob_bore"], D["hg_collar_r"]
         D["hg_bond_area"] = 2 * math.pi * r1 * D["hg_collar_h"] + math.pi * (r1 * r1 - r0 * r0)
+        if D["cs_on"]:
+            _cap_split(D, T, top, _seg)
     return D
+
+
+def _cap_split(D, T, top, _seg):
+    """v0.25 [Ed 19:46]: inner PA-12 hub / outer clear cap, top-hat joint at cs_r. The step height balances the PA-12 flange over
+    it against the clear ledge under it (the cap is ~4 thick there)."""
+    rj, ws, g, gax = D["cs_r"], D["cs_step_w"], D["hg_glue"], D["hg_glue_ax"]
+    z_top = lambda r: D["z_under_web"] + (r - D["cap_cone_r0"]) * T          # cap top (30° cone) past the race
+    z_bot = lambda r: D["h_band1"] + max(0.0, r - D["cap_flat_r1"]) * T     # cap underside
+    ro = rj + ws
+    # flange (PA-12) at its thin inner end = z_top(rj) - zs; ledge (clear) at its thin outer end = zs - gax - z_bot(ro + g)
+    D["cs_z_step"] = zs = (z_top(rj) + gax + z_bot(ro + g)) / 2
+    D["cs_flange"] = z_top(rj) - zs
+    D["cs_ledge"] = zs - gax - z_bot(ro + g)
+    D["cs_r_flange"] = ro
+    D["cs_key_len"] = zs - z_bot(rj + D["hg_key_h"])                        # keys on the cylinder below the step (short end, outside)
+    D["cs_slot_r"] = rj + D["hg_key_h"] + g
+    # PA-12 between the race groove and the joint faces (cylinder rj below zs, step face, flange rim)
+    gr, gz = D["kb_seat_c_knob"]; R = D["kb_seat_r"]
+    faces = [((rj, D["h_band1"]), (rj, zs)), ((rj, zs), (ro, zs)), ((ro, zs), (ro, z_top(ro)))]
+    D["cs_groove_wall"] = min(_seg((gr, gz), a, b) for a, b in faces) - R
+    # clear section outside the key slots: from the slot's outer corner on the underside to the step / cap top
+    corner = (D["cs_slot_r"], z_bot(D["cs_slot_r"]))
+    up = [(ro + g, zs - gax), (ro + g, z_top(ro + g)), (D["cap_cone_r1"], D["sleeve_z1"])]
+    D["cs_neck"] = min(_seg(corner, up[i], up[i + 1]) for i in range(2))
+    # torque: the 1220 at its limit x ratio x SF 2 (as the v0.25 collar), on hg_keys keys over cs_key_len at r rj + key_h/2
+    D["cs_T"] = D["hub_i_limit"] * D["ratio_knob_motor"] * D["sf_static"]
+    r_mid = rj + D["hg_key_h"] / 2
+    D["cs_key_F"] = D["cs_T"] / (D["hg_keys"] * r_mid)
+    D["cs_key_bearing"] = D["cs_key_F"] / (D["hg_key_h"] * D["cs_key_len"])
+    D["cs_key_shear"] = D["cs_key_F"] / (D["hg_key_w"] * D["cs_key_len"])
+    D["cs_bond_area"] = 2 * math.pi * rj * D["cs_key_len"] + math.pi * (ro * ro - rj * rj) + 2 * math.pi * ro * D["cs_flange"]
