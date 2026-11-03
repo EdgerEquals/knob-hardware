@@ -26,8 +26,8 @@ def checks(D, parts):
     row("SLA wall", D["wall"], sla, "UTR-8100 plain clear, no tint; front face polished, every other face as-printed")
     if D["top_corners"]:
         row("top posts stop under the joystick board", D["joy_board_z"] - D["z_post_top"], 1.0,
-            f"post top z {D['z_post_top']:.2f}; lowest part over them about z {D['joy_board_z']:.1f} [A] (v0.23: the vertical boards' "
-            "contact strip; the assembly row measures the real parts)")
+            f"post top z {D['z_post_top']:.2f}; lowest part over them about z {D['joy_board_z']:.1f} [A] (v0.25: nothing of the joystick "
+            "stack is over the posts' plan; the assembly path rows measure the real parts)")
     if D.get("joy_step"):   # v0.24 [Ed 14:02] joystick top-edge step
         st = D["joy_step"]
         row("joystick top-edge step: faceplate left over the rebate", D["wall"] - st["d"], 0.8,
@@ -44,6 +44,17 @@ def checks(D, parts):
             f"lower y {ly0:.2f}..{ly1:.2f}, upper y {y0:.2f}..{y1:.2f}; seam inside the knob shadow")
         row("back AMOLEDs inside the cover pocket", min(D["void_x1"] - x1, x0 - D["void_x0"], D["void_y1"] - y1, ly0 - D["void_y0"]), 0.3,
             f"{D['amo_w']:.2f} wide in a {D['void_x1'] - D['void_x0']:.2f} pocket")
+        if D.get("amo_drop_air"):   # v0.25 [Ed 19:12 (5)]: each screen drops straight onto the cover floor past the corner columns
+            from build123d import Pos as _P, Box as _B, Align as _Al
+            big = 9e9
+            for nm, (sx0, sx1, sy0, sy1), (sz0, sz1) in (("upper", D["amo_upper"], D["amo_upper_z"]), ("lower", D["amo_lower"], D["amo_lower_z"])):
+                path = _P((sx0 + sx1) / 2, (sy0 + sy1) / 2, sz1 + 0.05) * _B(sx1 - sx0, sy1 - sy0, D["z_rim_seat"] - sz1,
+                                                                            align=(_Al.CENTER, _Al.CENTER, _Al.MIN))
+                dd = path.distance_to(cover)
+                if dd < big: big, who = dd, nm
+            row("back AMOLEDs drop straight in: path clear of the cover (corner flares trimmed)", big, 0.3,   # [A] the v0.25 path rule
+                f"[Ed 19:12 (5)] each screen's plan swept from its own top face up to the cover rim; nearest: the {who} screen. The flare and "
+                f"ring of each corner column are cut {D['amo_drop_air']:g} round the screens' plans (v0.24: the upper AMOLED caught a top flare by 0.48)")
         row("cover depth from the screen rule (not deeper than needed)", D["cover_depth"], D["cover_depth"],
             f"deepest rear part z {D['z_rear_parts']:.2f} over the upper screen, {D['screen_air']:.1f} air -> floor z {D['z_cover_in']:.2f}; the 3D screen-rule check confirms the air", higher_ok=False)
     else:

@@ -57,6 +57,26 @@ def _merge_pcb(el_pcb, case_pcb, key):
     if not os.path.exists(dst): export_brep(merged, dst)
     return merged, dst
 
+def _fuse_cradle(case, key):
+    """v0.25 [Ed 18:35]: the joystick cradle (lip ring, hangers, end walls, ball seats on their brackets, top-board shoulders) is printed
+    into the case: one UTR-8100 print. The cradle comes from cad/joystick-param (read as data, assembly/joystick.py) with a 0.02 overlap into
+    the faceplate so the two solids fuse into one. Cached like the merged PCB. Returns (case, brep path, joystick key)."""
+    from build123d import export_brep, import_brep
+    import hashlib
+    from . import joystick as js
+    cr, ck = js.cradle_for_case()
+    if cr is None:
+        return case, None, ""
+    dst = os.path.join(CACHE, "case_cradle_" + hashlib.sha1((key + "|" + ck).encode()).hexdigest()[:16] + ".brep")
+    if os.path.exists(dst):
+        return import_brep(dst), dst, ck
+    fused = (case + cr).clean()
+    if len(fused.solids()) == 1:
+        fused = fused.solids()[0]   # one print, one solid (the assembly row "printed into the case: one solid" checks it)
+    export_brep(fused, dst)
+    return fused, dst, ck
+
+
 def build_all(D, full_pcb=False, only=None):
     """only: list of sub-assembly names (None = all). Returns parts, stats, keys, owner{part: sub}."""
     global PATHS
@@ -72,7 +92,13 @@ def build_all(D, full_pcb=False, only=None):
             # the case gives the board outline (10HP nest + corner notches); electronics gives every hole and cut-out
             out = dict(out); paths = dict(paths)
             out["PCB"], paths["PCB"] = _merge_pcb(parts["PCB"], out["PCB"], keys["PCB"] + key)
+        ck = ""
+        if s == "case" and "case" in out:   # v0.25 [Ed 18:35]: the joystick cradle is printed into the case (one print)
+            out = dict(out); paths = dict(paths)
+            out["case"], p_, ck = _fuse_cradle(out["case"], key)
+            if p_: paths["case"] = p_
         for n in out: keys[n] = (keys[n] + key + n) if (n == "PCB" and n in keys) else key + n; owner[n] = owner.get(n, s)
+        if ck: keys["case"] += "|cradle" + ck
         PATHS.update(paths); parts.update(out)
     if full_pcb and (not only or "electronics" in only):
         from build123d import export_brep

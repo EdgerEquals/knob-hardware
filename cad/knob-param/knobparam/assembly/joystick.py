@@ -14,17 +14,75 @@ def _jsdir():
     return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(here))), "joystick-param")
 
 
-def placed():
-    """{'joystick: <name>': solid} in the knob panel frame, plus the joystick D."""
-    from build123d import Pos
+_JD = {}
+
+
+def _jd():
+    """The joystick D (derived once per process)."""
     js = _jsdir()
     if js not in sys.path:
         sys.path.insert(0, js)
-    from jsparam import params, parts
-    JD = params.derive(params.P)
+    if "D" not in _JD:
+        from jsparam import params
+        _JD["D"] = params.derive(params.P)
+    return _JD["D"]
+
+
+def placed():
+    """{'joystick: <name>': solid} in the knob panel frame, plus the joystick D. v0.25 [Ed 18:35]: the cradle is printed into the case,
+    so it is not a joystick part here: build_all fuses it into "case" (cradle_for_case)."""
+    from build123d import Pos
+    JD = _jd()
+    from jsparam import parts
     P = parts.build(JD)
-    out = {PREFIX + n: Pos(0, JD["place_y"], 0) * s for n, s in P.items() if not n.startswith(PROXIES)}
+    skip = PROXIES + ((parts.cc_name(JD),) if JD.get("cradle_in_case") else ())
+    out = {PREFIX + n: Pos(0, JD["place_y"], 0) * s for n, s in P.items() if not n.startswith(skip)}
     return out, JD
+
+
+def cradle_for_case(ov=0.02):
+    """v0.25 [Ed 18:35]: the joystick cradle as printed in the case (knob panel frame), with its lip and flange riser running ov into the
+    faceplate so it fuses, and a cache key (joystick source + its derived values). (None, "") when the cradle is a separate part."""
+    import hashlib, json
+    from build123d import Pos
+    JD = _jd()
+    if JD.get("base") != "case" or not JD.get("cradle_in_case"):
+        return None, ""
+    from jsparam import parts
+    src = "".join(open(m.__file__, encoding="utf-8").read() for m in src_modules()[:2])
+    ck = hashlib.sha1((src + json.dumps(JD, sort_keys=True, default=repr) + f"{ov}").encode()).hexdigest()[:16]
+    return Pos(0, JD["place_y"], 0) * parts.case_cradle(JD, ov=ov), ck
+
+
+def _zsweep(shape, dz_lo, dz_hi):
+    """Prisms swept by each solid of `shape` moving along z by dz_lo..dz_hi (each solid taken as a prism in z: its plan at mid height)."""
+    from build123d import Box, Pos, extrude
+    out = []
+    for s in shape.solids():
+        bb = s.bounding_box(); c = bb.center(); zm = (bb.min.Z + bb.max.Z) / 2
+        sec = s & (Pos(c.X, c.Y, zm) * Box(bb.size.X + 2, bb.size.Y + 2, 1e-3))
+        for f in sec.faces():
+            if f.normal_at().Z < -0.99:
+                f0 = Pos(0, 0, bb.min.Z + dz_lo - f.center().Z) * f
+                out.append(extrude(f0, amount=(bb.max.Z - bb.min.Z) + (dz_hi - dz_lo), dir=(0, 0, 1)))
+    return out
+
+
+def _path(movers, fixed, dz_lo, dz_hi):
+    """Least distance from the swept movers to the fixed parts, and which pair."""
+    best, who = 9e9, ""
+    for mn, m in movers.items():
+        for pr in _zsweep(m, dz_lo, dz_hi):
+            pb = pr.bounding_box()
+            for fn, f in fixed.items():
+                fb = f.bounding_box()
+                if (pb.min.X > fb.max.X + 2 or fb.min.X > pb.max.X + 2 or pb.min.Y > fb.max.Y + 2 or fb.min.Y > pb.max.Y + 2
+                        or pb.min.Z > fb.max.Z + 2 or fb.min.Z > pb.max.Z + 2):
+                    continue
+                d = pr.distance_to(f)
+                if d < best:
+                    best, who = d, f"{mn[len(PREFIX):] if mn.startswith(PREFIX) else mn} / {fn}"
+    return best, who
 
 
 def src_modules():
@@ -38,76 +96,66 @@ def src_modules():
 
 def cross(D, pp, jp, JD):
     """[Ed 3 Nov] layout v4: cross-checks between the knob model (electronics vertical boards, MCU, encoder riser, case) and the joystick
-    (top board, sockets, case cradle, bead, hold-down springs). v0.24 [Ed 13:31-14:08]: pins into sockets, the boards are the posts,
-    a form-in-place bead takes the stack, the top-edge step. pp: knob parts in the panel frame; jp: placed joystick parts."""
+    (top board, sockets, hold-down springs). v0.24 [Ed 13:31-14:08]: pins into sockets. v0.25 [Ed 18:35 / 19:12]: the cradle is printed
+    into the case (fused into "case" by build_all), the pins take the stack (the end tabs clear the top board), 4.5 sockets, the top board
+    goes in from the back on its own (corner notches), the pin rows 0.3 inboard (and 2.5 toward the knob [A]).
+    pp: knob parts in the panel frame; jp: placed joystick parts (no cradle: it is in the case)."""
     import math
     from ..common.checks import Rows
     r = Rows("assembly"); row = r.row
     if JD.get("base") != "case" or not D.get("vb"):
         return r
-    from jsparam.parts import CC_NAME, gk_name, db_name
+    from jsparam.parts import db_name
     V, Q, H = D["vb"], D["vb_pin"], D["vb_hdr"]
-    S, B = JD["tb_sock"], JD["bead"]
+    S = JD["tb_sock"]
     py = JD["place_y"]
+    rss = lambda T: math.sqrt(sum(v * v for v in T.values()))
+
+    def info(name, val, tgt, note):   # a row that reports, it does not gate
+        r.append(dict(name=name, value=round(float(val), 3), target=tgt, ok=True, note=note, owner=r.owner, slack=None))
     # ---- values that must match across the two models
     dz = abs(JD["z_db0"] - V["top_board_z"])
     row("top board height: joystick tb_z0 = electronics vb.top_board_z", dz, 0.01,
-        f"joystick top board underside z {JD['z_db0']:.2f}; the vertical boards' end tabs reach z {V['top_board_z']:.2f}", higher_ok=False)
+        f"joystick top board underside z {JD['z_db0']:.2f}; electronics vb.top_board_z {V['top_board_z']:.2f}", higher_ok=False)
     dm = max(abs(JD["vb_pin_x"] - D["vb_top_x"]), abs(JD["vb_plane_x"] - V["x"]), *(abs(a - b) for a, b in zip(JD["vb_y_panel"], V["y"])),
              *(abs(a + py - b) for a, b in zip(JD["sock_pin_y"], D["vb_top_y"])), abs(S["n"] - Q["n"]), abs(S["pitch"] - Q["pitch"]),
              abs(S["h"] - Q["sock_h"]), *(abs(a - b) for a, b in zip(S["ins"], Q["sock_ins"])),
              abs(JD["sock_y"][0] + py - D["vb_sock_y"][0]), abs(JD["sock_y"][1] + py - D["vb_sock_y"][1]))
     row("pins and sockets: rows, positions, height and insertion range, electronics = joystick", dm, 0.01,
-        f"{Q['n']} × 2 at {Q['pitch']:g}, rows x ±{D['vb_top_x']:.2f}, y {D['vb_top_y'][0]:.2f}..{D['vb_top_y'][-1]:.2f}; socket {S['h']:g} tall, "
-        f"insertion {S['ins'][0]:g}-{S['ins'][1]:g}", higher_ok=False)
+        f"{Q['n']} × 2 at {Q['pitch']:g}, rows x ±{D['vb_top_x']:.2f} [Ed 19:12 (4): 0.3 inboard], y {D['vb_top_y'][0]:.2f}..{D['vb_top_y'][-1]:.2f} "
+        f"({Q.get('y_shift', 0):+g} toward the knob [A]); socket {S['h']:g} tall [Ed 19:12 (7)], insertion {S['ins'][0]:g}-{S['ins'][1]:g}",
+        higher_ok=False)
     dh = max(abs(D["joy_hole"][0] - 2 * JD["hole_hw"]), abs(D["joy_hole"][1] - 2 * JD["hole_hh"]), abs(D["place_y"] - py))
     row("faceplate cutout and place_y: case = joystick", dh, 0.01,
         f"cutout {D['joy_hole'][0]:.2f} × {D['joy_hole'][1]:.2f} at y {D['place_y']:.2f}", higher_ok=False)
-    st = JD["step"]
-    ds = max(abs(D["joy_step"]["w"] - st["w"]), abs(D["joy_step"]["d"] - st["d"]), abs(D["joy_step_y0"] - (JD["st_y0"] + py)))
-    row("top-edge step: case rebate = joystick step (width, depth, start)", ds, 0.01,
-        f"rebate {st['w']:g} past the cutout wall, {st['d']:g} into the faceplate back, from panel y {JD['st_y0'] + py:.2f} round the top",
-        higher_ok=False)
-    # ---- pins into sockets: engagement (the boards are the posts, so the top board always sits on the tabs: the stack does not move it)
-    T = D["vb_pin_tol"]; er = math.sqrt(sum(v * v for v in T.values())); ew = sum(T.values())
+    # ---- the pins take the stack (decision (c), kept under [Ed 18:35]): main-board ledge -> printed shoulders is ONE SLA dimension now
+    ST, PT = D["vb_stack_tol"], D["vb_pin_tol"]
+    TE = dict(vb_seat=ST["vb_seat"], header_z=PT["header_z"], case=ST["case"], top_board=ST["top_board"], socket_h=PT["socket_h"])
+    er, ew = rss(TE), sum(TE.values())
     eng = D["vb_tip_z"] - JD["z_sock0"]
     lo, hi = S["ins"]
     m_rss = min(eng - er - lo, hi - (eng + er)); m_wc = min(eng - ew - lo, hi - (eng + ew))
-    row("pins in the sockets: engagement margin at both stack ends (RSS)", m_rss, D["vb_pin_margin"],
-        f"nominal {eng:.2f} into the {S['h']:g} socket (insertion {lo:g} [S Samtec FLE class]–{hi:g} [A]), ±{er:.2f} RSS of " +
-        ", ".join(f"{k} {v:g}" for k, v in T.items()) + f" (worst ±{ew:.2f}: margin {m_wc:.2f}). The same at both ends of the ±"
-        f"{math.sqrt(sum(v * v for v in D['vb_stack_tol'].values())):.2f} main-board stack: the tabs bear on the top board, so the stack goes "
-        "into the bead, not into the pins. v0.23's contact travel (0.12–0.88 of 1.0) and force rows are gone")
-    L = D["vb_lat_tol"]; lr = math.sqrt(sum(v * v for v in L.values()))
-    C = D["vb_capture"]; cap = C["lead_in"] + C["cradle_float"]
-    row("pins line up with the sockets as the main board goes in (RSS vs capture, y)", cap - lr, 0.05,
+    row("pins in the sockets: engagement margin at both stack ends (RSS); the pins take the stack", m_rss, D["vb_pin_margin"],
+        f"nominal {eng:.2f} into the {S['h']:g} socket (insertion {lo:g} [S Samtec FLE class]–{hi:g} [A]): band {eng - er:.2f}–{eng + er:.2f} "
+        f"RSS (±{er:.2f} of " + ", ".join(f"{k} {v:g}" for k, v in TE.items()) + f"), {eng - ew:.2f}–{eng + ew:.2f} worst (margin {m_wc:.2f}). "
+        "v0.24's faceplate + cradle terms are one 'case' term (the shoulders are printed in the case); no bead, no posts")
+    TT = dict(vb_seat=ST["vb_seat"], vb_height=ST["vb_height"], case=ST["case"], top_board=ST["top_board"])
+    g_tab = V["top_board_z"] - D["vb_z1"]
+    row("vertical boards' end tabs clear of the top board at the worst-case stack (no longer posts)", g_tab - sum(TT.values()),
+        D["vb_tab_margin"],
+        f"tab tops z {D['vb_z1']:.2f}, {g_tab:.2f} under the top board; worst stack ±{sum(TT.values()):.2f} (RSS ±{rss(TT):.2f}: " +
+        ", ".join(f"{k} {v:g}" for k, v in TT.items()) + "). Tabs: " + ", ".join(f"y {a:.2f}..{b:.2f}" for a, b in D["vb_tabs"]))
+    g_h = JD["z_sock0"] - D["vb_ze"]
+    row("male header body and board edge clear of the socket's face at the worst-case stack", g_h - ew, D["vb_tab_margin"],
+        f"header body top / board edge z {D['vb_ze']:.2f}, {g_h:.2f} under the socket entry z {JD['z_sock0']:.2f}; worst stack ±{ew:.2f} "
+        f"(the pins bottom at {hi - (eng + ew):.2f} past it)")
+    L = D["vb_lat_tol"]; lr = rss(L)
+    C = D["vb_capture"]; cap = C["lead_in"] + C["board_float"]
+    row("pins line up with the sockets as the board stack goes in (RSS vs capture, y)", cap - lr, 0.05,
         f"misalignment ±{lr:.2f} RSS of " + ", ".join(f"{k} {v:g}" for k, v in L.items()) + f"; capture {cap:.2f} = socket lead-in "
-        f"{C['lead_in']:g} [A] + the cradle sliding in its {JD['cc']['lip_c']:g} lip clearance until the case closes. In x the 1.0 boards "
-        f"also flex (about {_vb_flex(D):.1f} N per 0.3 mm). TIGHT in y (the boards are stiff in their own plane): a lead-in chamfer or "
-        "a locating pin between the cradle and the main board would help [C]")
-    # ---- the bead takes the stack (the boards are the posts)
-    VT = dict(D["vb_stack_tol"]); need = math.sqrt(sum(v * v for v in VT.values()) + B["disp"] ** 2); wc = sum(VT.values()) + B["disp"]
-    band = JD["bead_band"]
-    h_need = 2 * need / (B["c_hi"] - B["c_lo"])
-    row("form-in-place bead takes the post stack (RSS) inside its 15–45 % band", band - need, 0.0,
-        f"[Ed 14:08] stack ±{need:.2f} RSS (" + ", ".join(f"{k} {v:g}" for k, v in VT.items()) + f", the bead's own ±{B['disp']:g} height "
-        f"[S Henkel]; worst ±{wc:.2f}) vs the bead's ±{band:.2f} ({B['w0']:g} × {B['h0']:g} on the {JD['gk_land_x']:.2f} long-side land). "
-        f"FUNDAMENTAL: to take ±{need:.2f} in 15–45 % a bead needs about {h_need:.1f} tall (≈{h_need / 0.9:.1f} wide at aspect 0.9 [S]); "
-        f"the land fits {JD['gk_land_x']:.2f}. Short end: the bead lifts off (no seal); long end: it bottoms and the posts load up. "
-        "Danny's call [C]")
-    nb = _bead_len(JD); f_nom = B["f_mm"] * nb; f_hi = f_nom * ((B["c_hi"] / B["c_nom"]) ** 1.5)
-    fhd = len(JD["springs"]) * JD["spr_f"]; fpr = JD["push_hi"]
-    post = (f_hi + fhd + fpr) / 2
-    E, I, Lc = 18000.0, (V["y"][1] - V["y"][0]) * V["t"] ** 3 / 12.0, D["vb_z1"]
-    p_pin = math.pi ** 2 * E * I / (0.7 * Lc) ** 2; p_free = math.pi ** 2 * E * I / (2 * Lc) ** 2
-    row("posts: Euler load / post load, each board (bottom header clamped, top held by the pins)", p_pin / post, D["vb_buckle_margin"],
-        f"post load {post:.1f} N a board = (bead {f_hi:.0f} N at {100 * B['c_hi']:.0f} % [A {B['f_mm']:g} N/mm at 30 %, {nb:.0f} mm of bead] "
-        f"+ hold-downs {fhd:.1f} + worst press {fpr:.2f}) / 2; nominal bead {f_nom:.0f} N. Euler {p_pin:.0f} N fixed-pinned, {p_free:.0f} N "
-        f"fixed-free ({p_free / post:.1f}×) [A FR4 E 18 GPa, {V['y'][1] - V['y'][0]:.1f} × {V['t']:g}, {Lc:g} tall]")
-    row("bead force vs the hold-downs and a press (info: neither unloads the bead)", f_nom, 0.0,
-        f"bead {f_nom:.0f} N nominal pushes the cradle onto the top board and the tabs. The hold-downs ({fhd:.1f} N) close a loop main board → "
-        f"tabs → cradle → balls → carrier → springs → main board, and a press ({fpr:.2f} N) runs stem → top board → tabs → main board → back "
-        "cover: neither goes through the bead (only the boards' and the main board's elastic give, microns)")
+        f"{C['lead_in']:g} [A] + the top board floating in its printed nest ({JD['cc']['nest_c']:g} a side) while its glue is wet [A, needs "
+        f"Danny's OK]. With the glue already set the capture is the lead-in alone: {C['lead_in'] - rss(dict(L, board=0.05)):.2f}. In x the 1.0 "
+        f"boards also flex (about {_vb_flex(D):.1f} N per 0.3 mm)")
     # ---- header legs vs the top corner PCB notches (case corners), and vs the encoder riser behind R
     rp = H["pad"] / 2; best, who = 9e9, ""
     for cx, cy in D["corners"]:
@@ -116,7 +164,7 @@ def cross(D, pp, jp, JD):
                 d = math.hypot(x - cx, y - cy) - D["notch_r"] - rp
                 if d < best: best, who = d, f"leg ({x:.2f}, {y:.2f}) to the notch at ({cx:g}, {cy:.2f})"
     row("vertical-board header pads to the top corner PCB notches", best, 1.0,
-        f"notch r {D['notch_r']:.2f}; {who}. Rows stop at y {H['y_max'][0]:g} / {H['y_max'][1]:g} (vb_hdr.y_max)")
+        f"notch r {D['notch_r']:.2f}; {who}. Rows stop at y {H['y_max'][0]:g} / {H['y_max'][1]:g} (vb_hdr.y_max) [Ed 19:12 (6)]")
     vbp = {n: q for n, q in pp.items() if n.startswith("vertical board")}
     enc = [q for n, q in pp.items() if n.startswith(("encoder standoff", "encoder header", "encoder daughterboard"))]
     hdr = [q for n, q in vbp.items() if " header " in n]
@@ -126,7 +174,6 @@ def cross(D, pp, jp, JD):
         row("vertical-board header legs vs the encoder riser and its header", d, 0.5,
             f"[Ed 13:31] R: SMT legs over y {H['smt'][0][1]:g}-{H['smt'][0][2]:g} (no tails over the riser), {nt[1]} THT legs above; "
             f"L {nt[-1]} THT. The riser's own header is hybrid (THT at its inner end), no standoffs [Ed 13:39]")
-    # the riser's THT pins come through the main-board front: clear of R's foot, the windows and the H7B0
     from knobparam.electronics.parts import pcb as _pcb
     a = math.radians(D.get("mech_rot", 0.0)); c_, s_ = math.cos(a), math.sin(a)
     tp = [(c_ * x - s_ * y, s_ * x + c_ * y, d) for x, y, d in D.get("enc_tht_xy", [])]
@@ -146,12 +193,11 @@ def cross(D, pp, jp, JD):
                 if dd < best: best, who = dd, f"pin ({X:.2f}, {Y:.2f}) to window {k}"
         row("encoder riser THT pins on the main-board front: clear of R's foot, the windows and the H7B0", best, 0.5,
             f"[Ed 13:35] pins {list(D['enc_header_tht'])} through (pad + 0.15 ring); the rest SMT on the back under R's foot; nearest: {who}")
-    # ---- vertical boards vs the case, the joystick springs and the case cradle
+    # ---- vertical boards vs the case (the printed cradle is part of it now), the joystick springs and the rear anchor
     case = {n: q for n, q in pp.items() if n == "case" or n.startswith("glow coat")}
     d, who = min(((a.distance_to(b), f"{na} / {nb}") for na, a in vbp.items() for nb, b in case.items()), default=(9.9, ""))
-    row("vertical boards and their parts vs the case (corner posts, ledges, glow coat)", d, 1.0,
-        f"nearest: {who}. The male header body (z {D['vb_ze'] - Q['body_z']:.1f}-{D['vb_ze']:.1f}) sits {D['vb_ze'] - Q['body_z'] - D['z_post_top']:.1f} "
-        "over the top corner posts")
+    row("vertical boards and their parts vs the case (corner posts, ledges, glow coat, the printed cradle)", d, 1.0,
+        f"nearest: {who}. The male header body (z {D['vb_ze'] - Q['body_z']:.2f}-{D['vb_ze']:.2f}) is inboard of the top corner posts' plan")
     boards = [q for n, q in vbp.items() if "FR4" in n]
     hd = [q for n, q in jp.items() if "hold-down spring" in n]
     d = min(a.distance_to(b) for a in boards for b in hd)
@@ -162,15 +208,7 @@ def cross(D, pp, jp, JD):
     d, who = min(((a.distance_to(b), f"{na} / {nb[len(PREFIX):]}") for na, a in vbp.items() for nb, b in ra.items()), default=(9.9, ""))
     row("vertical boards (and header legs behind the main board) vs the joystick rear anchor and cross pins", d, 1.0,
         f"nearest: {who}; anchor x {JD['ra_x0']:.2f}..{JD['ra_x1']:.2f} on the board back, pin heads out to x {JD['ra_x1'] + 0.25 + JD['pin_head_t']:.2f}")
-    cc = jp[PREFIX + CC_NAME]
-    d, who = min(((cc.distance_to(q), n) for n, q in vbp.items()), default=(9.9, ""))
-    row("vertical boards and their pins vs the joystick case cradle", d, 0.5, f"nearest: {who}")
     tb = jp[PREFIX + db_name(JD)]
-    bd = [q for n, q in vbp.items() if "FR4" in n]
-    dt = max(b_.distance_to(tb) for b_ in bd)
-    row("vertical boards' end tabs bear on the top board's underside (the posts)", dt, 0.02,
-        f"tabs y {D['vb_tabs'][0][0]:.2f}..{D['vb_tabs'][0][1]:.2f} and {D['vb_tabs'][1][0]:.2f}..{D['vb_tabs'][1][1]:.2f} at x ±{V['x']:g} "
-        "(bare board under them on the top board [A])", higher_ok=False)
     sk = [q for n, q in jp.items() if "top-board socket" in n]
     pins = [q for n, q in vbp.items() if "male pins" in n]
     if sk and pins:
@@ -186,22 +224,45 @@ def cross(D, pp, jp, JD):
         best = min(best, math.hypot(dx_, dy_) - JD["spr_d"] / 2)
     row("H7B0 courtyard to the joystick hold-down springs (plan)", best, 1.0,
         f"courtyard {M['court']:g} □ at ({mx:g}, {my:g}); springs at (±{JD['spr_x']:.2f}, {py - JD['spr_y']:.2f} / {py + JD['spr_y']:.2f})")
-    # ---- the case cradle and its bead against the real case
+    # ---- [Ed 18:35] the cradle printed into the case
     cs = pp.get("case")
     if cs is not None:
-        d = cc.distance_to(cs)
-        row("joystick case cradle vs the real case (lip in the cutout, dam in the rebate, flange under the faceplate)", d, JD["cc"]["lip_c"] - 0.01,
-            f"lip {JD['cc']['lip_c']:.2f} from the cutout walls, dam {st['c']:g} from the rebate walls, flange {JD['z_fp0'] - JD['z_fl1']:.2f} "
-            "under the faceplate back")
-        gk = jp[PREFIX + gk_name(JD)]
-        row("cradle bead on the real faceplate back and in the real rebate", gk.distance_to(cs), 0.02,
-            f"bead top z {JD['z_fp0'] - 0.01:.2f} under the faceplate back z {D['z_fp0']:.2f}; in the step under the rebate ceiling z "
-            f"{JD['z_reb1']:.2f}", higher_ok=False)
+        cr, _ = cradle_for_case()
+        ns = len(cs.solids())
+        probe = (JD["nest_hw"] + JD["cc"]["wall"] / 2, py + (JD["nest_y0"] + JD["nest_y1"]) / 2, (JD["z_nest0"] + JD["z_fl0"]) / 2)
+        inside = cs.is_inside(probe)
+        row("joystick cradle printed into the case: one solid with the hangers in it", ns + (0 if inside else 9), 1,
+            f"[Ed 18:35] case = shell + the joystick cradle (lip ring, flange + riser, hangers, end walls, ball seats on their brackets, "
+            f"top-board shoulders), {cr.volume / 1000:.2f} cm³ fused in with a 0.02 overlap; {ns} solid(s); hanger probe "
+            f"{'inside' if inside else 'NOT inside'} the case. BOM and per-part STEP: one printed part, 'case'", higher_ok=False)
         gl = [q for n, q in pp.items() if n.startswith("glow coat")]
         if gl:
-            d = min(min(cc.distance_to(g), gk.distance_to(g)) for g in gl)
-            row("case cradle flange and bead clear of the side-wall glow coat", d, JD["cc"]["glow_air"] - 0.01,
-                f"flange edge x ±{JD['fl_x1']:.2f}; the coat is modelled {D['glow_gap']:g} off the wall at x ±{D['x_in1']:.2f}")
+            d = min(cr.distance_to(g) for g in gl)
+            row("printed cradle flange clear of the side-wall glow coat", d, JD["cc"]["glow_air"] - 0.01,
+                f"flange edge x ±{JD['fl_x1']:.2f}; the coat is modelled {D['glow_gap']:g} off the wall at x ±{D['x_in1']:.2f} (brush access)")
+        # the top board goes in from the back on its own (with its sockets, SW1 and the screen socket) up to its printed nest
+        fixed = {n: q for n, q in pp.items() if n == "case" or n.startswith(("glow coat", "corner insert", "jack ", "USB-C"))}
+        mov = {n: q for n, q in jp.items() if n.startswith(tuple(PREFIX + k for k in ("joystick top board", "top-board socket", "SW1 ", "screen FPC socket")))}
+        top = max(q.bounding_box().max.Z for q in mov.values())
+        lo_ = (D["z_rim"] - 2.0) - top
+        hi_ = (JD["z_nest0"] - D["path_min"]) - JD["z_db1"]
+        dpath, who = _path(mov, fixed, lo_, hi_)
+        nx, ny = JD.get("tb_notch_size", (0.0, 0.0))
+        row("top board (with its sockets and parts) path from the back clear of the case and inserts", dpath, D["path_min"],
+            f"[Ed 18:35] swept from behind the rim up to {JD['z_db1'] - JD['z_nest0'] + D['path_min']:.1f} short of home (the last bit is the "
+            f"printed nest, {JD['cc']['nest_c']:g} a side); nearest: {who}. Corner notches {nx:.2f} × {ny:.2f} round the top corner posts "
+            f"(v0.24: the board caught the posts' bases by ~1). TIGHT: the sockets' outer corners pass the posts' bases at about this")
+        # the vertical boards' male pin headers (and the boards) go in with the board stack from the back
+        movh = {n: q for n, q in vbp.items() if "male pins" in n}
+        movb = {n: q for n, q in vbp.items() if "male pins" not in n}
+        top = max(q.bounding_box().max.Z for q in vbp.values())
+        lo_ = (D["z_rim"] - 2.0) - top
+        dh_, whoh = _path(movh, fixed, lo_, 0.0)
+        db_, whob = _path(movb, fixed, lo_, 0.0)
+        row("vertical boards' male pin headers: path from the back clear of the case", dh_, D["path_min"],
+            f"[Ed 19:12 (4)] headers 0.3 inboard (pins x ±{D['vb_top_x']:.2f}, body to ±{D['vb_face_out'] + Q['body_x']:.2f}) and the rows "
+            f"{Q.get('y_shift', 0):+g} in y [A]; nearest: {whoh} (v0.24: 0.15 into the top corner posts' bases). The boards and their bottom "
+            f"headers: {db_:.2f} ({whob})")
     return r
 
 
@@ -209,14 +270,6 @@ def _vb_flex(D):
     """N to push one vertical board's top edge 0.3 sideways (cantilever from the header, FR4 E 18 GPa [A])."""
     V = D["vb"]; I = (V["y"][1] - V["y"][0]) * V["t"] ** 3 / 12.0
     return 3 * 18000.0 * I / D["vb_z1"] ** 3 * 0.3
-
-
-def _bead_len(JD):
-    """mm of bead: the ring next to the cutout (band centre), all four sides (flange U + the step), plus the two risers."""
-    import math
-    a = JD["gk_land_x"] / 2
-    w, h, r = JD["hole_hw"] + a, JD["hole_hh"] + a, JD.get("corner_r", 0.0) + a
-    return 2 * (2 * w + 2 * h) - (8 - 2 * math.pi) * r + 2 * (JD["z_reb1"] - JD["z_fl1"])
 
 
 def _bb(s):

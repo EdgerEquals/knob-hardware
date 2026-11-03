@@ -46,9 +46,10 @@ def _vb_rows(D, parts, r):
           f"{Q['n']} per board at {Q['pitch']:g} (right-angle header on the outer face, row x ±{D['vb_top_x']:.2f}), y {D['vb_top_y'][0]:.2f}.."
           f"{D['vb_top_y'][-1]:.2f}; doc: about 16-20 [Ed 11:25]. No spring contacts [Ed 13:46]")
     tw = min(b - a for a, b in D["vb_tabs"])
-    r.row("vertical boards: end tabs (posts) beside the sockets, narrowest (mm)", tw, Q["tab_min"],
-          f"[Ed 14:08] tabs y {D['vb_tabs'][0][0]:.2f}..{D['vb_tabs'][0][1]:.2f} and {D['vb_tabs'][1][0]:.2f}..{D['vb_tabs'][1][1]:.2f} up to z "
-          f"{D['vb_z1']:g} (the top board); the edge between them is at z {D['vb_ze']:.2f}, {Q['sock_clear']:g} under the socket")
+    r.row("vertical boards: end tabs beside the sockets, narrowest (mm)", tw, Q["tab_min"],
+          "tabs " + " and ".join(f"y {a:.2f}..{b:.2f}" for a, b in D["vb_tabs"]) + f" up to z {D['vb_z1']:g} "
+          f"({Q.get('tab_air', 0):g} under the top board: v0.25, no longer posts); the edge under the sockets is at z {D['vb_ze']:.2f}, "
+          f"{Q.get('sock_z_air', Q['sock_clear']):g} under the socket entry")
     cnt = {sx: (sum(k == "tht" for _, _, k in D["vb_legs"][sx]), sum(k == "smt" for _, _, k in D["vb_legs"][sx])) for sx in (-1, 1)}
     r.row("vertical boards: bottom header legs per board (fewest)", min(a + b for a, b in cnt.values()), 20,
           f"[Ed 13:31-13:39] hybrid right-angle header, 2 rows at {H['pitch']:g}: L {cnt[-1][0]} THT + {cnt[-1][1]} SMT, R {cnt[1][0]} THT + "

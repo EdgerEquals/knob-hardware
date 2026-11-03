@@ -19,6 +19,12 @@ DB_NAME8 = "joystick top board (on the vertical boards, sockets under it)"
 GK_NAME8 = "joystick cradle gasket: form-in-place silicone bead [A]"
 SK_NAME = "top-board socket {} (1.27 single row, {}) [A]"
 US_NAME = "guide up-stop cushion {} ({}) [A]"
+# v0.9 [Ed 18:35] the cradle is printed into the case (one UTR-8100 print with the faceplate)
+CC_NAME9 = "joystick case cradle (printed with the case, UTR-8100)"
+
+
+def cc_name(D):
+    return CC_NAME9 if D.get("cradle_in_case") else CC_NAME
 
 
 def db_name(D):
@@ -128,24 +134,33 @@ def cradle(D):
         r -= box(D["db_half_w"] - 0.5, D["tab_x1"] + 0.2, -D["tab_hy"] - 0.2, D["tab_hy"] + 0.2, zt, zt + 5.0)
     return r
 
-def case_cradle(D):
+def case_cradle(D, ov=0.0):
     """v0.7 [Ed 3 Nov 11:03] cradle captured by the case (clear SLA). Flange behind the faceplate (−y, ±x; the +y side is over the rail
     strip), lip ring up into the cutout (closed across +y inside the cutout only), hangers and end walls round the top board with
-    shoulders over its edge (the board is glued to them; the spring contacts push it up), and the four lower ball seats."""
+    shoulders over its edge (the board is glued to them; the spring contacts push it up), and the four lower ball seats.
+    v0.9 [Ed 18:35]: printed with the case: the lip ring fills the cutout wall below the front, the flange top is the faceplate back.
+    ov: how far the lip's outer face and the flange top run into the case (0 in this model: they touch the faceplate proxy; the knob
+    assembly passes a small overlap so the two solids fuse into one)."""
     cc = D["cc"]
     zf0, zf1, zl0, zl1 = D["z_fl0"], D["z_fl1"], D["z_lipb"], D["z_lip1"]
-    ohw, ohh, ihw, ihh = D["lip_out_hw"], D["lip_out_hh"], D["lip_in_hw"], D["lip_in_hh"]
+    ohw, ohh, ihw, ihh = D["lip_out_hw"] + ov, D["lip_out_hh"] + ov, D["lip_in_hw"], D["lip_in_hh"]
     fx1, fy0, fy1 = D["fl_x1"], D["fl_y0"], D["fl_y1"]
     nhw, ny0, ny1, w = D["nest_hw"], D["nest_y0"], D["nest_y1"], cc["wall"]
+    lr = (D.get("corner_r", 0.0) + ov) if D.get("cradle_in_case") else D["lip_corner_r"]   # v0.9: the cutout's own corner radius
     # lip ring in the cutout, all round
-    c = rbox(2 * ohw, 2 * ohh, D["lip_corner_r"], zl0, zl1) - cbox(2 * ihw, 2 * ihh, zl0 - 0.1, zl1 + 0.1)
+    c = rbox(2 * ohw, 2 * ohh, lr, zl0, zl1) - cbox(2 * ihw, 2 * ihh, zl0 - 0.1, zl1 + 0.1)
     # lip root down to the flange, only over the flange (y <= fl_y1)
-    root = rbox(2 * ohw, 2 * ohh, D["lip_corner_r"], zf1 - 0.01, zl0 + 0.01) - cbox(2 * ihw, 2 * ihh, zf1 - 0.2, zl0 + 0.2)
-    c += root - box(-ohw - 1, ohw + 1, fy1, ohh + 1, zf1 - 0.5, zl0 + 0.5)
+    if zl0 - zf1 > 0.005:   # v0.9: none (the flange top is the faceplate back, where the lip starts)
+        root = rbox(2 * ohw, 2 * ohh, lr, zf1 - 0.01, zl0 + 0.01) - cbox(2 * ihw, 2 * ihh, zf1 - 0.2, zl0 + 0.2)
+        c += root - box(-ohw - 1, ohw + 1, fy1, ohh + 1, zf1 - 0.5, zl0 + 0.5)
     # flange: the two side strips (inside edge = the nest wall) and the knob-side strip
     for sx in (-1, 1):
         c += box(min(sx * nhw, sx * fx1), max(sx * nhw, sx * fx1), fy0, fy1, zf0, zf1)
     c += box(-fx1, fx1, fy0, -ihh, zf0, zf1)
+    if D.get("cradle_in_case"):   # v0.9 [Ed 18:35]: riser from the flange top to the faceplate back, outboard of the lip's inner face (one print)
+        zr = D["z_fp0"] + ov
+        riser = box(-fx1, fx1, fy0, fy1, zf1 - 0.01, zr) - box(-ihw, ihw, -ihh, 60.0, zf1 - 0.1, zr + 0.1)
+        c += riser
     # hangers along the board's ±x edges and end walls along its ±y edges, from just under the board up to the flange
     for sx in (-1, 1):
         c += box(min(sx * nhw, sx * (nhw + w)), max(sx * nhw, sx * (nhw + w)), ny0 - w, ny1 + w, D["z_nest0"], zf0 + 0.01)
@@ -173,6 +188,17 @@ def case_cradle(D):
         c += box(min(x, sx * (nhw + 0.5)), max(x, sx * (nhw + 0.5)), y - 0.8 * D["boss_r"], y + 0.8 * D["boss_r"], D["z_seat0"], zf0 + 0.01)
         c -= Pos(x, y, D["z_sc_lo"]) * Sphere(D["cup_r"])
     return c
+
+def top_board_notches(D, db, z0=None, z1=None):
+    """v0.9 [Ed 18:35]: the top board's corner notches round the top corner posts (radius = post + notch_air), squared off up to the
+    board's +y edge so no thin horn of board is left at the corner. Also used for the board's path sweep (any z0..z1)."""
+    z0 = D["z_db0"] - 0.1 if z0 is None else z0
+    z1 = D["z_db1"] + 0.1 if z1 is None else z1
+    for x, y, r in D.get("tb_notch", ()):
+        db -= cyl(2 * r, z0, z1, x, y)
+        xa = abs(x) - r
+        db -= box(xa if x > 0 else -60.0, 60.0 if x > 0 else -xa, y, 60.0, z0, z1)
+    return db
 
 def cradle_bead(D):
     """v0.8 [Ed 14:03] form-in-place bead, drawn as its contact band at the nominal squeeze, 0.01 short of the case: (1) on the flange top
@@ -374,6 +400,7 @@ def build(D):
         db += box(dx1 - 0.01, D["tab_x1"], -D["tab_hy"], D["tab_hy"], D["z_db0"], D["z_db1"])
     for x, y in D.get("access_xy", []):   # [Ed 13:23] press-spring grub access
         db -= cyl(D["grub_access_d"], D["z_db0"] - 0.1, D["z_db1"] + 0.1, x, y)
+    db = top_board_notches(D, db)
     out[db_name(D) if D["base"] == "case" else "joystick daughterboard"] = db
     if D.get("top_joint") == "sockets":   # v0.8 [Ed 13:46]: SMT sockets under the top board, a hole for each male pin
         S = D["tb_sock"]; ys0, ys1 = D["sock_y"]
@@ -410,8 +437,9 @@ def build(D):
     out["SW1 SKRHADE010 body (45°)"] = body
     out["SW1 SKRHADE010 stem"] = stem
     if D["base"] == "case":   # v0.7 [Ed 3 Nov]
-        out[CC_NAME] = case_cradle(D)
-        out[gk_name(D)] = cradle_gasket(D)
+        out[cc_name(D)] = case_cradle(D)
+        if not D.get("cradle_in_case"):   # v0.9 [Ed 18:35]: one print, no bead
+            out[gk_name(D)] = cradle_gasket(D)
     elif D["base"] == "cradle":
         out["joystick cradle (printed, glued)"] = cradle(D)
         pin = D["cradle"]["pin"]

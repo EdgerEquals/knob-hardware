@@ -208,7 +208,8 @@ def build(D):
                  D["ox"], D["place_y"])
     case = _sub(case, joy)
     if D.get("joy_step"):   # v0.24 [Ed 14:02] top-edge seal: a rebate in the cutout wall from the faceplate back (top edge and the long sides
-        # above where the joystick cradle's flange ends); the cradle's dam sits in it with the bead on its front face
+        # above where the joystick cradle's flange ends); the cradle's dam sits in it with the bead on its front face. None since v0.25 [Ed 18:35]:
+        # the joystick cradle is printed into the case (assembly/build.py fuses it in)
         rw, rh = D["joy_reb"]; st = D["joy_step"]
         reb = _plate(rw, rh, D["hole_corner_r"] + st["w"], D["z_fp0"] - sl, D["z_fp0"] + st["d"], D["ox"], D["place_y"])
         reb = reb & _box(-60.0, 60.0, D["joy_step_y0"], D["panel_y1"] + 5.0, D["z_fp0"] - 2 * sl, D["z_fp0"] + st["d"] + sl)
@@ -303,6 +304,12 @@ def build(D):
             t = _add(t, _cyl_z(D["col_ring_r"], D["col_z2"] - fu, D["z_pcb_land"], x, y))
             t = t & _box(D["void_x0"] - fu, D["void_x1"] + fu, D["void_y0"] - fu, D["void_y1"] + fu, D["z_cover_in"] - 2 * fu, D["z_pcb_land"] + fu)
             t = _sub(t, _cyl_z(D["notch_r"], D["z_pcb_land"] - 0.3, D["z_pcb_land"] + sl, x, y))   # relief: bears on the board only
+            if D["back_screens"] == "amoled2" and D.get("amo_drop_air"):
+                # v0.25 [Ed 19:12 (5)]: trim the flare and the ring where a screen drops in from above (its plan + amo_drop_air, from the
+                # screen's own face up through the ring), so it goes straight down onto the floor; the slim column stays (col_screen_air)
+                a_ = D["amo_drop_air"]
+                for (sx0, sx1, sy0, sy1), (sz0, _sz1) in ((D["amo_upper"], D["amo_upper_z"]), (D["amo_lower"], D["amo_lower_z"])):
+                    t = _sub(t, _box(sx0 - a_, sx1 + a_, sy0 - a_, sy1 + a_, sz0 + 0.01, D["z_pcb_land"] + sl))
             cover = _add(cover, t)
             cover = _sub(cover, _cyl_z(D["hole_r"], D["z_cover_out"] - sl, D["z_pcb_land"] + sl, x, y))
             cover = _sub(cover, _cyl_z(D["cbore_r"], D["z_cover_out"] - sl, D["z_cover_out"] + D["cbore_depth"], x, y))
