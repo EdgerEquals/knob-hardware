@@ -49,6 +49,12 @@ def _split_rows(D, parts, r):
               f"Ø{D['dt_pin'][0]:g} pins at r {(r0 + r1) / 2:.2f}, " + ", ".join(f"{a:g}°" for a in D["dt_pin_angs"])
               + f" in a {r1 - r0:.3f}-wide foot (same 0.3 floor as the dial land's Ø1 holes); {D['dt_pin_end']:.2f} to the foot ends. "
               f"A tapped screw from behind needs {D['dt_screw_need']['M1.6']:.2f} (M1.6) / {D['dt_screw_need']['M2']:.2f} (M2): does not fit [C]")
+        from ..common.util import cyl
+        pins = [cyl(D["dt_pin"][0] / 2, D["plate_t"] - D["dt_pin"][1], D["dt_pin"][1], x, y) for x, y in D["dt_pin_xy"]]
+        voids = [hall_slot.window(D), mech.split_cuts(D)]
+        pw = min(p.distance_to(v) for p in pins for v in voids)
+        r.row("detent block: plate round each locating-pin hole (to the Hall slot / pedestal pocket, mm)", pw, 0.3,
+              f"pins pressed {D['dt_pin'][1]:g} into the {D['plate_t']:g} plate, cradle OD r {D['r_out']:.3f}")
     else:
         r.row("split detent: boss lift under the spring, grub fully in, ball on a dimple rim (mm)", D["sp_lift"], D["sp_lift_max"],
               f"{D['det_force_max']:.2f} N; wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}, {D['sp_wall_a'][0]:g}-{D['sp_wall_a'][1]:g}°, "

@@ -234,7 +234,9 @@ def cross(D, parts):
         f"shaft tip z {D['h_shaft_tip']:.2f}; cap underside / collar bottom z {D['h_band1']:.2f}")
     hg = [s for n, s in parts.items() if n.startswith(("knob hub gear ring", "knob upper-cap hub"))]   # v0.25 [Ed 19:46]: the inner hub
     if hg:
-        lo = [s for n, s in parts.items() if n == "motor"]
+        # v0.25 [Ed 19:46]: the PA-12 hub's flat underside now spans the 1220 shaft tip (0.5 over it, the pinion-top row's gap), so
+        # this row keeps to what it says: the can and the boss (below the gearbox front)
+        lo = [s & cyl(30.0, -60.0, D["h_motor_front"] + 60.0 + 0.01, D["offset"]) for n, s in parts.items() if n == "motor"]
         row("hub-gear ring vs the 1220 can and boss", min(hg[0].distance_to(q) for q in lo), 0.5,
             f"teeth down to z {D['knob_hub_z0']:.2f} (v0.24 39.6); can top z {D['motor']['motor_len'] + D['motor']['gearbox_len']:.1f}, "
             f"boss to z {D['h_motor_front']:.1f}")
@@ -300,11 +302,12 @@ def _cart_cross(D, parts, row, TR, Dc):
     lo = [q for n, q in parts.items() if n.startswith("control dial lower part")]
     if lo:   # v0.25 [Ed 18:12]: the lower part goes in before the cap, the cap over its tube, the dish on last
         from ..common.util import tube
-        lo = lo[0]; tip = D["hb_tip_r"]; gl = D["sleeve_id_worst"] / 2
-        d_ring = lo.distance_to(tube(tip, tip + 3.0, -5.0, 80.0))           # exact: its outermost point vs the ring-tip circle, all z
-        row("dial split: lower part passes down through the glass and the ring (ring tips - its outermost point, radial)", d_ring,
-            T["arm_vs_cradle"], f"ring tips r {tip:.3f} (v0.25 spur), worst glass bore r {gl:.2f}; outermost: the Hall bar's outer pad; "
-            "nothing of the cap or the detent boss is in yet")
+        lo = lo[0]; tip = D["hb_tip_r"]; spg = D["sleeve_lip_r"]; gl = D["sleeve_id_worst"] / 2
+        rr = min(tip, spg)   # the ring's innermost: its teeth (tips) and the plug ring up into the glass (ID sleeve_lip_r)
+        d_ring = lo.distance_to(tube(rr, rr + 3.0, -5.0, 80.0))           # exact: the lower part's outermost point vs that circle, all z
+        row("dial split: lower part passes down through the glass and the ring (ring bore - its outermost point, radial)", d_ring,
+            T["arm_vs_cradle"], f"ring tips r {tip:.3f} (v0.25 spur), its plug ring ID r {spg:.2f}, worst glass bore r {gl:.2f}; outermost: the "
+            "Hall rib's outer corner (r 16.90, the rib top); nothing of the cap or the detent boss is in yet")
         hi = lo & cyl(30.0, D["knob_hub_z0"] - 0.5, 30.0)                  # what the cap passes over on its way down
         rk = D["r_knob_bore"]
         d_cap = hi.distance_to(tube(rk, rk + 3.0, D["knob_hub_z0"] - 1.0, 30.0))
@@ -356,7 +359,8 @@ def _arc_cross(D, parts, row, TR, ARM):
         mt = split_mount(model.view(D, "base_drive"))
         bd = min(ARM[th].distance_to(mt) for th in TR)
         row("split detent mount (pedestal, wall, bracket, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
-            f"wall r {D['sp_wall_r0']:.2f}-{D['sp_wall_r1']:.2f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}")
+            f"wall r {D['sp_wall_r0']:.2f}-{D.get('sp_wall_r1_used', D['sp_wall_r1']):.3f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}"
+            + ("; v0.25 the separate detent block [Ed 18:15]" if D.get("dt_block") else ""))
         caps = [s for n, s in parts.items() if "cap" in n and "pinion" in n]
         if caps:
             dc = min(ARM[th].distance_to(c) for th in TR for c in caps)
