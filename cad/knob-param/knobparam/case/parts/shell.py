@@ -459,7 +459,13 @@ def build(D):
             for x, y in D["jb_post_xy"]:
                 pb = _add(pb, _box(x - hx, x + hx, ty, by0 + D["fuse"], D["jb2_z0"], D["jb2_z1"]))
             for i, (x, y) in enumerate(D["jb_post_xy"], 1):
-                jacks[f"jack unit post {i} (Ø{D['jb_post_d']:g} brass pin) [A]"] = _cyl_z(D["jb_post_d"] / 2, 0.02, D["jb2_z0"] - 0.02, x, y)
+                jacks[f"jack unit post {i} (Ø{D['jb_post_d']:g} brass, {'GND' if i == 1 else '15 V'}) [A]"] = _cyl_z(D["jb_post_d"] / 2, 0.02,
+                                                                                                         D["jb2_z0"] - 0.02, x, y)
+            if D.get("link_lane"):   # v0.36 [Ed 22:52]: the two flexes, drawn as straight risers from the strip up to their ZIFs
+                oy0 = D["clear_oled_xy"][1] - D["clear_oled"][1] / 2; ft = D["flex_t"]; zt = D["zif_z0"] - 0.02
+                jacks["clear OLED flex (36.0 [S], plugged on the bench)"] = _box(-6.25, 6.25, oy0 - 0.05 - ft, oy0 - 0.05, D["clear_oled"][2] / 2, zt)
+                lx0, lx1, _ly = D["link_lane"]
+                jacks["link flex (main board to the jack power board) [A]"] = _box(lx0, lx1, oy0 - 0.45 - ft, oy0 - 0.45, 0.02, zt)
         jacks["jack power board (FR-4: ZIFs, ±12 V, the OLED's 12.5 V) [A]"] = pb
         jacks["jack power board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb2_z1"] + 0.02,
                                                                  D["jb2_parts_z1"]), hkeep)

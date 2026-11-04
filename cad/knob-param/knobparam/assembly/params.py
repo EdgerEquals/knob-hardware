@@ -3,7 +3,10 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.35",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.36",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.36 [Ed 4 Nov 22:52] step 2, decision 6, option A: the right post moves in to x 8; the link flex gets the lane
+                       # x 9.5-18.5 (signals only); the posts carry 15 V and GND (soldered both ends); jack holes Ø6.6 for the float;
+                       # the two flexes are drawn
                        # v0.35 [Ed 4 Nov 22:36] step 2, decision 5, option A: the USB-C board's 15 V and GND reach the jack unit through 4
                        # spring contacts on a tab of the jack board, landing on its back face as the stack goes home; the key's ledge tab goes
                        # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack on two Ø2 posts

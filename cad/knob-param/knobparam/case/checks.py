@@ -305,6 +305,17 @@ def checks(D, parts):
                 row("jack unit posts + the power board's ears: clear of the case and glow coat as the shell comes down", dd, 0.3,
                     f"the ears (±{hx:g} round each post, down to y {ty:g}) and the posts swept over the shell's whole travel; the bottom ledge's "
                     f"inner face is y {ly:.2f}; its glow coat is left off ±1.6 round each post")
+                if D.get("link_lane"):   # v0.36 [Ed 22:52]
+                    lx0, lx1, ly = D["link_lane"]; r2 = D["jb_post_d"] / 2; px2 = D["jb_post_xy"][1][0]
+                    row("right post: to the clear OLED's flex", (px2 - r2) - 6.25, 0.5,
+                        f"post 2 at x {px2:g} (15 V, brass, soldered both ends); the OLED's flex is 12.5 wide [S], centred")
+                    row("link flex lane: to the right post", lx0 - (px2 + r2), 0.3, f"lane x {lx0:g}..{lx1:g}, ~16 lines at 0.5 [A]")
+                    cx, cy = D["corners"][1]
+                    row("link flex pads: clear of the main board's corner notch", math.hypot(lx1 - cx, ly - cy) - D["notch_r"], 0.3,
+                        f"pads down to y {ly:g} at x {lx1:g}; notch r {D['notch_r']:.2f} at ({cx:g}, {cy:.2f})")
+                    row("jack holes: float for the bushings", (D["jack_hole"] - D["jack_bush_d"]) / 2, 0.25,
+                        f"Ø{D['jack_hole']:g} holes for Ø{D['jack_bush_d']:g} bushings [Ed 22:52]: the stack sets the jack unit within this")
+                    row("jack nuts still cover the holes", (D["jack_nut_d"] - D["jack_hole"]) / 2, 0.5, f"Ø{D['jack_nut_d']:g} nuts")
                 zf = D["zif_z0"]; oz_ = D["clear_oled"][2] / 2
                 need = (zf + 1.0 - oz_) + 3.0
                 row("the clear OLED's flex reaches its ZIF (slack)", D["oled_flex_len"] - need, 3.0,

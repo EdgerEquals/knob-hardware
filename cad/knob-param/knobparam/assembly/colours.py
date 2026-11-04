@@ -70,6 +70,7 @@ def key(name):
     if "rod pad" in low: return "brass"
     if "spring" in low: return "steel"                       # 'non-magnetic' springs must not read as magnets
     if "socket" in low and "fpc" in low: return "ic"           # FPC socket on the joystick board
+    if low.startswith(("clear oled flex", "link flex")): return "flex"
     if low.startswith("jack unit post"): return "brass"
     if low.startswith(("jack board", "jack power board")):     # v0.33 [Ed 21:30]: the two jack boards and what is on them
         return "ic" if any(k in low for k in ("envelope", "header", "zif")) else "pcb"

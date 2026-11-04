@@ -260,7 +260,8 @@ P = dict(
     tft_mod_t=3.2,         # [A] placeholder module thickness, into the pocket
     tft_gap=0.80,          # [A] air from the module to the pocket wall
     # ---- front jacks, only counted. Thonkiconn PJ398SM [S], body width [A] ----
-    jack_hole=6.2,         # [S] panel hole for the 6.0 bushing
+    jack_hole=6.6,         # [Ed 4 Nov 22:52] panel hole for the 6.0 bushing (was 6.2 [S]): ±0.3 float, since the jack unit's posts are
+                           # soldered at both ends; the Ø8 nut still covers it
     jack_nut=7.8,          # [S] knurled nut
     jack_body=10.5,        # [S] PJ366ST body (was 12.0 assumed)
     jack_air=0.80,         # [A] air between bodies, and off the knob
@@ -281,12 +282,16 @@ P = dict(
     jb_hdr=(1.27, 10.2, 20.75),   # [A] two 1x8 1.27 mm SMD headers: width, length, x centre (±), at the boards' outer ends
     zif_oled=(17.65, 4.5, 2.0, 0.0),   # [S] ER-CON24HT-1, the clear OLED's matching ZIF (docs/screens-2026-11-02.md): w, d, h; x centre on the
                                        # flex, which leaves the middle of the OLED's long edge [S]; on the power board's underside
-    zif_link=(11.0, 5.5, 2.0, 15.5),   # [A] ~16-pin 0.5 mm ZIF for the link flex to the main board: w, d, h, x centre
+    zif_link=(10.0, 5.5, 2.0, 14.1),   # [A] ~16-pin 0.5 mm ZIF for the link flex: w, d, h, x centre (v0.36: over its lane, 0.28 from the OLED's)
     zif_y_off=0.75,        # [A] ZIFs start this far above the boards' bottom edge (0.3 clear of the posts)
     # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack, held on two posts standing in the
     # main board's strip under the clear OLED; both flexes are plugged into its ZIFs on the bench. The power board gets a tab down over them.
-    jb_post_xy=((-16.5, -50.45), (16.5, -50.45)),   # [Ed 22:21 / A] post centres: 0.65 from the OLED's edge, 0.35 from the bottom ledge
-    jb_post_d=2.0,         # [Ed 4 Nov 22:21] Ø2 posts (brass pins [A], soldered in the power board's tab, ~0.3 float at the main board)
+    jb_post_xy=((-16.5, -50.45), (8.0, -50.45)),    # [Ed 22:21, 22:52] post centres: 0.65 from the OLED's edge, 0.35 from the bottom ledge;
+                           # v0.36 the right post moves in to x 8 (between the OLED's flex and the link flex's lane)
+    jb_post_d=2.0,         # [Ed 4 Nov 22:21] Ø2 posts; [Ed 22:52] brass, soldered at both ends, they carry 15 V and GND to the main board
+    link_lane=(9.5, 18.5, -50.6),   # [Ed 22:52 / A] the link flex's lane: x from, x to, and its pads' lowest y in the strip (clear of the
+                           # board's corner notch); ~16 lines at 0.5 mm, signals only
+    flex_t=0.15,           # [A] flex thickness (drawn as a straight riser from the strip to its ZIF)
     jb_tab=(1.3, -51.5),   # [A] power board ears down over the posts: half width round each post, bottom edge y (0.3 above the bottom
                            # ledge); the bottom lip's glow coat is left off 1.6 either side of each post (the shell's lip passes the ears)
     oled_flex_len=36.0,    # [S] the clear OLED's flex, from the panel edge (36.0 ± 0.5)
