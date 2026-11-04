@@ -173,8 +173,15 @@ def checks(D, parts):
     z_cavity = (D["z_ledge1"] + D["z_fp0"]) / 2
     wall_x = (D["x_out0"] + D["x_in0"]) / 2
     row("side wall is material", 1.0 if _inside(case, wall_x, D["body_yc"], z_cavity) else 0.0, 1.0, "probe in the left wall")
-    row("ledge is material", 1.0 if _inside(case, 0.0, D["pcb_y0"] + D["ledge_w"] / 2, (D["z_ledge0"] + D["z_ledge1"]) / 2) else 0.0,
-        1.0, "bottom ledge, under the PCB front edge")
+    lx = (D["usb_ch_hw"] + 2.0) if D.get("usb_slot") else 0.0   # v0.32: the USB-C channel cuts the bottom ledge at x 0 (the key's tab fills it)
+    row("ledge is material", 1.0 if _inside(case, lx, D["pcb_y0"] + D["ledge_w"] / 2, (D["z_ledge0"] + D["z_ledge1"]) / 2) else 0.0,
+        1.0, f"bottom ledge, under the PCB front edge, probe at x {lx:.2f}" + (" (beside the USB-C channel; the key's tab is the ledge in it)"
+                                                                            if D.get("usb_slot") else ""))
+    if D.get("usb_slot"):
+        key = parts.get("USB-C key (printed, held by the back cover)")
+        if key is not None:
+            row("USB-C key's tab restores the bottom ledge in the channel", 1.0 if _inside(key, 0.0, D["pcb_y0"] + D["ledge_w"] / 2,
+                (D["z_ledge0"] + D["z_ledge1"]) / 2) else 0.0, 1.0, "probe at x 0 on the ledge line")
     row("knob hole is open", 0.0 if _inside(case, D["ox"], D["oy"], z_mid) else 1.0, 1.0, "probe on the dial axis, in the plate")
     row("shell back is open for the PCB", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_rim"] + D["z_ledge0"]) / 2) else 1.0, 1.0,
         "the PCB drops in from the back and stops on the ledge; the cover clamps it")
@@ -259,6 +266,54 @@ def checks(D, parts):
         f"post top z {D['z_post_top']:.2f}, PJ366ST pin tips z {D['z_jack_pins']:.2f} (body {D['jack_depth']:.1f} + pins {D['jack_pin_len']:.1f} behind the plate)")
     row("post stands above the thread", D["z_post_top"] - D["z_thread1"], D["wall"],
         f"post top z {D['z_post_top']:.2f}, tap ends z {D['z_thread1']:.2f}")
+
+    if D.get("jack_lip_notch") is not None:   # step 2 [Ed 4 Nov 20:12]: the jacks come in straight from behind (later on the jack board)
+        from build123d import Pos as _P, Box as _B, Align as _Al
+        glow = parts.get("glow coat (inside walls)")
+        jw, jh = D["jack_w"], D["jack_h"]; z0p = D["z_rim"] - 1.0; z1p = D["z_fp0"] - 1.0   # the last 1.0 is the body at home (clash check)
+        paths = [_P(x - jw / 2, y - jh / 2, z0p) * _B(jw, jh, z1p - z0p, align=(_Al.MIN,) * 3) for x, y in D["jack_xy"]]
+        dc = min(p_.distance_to(case) for p_ in paths)
+        row("jacks' straight path from behind: clear of the case", dc, 0.3,
+            f"each body ({jw:g} x {jh:g}) swept from behind the rim to 1.0 short of home; the side ledges notched y {D['jack_notch_y'][0]:.2f}.."
+            f"{D['jack_notch_y'][1]:.2f}, the bottom posts cut flat at y {D['post_clip_y']:.2f}, jacks 1/4 {D['x_in1'] - (max(D['jack_xs']) + jw / 2):.2f} "
+            "from the side walls [Ed 4 Nov 20:12]")
+        if glow is not None:
+            row("jacks' straight path from behind: clear of the glow coat", min(p_.distance_to(glow) for p_ in paths), 0.1,
+                "the side coat is left off the jack strip (it stood 0.15 into jacks 1 and 4)")
+        row("bottom posts cut flat: air to the jack bodies", D["jack_post_air"], 0.3,
+            f"jack bodies' bottom y {D['jack_bot_y']:.2f}; posts at y {D['corners'][0][1]:.2f} ({D['bot_post_drop']:g} lower), r {D['screw_boss_r']:.2f}, "
+            f"cut flat at y {D['post_clip_y']:.2f}")
+        row("bottom inserts: resin to the flat (jack side)", D["post_insert_wall_jack"], 1.2,
+            f"insert hole Ø{D['insert_od'] + 2 * D['insert_glue']:.2f} (Ø{D['insert_od']:g} + epoxy) at y {D['corners'][0][1]:.2f}")
+        row("bottom inserts: resin to the bottom face", D["post_insert_wall_out"], 1.2,
+            f"bottom face y {D['body_y0']:.2f}")
+    if D.get("usb_slot"):   # [Ed 4 Nov 20:15] option C
+        from build123d import Pos as _P, Box as _B, Align as _Al
+        key = parts.get("USB-C key (printed, held by the back cover)")
+        brd = parts.get("USB-C PD board"); rc = parts.get("USB-C receptacle [S]")
+        row("USB-C board to the jack bodies", D["usb_jack_air"], 0.5,
+            f"board y {D['usb_board_y0']:.2f}..{D['usb_board_y1']:.2f} (5.5 tall), jack bodies from y {D['jack_bot_y']:.2f}")
+        row("USB-C board's edge not past the bottom face", -D["usb_board_out"], 0.0,
+            f"board edge y {D['usb_board_y0']:.2f}, bottom face y {D['body_y0']:.2f} (the rail line) [Ed 11:09]")
+        row("USB-C ledge each side of the receptacle (board edge on it)", D["usb_ledge_side"], 1.0,
+            f"board {D['usb_board'][0]:g} wide on the wall left in front of it; receptacle pocket ±{D['usb_pocket_hw']:.2f}")
+        row("USB-C ledge under the receptacle pocket", D["usb_ledge_below"], D["web_min"],
+            f"pocket from y {D['usb_pocket_y0']:.2f}, bottom face y {D['body_y0']:.2f}: a {D['usb_ledge_below']:.2f} web, "
+            f"{D['z_fp0'] - D['usb_z1']:.2f} tall, joined to the faceplate")
+        if brd is not None and rc is not None:
+            zb = D["z_rim"] - 1.0
+            bp = _P(-D["usb_board"][0] / 2, D["usb_board_y0"], zb) * _B(D["usb_board"][0], D["usb_board"][1], D["usb_z0"] - 0.5 - zb, align=(_Al.MIN,) * 3)
+            uw, uh, ud = D["usb_rcpt"]; uy = D["usb_xy"][1]
+            rp = _P(-uw / 2, uy - uh / 2, zb) * _B(uw, uh, D["z_fp1"] - 0.5 - zb, align=(_Al.MIN,) * 3)
+            row("USB-C board + receptacle path from behind (the channel): clear of the case", min(bp.distance_to(case), rp.distance_to(case)), 0.1,
+                f"channel ±{D['usb_ch_hw']:.2f} through the bottom wall and ledge, from the back edge to z {D['usb_z1']:.2f}; swept to 0.5 short of home")
+        if key is not None:
+            row("USB-C key: clear of the channel walls", key.distance_to(case), 0.03, f"{D['usb_key_gap']:g} a side [A]")
+            if brd is not None:
+                row("USB-C key to the board's back face (it clamps the board on the ledge)", key.distance_to(brd), 0.05,
+                    "0.02 nominal", higher_ok=False)
+            row("USB-C key to the back cover (the cover holds it in)", key.distance_to(cover), 0.05,
+                "0.02 nominal; the key ends behind the case rim, at the cover's face", higher_ok=False)
 
     vol = case.volume
     mass = vol * D["case_rho"]

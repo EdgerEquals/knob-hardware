@@ -58,6 +58,8 @@ RULES = [
     (r"^hall sensor|^adapter part|^adapter board", "board", "PCBA parts", "PCBWay PCBA"),
     (r"^encoder daughterboard|^encoder header|^encoder sensor", "board", "encoder daughterboard (EE-SX1321)", "PCBWay PCBA"),
     (r"^case$", "print", "UTR-8100 clear resin, front face polished; the joystick cradle printed in (v0.25, Ed 18:35)", "SLA"),
+    (r"^USB-C key", "print", "UTR-8100 clear resin [A], printed with the case; fills the bottom-wall channel behind the USB-C board, "
+                             "held in by the back cover (v0.32, Ed 4 Nov 20:15)", "SLA"),
     (r"glow coat", "ref", "Shimicoat strontium aluminate, brushed", "Ed"),
     (r"back cover|lower screen pad", "print", "ASA-CF, black (print floor-down; PET/Kapton film under the screens)", "FDM"),
     (r"cap\b|caps\b|Fresnel", "print", "UTR-8100 clear resin", "SLA"),

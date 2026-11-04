@@ -206,10 +206,22 @@ P = dict(
     jack_nut_d=8.0,        # [S] knurled nut across flats/round
     jack_nut_t=2.0,        # [A] nut thickness on the plate front
     jack_xs=(-17.25, -5.75, 5.75, 17.25),   # [Ed] four jacks at 11.5 mm pitch
-    jack_y_up=26.7,        # [Ed] jack centre above the panel bottom edge (frame y -48.9 with the v0.2 knob at 0)
-    usb_y_up=17.1,         # [Ed] USB-C centre above the panel bottom edge, between the bottom bolts
+    jack_y_up=21.75,       # [Ed 4 Nov 10:07, 20:12] jack centre above the panel bottom edge: 5.45 lower than 26.7 (jack tops on the clear
+                           # OLED's lit-area edge), then 0.5 back up (option B: room at the bottom corner posts, ~97-98% of the lit area seen)
+    usb_y_up=12.75,        # [Ed 4 Nov 11:09] USB-C centre above the panel bottom edge: 4.35 lower than 17.1, so the 5.5 board's bottom
+                           # edge is on the bottom face (y -56.4, the rail line), through the bottom wall
     usb_rcpt=(8.94, 3.26, 7.35),   # [S] USB-C receptacle opening w, h and depth behind the plate (typical mid-mount)
-    usb_board=(12.0, 6.0, 1.0),    # [Ed] small PD board glued behind the faceplate: w, h, t
+    usb_board=(12.0, 5.5, 1.0),    # [Ed 4 Nov 11:09] small PD board (PD sink, 15 V out) behind the faceplate: w, h (was 6), t
+    bot_post_drop=1.0,     # [Ed 4 Nov 20:12] the bottom corner screws (inserts, posts, cover columns, PCB notches) 1.0 lower: the
+                           # posts stay out of the jacks' straight path from behind
+    post_jack_air=0.4,     # [A, asked Ed 20:16] the bottom posts are cut flat this far below the jack bodies (their path from behind); 0.4 leaves 1.2 of
+                           # resin both sides of the insert (0.7 would leave 0.9 on the jack side)
+    jack_lip_notch=0.5,    # [A] the side PCB ledges are notched along the jack row (jacks 1 and 4 pass them from behind) this far past the
+                           # jack bodies; the side glow coat stays off the same strip [Ed 4 Nov 20:12]
+    usb_slot=True,         # [Ed 4 Nov 20:15] option C: the USB-C board slides in from behind along a channel through the bottom wall onto
+                           # a ledge (the wall left in front of it); a printed key fills the channel behind it, held only by the back cover
+    usb_slot_clear=0.15,   # [A] channel side clearance round the board
+    usb_key_gap=0.05,      # [A] key to the channel walls; 0.02 to the board's back face and to the back cover
     boss_gap=0.40,         # [A] air, boss to the knob hole and to the joystick opening
     cover_mat="ASA-CF",    # [Ed 2 Nov] back cover and lower screen pad: carbon-filled ASA, FDM (was PETG). Stiffer (~4.2 GPa),
                            # HDT ~100 °C, so the corner-column clamp does not creep. Print floor-down; thin PET/Kapton film under the screens
@@ -661,12 +673,36 @@ def derive(D):
 
     if D["top_corners"]:
         y_hi = D["pcb_y1"] - br - gap   # [Ed] mirror of the bottom pair (pcb_y0 + br + gap)
-    D["corners"] = ((-bx, _y_for(-bx)), (bx, _y_for(bx)), (-bx, y_hi), (bx, y_hi))
+    dr = D["bot_post_drop"] if D["bot_posts_in_wall"] else 0.0   # [Ed 4 Nov 20:12] bottom pair lower, out of the jacks' path
+    D["corners"] = ((-bx, _y_for(-bx) - dr), (bx, _y_for(bx) - dr), (-bx, y_hi), (bx, y_hi))
     # jacks and USB-C (panel frame, from the panel bottom edge)
     D["jack_y"] = D["panel_y0"] + D["jack_y_up"]
     D["jack_xy"] = tuple((x, D["jack_y"]) for x in D["jack_xs"])
     D["usb_xy"] = (0.0, D["panel_y0"] + D["usb_y_up"])
     D["jack_depth_z0"] = D["z_fp0"] - D["jack_depth"]
+    # step 2 [Ed 4 Nov 20:12]: the jacks' straight path from behind. The bottom posts are cut flat post_jack_air under the jack bodies;
+    # the side ledges are notched (and the side glow coat left off) along the jack row.
+    D["jack_bot_y"] = D["jack_y"] - D["jack_h"] / 2
+    D["jack_top_y"] = D["jack_y"] + D["jack_h"] / 2
+    D["post_clip_y"] = D["jack_bot_y"] - D["post_jack_air"] if dr else None
+    D["jack_notch_y"] = (D["jack_bot_y"] - D["jack_lip_notch"], D["jack_top_y"] + D["jack_lip_notch"])
+    yb = D["corners"][0][1]; ri = D["insert_od"] / 2 + D["insert_glue"]
+    D["post_insert_wall_jack"] = (D["post_clip_y"] - (yb + ri)) if dr else None   # resin, insert hole to the flat
+    D["post_insert_wall_out"] = (yb - ri) - D["body_y0"]                          # resin, insert hole to the bottom face
+    D["jack_post_air"] = D["jack_bot_y"] - (D["post_clip_y"] if dr else yb + br)
+    # [Ed 4 Nov 20:15] USB-C: channel through the bottom wall from the back edge to the board's front face, a ledge in front, a key behind
+    uw, uh, ud = D["usb_rcpt"]; bw, bh, bt = D["usb_board"]
+    D["usb_z1"] = D["z_fp1"] - ud            # board front face (bears on the ledge)
+    D["usb_z0"] = D["usb_z1"] - bt           # board back face (the key bears on it)
+    D["usb_board_y0"] = D["usb_xy"][1] - bh / 2
+    D["usb_board_y1"] = D["usb_xy"][1] + bh / 2
+    D["usb_ch_hw"] = bw / 2 + D["usb_slot_clear"]
+    D["usb_pocket_hw"] = uw / 2 + 0.15        # as the faceplate opening
+    D["usb_pocket_y0"] = D["usb_xy"][1] - uh / 2 - 0.15
+    D["usb_ledge_side"] = bw / 2 - D["usb_pocket_hw"]                  # board edge over the ledge, each side of the receptacle pocket
+    D["usb_ledge_below"] = D["usb_pocket_y0"] - max(D["usb_board_y0"], D["body_y0"])   # under the pocket
+    D["usb_board_out"] = D["body_y0"] - D["usb_board_y0"]             # board edge past the bottom face (0 = flush)
+    D["usb_jack_air"] = D["jack_bot_y"] - D["usb_board_y1"]
     # Knob bolts: on the bolt circle outside the collar, lower arc only (the bezel
     # occupies +Y). Placed after the corners so a bolt is not spent on a post it hits.
     D["bolt_r"] = D["collar_r"] + D["seat_gap"] + br

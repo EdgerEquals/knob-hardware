@@ -192,8 +192,16 @@ def build(D):
                                ky0, ky1, z0 - eps, z1 + eps))
     # corner posts beside the PCB. The thread is the lower part; the post stops under the jack pins
     # and is fused to the side wall, so it does not need to reach the plate.
-    for x, y in D["corners"]:
-        case = _add(case, _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_post_top"], x, y))
+    for i, (x, y) in enumerate(D["corners"]):
+        post = _cyl_z(D["screw_boss_r"], D["z_rim"], D["z_post_top"], x, y)
+        if i < 2 and D.get("post_clip_y") is not None:   # [Ed 4 Nov 20:12] bottom pair: cut flat under the jacks' path, kept inside the body
+            post = post & _box(x - 2 * D["screw_boss_r"], x + 2 * D["screw_boss_r"], D["body_y0"], D["post_clip_y"], D["z_rim"] - 1.0,
+                               D["z_post_top"] + 1.0)
+        case = _add(case, post)
+    if D.get("jack_lip_notch") is not None:   # [Ed 4 Nov 20:12] side ledges notched along the jack row: jacks 1 and 4 pass from behind
+        ny0, ny1 = D["jack_notch_y"]
+        case = _sub(case, _box(D["x_in0"], -D["pcb_x1"] + lw + sl, ny0, ny1, z0 - sl, z1 + sl))
+        case = _sub(case, _box(D["pcb_x1"] - lw - sl, D["x_in1"], ny0, ny1, z0 - sl, z1 + sl))
     # collar under the knob opening; the knob module slides down through it
     case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
@@ -281,6 +289,10 @@ def build(D):
                                D["shelf_z0"] - sl, D["shelf_z1"] + sl))
     for x, y in D["corners"]:
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_post_top"] + D["glow_gap"], x, y))
+    if D.get("jack_lip_notch") is not None:   # [Ed 4 Nov 20:12] no side coat along the jacks' path (it stood 0.15 into jacks 1 and 4)
+        ny0, ny1 = D["jack_notch_y"]
+        glow = _sub(glow, _box(D["x_in0"] - sl, D["x_in0"] + g0 + gt + sl, ny0, ny1, D["z_rim"] - sl, D["z_fp1"]))
+        glow = _sub(glow, _box(D["x_in1"] - g0 - gt - sl, D["x_in1"] + sl, ny0, ny1, D["z_rim"] - sl, D["z_fp1"]))
     glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
     if D["tft_on_front"]:
         glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))
@@ -385,7 +397,21 @@ def build(D):
     for x, y in D["jack_xy"]:
         case = _sub(case, _cyl_z(D["jack_hole"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, y))
     ux, uy = D["usb_xy"]; uw, uh, ud = D["usb_rcpt"]
-    case = _sub(case, _box(ux - uw / 2 - 0.15, ux + uw / 2 + 0.15, uy - uh / 2 - 0.15, uy + uh / 2 + 0.15, D["z_fp0"] - sl, D["z_fp1"] + sl))
+    zr0 = D["usb_z1"] - 0.01 if D.get("usb_slot") else D["z_fp0"] - sl   # [Ed 20:15] the receptacle's pocket runs back through the wall
+    case = _sub(case, _box(ux - uw / 2 - 0.15, ux + uw / 2 + 0.15, uy - uh / 2 - 0.15, uy + uh / 2 + 0.15, zr0, D["z_fp1"] + sl))
+    key = None
+    if D.get("usb_slot"):
+        # [Ed 4 Nov 20:15] channel through the bottom wall and the bottom ledge, from the back edge to the board's front face; the wall
+        # left in front of the board is its ledge. A printed key fills the channel behind the board (and restores the ledge strip), held
+        # in by the back cover alone.
+        hw = D["usb_ch_hw"]
+        chan = _box(ux - hw, ux + hw, D["body_y0"] - sl, D["pcb_y0"] + D["ledge_w"] + sl, D["z_rim"] - sl, D["usb_z1"])
+        case = _sub(case, chan)
+        glow = _sub(glow, chan)
+        kw, kg = hw - D["usb_key_gap"], 0.02
+        key = _box(ux - kw, ux + kw, D["body_y0"], D["y_in0"] - D["usb_key_gap"], D["z_rim_seat"] + kg, D["usb_z0"] - kg)
+        key = _add(key, _box(ux - kw, ux + kw, D["y_in0"] - D["usb_key_gap"] - D["fuse"], D["pcb_y0"] + D["ledge_w"], D["z_ledge0"],
+                             D["z_ledge1"]))
     jacks = {}
     for i, (x, y) in enumerate(D["jack_xy"], 1):
         g = 0.02
@@ -400,6 +426,8 @@ def build(D):
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
     out = {"case": case, f"back cover ({D['cover_mat']})": cover, "glow coat (inside walls)": glow, "PCB": pcb}   # glow trimmed above
+    if key is not None:
+        out["USB-C key (printed, held by the back cover)"] = key
     if window is not None:
         out["back TFT window"] = window
     out.update(amo)

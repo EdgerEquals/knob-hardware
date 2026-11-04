@@ -142,11 +142,15 @@ STEPS = [
     dict(id="shell-ins", sub="shell", name="Corner brass inserts into the shell's corner posts", dir="+z", travel=8,
          parts=[r"^corner insert"], note="epoxied in the resin (CD)"),
     dict(id="shell-jacks", sub="shell", name="Four PJ366ST jacks into the faceplate from behind", dir="+z", travel="auto",
-         parts=[r"^jack \d PJ366ST", r"^jack \d bushing"], note="bushing through the panel hole, flying leads [CD 2 Nov; L4 jack board is step 2]"),
+         parts=[r"^jack \d PJ366ST", r"^jack \d bushing"], note="v0.32: 4.95 lower, straight in past the notched side ledges and the "
+         "flat-cut bottom posts (L4 step 2, Ed 4 Nov 20:12); the jack board under them is the next decision"),
     dict(id="shell-nuts", sub="shell", name="Jack nuts from the front", dir="-z", travel=8,
          parts=[r"^jack \d nut"], note="threaded on the bushings"),
-    dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle behind the faceplate", dir="+z", travel="auto",
-         parts=[r"^USB-C"], note="glued behind the faceplate (CD) [L4 step 2: slot in the bottom wall, JB Weld]"),
+    dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
+         dir="+z", travel="auto", parts=[r"^USB-C PD board", r"^USB-C receptacle"],
+         note="board edge on the bottom face; JB Weld or silicone round the receptacle at the front (L4 step 2, Ed 4 Nov 20:15)"),
+    dict(id="shell-usb-key", sub="shell", name="Printed key into the channel behind the USB-C board (the back cover holds it in)",
+         dir="+z", travel="auto", parts=[r"^USB-C key"], note="no glue: comes out with the cover off (L4 step 2, option C, Ed 4 Nov 20:15)"),
     # ---- v0.25 [Ed 18:35]: the joystick cradle is printed into the case (part of "case"); the top board goes in from the back on its own
     dict(id="jcr-tb", sub="shell", name="Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders",
          dir="+z", travel="auto",

@@ -3,9 +3,12 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.31",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.32",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.32 [Ed 4 Nov 20:12-20:15] step 2, decisions 1-2: jacks 4.95 lower, USB-C 4.35 lower (board 5.5, edge on the
+                       # bottom face); side PCB ledges notched along the jack row, bottom corner screws 1.0 lower and their posts cut flat
+                       # under the jacks; the USB-C board in a channel through the bottom wall, a printed key behind it held by the cover
                        # v0.31 [Ed 4 Nov 16:35] dial item 6: the centring springs lifted above the detent block: two extension springs at
-                       # z 15 from a pin on a column on the Hall arm's rib (the lever goes) to two posts printed up from the cradle plate.
+                       # z 10.5 from a pin on a column on the Hall arm's rib (the lever goes) to two posts printed up from the cradle plate.
                        # The hard stop stays in the Hall slot (v0.30); v0.30's post-2 hanger goes
                        # v0.30 [Ed 4 Nov 15:46] dial item 6, option A: the hard stop in the Hall slot (two stop faces the Hall bar meets
                        # at ±travel; the r 7 stop blocks gone), anchor post 2 + its pin on an arm from the detent block (the lever and the
