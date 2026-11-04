@@ -293,6 +293,23 @@ def checks(D, parts):
             row("between the two boards' parts envelopes", D["jb_env_air"], 0.5,
                 f"jack board underside parts to z {D['jb_under_z0']:.2f} [A], power board parts to z {D['jb2_parts_z1']:.2f} [A]; "
                 f"boards {D['jb2_gap']:g} apart on the headers")
+            if D.get("jb_post_xy"):   # v0.34 [Ed 22:21] option 1A: the jack unit rides in with the stack on two posts
+                oy0 = D["clear_oled_xy"][1] - D["clear_oled"][1] / 2; r_ = D["jb_post_d"] / 2
+                py = D["jb_post_xy"][0][1]; ly = D["pcb_y0"] + D["ledge_w"]
+                row("jack unit posts: to the clear OLED's bottom edge", oy0 - (py + r_), 0.3,
+                    f"Ø{D['jb_post_d']:g} posts at y {py:.2f}, x ±{abs(D['jb_post_xy'][0][0]):g}, in the main board's strip under the OLED (edge y {oy0:.2f})")
+                hx, ty = D["jb_tab"]
+                ears = [_P(x - hx, ty, z0p) * _B(2 * hx, D["jack_bot_y"] - ty, D["jb2_z1"] - z0p, align=(_Al.MIN,) * 3) for x, _y in D["jb_post_xy"]]
+                glow_ = parts.get("glow coat (inside walls)")
+                dd = min(min(e.distance_to(case) for e in ears), min(e.distance_to(glow_) for e in ears) if glow_ is not None else 9e9)
+                row("jack unit posts + the power board's ears: clear of the case and glow coat as the shell comes down", dd, 0.3,
+                    f"the ears (±{hx:g} round each post, down to y {ty:g}) and the posts swept over the shell's whole travel; the bottom ledge's "
+                    f"inner face is y {ly:.2f}; its glow coat is left off ±1.6 round each post")
+                zf = D["zif_z0"]; oz_ = D["clear_oled"][2] / 2
+                need = (zf + 1.0 - oz_) + 3.0
+                row("the clear OLED's flex reaches its ZIF (slack)", D["oled_flex_len"] - need, 3.0,
+                    f"{D['oled_flex_len']:g} flex [S] from the OLED's edge (z {oz_:.2f}) up to the ZIF under the power board (face z {zf:.2f}): "
+                    f"~{need:.1f} of path incl. the turn and 3 into the ZIF [A]; the rest folds (plugged on the bench)")
             oz = D["clear_oled"][2]
             row("ZIFs to the clear OLED below (room for the two flexes to turn up into them)", D["zif_z0"] - oz, 8.0,
                 f"ZIF faces z {D['zif_z0']:.2f}, OLED front z {oz:.2f} [A: target]")

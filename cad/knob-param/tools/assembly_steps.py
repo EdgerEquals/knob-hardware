@@ -137,22 +137,15 @@ STEPS = [
          dir="-z", travel="auto", parts=[r"^dial board", r"^dial strap loop"],
          note="board on the 55.1 ledge, lobe in the land cut; strap soldered on the board, its free end to the rod-link board [A]"),
     # ------------------------------------------------------------------ front shell (built off to the side)
+    # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack (both flexes plugged on the bench)
+    dict(id="jack-unit", name="Jack unit (jacks, jack board, power board on its headers) onto its two posts on the main board's bottom strip; "
+         "the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
+         parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack unit post"],
+         note="on the bench, everything in reach; the posts let it float ~0.3 [A] until the nuts pull it to the faceplate (L4 step 2, Ed 4 Nov 22:21)"),
     dict(id="shell", sub="shell", base=True, name="Front shell (clear UTR-8100) with its glow coat",
          parts=[r"^case$", r"^glow coat"], note="SLA, front face polished; Shimicoat brushed inside (CD)"),
     dict(id="shell-ins", sub="shell", name="Corner brass inserts into the shell's corner posts", dir="+z", travel=8,
          parts=[r"^corner insert"], note="epoxied in the resin (CD)"),
-    dict(id="shell-jacks", sub="shell", name="Jack board unit (four jacks soldered on, the power board on its headers) straight in from behind",
-         dir="+z", travel="auto", parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board"],
-         note="v0.33: one unit on the jack row's outline, past the notched side ledges and the flat-cut bottom posts; bushings through the "
-              "panel holes (L4 step 2, Ed 4 Nov 20:12, 21:30)"),
-    dict(id="shell-nuts", sub="shell", name="Jack nuts from the front", dir="-z", travel=8,
-         parts=[r"^jack \d nut"], note="threaded on the bushings"),
-    dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
-         dir="+z", travel="auto", parts=[r"^USB-C PD board", r"^USB-C receptacle"],
-         note="board edge on the bottom face; JB Weld or silicone round the receptacle at the front (L4 step 2, Ed 4 Nov 20:15)"),
-    dict(id="shell-usb-key", sub="shell", name="Printed key into the channel behind the USB-C board (the back cover holds it in)",
-         dir="+z", travel="auto", parts=[r"^USB-C key"], note="no glue: comes out with the cover off (L4 step 2, option C, Ed 4 Nov 20:15)"),
-    # ---- v0.25 [Ed 18:35]: the joystick cradle is printed into the case (part of "case"); the top board goes in from the back on its own
     dict(id="jcr-tb", sub="shell", name="Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders",
          dir="+z", travel="auto",
          parts=[r"^joystick: joystick top board", r"^joystick: top-board socket", r"^joystick: SW1 ", r"^joystick: screen FPC socket"],
@@ -183,6 +176,14 @@ STEPS = [
     dict(id="shell-on", join="shell", name="Shell + joystick over the board stack (the stack goes in from the back, springs through)", dir="-z",
          travel="auto",
          note="PCB nests in the shell's recess (CD); knob through the faceplate hole; male pins into the top-board sockets (L4 Ed 13:46)"),
+    dict(id="jack-nuts", name="Jack nuts from the front (pull the jack unit to the faceplate)", dir="-z", travel=8,
+         parts=[r"^jack \d nut"], note="threaded on the bushings (v0.34: after the shell, the jack unit came in with the stack)"),
+    dict(id="usb", name="USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
+         dir="+z", travel="auto", parts=[r"^USB-C PD board", r"^USB-C receptacle"],
+         note="the channel is in the wall, outside the main board's nest, so it is still open with the stack in; its two power wires to the "
+              "jack unit are decision 5 (L4 step 2, Ed 4 Nov 20:15)"),
+    dict(id="usb-key", name="Printed key into the channel behind the USB-C board (the back cover holds it in)",
+         dir="+z", travel="auto", parts=[r"^USB-C key"], note="no glue: comes out with the cover off (L4 step 2, option C, Ed 4 Nov 20:15)"),
     dict(id="js-pins", name="Back: two cross pins through the spring anchor, hooks pulled on", dir="-x", travel="auto",
          parts=[r"^joystick: cross pin"], note="hook the springs' lower ends behind the PCB (CD); slide-in direction [A]"),
     dict(id="oring", name="Drip O-ring stretched over the dial onto the glass", dir="-z", travel="auto",

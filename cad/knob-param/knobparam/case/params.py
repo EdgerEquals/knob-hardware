@@ -279,8 +279,17 @@ P = dict(
     jb2_t=1.6,             # [A] power board FR-4
     jb2_parts=2.0,         # [A] parts envelope on the power board's top face
     jb_hdr=(1.27, 10.2, 20.75),   # [A] two 1x8 1.27 mm SMD headers: width, length, x centre (±), at the boards' outer ends
-    zif_oled=(16.0, 5.5, 2.0, -6.0),   # [A] 24-pin 0.5 mm ZIF for the clear OLED's flex: w, d, h, x centre (on the power board's underside)
-    zif_link=(14.0, 5.5, 2.0, 11.0),   # [A] ZIF for the link flex to the main board: w, d, h, x centre
+    zif_oled=(17.65, 4.5, 2.0, 0.0),   # [S] ER-CON24HT-1, the clear OLED's matching ZIF (docs/screens-2026-11-02.md): w, d, h; x centre on the
+                                       # flex, which leaves the middle of the OLED's long edge [S]; on the power board's underside
+    zif_link=(11.0, 5.5, 2.0, 15.5),   # [A] ~16-pin 0.5 mm ZIF for the link flex to the main board: w, d, h, x centre
+    zif_y_off=0.75,        # [A] ZIFs start this far above the boards' bottom edge (0.3 clear of the posts)
+    # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack, held on two posts standing in the
+    # main board's strip under the clear OLED; both flexes are plugged into its ZIFs on the bench. The power board gets a tab down over them.
+    jb_post_xy=((-16.5, -50.45), (16.5, -50.45)),   # [Ed 22:21 / A] post centres: 0.65 from the OLED's edge, 0.35 from the bottom ledge
+    jb_post_d=2.0,         # [Ed 4 Nov 22:21] Ø2 posts (brass pins [A], soldered in the power board's tab, ~0.3 float at the main board)
+    jb_tab=(1.3, -51.5),   # [A] power board ears down over the posts: half width round each post, bottom edge y (0.3 above the bottom
+                           # ledge); the bottom lip's glow coat is left off 1.6 either side of each post (the shell's lip passes the ears)
+    oled_flex_len=36.0,    # [S] the clear OLED's flex, from the panel edge (36.0 ± 0.5)
     jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width

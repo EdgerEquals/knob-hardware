@@ -3,7 +3,10 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.33",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.34",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack on two Ø2 posts
+                       # in the main board's strip under the clear OLED (power board ears over them); both flexes plugged on the bench;
+                       # the clear OLED's ZIF is the real ER-CON24HT-1 (17.65 x 4.5 x 2.0), centred on its flex
                        # v0.33 [Ed 4 Nov 21:30] step 2, decision 3, option B: the jack board on the jacks' backs and the jack power board
                        # 5 below it on two headers (both ZIFs and the power parts), one unit on the jack row's outline
                        # v0.32 [Ed 4 Nov 20:12-20:15] step 2, decisions 1-2: jacks 4.95 lower, USB-C 4.35 lower (board 5.5, edge on the
