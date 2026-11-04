@@ -25,6 +25,8 @@ A step whose regexes match nothing is reported as EMPTY and skipped (placeholder
 Sources: docs/design-notes.md (DN), docs/case-decisions-2026-11-02.md (CD), docs/top-screen-joystick.md (TJ),
 docs/layout-v4-2026-11-03.md (L4), knobparam/assembly/export_parts.py (BOM kinds)."""
 
+import math
+
 STEPS = [
     # ------------------------------------------------------------------ main PCB, bench, front face up
     dict(id="pcb", name="Main PCB with its soldered parts (H7B0 on the front)", base=True, dir="+z", travel=10,
@@ -112,15 +114,12 @@ STEPS = [
          expect=[(r"^knob balls", r"upper-cap", "seat", "0.04 mm³ only in the last 0.25 mm: seated on the 45° cone")]),
     dict(id="dish", sub="dish", base=True, name="Control dial dish (top, race, pocket, land, key slots)",
          parts=[r"^control dial dish"], note="MJF PA-12 [Ed 18:12]"),
-    dict(id="dish-mag-30", sub="dish", name="Dial-wall magnet at 30° pressed sideways into the dish's outer wall (facing out)",
-         dir=(-0.866, -0.5, 0.0), travel=5, parts=[r"^cartridge magnet .*\(dial wall.* 30°$"],
-         note="Ø1x0.8 N52 [A], glued; poles attract its bezel partner (L4 v0.25, Ed 18:26)"),
-    dict(id="dish-mag-150", sub="dish", name="Dial-wall magnet at 150° pressed sideways into the dish's outer wall (facing out)",
-         dir=(0.866, -0.5, 0.0), travel=5, parts=[r"^cartridge magnet .*\(dial wall.* 150°$"],
-         note="Ø1x0.8 N52 [A], glued; poles attract its bezel partner (L4 v0.25, Ed 18:26)"),
-    dict(id="dish-mag-240", sub="dish", name="Dial-wall magnet at 240° pressed sideways into the dish's outer wall (facing out)",
-         dir=(0.5, 0.866, 0.0), travel=5, parts=[r"^cartridge magnet .*\(dial wall.* 240°$"],
-         note="Ø1x0.8 N52 [A], glued; poles attract its bezel partner (L4 v0.25, Ed 18:26)"),
+    # six pairs at 0/30/120/150/240/270° since v0.27 [Ed 4 Nov 11:46]; each magnet goes in radially, so dir is the radial at its angle
+    *[dict(id=f"dish-mag-{a}", sub="dish", name=f"Dial-wall magnet at {a}° pressed sideways into the dish's outer wall (facing out)",
+           dir=(-round(math.cos(math.radians(a)), 3), -round(math.sin(math.radians(a)), 3), 0.0), travel=5,
+           parts=[rf"^cartridge magnet .*\(dial wall.* {a}°$"],
+           note="Ø1x0.5 N52 [A], glued; poles attract its bezel partner (L4 v0.27, Ed 4 Nov 11:46)")
+      for a in (0, 30, 120, 150, 240, 270)],
     dict(id="dish-in", join="dish", name="Dial dish bonded onto the tube end (socket over the tube, flat keyed), seated on the balls",
          dir="-z", travel="auto", note="epoxy in the socket [A]; the race centres the dish, the bond takes up the train-vs-race height [Ed 18:12]",
          expect=[(r"^control dial dish", r"^knob balls", "seat", "0.04 mm³ only in the last 0.25 mm: the dish's race groove seats on the balls")]),
@@ -186,18 +185,12 @@ STEPS = [
     # ------------------------------------------------------------------ dial screen bezel cartridge (built off to the side)
     dict(id="cart", sub="cartridge", base=True, name="Dial bezel (printed ring, the whole outside of the dial top)",
          parts=[r"^dial bezel"], note="MJF PA-12, dyed black [A] (L4 dial cartridge, Ed 12:41)"),
-    dict(id="cart-mag-30", sub="cartridge", name="Bezel magnet at 30° pressed sideways into the skirt from the bore (facing in)",
-         dir=(0.866, 0.5, 0.0), travel=6, parts=[r"^cartridge magnet .*\(bezel skirt.* 30°$"],
-         expect=[(r"^cartridge magnet .*bezel skirt", r"^dial bezel", "inside", "put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall")],
-         note="Ø1x0.8 N52 [A], glued; 0.4 above its dial-wall partner, attracting: pulls the cartridge down [A, Ed 18:26]"),
-    dict(id="cart-mag-150", sub="cartridge", name="Bezel magnet at 150° pressed sideways into the skirt from the bore (facing in)",
-         dir=(-0.866, 0.5, 0.0), travel=6, parts=[r"^cartridge magnet .*\(bezel skirt.* 150°$"],
-         expect=[(r"^cartridge magnet .*bezel skirt", r"^dial bezel", "inside", "put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall")],
-         note="Ø1x0.8 N52 [A], glued; 0.4 above its dial-wall partner, attracting: pulls the cartridge down [A, Ed 18:26]"),
-    dict(id="cart-mag-240", sub="cartridge", name="Bezel magnet at 240° pressed sideways into the skirt from the bore (facing in)",
-         dir=(-0.5, -0.866, 0.0), travel=6, parts=[r"^cartridge magnet .*\(bezel skirt.* 240°$"],
-         expect=[(r"^cartridge magnet .*bezel skirt", r"^dial bezel", "inside", "put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall")],
-         note="Ø1x0.8 N52 [A], glued; 0.4 above its dial-wall partner, attracting: pulls the cartridge down [A, Ed 18:26]"),
+    *[dict(id=f"cart-mag-{a}", sub="cartridge", name=f"Bezel magnet at {a}° pressed sideways into the skirt from the bore (facing in)",
+           dir=(round(math.cos(math.radians(a)), 3), round(math.sin(math.radians(a)), 3), 0.0), travel=6,
+           parts=[rf"^cartridge magnet .*\(bezel skirt.* {a}°$"],
+           expect=[(r"^cartridge magnet .*bezel skirt", r"^dial bezel", "inside", "put in the bore, then pressed out into its pocket: a straight line from outside the bezel crosses its far wall")],
+           note="Ø1x0.5 N52 [A], glued; 0.3 above its dial-wall partner, attracting: pulls the cartridge down (L4 v0.27, Ed 4 Nov 11:46)")
+      for a in (0, 30, 120, 150, 240, 270)],
     dict(id="cart-panel", sub="cartridge", name="Glass + panel (Waveshare Z132A2441) glued up into the bezel from underneath",
          dir="+z", travel=10, parts=[r"^dial screen Z132A2441"],
          note="lens laps the bezel's 0.55 step; tail folded under, plug faces down (L4 Ed 12:41); v0.25: nothing inside r 18.5 below the glass"),
