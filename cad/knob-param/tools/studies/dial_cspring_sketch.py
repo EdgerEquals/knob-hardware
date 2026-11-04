@@ -12,7 +12,7 @@ import numpy as np
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
 
 # ---- proposal [A] ----
-RS = 8.0                      # spring axis radius (at Hall pad 2; at r 7 the slot's slanted wall leaves the pocket's inner side open)
+RS = 7.4                      # spring axis radius: the largest with room both sides (r 7.8 and out run into the feel gear's pocket on the - side)
 ZS = 2.6                      # spring axis height (the arm is in the plate over z 1.75-3.5)
 K_DIAL = 0.4                  # N·mm/deg, the model's centring rate [A] (dial_spring), kept
 OD, WIRE = 1.5, 0.15          # 316 stainless [A]
@@ -100,7 +100,7 @@ def main():
         stops[key] = (r, b0s if key == "-" else b1s, w, abs(e - w) * math.pi / 180 * r)
     print("\n".join(rep)); print(sp); print(stops)
     global ROOM
-    ROOM = "; ".join(x.split(":")[0] + " " + x.split("runs ")[1] for x in rep)
+    ROOM = " / ".join(x.split("runs ")[1].split(" past")[0] for x in rep) + " of solid past the wall"
 
     fig = plt.figure(figsize=(19, 8.6), dpi=120)
     ax = fig.add_axes([0.04, 0.07, 0.46, 0.84]); ax2 = fig.add_axes([0.53, 0.42, 0.44, 0.46]); axt = fig.add_axes([0.53, 0.03, 0.46, 0.36])
@@ -119,13 +119,15 @@ def main():
                 if tt:
                     ax.add_collection(PolyCollection(tt, facecolors="#f2a03d", edgecolors="none", alpha=0.85))
     # proposal: springs (red) in pockets, stop bumps (green)
-    for key, (aw, ae) in pockets.items():
+    for key, (aw, ae) in pockets.items():   # ARC pockets, concentric with the dial axis [Ed 4 Nov 13:48 "an arc would be more ideal"]
         sg = -1 if key == "-" else 1
         L = sp["Lc"]; a_bar = aw - sg * math.degrees(sp["travel"] / RS)
-        p0 = np.array(pol(RS, ae)); p1 = np.array(pol(RS, a_bar)); u = (p1 - p0) / np.linalg.norm(p1 - p0); v = np.array([-u[1], u[0]])
-        ax.add_patch(Polygon([p0 + v * (OD / 2 + 0.1), p0 + u * (sp["pocket"]) + v * (OD / 2 + 0.1),
-                              p0 + u * (sp["pocket"]) - v * (OD / 2 + 0.1), p0 - v * (OD / 2 + 0.1)], closed=True, fc="white", ec="#c62828", lw=0.8))
-        zz = [p0 + u * (L * i / 16) + v * (OD / 2 * (1 if i % 2 else -1)) for i in range(17)]
+        ro, ri = RS + OD / 2 + 0.1, RS - OD / 2 - 0.1
+        th = np.linspace(ae, aw, 30)
+        band = [pol(ro, t) for t in th] + [pol(ri, t) for t in th[::-1]]
+        ax.add_patch(Polygon(band, closed=True, fc="white", ec="#c62828", lw=0.8))
+        n_z = 18
+        zz = [pol(RS + (OD / 2) * (1 if i % 2 else -1), ae - sg * math.degrees(L * i / n_z / RS)) for i in range(n_z + 1)]
         ax.plot([q[0] for q in zz], [q[1] for q in zz], color="#c62828", lw=1.0)
     for key, (r, bar_edge, w, solid) in stops.items():
         sg = -1 if key == "-" else 1
@@ -134,8 +136,8 @@ def main():
         p = [pol(r - 1.0, a_new), pol(r + 1.0, a_new), pol(r + 1.0, w), pol(r - 1.0, w)]
         ax.add_patch(Polygon(p, closed=True, fc="#2e7d32", ec="none", alpha=0.9))
     k = dict(fontsize=8.5, arrowprops=dict(arrowstyle="-", lw=0.7))
-    ax.annotate(f"compression springs at r {RS:g}, one each side,\nin pockets in the plate (proposed)", pol(RS, pockets["+"][1]), (-3.5, -16.5), **k)
-    ax.annotate("", pol(RS, pockets["-"][1]), (-3.5, -16.0), **k)
+    ax.annotate(f"compression springs on an arc at r {RS:g}, one each side,\nin arc pockets in the plate (proposed)", pol(RS, pockets["+"][1]), (-6.5, 1.6), **k)
+    ax.annotate("", pol(RS, pockets["-"][1]), (-6.0, 1.5), **k)
     ax.annotate(f"stop bump (proposed): the arm's pad at r {STOP_R['-']:g}\nmeets it at -{T:.2f}°; {stops['-'][3]:.1f} of plate behind",
                 pol(STOP_R["-"], stops["-"][2]), (-19.5, -15.8), **k)
     ax.annotate(f"stop bump (proposed): pad at r {STOP_R['+']:g} at +{T:.2f}°;\n{stops['+'][3]:.1f} of plate behind (at r 14-16 only ~1.0:\nthe detent block's pin hole)",
@@ -175,7 +177,7 @@ def main():
         f"{sp['Fmax']:.2f} N at full travel",
         f"Torque at ±{T:.2f}°: {sp['T_end']:.1f} N·mm (as now). Shear stress at full travel ~{sp['tau']:.0f} MPa: HIGH for fine",
         "stainless wire; a spring maker's stock part to confirm, or a softer feel / bigger radius.",
-        f"Pocket {sp['pocket']:.2f} deep past the slot wall, Ø{OD + 0.2:g}, open at the plate top; solid plate both sides at r {RS:g}: {ROOM}.",
+        f"Arc pocket at r {RS:g}, {sp['pocket']:.2f} deep, Ø{OD + 0.2:g}, open at the plate top; -/+ side "f"{ROOM}.",
         f"Stop: the slot wall brought in to meet a pad at exactly ±{T:.2f}°; the arm, not the springs, takes the hand twist",
         f"(241 mNm [A] -> ~{241 / STOP_R['-']:.0f} N at r {STOP_R['-']:g}, ~{241 / STOP_R['+']:.0f} N at r {STOP_R['+']:g}). "
         "Goes: the lever, both stop blocks, both posts and pins.",
