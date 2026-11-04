@@ -36,7 +36,7 @@ STEPS = [
          travel="auto", parts=[r"^vertical board [LR]"],
          note="PCBA: THT legs through the main board, SMT legs over the encoder riser; no standoff (L4 Ed 13:31-13:39)"),
     dict(id="oled", name="Clear OLED onto the PCB front over window D", dir="-z", travel="auto",
-         parts=[r"^clear OLED"], note="sits on the 1.6 ledge round window D, flex to the board [A: bonded with a tape ring]"),
+         parts=[r"^clear OLED(?! flex)"], note="sits on the 1.6 ledge round window D [A: bonded with a tape ring]; its flex is plugged into the jack unit later (v0.34)"),
     dict(id="back", name="Back-side parts: encoder riser board, bearing-2 seat + bearing, joystick spring anchor",
          dir="+z", travel="auto",
          parts=[r"^encoder (daughterboard|header|sensor)", r"^encoder bearing 2", r"^joystick: rear spring anchor"],
