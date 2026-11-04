@@ -411,6 +411,9 @@ def build(D):
         chan = _box(ux - hw, ux + hw, D["body_y0"] - sl, D["pcb_y0"] + D["ledge_w"] + sl, D["z_rim"] - sl, D["usb_z1"])
         case = _sub(case, chan)
         glow = _sub(glow, chan)
+        # v0.36b: the bottom lip's coat stays off across the channel width, up past the board's top edge (the v0.36 assembly check: the
+        # board, and the jack board's tab as the shell comes down, passed a 0.15 sliver of it left above the channel cut)
+        glow = _sub(glow, _box(ux - hw, ux + hw, D["pcb_y0"] - 1.0, D["usb_board_y1"] + 0.6, D["z_rim"] - sl, D["z_fp1"]))
         kw, kg = hw - D["usb_key_gap"], 0.02
         key = _box(ux - kw, ux + kw, D["body_y0"], D["y_in0"] - D["usb_key_gap"], D["z_rim_seat"] + kg, D["usb_z0"] - kg)
         if not D.get("usb_pwr_tab"):   # v0.32-v0.34: the key's tab restored the bottom ledge in the channel (v0.35: the jack board's tab passes there)

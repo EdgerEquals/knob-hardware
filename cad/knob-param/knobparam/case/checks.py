@@ -349,13 +349,16 @@ def checks(D, parts):
             bp = _P(-D["usb_board"][0] / 2, D["usb_board_y0"], zb) * _B(D["usb_board"][0], D["usb_board"][1], D["usb_z0"] - 0.5 - zb, align=(_Al.MIN,) * 3)
             uw, uh, ud = D["usb_rcpt"]; uy = D["usb_xy"][1]
             rp = _P(-uw / 2, uy - uh / 2, zb) * _B(uw, uh, D["z_fp1"] - 0.5 - zb, align=(_Al.MIN,) * 3)
-            row("USB-C board + receptacle path from behind (the channel): clear of the case", min(bp.distance_to(case), rp.distance_to(case)), 0.1,
+            glow_ = parts.get("glow coat (inside walls)")
+            row("USB-C board + receptacle path from behind (the channel): clear of the case and glow coat",
+                min(bp.distance_to(case), rp.distance_to(case), bp.distance_to(glow_) if glow_ is not None else 9e9), 0.1,
                 f"channel ±{D['usb_ch_hw']:.2f} through the bottom wall and ledge, from the back edge to z {D['usb_z1']:.2f}; swept to 0.5 short of home")
         if D.get("usb_pwr_tab") and D.get("jb_on"):   # v0.35 [Ed 22:36] option A
             tw, ty = D["usb_pwr_tab"]; zb = D["z_rim"] - 1.0
             tp = _P(-tw, ty, zb) * _B(2 * tw, D["jack_bot_y"] - ty, D["jb_z1"] - zb, align=(_Al.MIN,) * 3)
-            dd = min(tp.distance_to(case), tp.distance_to(key) if key is not None else 9e9)
-            row("jack board's USB tab: clear of the case and the key as the stack goes in", dd, 0.3,
+            glow_ = parts.get("glow coat (inside walls)")
+            dd = min(tp.distance_to(case), tp.distance_to(key) if key is not None else 9e9, tp.distance_to(glow_) if glow_ is not None else 9e9)
+            row("jack board's USB tab: clear of the case, glow coat and key as the stack goes in", dd, 0.3,
                 f"tab ±{tw:g} down to y {ty:g}, swept from behind the rim to its home; the key (in the channel, shell first) is the nearest")
             row("USB power spring contacts: working length", D["usb_z0"] - D["jb_z1"], 3.0,
                 f"{len(D['usb_pwr_contacts'])} contacts Ø{D['usb_pwr_d']:g} [A] from the tab's face z {D['jb_z1']:.2f} to the USB-C board's back z "
