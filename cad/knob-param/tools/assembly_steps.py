@@ -140,7 +140,8 @@ STEPS = [
     # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack (both flexes plugged on the bench)
     dict(id="jack-unit", name="Jack unit (jacks, jack board, power board on its headers) onto its two posts on the main board's bottom strip; "
          "the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
-         parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack unit post"],
+         parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack unit post",
+                r"^USB power spring contact"],
          note="on the bench, everything in reach; the posts let it float ~0.3 [A] until the nuts pull it to the faceplate (L4 step 2, Ed 4 Nov 22:21)"),
     dict(id="shell", sub="shell", base=True, name="Front shell (clear UTR-8100) with its glow coat",
          parts=[r"^case$", r"^glow coat"], note="SLA, front face polished; Shimicoat brushed inside (CD)"),

@@ -413,8 +413,9 @@ def build(D):
         glow = _sub(glow, chan)
         kw, kg = hw - D["usb_key_gap"], 0.02
         key = _box(ux - kw, ux + kw, D["body_y0"], D["y_in0"] - D["usb_key_gap"], D["z_rim_seat"] + kg, D["usb_z0"] - kg)
-        key = _add(key, _box(ux - kw, ux + kw, D["y_in0"] - D["usb_key_gap"] - D["fuse"], D["pcb_y0"] + D["ledge_w"], D["z_ledge0"],
-                             D["z_ledge1"]))
+        if not D.get("usb_pwr_tab"):   # v0.32-v0.34: the key's tab restored the bottom ledge in the channel (v0.35: the jack board's tab passes there)
+            key = _add(key, _box(ux - kw, ux + kw, D["y_in0"] - D["usb_key_gap"] - D["fuse"], D["pcb_y0"] + D["ledge_w"], D["z_ledge0"],
+                                 D["z_ledge1"]))
     jacks = {}
     for i, (x, y) in enumerate(D["jack_xy"], 1):
         g = 0.02
@@ -441,7 +442,14 @@ def build(D):
         for sx in (-1, 1):
             h = _box(sx * hx - hw / 2 - a, sx * hx + hw / 2 + a, (by0 + by1) / 2 - hl / 2 - a, (by0 + by1) / 2 + hl / 2 + a, D["jb2_z0"] - 1.0, D["jb_z1"])
             hkeep = h if hkeep is None else _add(hkeep, h)
-        jacks["jack board (FR-4, the four jacks soldered on) [A]"] = _sub(_box(bx0, bx1, by0, by1, D["jb_z0"], D["jb_z1"] - 0.02), holes)
+        jbb = _box(bx0, bx1, by0, by1, D["jb_z0"], D["jb_z1"] - 0.02)
+        if D.get("usb_pwr_tab"):   # v0.35 [Ed 22:36] tab into the USB-C channel with the power spring contacts on its front face
+            tw, ty = D["usb_pwr_tab"]
+            jbb = _add(jbb, _box(-tw, tw, ty, by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
+            for i, (x, y) in enumerate(D["usb_pwr_contacts"], 1):
+                jacks[f"USB power spring contact {i} ({'15 V' if i <= 2 else 'GND'}) [A]"] = _cyl_z(D["usb_pwr_d"] / 2, D["jb_z1"],
+                                                                                                   D["usb_z0"] - 0.02, x, y)
+        jacks["jack board (FR-4, the four jacks soldered on) [A]"] = _sub(jbb, holes)
         jacks["jack board underside parts (envelope) [A]"] = _sub(_sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb_under_z0"],
                                                                          D["jb_z0"] - 0.02), holes), hkeep)
         jacks["jack board headers (2 x 1x8 1.27, SMD) [A]"] = hdrs

@@ -9,6 +9,7 @@ from collections import OrderedDict
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
     # v0.33 [Ed 4 Nov 21:30] step 2, decision 3 option B: the jack board (jacks soldered on) and the jack power board under it
+    (r"^USB power spring contact", "buy", "spring contact ~4.2 working, 1.5-2 A [A][C]", "on the jack board PCBA"),
     (r"^jack unit post", "buy", "brass Ø2 pin [A] (soldered in the jack power board's tab)", "buy"),
     (r"^jack (power )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
     (r"^jack (power )?board.*(ZIF|headers)", "buy", "0.5 mm ZIF / 1.27 mm SMD header [A] (LCSC)", "on the PCBA"),

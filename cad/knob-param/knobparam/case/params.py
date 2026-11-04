@@ -290,6 +290,12 @@ P = dict(
     jb_tab=(1.3, -51.5),   # [A] power board ears down over the posts: half width round each post, bottom edge y (0.3 above the bottom
                            # ledge); the bottom lip's glow coat is left off 1.6 either side of each post (the shell's lip passes the ears)
     oled_flex_len=36.0,    # [S] the clear OLED's flex, from the panel edge (36.0 ± 0.5)
+    # v0.35 [Ed 4 Nov 22:36] step 2, decision 5, option A: the USB-C board (in the shell first) reaches the jack unit (in with the stack)
+    # through spring contacts: a tab on the jack board's bottom edge reaches into the USB-C channel and carries them; they land on gold pads
+    # on the USB-C board's back face in the stack's last ~1 mm. The key's ledge tab goes (the jack board's tab passes there).
+    usb_pwr_tab=(5.5, -53.6),   # [Ed 22:36 / A] jack board tab: half width, bottom edge y (0.35 above the key, inside the channel)
+    usb_pwr_contacts=((-4.5, -52.4), (-1.5, -52.4), (1.5, -52.4), (4.5, -52.4)),   # [A] one row: 15 V x2, GND x2 (1.0 clear of the key line and the board top)
+    usb_pwr_d=1.0,         # [A] contact barrel Ø; ~1.5-2 A each [C: part to find, ~4.2 mm working length]
     jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width

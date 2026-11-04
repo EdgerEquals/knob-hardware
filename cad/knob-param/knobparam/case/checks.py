@@ -179,7 +179,7 @@ def checks(D, parts):
                                                                             if D.get("usb_slot") else ""))
     if D.get("usb_slot"):
         key = parts.get("USB-C key (printed, held by the back cover)")
-        if key is not None:
+        if key is not None and not D.get("usb_pwr_tab"):
             row("USB-C key's tab restores the bottom ledge in the channel", 1.0 if _inside(key, 0.0, D["pcb_y0"] + D["ledge_w"] / 2,
                 (D["z_ledge0"] + D["z_ledge1"]) / 2) else 0.0, 1.0, "probe at x 0 on the ledge line")
     row("knob hole is open", 0.0 if _inside(case, D["ox"], D["oy"], z_mid) else 1.0, 1.0, "probe on the dial axis, in the plate")
@@ -340,6 +340,19 @@ def checks(D, parts):
             rp = _P(-uw / 2, uy - uh / 2, zb) * _B(uw, uh, D["z_fp1"] - 0.5 - zb, align=(_Al.MIN,) * 3)
             row("USB-C board + receptacle path from behind (the channel): clear of the case", min(bp.distance_to(case), rp.distance_to(case)), 0.1,
                 f"channel ±{D['usb_ch_hw']:.2f} through the bottom wall and ledge, from the back edge to z {D['usb_z1']:.2f}; swept to 0.5 short of home")
+        if D.get("usb_pwr_tab") and D.get("jb_on"):   # v0.35 [Ed 22:36] option A
+            tw, ty = D["usb_pwr_tab"]; zb = D["z_rim"] - 1.0
+            tp = _P(-tw, ty, zb) * _B(2 * tw, D["jack_bot_y"] - ty, D["jb_z1"] - zb, align=(_Al.MIN,) * 3)
+            dd = min(tp.distance_to(case), tp.distance_to(key) if key is not None else 9e9)
+            row("jack board's USB tab: clear of the case and the key as the stack goes in", dd, 0.3,
+                f"tab ±{tw:g} down to y {ty:g}, swept from behind the rim to its home; the key (in the channel, shell first) is the nearest")
+            row("USB power spring contacts: working length", D["usb_z0"] - D["jb_z1"], 3.0,
+                f"{len(D['usb_pwr_contacts'])} contacts Ø{D['usb_pwr_d']:g} [A] from the tab's face z {D['jb_z1']:.2f} to the USB-C board's back z "
+                f"{D['usb_z0']:.2f}; they meet in the stack's last ~1 [C: a part ~4.2 working, ~1.5-2 A each, 2 per line]")
+            py = [y for _x, y in D["usb_pwr_contacts"]]
+            row("USB power contacts land on the USB-C board (inside the box, above the key)", min(min(py) - D["usb_pwr_d"] / 2 - D["y_in0"],
+                D["usb_board_y1"] - (max(py) + D["usb_pwr_d"] / 2)), 0.3,
+                f"contacts y {min(py):g}..{max(py):g}; the board's back face is free from y {D['y_in0']:.2f} (the key below) to its top edge {D['usb_board_y1']:.2f}")
         if key is not None:
             row("USB-C key: clear of the channel walls", key.distance_to(case), 0.03, f"{D['usb_key_gap']:g} a side [A]")
             if brd is not None:
