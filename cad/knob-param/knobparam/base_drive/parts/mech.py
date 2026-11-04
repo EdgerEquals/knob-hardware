@@ -162,7 +162,7 @@ def es_posts(D):
     out = None
     for sp in D["es_springs"]:
         x, y = sp["Q"]
-        q = cyl(D["es_post_d"] / 2, D["plate_t"] - 0.01, D["es_top"] - D["plate_t"] + 0.01, x, y)
+        q = cyl(sp["post_d"] / 2, D["plate_t"] - 0.01, D["es_top"] - D["plate_t"] + 0.01, x, y)
         out = q if out is None else out + q
     return out
 

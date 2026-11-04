@@ -114,7 +114,7 @@ def _es_rows(D, r):
     sps = D["es_springs"]; arms = ", ".join(f"{sp['d']:.2f}" for sp in sps)
     r.row("lifted centring springs: the dial's centring rate, both springs (N·mm/deg)", D["es_rate"], D["dial_spring"] * 0.999,
           f"[Ed 4 Nov 16:35] pin on the Hall arm's column at r {D['es_rp']:g}, {D['ha_ang0']:g}°, z {D['es_z']:g}; posts at "
-          + ", ".join(f"r {r_:g} {a_:g}°" for a_, r_ in D["es_posts"]) + f"; torque arms {arms}; "
+          + ", ".join(f"r {r_:g} {a_:g}°" for a_, r_, _d in D["es_posts"]) + f"; torque arms {arms}; "
           f"one stock spring {D['es_k']:.3f} N/mm (316, OD {D['es_od']:g}, wire {D['es_wire']:g}, ~{D['es_n']:.1f} active coils, C {D['es_C']:.1f})")
     r.row("lifted centring springs: still stretched at the far end of travel (past free length, min, mm)",
           min(sp["stretch"] - sp["dL"] for sp in sps), D["es_margin"] - 1e-6,
@@ -127,10 +127,10 @@ def _es_rows(D, r):
           max(sp["tau"] for sp in sps), D["es_tau_allow"], f"Gibbs 316 spring wire >= {D['es_uts']:g} MPa [S]; static, set removed [A]",
           higher_ok=False)
     r.row("lifted centring springs: post sway at the spring under the largest pull (mm)", D["es_post_sway"], D["es_sway_max"],
-          f"Ø{D['es_post_d']:g} x {D['es_post_h']:.1f} tall (plate to the hooks), UTR-8100 E {D['ad_E'] / 1000:g} GPa [A], "
-          f"{max(sp['F_max'] for sp in sps):.2f} N at z {D['es_z']:g}", higher_ok=False)
+          "; ".join(f"post {sp['k']} Ø{sp['post_d']:g}: {sp['sway']:.3f} at {sp['F_max']:.2f} N" for sp in sps)
+          + f"; {D['es_post_h']:.1f} tall (plate to the hooks), UTR-8100 E {D['ad_E'] / 1000:g} GPa [A], pull at z {D['es_z']:g}", higher_ok=False)
     r.row("lifted centring springs: post bending stress at its root (MPa)", D["es_post_sigma"], D["es_post_allow"],
-          "UTR-8100 41.6 MPa [S] / 2", higher_ok=False)
+          ", ".join(f"post {sp['k']} {sp['sigma']:.1f}" for sp in sps) + "; UTR-8100 41.6 MPa [S] / 2", higher_ok=False)
     return r
 
 def checks(D, parts):

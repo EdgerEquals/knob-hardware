@@ -152,8 +152,9 @@ P = dict(
     # cradle plate (UTR-8100, with the cradle) to just under the springs; two extension springs at es_z from the Hall arm's column pin
     # to the posts' pins. The spots are the free ones a grid search found (tools/studies/dial_hallspring_sketch.py: clear of the dial
     # swept ±travel and every other part by 0.3, plate top to z 16). ----
-    es_posts=((150.0, 6.5), (310.0, 6.5)),   # [A, search] (angle, r) of the - and + posts (the + one: the only free spot found)
-    es_post_d=2.4,   # [A] post Ø (SLA)
+    es_posts=((150.0, 6.5, 2.4), (306.0, 8.5, 2.0)),   # [A, search] (angle, r, Ø) of the - and + posts. The + side: a fine search
+                     # against the v0.31 dial (no lever) found only Ø2.0 spots, 304-306°, r 8.0-8.5 (306°/8.5: 0.84 to the dial swept
+                     # ±travel, 0.47 to the fixed parts); the sketch's 310°/6.5 met the detent spoke at +travel
     es_margin=0.6,   # [A] each spring stays this far past its free length at the far end of travel (still pulling)
     es_Fi=0.05,   # [A] initial tension of a small stock extension spring, N
     es_wire=0.2,   # [A] spring wire (316); with es_od and the rate it needs, the active coils follow
@@ -394,10 +395,10 @@ def _es(D):
     th = math.radians(D["travel_deg"]); R2D = math.degrees
     P = _pol(D["es_rp"], D["ha_ang0"])
     springs = []
-    for k, (a, r) in enumerate(D["es_posts"], 1):
+    for k, (a, r, pd) in enumerate(D["es_posts"], 1):
         Q = _pol(r, a); L = math.hypot(Q[0] - P[0], Q[1] - P[1])
         d = abs(P[0] * (Q[1] - P[1]) - P[1] * (Q[0] - P[0])) / L
-        springs.append(dict(k=k, Q=Q, L=L, d=d, dL=d * th))
+        springs.append(dict(k=k, Q=Q, L=L, d=d, dL=d * th, post_d=pd))
     ksp = D["dial_spring"] * 180.0 / math.pi / sum(sp["d"] ** 2 for sp in springs)   # N/mm, the same spring both sides
     Dm = D["es_od"] - D["es_wire"]; n = D["es_G"] * D["es_wire"] ** 4 / (8 * Dm ** 3 * ksp)
     C = Dm / D["es_wire"]; Kw = (4 * C - 1) / (4 * C - 4) + 0.615 / C
@@ -417,10 +418,13 @@ def _es(D):
     D["es_tau_allow"] = 0.45 * D["es_uts"]
     zt = D["es_z"] - D["es_od"] / 2 - 0.05                                # post / column tops, the hooks sit on them
     D["es_top"] = zt
-    h = zt - D["plate_t"]; I = math.pi * D["es_post_d"] ** 4 / 64; E = D["ad_E"]
-    Fm = max(sp["F_max"] for sp in springs); hl = D["es_z"] - D["plate_t"]  # the pull acts on the pin at the spring's axis
-    D["es_post_sway"] = Fm * hl ** 2 * (3 * h - hl) / (6 * E * I) if hl <= h else Fm * h ** 2 * (3 * hl - h) / (6 * E * I)
-    D["es_post_sigma"] = Fm * hl / (math.pi * D["es_post_d"] ** 3 / 32)
+    h = zt - D["plate_t"]; E = D["ad_E"]; hl = D["es_z"] - D["plate_t"]  # the pull acts on the pin at the spring's axis
+    for sp in springs:
+        I = math.pi * sp["post_d"] ** 4 / 64; F = sp["F_max"]
+        sp["sway"] = F * h ** 2 * (3 * hl - h) / (6 * E * I)                # cantilever h, load F at hl >= h (on the pin)
+        sp["sigma"] = F * hl / (math.pi * sp["post_d"] ** 3 / 32)
+    D["es_post_sway"] = max(sp["sway"] for sp in springs)
+    D["es_post_sigma"] = max(sp["sigma"] for sp in springs)
     D["es_post_h"] = h
 
 

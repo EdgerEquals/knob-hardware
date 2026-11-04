@@ -211,8 +211,9 @@ P = dict(
                   # springs at z es_z pull a pin on a column rising from the Hall arm's rib (the lever goes) toward two posts printed up
                   # from the cradle plate. The hard stop stays in the Hall slot (hs_slot). Sketch docs/img/dial-hallspring-sketch.png
     es_rp=8.0,   # [A, sketch] the column's pin radius, on the rib's line (ha_ang0)
-    es_z=15.0,   # [A, sketch] spring axis: over the detent block top (13.55) + 0.6 + the spring's radius
-    es_od=1.5,   # [A] extension spring OD (316 stainless, non-magnetic)
+    es_z=10.5,   # [A] spring axis: over the Hall rib's top (9.0) by 0.75 under the spring; the springs' paths stay inside r 8.6, clear of
+                 # the detent block (from r 11.7), so they need not clear its top (13.55, the sketch's z 15): short, stiff posts
+    es_od=1.6,   # [A] extension spring OD (316 stainless, non-magnetic; 1.6 so the body leaves room for the hooks at the rate needed)
     es_pin_d=0.8,   # [A] steel hook pins pressed into the column and post tops
     es_col_d=2.4,   # [A] the column on the rib (PA-12, part of the dial's lower part)
     cc_on=False,   # [Ed 4 Nov 15:46: option B, parked] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
