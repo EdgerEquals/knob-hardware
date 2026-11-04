@@ -170,9 +170,10 @@ def es_springs_at(D, theta):
     """The two extension springs with the dial at theta (the column's pin turned; the posts stay), as tubes between the pins."""
     import math as _m
     P, Qs = es_pins(D, theta); out = []
-    ro, ri = D["es_od"] / 2, D["es_od"] / 2 - D["es_wire"]; e = D["es_pin_d"] / 2 + 0.05
-    for Q in Qs:
+    ro, ri = D["es_od"] / 2, D["es_od"] / 2 - D["es_wire"]
+    for Q, sp in zip(Qs, D["es_springs"]):
         dx, dy = Q[0] - P[0], Q[1] - P[1]; L = _m.hypot(dx, dy); ang = _m.degrees(_m.atan2(dy, dx))
+        e = (sp["L_free"] - D["es_body"]) / 2                             # each hook, pin centre to the coils (wire hooks not drawn)
         body = Cylinder(ro, L - 2 * e) - Cylinder(ri, L - 2 * e + 0.02)
         out.append(Pos((P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2, D["es_z"]) * Rot(0, 0, ang) * Rot(0, 90, 0) * body)
     return out
