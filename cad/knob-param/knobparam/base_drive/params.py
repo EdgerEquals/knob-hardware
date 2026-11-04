@@ -132,10 +132,22 @@ P = dict(
     cc_gap=0.0,   # [A, Ed 15:15 no preload] free end to its seat in the arm at centre: each spring pushes
                   # only when the arm moves toward it (the springs go in before the dial; preloaded they would block the bar going in)
     cc_pocket_clear=0.1,   # [A] pocket over the spring OD, radially and under it; open at the plate top
-    cc_stops=((-1, 3, 13.6, 15.5), (1, 2, 10.9, 12.6)),   # [A, sketch] (side, link from pad index, r0, r1): the - stop on the arm's
-                  # outer link (pads 4-5, 2.3-3.7 of plate behind it), the + stop on pads 3-4 (r 14-16 is ~1.0 from the block's pin hole)
-    cc_stop_depth=0.8,   # [A] stop face block depth into the slot wall (the 0.5 slot clearance + 0.3 into the wall)
-    cc_stop_z0=1.6,   # [A] stop face from z 1.6 (the bar bottom, hv_z_mag0 1.75, - 0.15) to the plate top; the sensor openings below stay open
+    # ---- v0.30 [Ed 4 Nov 15:46] (interface hs_slot): the dial's hard stop in the Hall slot. Two stop faces on the slot's end walls are
+    # the Hall bar's link faces at exactly ±travel; the bar meets them flush (no r 7 stop blocks on the lever any more). ----
+    hs_stops=((-1, 3, 13.6, 15.5), (1, 2, 10.9, 12.6)),   # [A, sketch] (side, link from pad index, r0, r1): the - stop on the bar's
+                  # outer link (pads 4-5, 2.3-3.7 of plate behind it), the + stop on pads 3-4 (at r 14-16 only ~1.0: the block's pin hole)
+    hs_stop_depth=0.8,   # [A] stop face block depth into the slot wall (the 0.5 slot clearance + 0.3 into the wall)
+    hs_stop_z0=1.6,   # [A] stop face from z 1.6 (the bar bottom, hv_z_mag0 1.75, - 0.15) to the plate top; the sensor openings stay open
+    hs_back_min=2.0,   # [A] plate behind each stop face (to the next void, along the push)
+    # ---- v0.30 [Ed 4 Nov 15:46]: centring-spring anchor post 2 (with its pin) hangs from the detent block on a short arm over the
+    # springs (it stood over the dial's detent spoke, attached to nothing, since the block became a separate part) ----
+    dt_hang_post=2,   # [Ed 15:46] the anchor post the block carries (1-based, sl_anchor_xy order); post 1 stays on the cradle
+    dt_hang_w=2.4,   # [A] arm width
+    dt_hang_t=2.0,   # [A] arm depth (z)
+    dt_hang_gap=0.3,   # [A] arm underside over the spring-pin tops (sl_pin_top)
+    dt_hang_at=(0.0, 1.0),   # [A] the arm's root in the head: this far out from the head's inner radius, this many degrees in from
+                             # its edge on the post's side (clear of the grub bore: row)
+    dt_hang_F=1.0,   # [A] spring pull on post 2, conservative (initial tension + full travel; the springs' rate is ~0.23 N/mm)
 )
 
 IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
@@ -272,6 +284,8 @@ def _place_split_mount(D):
     D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
     if D["dt_block"]:
         _detent_block_joint(D, r0, r1, rm, t, L, e)
+        if D["hs_slot"] and not D["cc_on"]:
+            _dt_hanger(D)
     # v0.22b [Ed 15:50]: pedestal is a separate block on an M2 grub, guided in a pocket
     zb = D["tk"][0]["z"]; D["sp_z_blk1"] = zb - D["bt_up"]                     # block top (train seat level)
     D["sp_z_pf"] = D["plate_t"] - D["sp_ped_pocket"]                       # pocket floor
@@ -315,10 +329,54 @@ def _detent_block_joint(D, r0, r1, rm, t, L, e):
     D["dt_screw_need"] = {"M2": 1.6 + 2 * 0.8, "M1.6": 1.25 + 2 * 0.8}      # foot width a tapped screw needs (tap drill + SLA walls)
 
 
+def _hs_stops(D):
+    """v0.30 [Ed 4 Nov 15:46]: the dial's hard stop in the Hall slot. Each stop face is the Hall bar's link face (pads j, j+1) on
+    side s, rotated to s x travel, between radii r0 and r1, hs_stop_depth into the slot's end wall."""
+    T = D["travel_deg"]; D["hs_stop_polys"] = []
+    for s, j, r0, r1 in D["hs_stops"]:
+        p, u, o, L = cc_face(D, j, s)
+        ca, sa = math.cos(math.radians(s * T)), math.sin(math.radians(s * T))
+        rot = lambda q: (q[0] * ca - q[1] * sa, q[0] * sa + q[1] * ca)
+        a_, b_ = cc_on_circle(p, u, r0), cc_on_circle(p, u, r1)
+        e = D["hs_stop_depth"]
+        poly = [rot(a_), rot(b_), rot((b_[0] + e * o[0], b_[1] + e * o[1])), rot((a_[0] + e * o[0], a_[1] + e * o[1]))]
+        D["hs_stop_polys"].append((s, j, r0, r1, poly))
+    D["hs_stop_h"] = D["plate_t"] - D["hv_z_mag0"]                         # contact height: the bar in the plate (its bottom = the magnets' bottom)
+
+
+def _dt_hanger(D):
+    """v0.30 [Ed 4 Nov 15:46]: anchor post dt_hang_post hangs from the detent block's head on a straight arm over the springs, its
+    anchor pin pressed down through the arm into it. Deflection at the spring's height under dt_hang_F (arm bent sideways and
+    twisted, the post bent), and the extra peak tension it puts on the block's glued seat."""
+    k = D["dt_hang_post"] - 1; px, py = D["sl_anchor_xy"][k]
+    a_post = math.degrees(math.atan2(py, px)) % 360.0
+    sg = 1.0 if ((a_post - D["ad_ang"] + 180) % 360 - 180) > 0 else -1.0  # the post's side of the head
+    ri = D["ad_r"] - D["det_boss_d"] / 2
+    rA = ri + D["dt_hang_at"][0]; aA = D["ad_ang"] + sg * (D["dt_head_half"] - D["dt_hang_at"][1])
+    ax, ay = _pol(rA, aA)
+    z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15
+    z0 = D["sl_pin_top"] + D["dt_hang_gap"]; z1 = z0 + D["dt_hang_t"]
+    w, t = D["dt_hang_w"], D["dt_hang_t"]; L = math.hypot(px - ax, py - ay)
+    E = D["ad_E"]; G = E / 2.6; F = D["dt_hang_F"]
+    z_load = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] / 2      # the spring's axis
+    hp = z0 - z_load                                                       # post length below the arm, to the load
+    Ib = t * w ** 3 / 12                                                   # arm, bending sideways
+    a_, b_ = max(w, t), min(w, t); J = a_ * b_ ** 3 * (1 / 3 - 0.21 * b_ / a_ * (1 - b_ ** 4 / (12 * a_ ** 4)))
+    Ip = math.pi * D["sl_post_d"] ** 4 / 64
+    dl = dict(arm=F * L ** 3 / (3 * E * Ib), twist=F * hp * L / (G * J) * hp, post=F * hp ** 3 / (3 * E * Ip))
+    bx, by = _pol(D["ad_r"], D["ad_ang"])
+    D["dt_hang"] = dict(post_xy=(px, py), post_ang=a_post, root=(ax, ay), root_r=rA, root_ang=aA, z_post=z_post, z0=z0, z1=z1, L=L,
+                        defl=sum(dl.values()), defl_parts=dl, z_load=z_load,
+                        bore_clear=math.hypot(ax - bx, ay - by) - w / 2 - D["det_thread_d"] / 2,
+                        top_room=D["det_z1"] - z1)
+    r0, r1 = D["dt_seat"][0], D["dt_seat"][1]; ts = r1 - r0; Ls = D["dt_seat_area"] / ts
+    D["dt_hang_sigma"] = 6 * F * (z_load - D["plate_t"]) / (Ls * ts * ts)  # pull at the spring's height, about the seat's weak axis
+
+
 def _ccspring(D):
     """v0.30 [Ed 4 Nov 15:15]: the compression centring springs (one per side, on an arc at cc_r, each pushing its flat seat in the
     Hall bar's first link only when the arm turns toward it; seats from the interface) and the hard stop in the Hall slot (stop
-    faces the bar's links meet flush at ±travel)."""
+    faces: _hs_stops)."""
     R2D = math.degrees; T = D["travel_deg"]; R = D["cc_r"]
     d, od = D["cc_wire"], D["cc_od"]; Dm = od - d
     D["cc_travel_arc"] = R * math.radians(T)
@@ -341,17 +399,6 @@ def _ccspring(D):
     D["cc_C"] = C
     D["cc_tau"] = 8 * D["cc_F_max"] * Dm * Kw / (math.pi * d ** 3)
     D["cc_tau_allow"] = D["cc_tau_frac"] * D["cc_uts"]
-    # stop faces: the link's side face rotated to ±travel, between r0 and r1, cc_stop_depth into the slot wall
-    D["cc_stop_polys"] = []
-    for s, j, r0, r1 in D["cc_stops"]:
-        p, u, o, L = cc_face(D, j, s)
-        ca, sa = math.cos(math.radians(s * T)), math.sin(math.radians(s * T))
-        rot = lambda q: (q[0] * ca - q[1] * sa, q[0] * sa + q[1] * ca)
-        a_, b_ = cc_on_circle(p, u, r0), cc_on_circle(p, u, r1)
-        e = D["cc_stop_depth"]
-        poly = [rot(a_), rot(b_), rot((b_[0] + e * o[0], b_[1] + e * o[1])), rot((a_[0] + e * o[0], a_[1] + e * o[1]))]
-        D["cc_stop_polys"].append((s, j, r0, r1, poly))
-    D["cc_stop_h"] = D["plate_t"] - D["hv_z_mag0"]                         # contact height: the bar in the plate (its bottom = the magnets' bottom)
 
 
 def derive(D):
@@ -390,6 +437,8 @@ def derive(D):
         D["hv_slot_half"] = dev + D["travel_deg"] + R2D((D["hv_pad_r"] + D["hv_slot_clear"]) / D["hv_slot_r0"])
         if D["cc_on"]:
             _ccspring(D)
+        if D["hs_slot"]:
+            _hs_stops(D)
     # ---- v0.16 detents (v0.21: one detent on the arc, riding a land flush with the rib top) ----
     db = D["det_ball"]
     arc = D["arm_det"] in ("arc", "split") and D["ad_r"] is not None   # v0.22: split shares the arc keys

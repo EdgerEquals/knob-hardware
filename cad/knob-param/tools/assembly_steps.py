@@ -75,7 +75,7 @@ STEPS = [
          parts=[r"^knob glass sleeve"], note="glued; caps printed to the measured tube (CD)"),
     # ------------------------------------------------------------------ v0.25 [Ed 18:12-19:46]: the dial's lower part goes in first
     # (built off to the side), then the anchor pins, the detent block and the cap; the balls; the dish is bonded on last.
-    dict(id="dial", sub="dial", base=True, name="Control dial lower part (tube, Hall and detent spokes, lever)",
+    dict(id="dial", sub="dial", base=True, name="Control dial lower part (tube, Hall and detent spokes, lever: springs only since v0.30)",
          parts=[r"^control dial lower part"], note="MJF PA-12; the dial is two parts since v0.25 [Ed 18:12]"),
     dict(id="dial-hall", sub="dial", name="Five Hall magnets into the Hall bar (from below)", dir="+z", travel=8,
          parts=[r"^hall magnet \d"], note="pressed, poles N/S/N/S/N face down (DN)"),
@@ -84,8 +84,8 @@ STEPS = [
          expect=[(r"^centring spring", r"^control dial lower part", "flex", "the spring is stretched over the lever pin")]),
     dict(id="dial-in", join="dial", name="Dial lower part down through the glass and the ring, flange onto the train", dir="-z",
          travel="auto", note="tube over the brass tube, Hall bar down the cradle slot; nothing of the cap or the detent boss is there yet"),
-    dict(id="anchors", name="Two centring-spring anchor pins pressed through the springs' free loops into the cradle", dir="-z",
-         travel="auto", parts=[r"^spring anchor pin"], note="pressed [A]; after the dial's lower part (pin 2 stands over its detent spoke)",
+    dict(id="anchors", name="Centring-spring anchor pin 1 pressed through spring 1's free loop into the cradle's post", dir="-z",
+         travel="auto", parts=[r"^spring anchor pin 1"], note="pressed [A]; v0.30: post 2 and its pin are on the detent block (below)",
          expect=[(r"^spring anchor pin", r"^base cradle$", "press", "pressed into the cradle")]),
     dict(id="dt-pins", name="Two Ø1 locating pins for the detent block pressed into the plate", dir="-z", travel="auto",
          parts=[r"^detent block locating pin"], note="pressed [A]; the block's seat is glued over them [Ed 18:15 fallback: no room for a screw]"),
@@ -95,7 +95,11 @@ STEPS = [
          travel=6, parts=[r"^detent \d+ (ball|spring|grub)"],
          note="grub sets the preload (DN, CD v0.22); a lip cannot hold the ball: it must hang 0.15 below the boss to latch [A: grease]"),
     dict(id="dblock-in", join="detent block", name="Detent block down onto its seat over the two pins, glued (ball onto the flange)",
-         dir="-z", travel="auto", note="after the pedestal, the train and the dial's lower part, before the cap [Ed 18:15]; epoxy on the flat seat [A]"),
+         dir="-z", travel="auto", note="after the pedestal, the train and the dial's lower part, before the cap [Ed 18:15]; epoxy on the flat seat [A]. "
+         "v0.30 [Ed 4 Nov 15:46]: its arm carries anchor post 2 down over spring 2's free loop"),
+    dict(id="anchor2", name="Anchor pin 2 pressed down through the block's arm, through spring 2's free loop, into post 2", dir="-z",
+         travel="auto", parts=[r"^spring anchor pin 2"], note="pressed [A] after the block's glue has set",
+         expect=[(r"^spring anchor pin", r"^detent block \(", "press", "pressed into the block's post")]),
     dict(id="cap", sub="cap", base=True, name="Knob upper-cap, clear UTR-8100 part (web, plug, glass seat)",
          parts=[r"^knob upper-cap \(clear"], note="SLA, clear [Ed 19:00]"),
     dict(id="cap-hub", sub="cap", name="PA-12 hub (hub-gear teeth + 45° race) down into the clear part, keyed and glued", dir="-z", travel=8,

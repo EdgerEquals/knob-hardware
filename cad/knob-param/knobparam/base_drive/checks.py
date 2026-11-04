@@ -72,6 +72,43 @@ def _split_rows(D, parts, r):
           f"pedestal r {D['sp_ped'][0]:.2f}-{D['sp_ped'][1]:.2f}, ±{D['sp_ped'][2]:.1f}° about {D['ad_ang']:.0f}°")
     return r
 
+def _hs_rows(D, parts, r):
+    """v0.30 [Ed 4 Nov 15:46]: the hard stop in the Hall slot, anchor post 2 on the detent block, no loose pieces in the cradle."""
+    import math
+    from build123d import Vector
+    cr = parts["base cradle"]
+    loose = [q.volume for q in cr.solids() if q.volume < 10.0]
+    r.row("base cradle: loose pieces (solids under 10 mm³, attached to nothing)", len(loose), 0, "v0.25-v0.29 had two: anchor post 2 "
+          "and stop block 2, over the dial's detent spoke" + (f"; now {', '.join(f'{v:.2f}' for v in loose)} mm³" if loose else ""), higher_ok=False)
+    T = D["travel_deg"]; zc = (D["hs_stop_z0"] + D["plate_t"]) / 2
+    for s, j, r0, r1, poly in D["hs_stop_polys"]:
+        (ax, ay), (bx, by) = poly[0], poly[1]
+        ox, oy = poly[3][0] - poly[0][0], poly[3][1] - poly[0][1]; n = math.hypot(ox, oy); ox, oy = ox / n, oy / n
+        back = []
+        for t in (0.1, 0.5, 0.9):
+            x0, y0 = ax + (bx - ax) * t, ay + (by - ay) * t
+            d = 0.05
+            while d < 8.0 and cr.is_inside(Vector(x0 + d * ox, y0 + d * oy, zc)):
+                d += 0.1
+            back.append(d)
+        r.row(f"hard stop {'-' if s < 0 else '+'}: cradle plate behind the stop face (to the next void, along the push, mm)", min(back),
+              D["hs_back_min"], f"[Ed 4 Nov 15:46] the Hall bar's link (pads {j + 1}-{j + 2}) meets it flush at {s * T:+.2f}°, r {r0:g}-{r1:g}, "
+              f"z {D['hs_stop_z0']:g}-{D['plate_t']:g}; behind it {', '.join(f'{v:.1f}' for v in back)} at its ends and middle [A]")
+    h = D.get("dt_hang")
+    if h:
+        p = h["defl_parts"]
+        r.row("detent block: anchor post 2 on its arm, sideways give under the spring pull (mm)", h["defl"], 0.05,
+              f"[Ed 4 Nov 15:46] post at r {math.hypot(*h['post_xy']):.2f}, {h['post_ang']:.1f}° hangs from an arm {D['dt_hang_w']:g} x "
+              f"{D['dt_hang_t']:g}, {h['L']:.2f} long, z {h['z0']:.2f}-{h['z1']:.2f} (over the spring-pin tops + {D['dt_hang_gap']:g}); "
+              f"{D['dt_hang_F']:g} N [A] at z {h['z_load']:.2f}: arm {p['arm'] * 1e3:.1f} µm, twist {p['twist'] * 1e3:.1f}, post "
+              f"{p['post'] * 1e3:.1f}; E {D['ad_E'] / 1000:g} GPa [A]", higher_ok=False)
+        r.row("detent block: arm root clear of the grub's thread (plan, mm)", h["bore_clear"], 0.3,
+              f"root at r {h['root_r']:.2f}, {h['root_ang']:.1f}°; the grub goes in from the top, so nothing may cover its bore")
+        r.row("detent block: seat bond peak tension, detent spring + post 2's pull (MPa)", D["dt_bond_sigma"] + D["dt_hang_sigma"],
+              D["dt_glue_lap"] / 4, f"spring {D['dt_bond_sigma']:.2f} + pull {D['dt_hang_sigma']:.2f} ({D['dt_hang_F']:g} N at z {h['z_load']:.2f}, "
+              f"about the seat's weak axis, conservative); {D['dt_glue_lap']:g} MPa [A] / 4", higher_ok=False)
+    return r
+
 def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
@@ -102,6 +139,8 @@ def checks(D, parts):
           f"Ø{D['det_ball']:g} ball, spring {D['det_spring'][0]:g}×{D['det_spring'][1]:g} preload {D['det_preload']:g}, M{D['det_thread_d']:g}×{D['det_grub_len']:g} grub ±{D['det_grub_adj']:g}")
     if D["arm_det"] == "split" and D["ad_r"] is not None:   # v0.22: own spoke, train under the ball
         _split_rows(D, parts, r)
+        if D.get("hs_slot") and D["hall_layout"] == "vernier":
+            _hs_rows(D, parts, r)
     elif D["arm_det"] == "arc" and D["ad_r"] is not None:   # v0.21: the inboard window no longer applies; the detent is on the arc
         _arc_rows(D, parts, r)
     else:

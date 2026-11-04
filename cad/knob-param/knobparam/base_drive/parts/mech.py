@@ -42,7 +42,10 @@ def detent_block(D):
     """v0.25 [Ed 18:15]: the detent block (UTR-8100, like the cradle): wall, bracket and boss with the plunger bore and the
     tapped grub thread; two pin holes up into the foot. Glued on its flat seat on the plate top [A, Ed 18:15 fallback]."""
     pd, _pp, pe = D["dt_pin"]
-    s = split_mount(D) - det_bore(D, D["ad_ang"])
+    s = split_mount(D)
+    if D.get("dt_hang"):   # v0.30 [Ed 4 Nov 15:46]: anchor post 2 on an arm from the head
+        s += hanger(D)
+    s -= det_bore(D, D["ad_ang"])
     for x, y in D["dt_pin_xy"]:
         s -= cyl(pd / 2 + D["dt_pin_clear"], D["plate_t"] - 0.01, pe + 0.11, x, y)
     return s
@@ -121,19 +124,35 @@ def stop_blocks(D):
     T = T + D["stop_bias"]
     z0 = D["fan_top"] + D["tgt"]["arm_vs_cradle"]   # ear tops at fan_top; this keeps ≥ 0.3 mm under the block at every angle
     z1 = D["sl_top"]
-    s = _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
+    # v0.30 [Ed 4 Nov 15:46] (hs_slot): no stop blocks (the hard stop is in the Hall slot); the hung post is on the detent block
+    s = None if D["hs_slot"] else _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
     # anchors stand above the lever; the ±travel sweep passes underneath
     z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
-    for (px, py) in D["sl_anchor_xy"]:
-        s += cyl(D["sl_post_d"] / 2, z_post, max(D["sl_pin_top"] - z_post, 0.4), px, py)
+    for k, (px, py) in enumerate(D["sl_anchor_xy"], 1):
+        if _hung(D, k): continue
+        q = cyl(D["sl_post_d"] / 2, z_post, max(D["sl_pin_top"] - z_post, 0.4), px, py)
+        s = q if s is None else s + q
     if D["cu_on"]:
         md, mh = D["cu_mag"]
         for sg, aa in ((1, a + T), (-1, a - T)):
             s -= Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01))
     return s
 
+def _hung(D, k):   # v0.30 [Ed 4 Nov 15:46]: anchor post k (1-based) hangs from the detent block
+    return bool(D.get("dt_hang")) and k == D["dt_hang_post"] and _block(D)
+
+def hanger(D):
+    """v0.30 [Ed 4 Nov 15:46]: arm from the detent block's head over the springs to the hung anchor post, and the post (part of the
+    block). The pin hole runs down through the arm into the post (pressed from above, through the spring's free loop)."""
+    h = D["dt_hang"]; (ax, ay), (px, py) = h["root"], h["post_xy"]; w = D["dt_hang_w"]; z0, z1 = h["z0"], h["z1"]
+    L = h["L"]; ang = math.degrees(math.atan2(py - ay, px - ax))
+    arm = Pos((ax + px) / 2, (ay + py) / 2, z0) * Rot(0, 0, ang) * Box(L, w, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    arm += cyl(w / 2, z0, z1 - z0, ax, ay) + cyl(w / 2, z0, z1 - z0, px, py)
+    arm += cyl(D["sl_post_d"] / 2, h["z_post"], z0 - h["z_post"] + 0.01, px, py)
+    return arm - cyl(D["sl_pin_d"] / 2, h["z_post"] - 0.01, z1 - h["z_post"] + 0.02, px, py)
+
 def cradle_add(D):
-    s = None if D["cc_on"] else stop_blocks(D)   # v0.30 [Ed 4 Nov 15:15]: the hard stop is in the Hall slot, no anchor posts
+    s = None if D["cc_on"] else stop_blocks(D)   # v0.30: option B (cc_on) has no posts; hs_slot drops the stop blocks in stop_blocks
     if _block(D): return s   # v0.25: the wall, bracket and boss are the separate detent block
     if _split(D): return split_mount(D) if s is None else s + split_mount(D)
     if _arc(D): return arc_bridge(D) if s is None else s + arc_bridge(D)
@@ -147,7 +166,8 @@ def cradle_cut(D):
             s += cyl(D["dt_pin"][0] / 2, D["plate_t"] - D["dt_pin"][1], D["dt_pin"][1] + 0.01, x, y)
     else:
         for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
-    for (px, py) in ([] if D["cc_on"] else D["sl_anchor_xy"]):
+    for k, (px, py) in enumerate([] if D["cc_on"] else D["sl_anchor_xy"], 1):
+        if _hung(D, k): continue   # v0.30: its hole is in the detent block's hanger
         z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
         s += cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post + 0.01, px, py)   # anchor pin press hole
     return s

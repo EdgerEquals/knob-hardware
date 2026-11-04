@@ -205,7 +205,9 @@ P = dict(
     cc_r=7.4,   # [Ed 4 Nov 15:15, sketch] v0.30 compression springs: axis radius (the largest with plate room on both sides)
     cc_z=2.6,   # [A] spring axis height (the Hall bar is in the plate over z 1.75-3.5)
     cc_od=1.5,   # [A] spring OD (316 stainless, non-magnetic: the Hall magnets are beside it)
-    cc_on=False,   # [Ed 4 Nov 15:15, WIP: off until the + spring access is settled] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
+    hs_slot=True,   # [Ed 4 Nov 15:46] v0.30 (option A): the dial's hard stop in the Hall slot (stop faces the Hall bar meets at ±travel),
+                    # the r 7 stop blocks gone; the lever and the two extension springs stay; anchor post 2 hangs from the detent block
+    cc_on=False,   # [Ed 4 Nov 15:46: option B, parked] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
                   # first link, and the hard stop in the Hall slot (two stop faces the arm's links meet at ±travel). No lever on the dial,
                   # no stop blocks, no anchor posts or pins. The sl_* values still place the detent and the webs as before (no other
                   # geometry moves). False = v0.17-v0.29: the lever, two extension springs on anchor posts, the r 7 stop blocks.

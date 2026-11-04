@@ -40,7 +40,7 @@ def window(D):
 
 
 
-# ---- v0.30 [Ed 4 Nov 15:15] (cc_on): compression centring springs in arc pockets, and the hard stop in this slot ----
+# ---- v0.30: the hard stop in this slot [Ed 4 Nov 15:46] (hs_slot); compression centring springs in arc pockets (cc_on, parked) ----
 def _band(r0, r1, a0, a1, z0, z1):
     lo, hi = min(a0, a1), max(a0, a1)
     return sector(r0, r1, (hi - lo) / 2, z0, z1 - z0, (lo + hi) / 2, n=48)
@@ -59,11 +59,11 @@ def spring_pockets(D):
 def stop_faces(D):
     """The two stop faces: blocks on the slot's end walls whose faces are the bar's link faces at exactly ±travel."""
     out = None
-    for s, j, r0, r1, poly in D["cc_stop_polys"]:
+    for s, j, r0, r1, poly in D["hs_stop_polys"]:
         a = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(poly, poly[1:] + poly[:1]))
         pts = poly if a > 0 else poly[::-1]
-        q = Pos(0, 0, D["cc_stop_z0"]) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)),
-                                                  D["plate_t"] - D["cc_stop_z0"])
+        q = Pos(0, 0, D["hs_stop_z0"]) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)),
+                                                  D["plate_t"] - D["hs_stop_z0"])
         out = q if out is None else out + q
     return out
 

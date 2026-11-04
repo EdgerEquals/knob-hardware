@@ -91,8 +91,9 @@ def build(D):
     if D["tb_on"]: c -= thrust_groove(D["tb_pcd"], D["tb_groove_r"], D["tb_z_ball"])   # control_dial export: thrust-ball ring
     c -= Pos(mx + D["collar_trim"], 0, 0) * Box(20, 40, D["motor_collar_top"], align=(Align.MIN, Align.CENTER, Align.MIN))
     c -= hall_slot.window(D)
-    if D["cc_on"]:   # v0.30 [Ed 4 Nov 15:15]: compression-spring pockets, and the stop faces the Hall bar meets at ±travel
+    if D["cc_on"]:   # v0.30 option B (parked): compression-spring pockets
         c -= hall_slot.spring_pockets(D)
+    if D["hs_slot"]:   # v0.30 [Ed 4 Nov 15:46]: the stop faces the Hall bar meets at ±travel
         c += hall_slot.stop_faces(D)
     add = mech.cradle_add(D)     # detent blocks, hard stops, spring posts (v0.30 with cc_on and the detent block: nothing)
     if add is not None: c += add

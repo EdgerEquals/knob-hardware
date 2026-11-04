@@ -71,15 +71,45 @@ def cross(D, parts):
     if D["hall_layout"] == "vernier":
         cr = parts["base cradle"]; sens = [parts[n] for n in parts if n.startswith("hall sensor")]
         from ..common.util import sector
-        cr_far = cr - sector(0, D["sl_r"] + 3, 60, -1, 20, D["sl_ang"]) if D["fan_on"] else cr   # stop blocks checked separately
+        if D.get("hs_slot"):   # v0.30 [Ed 4 Nov 15:46]: the hard stop is two faces in the Hall slot; the lever has no stops
+            from ..base_drive.parts import hall_slot as _hs
+            stops = _hs.stop_faces(model.view(D, "base_drive"))
+            near = None
+            for _s, _j, r0, r1, poly in D["hs_stop_polys"]:
+                angs = [math.degrees(math.atan2(y, x)) % 360 for x, y in poly]
+                lo, hi = min(angs), max(angs)
+                q = sector(max(r0 - 0.8, 0.2), r1 + 0.8, (hi - lo) / 2 + 2.0, -1, 20, (lo + hi) / 2)
+                near = q if near is None else near + q
+            cr_far = cr - near                                                      # stop faces checked separately
+        else:
+            cr_far = cr - sector(0, D["sl_r"] + 3, 60, -1, 20, D["sl_ang"]) if D["fan_on"] else cr   # stop blocks checked separately
         row("Hall arm / fan vs cradle, detent blocks, track (±travel)", min_dist(list(ARM.values()), [cr_far]), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
-        if D["fan_on"]:
+        if D.get("hs_slot"):
+            note = (f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, "
+                    "the ball's bore play)")
+            row("Hall bar vs the slot's stop faces at rest", ARM[0.0].distance_to(stops), T["arm_vs_cradle"])
+            row("Hall bar vs the slot's stop faces when latched at ±det_deg", min(ARM[t].distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02, note)
+            row("Hall bar meets the slot's stop faces at ±travel (gap)", max(ARM[t].distance_to(stops) for t in (-Tdeg, Tdeg)), 0.02,
+                "[Ed 4 Nov 15:46] flush contact = the hard end stop; " + "; ".join(
+                    f"{'-' if _s < 0 else '+'}: the bar's link pads {_j + 1}-{_j + 2}, r {r0:g}-{r1:g}" for _s, _j, r0, r1, _p in D["hs_stop_polys"]), higher_ok=False)
+            ov = max(((ARM[t] & stops).volume if ARM[t].distance_to(stops) < 1e-6 else 0.0) for t in (-Tdeg, Tdeg))
+            row("Hall bar into the slot's stop faces at ±travel (overlap, mm³)", ov, 0.01, "the faces are the bar's link faces at ±travel", higher_ok=False)
+            Td = D["dsp"]["T_design"]; allow = min(D.get("utr_uts", 41.6), D.get("pa12_uts", 43.0)) / 2
+            bear = []
+            for _s, _j, r0, r1, poly in D["hs_stop_polys"]:
+                Lc = math.hypot(poly[1][0] - poly[0][0], poly[1][1] - poly[0][1])
+                bear.append(Td / ((r0 + r1) / 2) / (Lc * D["hs_stop_h"]))
+            row("hard stop: bearing on the stop faces at the dial design torque (MPa)", max(bear), allow,
+                f"{Td:g} mNm [A] on one face: " + ", ".join(f"{b_:.1f}" for b_ in bear) + f" MPa over the face x the bar's {D['hs_stop_h']:.2f} in the "
+                f"plate; UTR-8100 / PA-12 strength / 2 (the v0.29 r 7 stop blocks took ~72 MPa at this torque)", higher_ok=False)
+        elif D["fan_on"]:
             stops = cr - cr_far
             lv = lambda t: ARM[t]
             row("dial lever vs hard stops at rest", lv(0).distance_to(stops), T["arm_vs_cradle"])
             row("dial lever vs hard stops when latched at ±det_deg", min(lv(t).distance_to(stops) for t in (-D["det_deg"], D["det_deg"])), 0.02,
                 f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, the ball's bore play)")
             row("dial lever meets the stop faces at ±travel (gap)", max(lv(t).distance_to(stops) for t in (-D["travel_deg"], D["travel_deg"])), 0.02, "flush contact = hard end stop", higher_ok=False)
+        if D["fan_on"]:
             if D["cu_on"]:
                 md, mh = D["cu_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md / 2e3) ** 2 * (mh / 1e3)
                 cus = [parts[n] for n in parts if n.startswith("cushion magnet")]
