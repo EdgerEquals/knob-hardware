@@ -134,7 +134,8 @@ def split_parts(D, body):
     lower += hall.arm(D)
     sock = cyl(D["dsp_r_sock"], z0 - 0.5, D["z_well_top"] - z0 + 1.0) - _flat_cut(D, D["dsp_flat_d"] + g, z0 - 0.6, D["z_well_top"] - z0 + 1.2)
     dish = body - cyl(40, D["dial_z_base"] - 1.0, z0 - D["dial_z_base"] + 1.0) - sock
-    nm = "control dial lower part (tube, Hall and detent spokes)" if D.get("cc_on") else "control dial lower part (tube, Hall and detent spokes, lever)"
+    nm = ("control dial lower part (tube, Hall and detent spokes, spring column)" if D.get("es_on") else
+          "control dial lower part (tube, Hall and detent spokes)" if D.get("cc_on") else "control dial lower part (tube, Hall and detent spokes, lever)")
     return {nm: lower,
             "control dial dish (bonded on the tube)": dish - to_mech(D, cart_cuts(D))}
 

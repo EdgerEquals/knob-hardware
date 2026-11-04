@@ -44,6 +44,8 @@ def arm(D, travel=0.0):
     md, mh = D["hv_mag"]
     for r, a in zip(rs, ps):   # pockets open from below, top flush with the magnet top (press / glue fit)
         x, y = _pt(r, a); s -= cyl(md / 2, D["hv_z_mag0"] - 0.1, mh + 0.1, x, y)
+    if D.get("es_on") and D["fan_on"] and D["arm_det"] == "split":
+        s -= spring_pin_hole(D)
     li = spring_leadins(D) if D.get("cc_on") else None
     if li is not None:
         s -= li
@@ -157,7 +159,12 @@ def spring_column(D):
     steel hook pin is pressed into a hole in its top (a separate part, base_drive builds the springs and pins)."""
     z0 = D["ha_rib_z_top"] - 0.01; z1, _zp = es_column_top(D)
     x, y = _pt(D["es_rp"], D["ha_ang0"])
-    return cyl(D["es_col_d"] / 2, z0, z1 - z0, x, y) - cyl(D["es_pin_d"] / 2, z1 - 1.5, 1.6, x, y)
+    return cyl(D["es_col_d"] / 2, z0, z1 - z0, x, y)
+
+def spring_pin_hole(D):
+    """The hook pin's hole, 1.5 deep from the column's top (down into the rib where the column is short)."""
+    z1, _zp = es_column_top(D); x, y = _pt(D["es_rp"], D["ha_ang0"])
+    return cyl(D["es_pin_d"] / 2, z1 - 1.5, 1.6, x, y)
 
 def _ccw(pts):
     a = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]))
