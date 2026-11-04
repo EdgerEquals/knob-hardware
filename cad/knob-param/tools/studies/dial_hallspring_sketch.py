@@ -59,13 +59,17 @@ def main():
     cols = [Rot(0, 0, t) * col for t in np.linspace(-T, T, 7)]
     dial_all = Compound(children=poses + cols); fixed = Compound(children=[q for _n, q in obst])
     free = []
-    for side, angs in (("-", range(130, 212, 4)), ("+", range(238, 330, 4))):
+    cache = os.path.join(OUT, "_hallspring_free.json")
+    if os.environ.get("HS_REUSE") and os.path.exists(cache):
+        free = json.load(open(cache))
+    for side, angs in ((("-", range(130, 212, 4)), ("+", range(238, 330, 4))) if not free else ()):
         for a in angs:
             for r in (6.5, 8.0, 9.5, 11.0, 12.5, 14.0):
                 post = cyl(POST_D / 2, D["plate_t"], ZS - 0.7 - D["plate_t"], *pol(r, a))
                 d1 = post.distance_to(dial_all); d2 = post.distance_to(fixed)
                 if min(d1, d2) >= CLR:
                     free.append(dict(side=side, a=a, r=r, d_dial=d1, d_fixed=d2))
+    json.dump(free, open(cache, "w"))
     # springs: for each free pair, the torque arm d (axis to the spring line) and the length; prefer long, symmetric, big d
     P = np.array(pol(RP, A0))
     best = None
@@ -73,7 +77,8 @@ def main():
         for f2 in [f for f in free if f["side"] == "+"]:
             Q1, Q2 = np.array(pol(f1["r"], f1["a"])), np.array(pol(f2["r"], f2["a"]))
             L1, L2 = np.linalg.norm(Q1 - P), np.linalg.norm(Q2 - P)
-            d1 = abs(np.cross(P, Q1 - P)) / L1; d2 = abs(np.cross(P, Q2 - P)) / L2
+            cr2 = lambda u, v: u[0] * v[1] - u[1] * v[0]
+            d1 = abs(cr2(P, Q1 - P)) / L1; d2 = abs(cr2(P, Q2 - P)) / L2
             if min(L1, L2) < 4.5 or min(d1, d2) < 5.0:
                 continue
             score = min(L1, L2) + 2 * min(d1, d2) - abs(L1 - L2) - abs(d1 - d2)
