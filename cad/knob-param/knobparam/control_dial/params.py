@@ -166,9 +166,12 @@ P = dict(
             lap_d=34.40,                     # [Ed 12:58] lap over the lens step, ID 34.40, 0.55 deep: no glass edge or gap shows
             # v0.25 [Ed 18:26]: no bosses, no pins; the bezel is a plain ring with a key rib (+ two seat ribs [A]) and the sideways
             # magnets in its skirt. Sketch docs/img/cart-side-magnets-v024.png.
-            mag=(1.0, 0.8),                  # [A] N52 Ø1 x 0.8 (Ø1 x 1 leaves 0.5 of skirt skin outside it, 0.8 leaves 0.7; PCBWay MJF wall 1.0)
-            mag_angs=(30.0, 150.0, 240.0),   # [A] three pairs (the v0.24 angles): clear of the plug lobe and pad arm (290-330°, 305°),
-                                             # the bends, tab and U-turn are all above the land, 2+ mm over the magnets
+            mag=(1.0, 0.5),                  # [Ed 4 Nov 11:46] N52 Ø1 x 0.5: leaves 1.00 of skirt skin outside it (PCBWay MJF wall 1.0);
+                                             # v0.25 was Ø1 x 0.8 (skin 0.70)
+            mag_angs=(0.0, 30.0, 120.0, 150.0, 240.0, 270.0),   # [Ed 4 Nov 11:46] six pairs, two sets of three 120° apart (each set's
+                                             # sideways pulls cancel); clear of the key and seat ribs (180, 60, 340°) and the plug lobe
+                                             # and pad arm (290-330°, 305°); the bends, tab and U-turn are all above the land, 2+ mm over
+                                             # the magnets. The 0.30 bore gap stays (slip fit for MJF ±0.25 a part) [Ed 11:46]
             mag_dz=+0.4,                     # [A, Ed 18:26 "~0.4 lower"] skirt magnet this far ABOVE the dial magnet, poles attracting:
                                              # an attracting partner 0.4 lower pulls the cartridge UP; above, it pulls it down
             mag_press=0.05,                  # [A] pocket oversize (glued)

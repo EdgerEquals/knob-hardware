@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.26",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.27",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.27 [Ed 4 Nov 11:46]: cartridge magnets: six Ø1 x 0.5 pairs at 0/30/120/150/240/270 (were three
+                       # Ø1 x 0.8), 0.30 bore gap kept; skirt skin 1.00
                        # v0.26 [Ed 4 Nov 10:03]: the joystick cutout starts 1.40 behind the faceplate (top wall and top posts back;
                        # the top ledge only at its ends: the top board passes up from the back over ±18.15)
                        # v0.25 [Ed 3 Nov evening]: review decisions: spur gears + hub m0.75 12/17 nylon in a split clear cap,

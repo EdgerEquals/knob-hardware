@@ -238,8 +238,10 @@ def _cart_v025_rows(D, parts, row, bezel, dial, panel, P):
         f"bezel magnet {bz['mag_dz']:+g} above its partner, attracting: {-fz:.3f} N down and {-fr:.3f} N in a pair, {D['cm_hold']:.2f} N down "
         f"in all vs {W:.3f} N (~{D['cm_mass_g']:g} g); surface-charge model, Br {D['hv_br']:g} T [method]; the plug's retention comes on top")
     row("cartridge magnets: skirt skin outside the bezel magnet (radial, mm)", D["cm_skin_out"], mjf["feature"],
-        f"bezel OD r {D['R']:g}, bore r {D['bz_bore_r']:g}, magnet {bz['mag'][1]:g} deep; TIGHT: under PCBWay's {mjf['wall']:g} MJF wall "
-        f"(a skin over a Ø{bz['mag'][0] + bz['mag_press']:g} pocket, held by the {mjf['feature']:g} feature floor) [A]")
+        f"bezel OD r {D['R']:g}, bore r {D['bz_bore_r']:g}, magnet {bz['mag'][1]:g} deep; "
+        + (f"TIGHT: under PCBWay's {mjf['wall']:g} MJF wall " if D["cm_skin_out"] < mjf["wall"] - 1e-6 else
+           f"meets PCBWay's {mjf['wall']:g} MJF wall exactly (no margin over the wall rule) ")
+        + f"(a skin over a Ø{bz['mag'][0] + bz['mag_press']:g} pocket, held by the {mjf['feature']:g} feature floor) [A]")
     row("cartridge magnets: dial wall over and under the dial magnet (mm)", D["cm_skin_dial"], mjf["feature"],
         f"pocket Ø{bz['mag'][0] + bz['mag_press']:g} centred in the outer wall z {D['z_lip0']:.2f}-{D['db_z1']:.2f}, {bz['mag'][1]:g} deep from r {ct['outer_r']:g}")
     row("cartridge magnets: ring de-centring stiffness (attracting pairs; dF/dx, N/mm)", D["cm_K_ring"], 0.3,
