@@ -2021,7 +2021,7 @@
    "slack": 0.17
   },
   {
-   "name": "USB-C board + receptacle path from behind (the channel): clear of the case",
+   "name": "USB-C board + receptacle path from behind (the channel): clear of the case and glow coat",
    "value": 0.15,
    "target": ">= 0.1",
    "ok": true,
@@ -2030,7 +2030,7 @@
    "slack": 0.05
   },
   {
-   "name": "jack board's USB tab: clear of the case and the key as the stack goes in",
+   "name": "jack board's USB tab: clear of the case, glow coat and key as the stack goes in",
    "value": 0.35,
    "target": ">= 0.3",
    "ok": true,
