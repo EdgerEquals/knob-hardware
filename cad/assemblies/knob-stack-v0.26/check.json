@@ -2470,7 +2470,7 @@
    "value": 1.041,
    "target": ">= 1",
    "ok": true,
-   "note": "nearest: vertical board R male pins (right-angle 1.27, 13 into the top-board socket) [A] / case. The male header body (z 22.50-24.50) is inboard of the top corner posts' plan",
+   "note": "nearest: vertical board L male pins (right-angle 1.27, 13 into the top-board socket) [A] / case. The male header body (z 22.50-24.50) is inboard of the top corner posts' plan",
    "owner": "assembly",
    "slack": 0.041
   },
@@ -2551,7 +2551,7 @@
    "value": 0.349,
    "target": ">= 0.3",
    "ok": true,
-   "note": "[Ed 4 Nov 10:03] the joystick cutout runs from z 34.90 (1.4 behind the faceplate back), not the case's whole depth: the top wall (y 49.60-52.10, x \u00b121.11), the main board's top ledge and the top corner posts are whole again (v0.25 first cut: open from z -0.42); the top ledge comes back only at its ends (cut over x \u00b118.15 for the top board's path, its own row). Lowest part over the wall: joystick: ball 1 \u00d82 stainless at z 35.25. A 1.40 slit stays between the wall top and the faceplate back (inside the rack, behind the faceplate overhang)",
+   "note": "[Ed 4 Nov 10:03] the joystick cutout runs from z 34.90 (1.4 behind the faceplate back), not the case's whole depth: the top wall (y 49.60-52.10, x \u00b121.11) and the top corner posts are whole again (v0.25 first cut: open from z -0.42); the main board's top ledge comes back only at its ends (cut over x \u00b118.15 for the top board's path, its own row). Lowest part over the wall: joystick: ball 1 \u00d82 stainless at z 35.25. A 1.40 slit stays between the wall top and the faceplate back (inside the rack, behind the faceplate overhang)",
    "owner": "assembly",
    "slack": 0.049
   }
