@@ -4,7 +4,8 @@ P = dict(
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
     version="v0.26",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
-                       # v0.26 [Ed 4 Nov 10:03]: the joystick cutout starts 1.40 behind the faceplate (top wall, top ledge, top posts back)
+                       # v0.26 [Ed 4 Nov 10:03]: the joystick cutout starts 1.40 behind the faceplate (top wall and top posts back;
+                       # the top ledge only at its ends: the top board passes up from the back over ±18.15)
                        # v0.25 [Ed 3 Nov evening]: review decisions: spur gears + hub m0.75 12/17 nylon in a split clear cap,
                        # cradle printed into the case, dial split, detent block, cartridge sideways magnets + key
                        # v0.24 [Ed 3 Nov]: dial bezel cartridge (+4.4, job 1) + joystick v0.8 step-1 follow-ups (job 2)

@@ -279,20 +279,10 @@ def cross(D, pp, jp, JD):
                     pass
             row("case top wall back under the joystick: lowest joystick part over it", zlow - z0c, D["topwall_air"],
                 f"[Ed 4 Nov 10:03] the joystick cutout runs from z {z0c:.2f} ({D['joy_cut_to']:g} behind the faceplate back), not the case's "
-                f"whole depth: the top wall (y {D['y_in1']:.2f}-{D['body_y1']:.2f}, x ±{D['hole_hw']:.2f}), the main board's top ledge and the "
-                f"top corner posts are whole again (v0.25 first cut: open from z -0.42). Lowest part over the wall: {who} at z {zlow:.2f}. "
+                f"whole depth: the top wall (y {D['y_in1']:.2f}-{D['body_y1']:.2f}, x ±{D['hole_hw']:.2f}) and the top corner posts are whole "
+                f"again (v0.25 first cut: open from z -0.42); the main board's top ledge comes back only at its ends (cut over "
+                f"x ±{D['joy_tb_pass']:.2f} for the top board's path, its own row). Lowest part over the wall: {who} at z {zlow:.2f}. "
                 f"A {D['z_fp0'] - z0c:.2f} slit stays between the wall top and the faceplate back (inside the rack, behind the faceplate overhang)")
-            band = Pos(-D["hole_hw"], D["pcb_y1"] - D["ledge_w"] - 1.0, D["z_ledge0"] - 0.5) * Box(
-                2 * D["hole_hw"], D["ledge_w"] + 1.5, D["z_ledge1"] - D["z_ledge0"] + 1.0, align=A_)
-            led = cs & band if cs is not None else None
-            vbs = [q for n, q in vbp.items() if n.startswith("vertical board") and "FR4" in n]
-            if led is not None and vbs:
-                dl = min(led.distance_to(q) for q in vbs)
-                T = D["vb_lat_tol"]; st = T["main_board"] + T["case"] + T["pins"]
-                row("vertical boards in the top-ledge notches: air at the worst x stack", dl - st, 0.05,
-                    f"[A] 4 Nov: notches {D['vb']['t'] + 2 * D['vb_ledge_air']:.2f} wide at x ±{D['vb']['x']:g} right through the restored "
-                    f"top ledge; nominal air {dl:.2f} a side, worst x stack {st:.2f} (main board in the case {T['main_board']:g} + case "
-                    f"{T['case']:g} + board on its header {T['pins']:g})")
     return r
 
 

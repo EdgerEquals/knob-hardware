@@ -209,12 +209,10 @@ def build(D):
     joy = _plate(D["joy_hole"][0], D["joy_hole"][1], D["hole_corner_r"], D["z_joy_cut0"], D["z_fp1"] + sl,
                  D["ox"], D["place_y"])
     case = _sub(case, joy)
-    if D.get("vb") and D.get("joy_cut_to") is not None:   # 4 Nov: the restored top ledge, notched right through round each vertical board
-        V, a = D["vb"], D["vb_ledge_air"]
-        for sx in (-1.0, 1.0):
-            x0, x1 = sx * V["x"] - V["t"] / 2 - a, sx * V["x"] + V["t"] / 2 + a
-            case = _sub(case, _box(x0, x1, D["pcb_y1"] - D["ledge_w"] - sl, min(D["pcb_y1"] + sl, D["y_in1"]),
-                                   D["z_ledge0"] - sl, D["z_ledge1"] + sl))
+    if D.get("joy_cut_to") is not None:   # 4 Nov: the top ledge stays cut where the joystick top board passes up from the back
+        h = D["joy_tb_pass"]
+        case = _sub(case, _box(-h + D["ox"], h + D["ox"], D["pcb_y1"] - D["ledge_w"] - sl, min(D["pcb_y1"] + sl, D["y_in1"]),
+                               D["z_ledge0"] - sl, D["z_ledge1"] + sl))
     if D.get("joy_step"):   # v0.24 [Ed 14:02] top-edge seal: a rebate in the cutout wall from the faceplate back (top edge and the long sides
         # above where the joystick cradle's flange ends); the cradle's dam sits in it with the bead on its front face. None since v0.25 [Ed 18:35]:
         # the joystick cradle is printed into the case (assembly/build.py fuses it in)

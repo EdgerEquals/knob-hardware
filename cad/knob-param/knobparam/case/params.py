@@ -183,13 +183,14 @@ P = dict(
                            # vertical boards' male headers and the sockets sit 0.3+ off them, assembly path rows): the lowest part over them
                            # is the top board's underside (30.0). v0.24: 24.3, the male header body; v0.23: 26.6, the spring-contact strip
     joy_cut_to=1.40,       # [Ed 4 Nov 10:03] joystick item 5: the joystick cutout runs only this far behind the faceplate back (z_fp0), not
-                           # the case's whole depth, so the top wall, the main board's top ledge and the two top corner posts come back
+                           # the case's whole depth, so the top wall and the two top corner posts come back (the top ledge only at its ends, joy_tb_pass)
                            # (v0.25 first cut: from z_seat - cut_slop, -0.42, the wall was open 42.2 wide). 1.40 (wall top z 34.90) = the
                            # cradle's two Ø2 balls reach 1.05 under z_fp0 over the wall (joystick v0.9 [J]) + 0.35 air [A]; assembly row
                            # "case top wall back under the joystick" measures the real parts. None = the v0.25 full-depth cut
-    vb_ledge_air=0.60,     # [A] 4 Nov: the restored top ledge is notched round each vertical board (they stand on the board front through the
-                           # ledge's band, y to 48.4 in the ledge's 47.5-49.0), this much air a side: covers the worst x stack 0.50 (main board
-                           # in the case 0.20 + case 0.20 + board on its header 0.10, the assembly vb_lat_tol terms) + 0.10; assembly row
+    joy_tb_pass=18.15,     # [J][A] 4 Nov: the restored top ledge stays cut over x ±this, where the joystick top board passes up from the back
+                           # to its printed nest (it goes in before the board stack): the board is ±18.95 less its 1.30 corner notches round the
+                           # top posts = ±17.65 over the ledge's band (joystick v0.9 [J]) + 0.50 air [A]. The vertical boards (x ±16) stand
+                           # inside it. The ledge comes back only at its ends (to the posts and the side ledges); assembly path row
     joy_step=None,         # [Ed 18:35] v0.25: no top-edge step (the joystick cradle is printed into the case: nothing to seal). v0.24 [Ed 14:02]:
                            # dict(w=1.20, d=1.45, y_in=0.20), a rebate in the cutout wall from the faceplate back with the cradle's dam in it
     amo_drop_air=0.45,     # [A] v0.25 [Ed 19:12 (5)]: the corner columns' flare and ring are trimmed this far round each back screen's plan, so
@@ -264,12 +265,11 @@ P = dict(
     scan_clear=0.50,       # [A] swept beam to the knob and to the joystick envelope
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy",
-                           "vb"],   # 4 Nov: the vertical boards' plan, for the top-ledge notches
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy"],
            "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
-           "z_joy_cut0", "vb_ledge_air",   # 4 Nov: the restored top wall's top and the ledge notches (assembly rows)
+           "z_joy_cut0", "joy_tb_pass",   # 4 Nov: the restored top wall's top and the top-ledge gap (assembly rows)
            "lab_ring_r", "lab_ring_z0", "lab_ring_z1",
            "lab_shoulder_r", "lab_shoulder_z0", "lab_shoulder_z1"]
 

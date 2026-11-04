@@ -1,7 +1,7 @@
 # v0.26 [Ed 4 Nov 10:03] joystick item 5 in the model: the joystick cutout starts 1.40 behind the faceplate back, so the case's top wall,
-# the main board's top ledge and the two top corner posts are whole again; the ledge is notched round the vertical boards.
+# the two top corner posts are whole again; the top ledge comes back only at its ends (the top board passes up from the back).
 #   case-topwall-v026.png  1: the case alone from behind and above (as case-topwall-v025.png panel 1); 2: straight-on cut at x = 0, every
-#                          part; 3: plan at z = mid-ledge over the top ledge, the vertical boards in their notches
+#                          part; 3: plan at z = mid-ledge over the top ledge
 # Run from cad/knob-param:  PYTHONPATH=. xvfb-run -a python tools/studies/case_topwall_v026_fig.py <out dir>
 import os, sys
 sys.path.insert(0, ".")
@@ -50,8 +50,7 @@ def main():
     ax.annotate(f"top wall (case), to z {z0c:.2f}", (D["body_y1"] - 1.2, 18), (52.8, 22), **k)
     ax.annotate(f"{D['z_fp0'] - z0c:.2f} slit under the faceplate\n(over the cradle's Ø2 balls)", (D["body_y1"] - 1.2, z0c + 0.6),
                 (52.8, 30.5), **k)
-    ax.annotate("top ledge (case)", (D["pcb_y1"] - 0.7, D["z_ledge1"] - 0.5), (52.8, 5), **k)
-    ax.annotate("main board", (40, -0.8), (52.8, -3.5), **k)
+        ax.annotate("main board", (40, -0.8), (52.8, -3.5), **k)
     ax.set_xlim(28, 64); ax.set_ylim(-7, 46); ax.set_aspect("equal"); ax.grid(alpha=0.2)
     ax.set_xlabel("y (mm, up the panel)"); ax.set_ylabel("z (mm, out of the panel)")
     ax.set_title("2. Straight-on cut at x = 0 (through the joystick), every part", fontsize=10, loc="left")
@@ -69,11 +68,12 @@ def main():
         t = _cut_faces(s, "z", zl)
         if t:
             ax.add_collection(PolyCollection(t, facecolors=colour(n), edgecolors="none", alpha=0.55 if see_through(n) else 1.0))
-    V, a = D["vb"], D["vb_ledge_air"]
-    for sx in (-1, 1):
-        ax.annotate(f"vertical board {'L' if sx < 0 else 'R'} in its notch\n({V['t'] + 2 * a:.1f} wide, {a:.2f} a side)",
-                    (sx * V["x"], D["pcb_y1"] - 0.75), (sx * V["x"] - (12 if sx < 0 else 2), 43.0), **k)
-    ax.annotate("top ledge (back over the joystick's width)", (0, D["pcb_y1"] - 0.75), (-12, 54.5), **k)
+    h = D["joy_tb_pass"]
+    ax.add_patch(plt.Rectangle((-h, D["pcb_y1"] - D["ledge_w"]), 2 * h, D["ledge_w"], fill=False, ec="#c62828", lw=1.0, ls="--"))
+    ax.annotate(f"top ledge left open over x ±{h:.2f}: the top board\n(±17.65 here, notched round the posts) passes up from the back",
+                (0, D["pcb_y1"] - 0.75), (-21, 42.5), **k)
+    ax.annotate("vertical board", (D["vb"]["x"], D["pcb_y1"] - 1.5), (8, 40.0), **k)
+    ax.annotate("ledge end back", (h + 0.4, D["pcb_y1"] - 0.75), (12, 55.0), **k)
     ax.annotate("top wall", (-8, D["body_y1"] - 1.2), (-20, 56.5), **k)
     ax.annotate("top corner post, whole", (21.2, 45.35), (8, 39.5), **k)
     ax.set_xlim(-26, 26); ax.set_ylim(38, 58); ax.set_aspect("equal"); ax.grid(alpha=0.2)
@@ -88,7 +88,7 @@ def main():
         cv.paste(i, (x, 50)); x += i.width
     ImageDraw.Draw(cv).text((20, 15), f"Knob v0.26 ([Ed 4 Nov 10:03], joystick item 5): the joystick cutout starts at z {z0c:.2f}, "
                             f"{D['joy_cut_to']:g} behind the faceplate back: the top wall, the main board's top ledge and the top corner posts "
-                            "are whole again; the ledge is notched round the two vertical boards.", fill="black")
+                            "are whole again; the top ledge only at its ends (the top board passes up from the back).", fill="black")
     out = os.path.join(OUT, "case-topwall-v026.png"); cv.save(out)
     for f in outs:
         os.remove(f)
