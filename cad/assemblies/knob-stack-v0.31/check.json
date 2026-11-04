@@ -963,7 +963,7 @@
    "value": 0.4,
    "target": ">= 0.3996",
    "ok": true,
-   "note": "[Ed 4 Nov 16:35] pin on the Hall arm's column at r 8, 224\u00b0, z 15; posts at r 6.5 150\u00b0, r 6.5 310\u00b0; torque arms 5.67, 5.21; one stock spring 0.386 N/mm (316, OD 1.5, wire 0.2, ~16.3 active coils, C 6.5)",
+   "note": "[Ed 4 Nov 16:35] pin on the Hall arm's column at r 8, 224\u00b0, z 10.5; posts at r 6.5 150\u00b0, r 8.5 306\u00b0; torque arms 5.67, 6.22; one stock spring 0.323 N/mm (316, OD 1.6, wire 0.2, ~15.5 active coils, C 7.0)",
    "owner": "base_drive",
    "slack": 0.0
   },
@@ -972,45 +972,45 @@
    "value": 0.6,
    "target": ">= 0.599999",
    "ok": true,
-   "note": "spring 1: 8.81 pin to pin, free 7.14, \u00b11.06 over \u00b1travel, 0.28-1.10 N; spring 2: 9.95 pin to pin, free 8.13, \u00b10.98 over \u00b1travel, 0.38-1.13 N; torques balance at centre (3.93 N\u00b7mm each)",
+   "note": "spring 1: 8.81 pin to pin, free 6.86, \u00b11.06 over \u00b1travel, 0.34-1.02 N; spring 2: 10.83 pin to pin, free 9.07, \u00b11.17 over \u00b1travel, 0.24-1.00 N; torques balance at centre (3.86 N\u00b7mm each)",
    "owner": "base_drive",
    "slack": 0.0
   },
   {
    "name": "lifted centring springs: closed body inside the free length, room for the hooks (min, mm)",
-   "value": 3.689,
-   "target": ">= 3",
+   "value": 3.55,
+   "target": ">= 3.2",
    "ok": true,
-   "note": "body (n + 1) x wire = 3.46; two hooks need about an OD each [A]",
+   "note": "body (n + 1) x wire = 3.31; two hooks need about an OD each [A]",
    "owner": "base_drive",
-   "slack": 0.689
+   "slack": 0.35
   },
   {
    "name": "lifted centring springs: shear stress at the largest pull vs 45% of the wire's tensile (MPa)",
-   "value": 575.794,
+   "value": 553.633,
    "target": "<= 760.05",
    "ok": true,
    "note": "Gibbs 316 spring wire >= 1689 MPa [S]; static, set removed [A]",
    "owner": "base_drive",
-   "slack": 184.256
+   "slack": 206.417
   },
   {
    "name": "lifted centring springs: post sway at the spring under the largest pull (mm)",
-   "value": 0.126,
+   "value": 0.048,
    "target": "<= 0.15",
    "ok": true,
-   "note": "\u00d82.4 x 10.7 tall (plate to the hooks), UTR-8100 E 2.5 GPa [A], 1.13 N at z 15",
+   "note": "post 1 \u00d82.4: 0.024 at 1.02 N; post 2 \u00d82: 0.048 at 1.00 N; 6.1 tall (plate to the hooks), UTR-8100 E 2.5 GPa [A], pull at z 10.5",
    "owner": "base_drive",
-   "slack": 0.024
+   "slack": 0.102
   },
   {
    "name": "lifted centring springs: post bending stress at its root (MPa)",
-   "value": 9.578,
+   "value": 8.894,
    "target": "<= 20.8",
    "ok": true,
-   "note": "UTR-8100 41.6 MPa [S] / 2",
+   "note": "post 1 5.3, post 2 8.9; UTR-8100 41.6 MPa [S] / 2",
    "owner": "base_drive",
-   "slack": 11.222
+   "slack": 11.906
   },
   {
    "name": "feel mount rib (radial depth)",
@@ -1905,12 +1905,12 @@
   },
   {
    "name": "Hall arm / fan vs cradle, detent blocks, track (\u00b1travel)",
-   "value": 0.0,
+   "value": 0.35,
    "target": ">= 0.3",
-   "ok": false,
+   "ok": true,
    "note": "slot r 4.05-17.86",
    "owner": "assembly",
-   "slack": -0.3
+   "slack": 0.05
   },
   {
    "name": "Hall bar vs the slot's stop faces at rest",
@@ -2085,21 +2085,21 @@
   },
   {
    "name": "lifted centring springs vs the dial's lower part and the fixed parts (\u00b1travel)",
-   "value": 0.0,
+   "value": 0.405,
    "target": ">= 0.3",
-   "ok": false,
-   "note": "[Ed 4 Nov 16:35] springs at z 15 from the Hall arm's column pin to the posts; nearest: control dial lower part (turned); sampled -10.7, -10.0, +0.0, +10.0, +10.7",
+   "ok": true,
+   "note": "[Ed 4 Nov 16:35] springs at z 10.5 from the Hall arm's column pin to the posts; nearest: control dial lower part (turned); sampled -10.7, -10.0, +0.0, +10.0, +10.7",
    "owner": "assembly",
-   "slack": -0.3
+   "slack": 0.105
   },
   {
    "name": "lifted centring springs: Hall angle offset from the rib's twist at \u00b1travel (deg, estimate)",
-   "value": 0.024,
+   "value": 0.011,
    "target": "<= 0.05",
    "ok": true,
-   "note": "0.54 N tangential at z 15 on the column, rib 3 wide x 5.15 deep over 3.94 from the tube, PA-12 G 654 [A]: twist 0.94 mrad, magnets 4.4 \u00b5m; in step with the angle, so a calibration removes it",
+   "note": "0.54 N tangential at z 10.5 on the column, rib 3 wide x 5.15 deep over 3.94 from the tube, PA-12 G 654 [A]: twist 0.45 mrad, magnets 2.1 \u00b5m; in step with the angle, so a calibration removes it",
    "owner": "assembly",
-   "slack": 0.026
+   "slack": 0.039
   },
   {
    "name": "ball track 1: balls stay inside both grooves across \u00b1travel (ball to race, mm)",
@@ -2665,7 +2665,7 @@
   }
  ],
  "clashes": {
-  "centring spring 1 (extension, 316, non-magnetic) / centring spring 2 (extension, 316, non-magnetic)": 0.046160823613930715
+  "control dial lower part (tube, Hall and detent spokes, lever) / spring pin on the Hall arm's column (steel)": 0.427256600888212
  },
  "set": [],
  "sub": null
