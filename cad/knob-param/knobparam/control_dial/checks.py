@@ -251,9 +251,9 @@ def _cart_v025_rows(D, parts, row, bezel, dial, panel, P):
     # key + seat ribs
     key = [c for a, c, k in D["cart_ribs"] if k == "key"][0]; seat = [c for a, c, k in D["cart_ribs"] if k == "seat"]
     row("cartridge key: rib in its slot, tangential clearance a side (key)", key, 0.05 - 1e-6,
-        f"key at {bz['rib_angs'][0]:g}° [Ed 18:26], {bz['rib_w']:g} wide; seat ribs at {', '.join(f'{a:g}' for a in bz['rib_angs'][1:])}° [A] "
+        f"key at {bz['rib_angs'][0]:g}° [Ed 18:26], {bz['rib_w']:g} wide; seat ribs at {', '.join(f'{a:g}' for a in bz['rib_angs'][1:])}° [Ed 4 Nov 12:12] "
         f"{min(seat):g} a side (seat only, the key sets the angle); MJF ±0.25 a part: fit the key on the parts")
-    row("cartridge key: rib inner face to its slot's inner face (radial)", D["bz"]["slot_r_clear"], 0.1 - 1e-6,
+    row("cartridge key: rib inner face to its slot's inner face (radial)", D["bz"]["slot_r_clear"], D["cm_gap"] - 1e-6,
         f"rib r {bz['rib_r_in']:g}-{D['bz_bore_r']:g}, slot from r {D['rib_slot_r0']:g} out through the dial wall (r {ct['outer_r']:g})")
     gaps = []
     for a, cl, k in D["cart_ribs"]:

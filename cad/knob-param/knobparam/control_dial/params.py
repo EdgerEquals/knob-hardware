@@ -175,13 +175,15 @@ P = dict(
             mag_dz=+0.4,                     # [A, Ed 18:26 "~0.4 lower"] skirt magnet this far ABOVE the dial magnet, poles attracting:
                                              # an attracting partner 0.4 lower pulls the cartridge UP; above, it pulls it down
             mag_press=0.05,                  # [A] pocket oversize (glued)
-            rib_angs=(180.0, 60.0, 340.0),   # [Ed 18:26] key (first) + [A] two seat ribs: one rib cannot seat a Ø42 ring without tilting
+            rib_angs=(180.0, 60.0, 340.0),   # [Ed 18:26] key (first) + [Ed 4 Nov 12:12] two seat ribs: one rib cannot seat a Ø42 ring without tilting
                                              # onto the plug; uneven spacing so the cartridge goes on one way only
             rib_w=1.2,                       # [A] rib width (tangential)
             rib_r_in=18.6,                   # [Ed 18:26 "nothing inside r 18.5 below the glass"] rib inner face
-            rib_clear=(0.05, 0.25),          # [A] tangential clearance a side: key (sets the angle) / seat ribs (seat only)
+            rib_clear=(0.05, 0.50),          # [A] key / [Ed 4 Nov 12:12] seat ribs, tangential clearance a side: the key sets the
+                                             # angle; the seat ribs only seat, 0.50 so an MJF error (±0.25) never has them fight the key
             slot_depth=2.0,                  # [A] slot floor this far under the land top = the axial seat [Ed 19:12 item 2]
-            slot_r_clear=0.1,                # [A] slot's inner face inside the rib's
+            slot_r_clear=0.3,                # [Ed 4 Nov 12:12] slot's inner face this far inside the rib's (r 18.3 in the dial; was 0.1):
+                                             # as the 0.30 bore gap, so the ribs never centre the cartridge tighter than the bore
             plug_standoff=0.10,              # [A] with the ribs seated the plug stands this far off full mate (inside its wipe): it never
                                              # carries the cartridge [Ed 19:12 item 2]; set by gluing the pad with a 0.1 shim
             pad_top=1.6,                     # [Ed 12:58] printed plug pad 56.8-58.3: from the plug's flex up to 1.6 behind the lens back
