@@ -154,14 +154,14 @@ def main():
              f"Travel at the pin: ±{RP * math.radians(T):.2f} along the arc. The end stop stays in the Hall slot (v0.30)."]
     if res["best"]:
         for sp in res["best"]:
-            lines.append(f"Spring {sp['side']}: to a post at r {sp['r']:g}, {sp['a']}°: {sp['L_rest']:.1f} long at rest, torque arm {sp['arm']:.1f}, "
-                         f"changes ±{sp['dL']:.2f}; rate {sp['k']:.3f} N/mm for {K_DIAL:g} N·mm/deg (both in tension)")
-        lines.append("Both springs stay stretched through the whole travel if each is installed >= its change + a margin past free length.")
+            lines.append(f"Spring {sp['side']}: post r {sp['r']:g}, {sp['a']}°; {sp['L_rest']:.1f} long, arm {sp['arm']:.1f}, "
+                         f"changes ±{sp['dL']:.2f}; {sp['k']:.2f} N/mm for {K_DIAL:g} N·mm/deg")
+        lines.append("Both stay stretched over the whole travel if installed >= their change + a margin past free length.")
     else:
         lines.append("NO pair of free post spots gives springs >= 4.5 long with torque arms >= 5: see the grey dots.")
-    lines += ["To check in the model: the posts' height vs SLA (slender), the spring's free length and initial tension (stock part),",
-              "the rib's twist under the pull (a small Hall angle offset, proportional, calibrated out), the springs vs the dial at ±travel."]
-    axt.text(0, 1.0, "\n".join(lines), fontsize=8.4, va="top", family="monospace")
+    lines += ["To check in the model: the + post's room (one free spot, 0.3 clear), the posts' sway (SLA, ~11 tall),",
+              "the stock spring (free length, initial tension), the rib's twist (small Hall offset, calibrated out)."]
+    axt.text(0, 1.0, "\n".join(lines), fontsize=8.0, va="top", family="monospace")
     fig.text(0.03, 0.965, "Dial item 6, Danny's idea (16:02-16:06): the centring springs lifted above the detent block, pulling a column on "
              "the Hall arm (no lever). From the model (v0.30); the column, posts and springs are PROPOSED (sketch).", fontsize=10)
     out = os.path.join(OUT, "dial-hallspring-sketch.png"); fig.savefig(out); print("wrote", out)
