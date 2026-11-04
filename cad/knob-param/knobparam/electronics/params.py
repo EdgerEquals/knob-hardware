@@ -103,6 +103,7 @@ P = dict(
 IMPORTS = {"under_pcb": ["d_big_tip", "enc_tht_xy"]}   # enc_tht_xy: v0.24 encoder-riser THT pins (main-board holes, build time only)
 EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> under_pcb (big-gear size from the board outline)
            "clear_oled", "clear_oled_xy",                 # -> case (ledge relief round the clear OLED)
+           "vb",                                          # -> case (4 Nov: top-ledge notches round the vertical boards)
            "adapter_d", "adapter_fps", "adapter_env"]   # -> control_dial (cup pocket, J1/U3 positions, strap height)
 
 

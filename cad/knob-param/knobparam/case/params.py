@@ -182,6 +182,14 @@ P = dict(
     joy_board_z=30.0,      # [A] v0.25: no joystick part is over the top posts' plan any more (the top board is notched round them, the
                            # vertical boards' male headers and the sockets sit 0.3+ off them, assembly path rows): the lowest part over them
                            # is the top board's underside (30.0). v0.24: 24.3, the male header body; v0.23: 26.6, the spring-contact strip
+    joy_cut_to=1.40,       # [Ed 4 Nov 10:03] joystick item 5: the joystick cutout runs only this far behind the faceplate back (z_fp0), not
+                           # the case's whole depth, so the top wall, the main board's top ledge and the two top corner posts come back
+                           # (v0.25 first cut: from z_seat - cut_slop, -0.42, the wall was open 42.2 wide). 1.40 (wall top z 34.90) = the
+                           # cradle's two Ø2 balls reach 1.05 under z_fp0 over the wall (joystick v0.9 [J]) + 0.35 air [A]; assembly row
+                           # "case top wall back under the joystick" measures the real parts. None = the v0.25 full-depth cut
+    vb_ledge_air=0.60,     # [A] 4 Nov: the restored top ledge is notched round each vertical board (they stand on the board front through the
+                           # ledge's band, y to 48.4 in the ledge's 47.5-49.0), this much air a side: covers the worst x stack 0.50 (main board
+                           # in the case 0.20 + case 0.20 + board on its header 0.10, the assembly vb_lat_tol terms) + 0.10; assembly row
     joy_step=None,         # [Ed 18:35] v0.25: no top-edge step (the joystick cradle is printed into the case: nothing to seal). v0.24 [Ed 14:02]:
                            # dict(w=1.20, d=1.45, y_in=0.20), a rebate in the cutout wall from the faceplate back with the cradle's dam in it
     amo_drop_air=0.45,     # [A] v0.25 [Ed 19:12 (5)]: the corner columns' flare and ring are trimmed this far round each back screen's plan, so
@@ -256,10 +264,12 @@ P = dict(
     scan_clear=0.50,       # [A] swept beam to the knob and to the joystick envelope
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy"],
+IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy",
+                           "vb"],   # 4 Nov: the vertical boards' plan, for the top-ledge notches
            "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
+           "z_joy_cut0", "vb_ledge_air",   # 4 Nov: the restored top wall's top and the ledge notches (assembly rows)
            "lab_ring_r", "lab_ring_z0", "lab_ring_z1",
            "lab_shoulder_r", "lab_shoulder_z0", "lab_shoulder_z1"]
 
@@ -410,6 +420,9 @@ def derive(D):
     D["boss_x"] = D["x_out1"] - D["web_min"] - br
     D["hp_need_w"] = D["panel_w"]
     D["z_seat"] = D["seat_gap"]
+    # [Ed 4 Nov 10:03] where the joystick cutout prism starts (z): just behind the faceplate, so the top wall, top ledge and top posts stay whole
+    jc = D.get("joy_cut_to")
+    D["z_joy_cut0"] = (D["z_fp0"] - jc) if jc is not None else (D["z_seat"] - D["cut_slop"])
     # Placeholder rear stack: bearing 2 bottom behind the PCB back. Same arithmetic as under_pcb
     # (back panel seat + flange − bearing width). The retainer plate on sub/assembly-v017 replaces
     # rear_panel_snap when it reports a depth; the cover cavity then moves with it. The cavity

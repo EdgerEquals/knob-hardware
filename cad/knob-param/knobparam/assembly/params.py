@@ -3,7 +3,8 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.25",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.26",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.26 [Ed 4 Nov 10:03]: the joystick cutout starts 1.40 behind the faceplate (top wall, top ledge, top posts back)
                        # v0.25 [Ed 3 Nov evening]: review decisions: spur gears + hub m0.75 12/17 nylon in a split clear cap,
                        # cradle printed into the case, dial split, detent block, cartridge sideways magnets + key
                        # v0.24 [Ed 3 Nov]: dial bezel cartridge (+4.4, job 1) + joystick v0.8 step-1 follow-ups (job 2)
@@ -22,6 +23,7 @@ P = dict(
     vb_pin_margin=0.30,      # [A] engagement kept inside the socket's insertion range at each end
     vb_tab_margin=0.30,      # [A] v0.25: end tabs (and the male header body under the socket) clear of the top board / socket at the worst case
     path_min=0.30,           # [A] v0.25: parts going in from the back (top board, vertical boards' headers) clear the case by this
+    topwall_air=0.30,        # [A] 4 Nov [Ed 10:03]: the restored case top wall's top clears the lowest joystick part over it by this
     # v0.25 [Ed 18:35]: no separate cradle (its 0.2 lip float and its lip-to-nest term are gone); the top board floats in its printed
     # nest (0.2 a side) while its glue is wet [A], so the pins centre it as the board stack goes in, then the glue sets
     vb_lat_tol=dict(main_board=0.20,     # [A] ± main board in the case (y; x)

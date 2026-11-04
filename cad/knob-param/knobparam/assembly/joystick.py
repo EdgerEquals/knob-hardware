@@ -263,6 +263,36 @@ def cross(D, pp, jp, JD):
             f"[Ed 19:12 (4)] headers 0.3 inboard (pins x ±{D['vb_top_x']:.2f}, body to ±{D['vb_face_out'] + Q['body_x']:.2f}) and the rows "
             f"{Q.get('y_shift', 0):+g} in y [A]; nearest: {whoh} (v0.24: 0.15 into the top corner posts' bases). The boards and their bottom "
             f"headers: {db_:.2f} ({whob})")
+        # ---- [Ed 4 Nov 10:03] joystick item 5: the cutout starts just behind the faceplate, so the top wall, top ledge and top posts are back
+        if D.get("joy_cut_to") is not None:
+            from build123d import Box, Pos, Align
+            A_ = (Align.MIN,) * 3
+            z0c = D["z_joy_cut0"]
+            col = Pos(-D["hole_hw"], D["y_in1"], z0c - 3.0) * Box(2 * D["hole_hw"], D["body_y1"] - D["y_in1"], D["z_fp1"] - z0c + 3.0, align=A_)
+            zlow, who = 9e9, "-"
+            for n, q in jp.items():
+                try:
+                    x = q & col
+                    if x is not None and x.volume > 1e-6 and x.bounding_box().min.Z < zlow:
+                        zlow, who = x.bounding_box().min.Z, n
+                except Exception:
+                    pass
+            row("case top wall back under the joystick: lowest joystick part over it", zlow - z0c, D["topwall_air"],
+                f"[Ed 4 Nov 10:03] the joystick cutout runs from z {z0c:.2f} ({D['joy_cut_to']:g} behind the faceplate back), not the case's "
+                f"whole depth: the top wall (y {D['y_in1']:.2f}-{D['body_y1']:.2f}, x ±{D['hole_hw']:.2f}), the main board's top ledge and the "
+                f"top corner posts are whole again (v0.25 first cut: open from z -0.42). Lowest part over the wall: {who} at z {zlow:.2f}. "
+                f"A {D['z_fp0'] - z0c:.2f} slit stays between the wall top and the faceplate back (inside the rack, behind the faceplate overhang)")
+            band = Pos(-D["hole_hw"], D["pcb_y1"] - D["ledge_w"] - 1.0, D["z_ledge0"] - 0.5) * Box(
+                2 * D["hole_hw"], D["ledge_w"] + 1.5, D["z_ledge1"] - D["z_ledge0"] + 1.0, align=A_)
+            led = cs & band if cs is not None else None
+            vbs = [q for n, q in vbp.items() if n.startswith("vertical board") and "FR4" in n]
+            if led is not None and vbs:
+                dl = min(led.distance_to(q) for q in vbs)
+                T = D["vb_lat_tol"]; st = T["main_board"] + T["case"] + T["pins"]
+                row("vertical boards in the top-ledge notches: air at the worst x stack", dl - st, 0.05,
+                    f"[A] 4 Nov: notches {D['vb']['t'] + 2 * D['vb_ledge_air']:.2f} wide at x ±{D['vb']['x']:g} right through the restored "
+                    f"top ledge; nominal air {dl:.2f} a side, worst x stack {st:.2f} (main board in the case {T['main_board']:g} + case "
+                    f"{T['case']:g} + board on its header {T['pins']:g})")
     return r
 
 

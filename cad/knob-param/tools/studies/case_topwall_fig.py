@@ -1,4 +1,4 @@
-# Review figure (3 Nov evening, joystick item 5, knob v0.25 / joystick v0.9): the case's top wall is open behind the joystick.
+# v0.25 study (3 Nov evening, joystick item 5; IN THE MODEL since v0.26 [Ed 4 Nov 10:03], see case_topwall_v026_fig.py): the case top wall is open behind the joystick.
 # The joystick cutout prism (2 hole_hw x 2 hole_hh, centred on place_y) runs from z_seat - cut_slop to the front and reaches past the
 # body's top wall (joy_y_far > body_y1), so the wall, the top PCB ledge and the two top corner posts are cut away over its width.
 # What-if: the same prism starting at z_top (the lowest joystick part over the wall's slot - 0.3) instead of z_seat - cut_slop.
