@@ -2664,9 +2664,7 @@
    "slack": 0.049
   }
  ],
- "clashes": {
-  "control dial lower part (tube, Hall and detent spokes, lever) / spring pin on the Hall arm's column (steel)": 0.427256600888212
- },
+ "clashes": {},
  "set": [],
  "sub": null
 }
