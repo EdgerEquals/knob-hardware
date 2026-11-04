@@ -8,6 +8,10 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
+    # v0.33 [Ed 4 Nov 21:30] step 2, decision 3 option B: the jack board (jacks soldered on) and the jack power board under it
+    (r"^jack (power )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
+    (r"^jack (power )?board.*(ZIF|headers)", "buy", "0.5 mm ZIF / 1.27 mm SMD header [A] (LCSC)", "on the PCBA"),
+    (r"^jack board|^jack power board", "board", "jack boards, FR-4 1.6 [A] (KiCad with step 2)", "PCBWay PCBA"),
     # [Ed 3 Nov 12:41-12:58] v0.24 dial screen as a bezel cartridge (Waveshare Z132A2441), dial board, rod-link board, strap loop
     (r"^dial bezel", "print", "PA-12, dyed black [A] (bezel material open: MJF to match the dial, or SLA [C])", "MJF"),
     (r"^dial screen Z132A2441", "buy", "Waveshare Z132A2441-V0 1.32in AMOLED (lens, panel, flex, 24-pin plug) [C: bare panel source]", "buy"),

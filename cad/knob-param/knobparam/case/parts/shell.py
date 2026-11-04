@@ -416,12 +416,38 @@ def build(D):
     for i, (x, y) in enumerate(D["jack_xy"], 1):
         g = 0.02
         body = _box(x - D["jack_w"] / 2, x + D["jack_w"] / 2, y - D["jack_h"] / 2, y + D["jack_h"] / 2, D["jack_depth_z0"], D["z_fp0"] - g)
-        pins = _box(x - 2.0, x + 2.0, y - 3.0, y + 3.0, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"])
+        px, py = D["jack_pin_box"]
+        pins = _box(x - px / 2, x + px / 2, y - py / 2, y + py / 2, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"])
         bush = _cyl_z(D["jack_bush_d"] / 2, D["z_fp0"], D["z_fp1"] + D["jack_nut_t"], x, y)
         nut = _sub(_cyl_z(D["jack_nut_d"] / 2, D["z_fp1"] + g, D["z_fp1"] + D["jack_nut_t"], x, y), _cyl_z(D["jack_bush_d"] / 2 + 0.01, D["z_fp1"], D["z_fp1"] + D["jack_nut_t"] + 1, x, y))
         jacks[f"jack {i} PJ366ST body + pins [S]"] = _add(body, pins)
         jacks[f"jack {i} bushing"] = bush
         jacks[f"jack {i} nut"] = nut
+    if D.get("jb_on"):   # v0.33 [Ed 4 Nov 21:30] option B: the jack board on the jacks' backs, the jack power board under it
+        bx0, bx1 = D["jb_x"]; by0, by1 = D["jack_bot_y"], D["jack_top_y"]; a = D["jb_air"]; px, py = D["jack_pin_box"]
+        hw, hl, hx = D["jb_hdr"]
+        holes = None
+        for x, y in D["jack_xy"]:
+            h = _box(x - px / 2 - a, x + px / 2 + a, y - py / 2 - a, y + py / 2 + a, D["jb2_z1"] - 0.01, D["jb_z1"] + 0.01)
+            holes = h if holes is None else _add(holes, h)
+        hdrs = None
+        for sx in (-1, 1):
+            h = _box(sx * hx - hw / 2, sx * hx + hw / 2, (by0 + by1) / 2 - hl / 2, (by0 + by1) / 2 + hl / 2, D["jb2_z1"] + 0.02, D["jb_z0"] - 0.02)
+            hdrs = h if hdrs is None else _add(hdrs, h)
+        hkeep = None
+        for sx in (-1, 1):
+            h = _box(sx * hx - hw / 2 - a, sx * hx + hw / 2 + a, (by0 + by1) / 2 - hl / 2 - a, (by0 + by1) / 2 + hl / 2 + a, D["jb2_z0"] - 1.0, D["jb_z1"])
+            hkeep = h if hkeep is None else _add(hkeep, h)
+        jacks["jack board (FR-4, the four jacks soldered on) [A]"] = _sub(_box(bx0, bx1, by0, by1, D["jb_z0"], D["jb_z1"] - 0.02), holes)
+        jacks["jack board underside parts (envelope) [A]"] = _sub(_sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb_under_z0"],
+                                                                         D["jb_z0"] - 0.02), holes), hkeep)
+        jacks["jack board headers (2 x 1x8 1.27, SMD) [A]"] = hdrs
+        jacks["jack power board (FR-4: ZIFs, ±12 V, the OLED's 12.5 V) [A]"] = _box(bx0, bx1, by0, by1, D["jb2_z0"], D["jb2_z1"])
+        jacks["jack power board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb2_z1"] + 0.02,
+                                                                 D["jb2_parts_z1"]), hkeep)
+        for nm, (w, dd, hh, xc) in (("jack power board ZIF, 24-pin (clear OLED flex) [A]", D["zif_oled"]),
+                                    ("jack power board ZIF, link flex to the main board [A]", D["zif_link"])):
+            jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + 0.2, by0 + 0.2 + dd, D["jb2_z0"] - hh, D["jb2_z0"] - 0.02)
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)

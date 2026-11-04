@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.32",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.33",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.33 [Ed 4 Nov 21:30] step 2, decision 3, option B: the jack board on the jacks' backs and the jack power board
+                       # 5 below it on two headers (both ZIFs and the power parts), one unit on the jack row's outline
                        # v0.32 [Ed 4 Nov 20:12-20:15] step 2, decisions 1-2: jacks 4.95 lower, USB-C 4.35 lower (board 5.5, edge on the
                        # bottom face); side PCB ledges notched along the jack row, bottom corner screws 1.0 lower and their posts cut flat
                        # under the jacks; the USB-C board in a channel through the bottom wall, a printed key behind it held by the cover

@@ -280,6 +280,22 @@ def checks(D, parts):
         if glow is not None:
             row("jacks' straight path from behind: clear of the glow coat", min(p_.distance_to(glow) for p_ in paths), 0.1,
                 "the side coat is left off the jack strip (it stood 0.15 into jacks 1 and 4)")
+        if D.get("jb_on"):   # v0.33 [Ed 21:30] option B: the two jack boards go in with the jacks, on the same path
+            bx0, bx1 = D["jb_x"]
+            stack = _P(bx0, D["jack_bot_y"], z0p) * _B(bx1 - bx0, jh, z1p - z0p, align=(_Al.MIN,) * 3)
+            row("jack boards + jacks (one unit) straight in from behind: clear of the case", stack.distance_to(case), 0.3,
+                f"the jack row's outline {bx1 - bx0:.1f} x {jh:g} swept from behind the rim to 1.0 short of home: both boards, the headers, "
+                "the ZIFs and the parts envelopes stay inside it [Ed 4 Nov 21:30]")
+            row("jack pins through the jack board", D["jb_pin_out"], 1.0,
+                f"{D['jack_pin_len']:g} pins [S] through a {D['jb_t']:g} board [A]: room for the fillet")
+            row("jack pin tips to the power board's parts", D["jb_pin_tip_air"], 0.5,
+                f"pin tips z {D['jack_depth_z0'] - D['jack_pin_len']:.2f}; power board top z {D['jb2_z1']:.2f} + {D['jb2_parts']:g} parts [A]")
+            row("between the two boards' parts envelopes", D["jb_env_air"], 0.5,
+                f"jack board underside parts to z {D['jb_under_z0']:.2f} [A], power board parts to z {D['jb2_parts_z1']:.2f} [A]; "
+                f"boards {D['jb2_gap']:g} apart on the headers")
+            oz = D["clear_oled"][2]
+            row("ZIFs to the clear OLED below (room for the two flexes to turn up into them)", D["zif_z0"] - oz, 8.0,
+                f"ZIF faces z {D['zif_z0']:.2f}, OLED front z {oz:.2f} [A: target]")
         row("bottom posts cut flat: air to the jack bodies", D["jack_post_air"], 0.3,
             f"jack bodies' bottom y {D['jack_bot_y']:.2f}; posts at y {D['corners'][0][1]:.2f} ({D['bot_post_drop']:g} lower), r {D['screw_boss_r']:.2f}, "
             f"cut flat at y {D['post_clip_y']:.2f}")

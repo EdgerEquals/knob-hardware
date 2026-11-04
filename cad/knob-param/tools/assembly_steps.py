@@ -141,9 +141,10 @@ STEPS = [
          parts=[r"^case$", r"^glow coat"], note="SLA, front face polished; Shimicoat brushed inside (CD)"),
     dict(id="shell-ins", sub="shell", name="Corner brass inserts into the shell's corner posts", dir="+z", travel=8,
          parts=[r"^corner insert"], note="epoxied in the resin (CD)"),
-    dict(id="shell-jacks", sub="shell", name="Four PJ366ST jacks into the faceplate from behind", dir="+z", travel="auto",
-         parts=[r"^jack \d PJ366ST", r"^jack \d bushing"], note="v0.32: 4.95 lower, straight in past the notched side ledges and the "
-         "flat-cut bottom posts (L4 step 2, Ed 4 Nov 20:12); the jack board under them is the next decision"),
+    dict(id="shell-jacks", sub="shell", name="Jack board unit (four jacks soldered on, the power board on its headers) straight in from behind",
+         dir="+z", travel="auto", parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board"],
+         note="v0.33: one unit on the jack row's outline, past the notched side ledges and the flat-cut bottom posts; bushings through the "
+              "panel holes (L4 step 2, Ed 4 Nov 20:12, 21:30)"),
     dict(id="shell-nuts", sub="shell", name="Jack nuts from the front", dir="-z", travel=8,
          parts=[r"^jack \d nut"], note="threaded on the bushings"),
     dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge",

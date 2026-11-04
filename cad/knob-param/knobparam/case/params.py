@@ -268,6 +268,20 @@ P = dict(
     # The library lists it untested against a real part: measure one before ordering.
     jack_depth=10.0,       # [S] body depth behind the panel
     jack_pin_len=3.5,      # [S] solder pins below the body
+    jack_pin_box=(4.0, 6.0),   # [A] placeholder block for each jack's pins (x, y); the real PJ366ST pin layout is a [C]
+    # v0.33 [Ed 4 Nov 21:30] step 2, decision 3, option B: two boards with the jack row's own outline (its path from behind). The jack
+    # board sits on the jacks' backs (jacks soldered on, the small analog parts between the pins underneath); the jack power board hangs
+    # jb2_gap under it on two SMD headers, with both ZIFs on its underside and the power parts (±12 V, the clear OLED's 12.5 V).
+    jb_on=True,            # [Ed 4 Nov 21:30]
+    jb_t=1.6,              # [A] jack board FR-4
+    jb_under=2.0,          # [A] parts envelope under the jack board (between the pins)
+    jb2_gap=5.0,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face
+    jb2_t=1.6,             # [A] power board FR-4
+    jb2_parts=2.0,         # [A] parts envelope on the power board's top face
+    jb_hdr=(1.27, 10.2, 20.75),   # [A] two 1x8 1.27 mm SMD headers: width, length, x centre (±), at the boards' outer ends
+    zif_oled=(16.0, 5.5, 2.0, -6.0),   # [A] 24-pin 0.5 mm ZIF for the clear OLED's flex: w, d, h, x centre (on the power board's underside)
+    zif_link=(14.0, 5.5, 2.0, 11.0),   # [A] ZIF for the link flex to the main board: w, d, h, x centre
+    jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width
     mass_max=140.0,        # [A] g, resin shell only (the PETG cover is separate)
@@ -690,6 +704,16 @@ def derive(D):
     D["post_insert_wall_jack"] = (D["post_clip_y"] - (yb + ri)) if dr else None   # resin, insert hole to the flat
     D["post_insert_wall_out"] = (yb - ri) - D["body_y0"]                          # resin, insert hole to the bottom face
     D["jack_post_air"] = D["jack_bot_y"] - (D["post_clip_y"] if dr else yb + br)
+    # v0.33 [Ed 21:30] the jack boards: the jack row's outline, z from the jacks' backs down
+    D["jb_x"] = (min(D["jack_xs"]) - D["jack_w"] / 2, max(D["jack_xs"]) + D["jack_w"] / 2)
+    D["jb_z1"] = D["jack_depth_z0"]; D["jb_z0"] = D["jb_z1"] - D["jb_t"]
+    D["jb_under_z0"] = D["jb_z0"] - D["jb_under"]
+    D["jb2_z1"] = D["jb_z0"] - D["jb2_gap"]; D["jb2_z0"] = D["jb2_z1"] - D["jb2_t"]
+    D["jb2_parts_z1"] = D["jb2_z1"] + D["jb2_parts"]
+    D["jb_env_air"] = D["jb_under_z0"] - D["jb2_parts_z1"]                 # between the two parts envelopes
+    D["jb_pin_tip_air"] = (D["jack_depth_z0"] - D["jack_pin_len"]) - D["jb2_parts_z1"]   # jack pin tips to the power board's parts
+    D["jb_pin_out"] = D["jb_z0"] - (D["jack_depth_z0"] - D["jack_pin_len"])   # pins through the jack board
+    D["zif_z0"] = D["jb2_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
     # [Ed 4 Nov 20:15] USB-C: channel through the bottom wall from the back edge to the board's front face, a ledge in front, a key behind
     uw, uh, ud = D["usb_rcpt"]; bw, bh, bt = D["usb_board"]
     D["usb_z1"] = D["z_fp1"] - ud            # board front face (bears on the ledge)
