@@ -335,6 +335,7 @@ NEAR, FINE, COARSE = 5.0, 0.25, 1.0       # last NEAR mm at FINE steps, further 
 N_EXACT = 2                               # exact OCC confirmations per (moving, fixed) pair: middle and last mesh hit
 SCHED = "v2"
 WORKERS = max(1, int(os.environ.get("KNOB_POOL", "2")))   # parallel pair checks (fork); the 2-core box: 2
+BALLS = re.compile(r"\bballs?\b", re.I)   # loose-ball parts: checked by centre distance when the BREP is all spheres (v0.31)
 
 
 class Geo:
@@ -359,6 +360,20 @@ class Geo:
             from build123d import import_brep
             self._br[n] = import_brep(self.P[n]["brep"])
         return self._br[n]
+
+    def balls(self, n):
+        """(centres (k,3), radius) when part n is a set of loose balls (every BREP face a sphere, one radius), else None."""
+        if n not in self._pts:
+            from OCP.BRepAdaptor import BRepAdaptor_Surface
+            from OCP.GeomAbs import GeomAbs_Sphere
+            C, R, ok = [], set(), True
+            for fa in self.brep(n).faces():
+                a = BRepAdaptor_Surface(fa.wrapped)
+                if a.GetType() != GeomAbs_Sphere:
+                    ok = False; break
+                sp = a.Sphere(); p = sp.Location(); C.append((p.X(), p.Y(), p.Z())); R.add(round(sp.Radius(), 5))
+            self._pts[n] = (np.unique(np.round(np.array(C), 5), axis=0), R.pop()) if ok and C and len(R) == 1 else None
+        return self._pts[n]
 
     def exact(self, m, f, off):
         """Common volume (mm³) of m moved by off with f, and the smallest extent of the overlap (mm). -1 if OCC fails."""
@@ -422,7 +437,10 @@ class Checker:
         coarse = float(np.clip(0.45 * min(_ext(bm, d), _ext(bf, d)), FINE, COARSE))
         cand = [s for s in schedule(L, coarse) if _ov(_bb_off(bm, -s * d), bf, 0.02)]
         hits = []
-        if cand:
+        bp = self._ball_pair(m, f) if cand else None
+        if bp:
+            hits = self._ball_hits(m, f, d, cand, bp)
+        elif cand:
             import vtk
             cf = vtk.vtkCollisionDetectionFilter()
             cf.SetInputData(0, self.geo.pd(m)); cf.SetInputData(1, self.geo.pd(f))
@@ -443,6 +461,29 @@ class Checker:
         self.memo[k] = r
         return r
 
+    def _ball_pair(self, m, f):
+        """'m' or 'f' when exactly one of the two is a ball set (BALLS name, all-sphere BREP), else None. v0.31: the shell sweeping
+        past the 53 knob balls took 20-55 s per position in vtkCollisionDetectionFilter (no contact, deep OBB descent) and hung the
+        check at the 2 h limit; ball centre to surface distance answers the same question exactly for spheres in milliseconds."""
+        bm = bool(BALLS.search(m)) and self.geo.balls(m) is not None
+        bf = bool(BALLS.search(f)) and self.geo.balls(f) is not None
+        return None if bm == bf else ("m" if bm else "f")
+
+    def _ball_hits(self, m, f, d, positions, which):
+        """Positions s where a ball overlaps the other part: signed distance (vtk, negative inside) from a ball centre to the other
+        part's surface < the ball radius. Fixed balls are seen from the moving part's frame (+s*d); moving balls sit at -s*d."""
+        import vtk
+        balls, other, sg = (m, f, -1.0) if which == "m" else (f, m, 1.0)
+        C, r = self.geo.balls(balls)
+        dist = vtk.vtkImplicitPolyDataDistance(); dist.SetInput(self.geo.pd(other))
+        out = []
+        for s in positions:
+            P = C + sg * s * np.asarray(d, float)
+            self.n_mesh += 1
+            if min(dist.EvaluateFunction(*p) for p in P) < r:
+                out.append(s)
+        return out
+
     def home(self, a, b, exact=False):
         """Assembled state: do a and b touch (mesh)? The exact common volume only on request: the knob build's own all-pairs
         clash check (exact, every part) already covers the assembled state, so this stage only lists the touching pairs."""
@@ -450,12 +491,17 @@ class Checker:
         k = self._key("home", P[a]["mesh"], P[b]["mesh"], exact)
         if k in self.memo:
             return self.memo[k]
-        import vtk
-        cf = vtk.vtkCollisionDetectionFilter()
-        cf.SetInputData(0, self.geo.pd(a)); cf.SetInputData(1, self.geo.pd(b))
-        cf.SetMatrix(0, vtk.vtkMatrix4x4()); cf.SetMatrix(1, vtk.vtkMatrix4x4())
-        cf.SetCollisionModeToFirstContact(); cf.Update(); self.n_mesh += 1
-        r = dict(touch=cf.GetNumberOfContacts() > 0, vol=0.0, depth=0.0)
+        bp = self._ball_pair(a, b)
+        if bp:
+            touch = bool(self._ball_hits(a, b, (0.0, 0.0, 1.0), [0.0], bp))
+        else:
+            import vtk
+            cf = vtk.vtkCollisionDetectionFilter()
+            cf.SetInputData(0, self.geo.pd(a)); cf.SetInputData(1, self.geo.pd(b))
+            cf.SetMatrix(0, vtk.vtkMatrix4x4()); cf.SetMatrix(1, vtk.vtkMatrix4x4())
+            cf.SetCollisionModeToFirstContact(); cf.Update(); self.n_mesh += 1
+            touch = cf.GetNumberOfContacts() > 0
+        r = dict(touch=touch, vol=0.0, depth=0.0)
         if r["touch"] and exact:
             r["vol"], r["depth"] = self.geo.exact(a, b, [0.0, 0.0, 0.0])
         self.memo[k] = r
