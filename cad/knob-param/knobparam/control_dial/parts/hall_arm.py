@@ -29,18 +29,22 @@ def arm(D, travel=0.0):
     sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
     L = rs[0] - r_in
     s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
+    lev = not D.get("cc_on")   # v0.30 [Ed 4 Nov 15:15]: no lever (compression springs in the cradle plate push the bar itself)
     if D["fan_on"] and D["arm_det"] == "split":   # v0.22 [Ed]: no fan; Hall spoke + rib, lever, and the detent spoke
-        s += lever(D)
+        if lev: s += lever(D)
         s += rib(D)
         s += split_adds(D)
     elif D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + lever; v0.17 adds the tapered rib and detent ears
         s += sector(D["fan_r0"], D["fan_r1"], D["fan_half"], D["fan_z0"], z1 - D["fan_z0"], D["ha_ang0"], n=48)
-        s += lever(D)
+        if lev: s += lever(D)
         s += rib(D)
         s += ears(D) if D["arm_det"] != "arc" else arc_adds(D)
     md, mh = D["hv_mag"]
     for r, a in zip(rs, ps):   # pockets open from below, top flush with the magnet top (press / glue fit)
         x, y = _pt(r, a); s -= cyl(md / 2, D["hv_z_mag0"] - 0.1, mh + 0.1, x, y)
+    li = spring_leadins(D) if D.get("cc_on") else None
+    if li is not None:
+        s -= li
     if D["fan_on"]:
         s -= wing_cuts(D) if D["arm_det"] not in ("arc", "split") else arc_cuts(D)
     s -= cyl(D["dial_tube_id"] / 2 + 0.01, 0, 20)
@@ -141,6 +145,38 @@ def arc_cuts(D):
         a = math.radians(D["ad_ang"] - th)
         out += Pos(r * math.cos(a), r * math.sin(a), D["ad_z_land"] + rb - D["det_dimple"]) * Sphere(rb)
     return out
+
+def _ccw(pts):
+    a = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]))
+    return pts if a > 0 else pts[::-1]
+
+def spring_leadins(D):
+    """v0.30 [Ed 4 Nov 15:15]: what the compression springs need on the Hall bar's first link (pads either side of cc_r), each side:
+    a flat radial seat recessed into the link face at cc_seat_ang (the face leans off the spring's end plane; the arm gets no
+    wider), and a 45° lead-in (cc_chamfer) on the seat's bottom edge so the bar going down the slot pushes a spring end back if
+    a print leaves it standing proud. The lead-in stops where it would thin a magnet's wall below hv_wall."""
+    from ...common.util import cc_face, cc_on_circle
+    R, h, i = D["cc_r"], D["cc_od"] / 2, D["cc_link"]; c = D["cc_chamfer"]
+    z0 = D["hv_bar_z0"]; zt = D["cc_z"] + D["cc_od"] / 2 + 0.15
+    mags = [_pt(D["hv_r"][k], D["hv_phi_m"][k]) for k in (i, i + 1)]; need = D["hv_mag"][0] / 2 + D["hv_wall"]
+    s = None; D_lead = {}
+    for sg in (-1, 1):
+        a = D["cc_seat_ang"][sg]
+        p, u, o, L = cc_face(D, i, sg)
+        ra, rb = R - h - 0.05, R + h + 0.05
+        fa, fb = cc_on_circle(p, u, ra), cc_on_circle(p, u, rb)
+        pts = _ccw([_pt(ra, a), _pt(rb, a), (fb[0] + 0.1 * o[0], fb[1] + 0.1 * o[1]), (fa[0] + 0.1 * o[0], fa[1] + 0.1 * o[1])])
+        q = Pos(0, 0, z0 - 0.1) * extrude(Face(Wire.make_polygon([Vector(x, y, 0) for x, y in pts], close=True)), zt - z0 + 0.1)
+        # lead-in along the seat's bottom edge, over the radii where the magnets keep their wall
+        ain = a - sg * math.degrees(c / R)                                   # the chamfer's inner line on the bottom face
+        ok = lambda r: all(math.hypot(r * math.cos(math.radians(ain)) - mx, r * math.sin(math.radians(ain)) - my) >= need for mx, my in mags)
+        rr = [R - h + k * 0.01 for k in range(int(2 * h / 0.01) + 1)]
+        good = [r for r in rr if ok(r)]
+        if good:
+            r0, r1 = min(good), max(good)
+            q += Rot(0, 0, a) * Pos((r0 + r1) / 2, 0, z0) * Rot(45, 0, 0) * Box(r1 - r0, c * math.sqrt(2), c * math.sqrt(2))
+        s = q if s is None else s + q
+    return s
 
 def lever(D):
     """Radial lever on the dial tube at sl_ang: bar above the thrust cage, end block, spring pin on top.

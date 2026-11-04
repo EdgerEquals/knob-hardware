@@ -135,3 +135,23 @@ class overlay(dict):
     def __getitem__(self, k): return super().__getitem__(k) if super().__contains__(k) else self.base[k]
     def get(self, k, default=None): return super().__getitem__(k) if super().__contains__(k) else self.base.get(k, default)
     def __contains__(self, k): return super().__contains__(k) or k in self.base
+
+
+def cc_face(D, i, s):
+    """v0.30: the Hall bar's link from pad i to pad i+1 (pads and links 2 x hv_pad_r wide), its side face on the s side (-1 toward
+    lower angles): (a point on the face, unit direction along the link, outward unit normal, link length)."""
+    rs, ps, pr = D["hv_r"], D["hv_phi_m"], D["hv_pad_r"]
+    pol = lambda r, a: (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
+    x0, y0 = pol(rs[i], ps[i]); x1, y1 = pol(rs[i + 1], ps[i + 1]); L = math.hypot(x1 - x0, y1 - y0)
+    ux, uy = (x1 - x0) / L, (y1 - y0) / L; nx, ny = -uy, ux
+    mx, my = x0 + ux * L / 2, y0 + uy * L / 2
+    sg = 1.0 if (nx * -my + ny * mx) > 0 else -1.0                        # +1 if the left normal points toward higher angles
+    ox, oy = s * sg * nx, s * sg * ny
+    return (x0 + pr * ox, y0 + pr * oy), (ux, uy), (ox, oy), L
+
+
+def cc_on_circle(p, u, R):
+    """Where the line p + t u (t >= 0, from inside) crosses the circle of radius R."""
+    b = 2 * (p[0] * u[0] + p[1] * u[1]); c = p[0] ** 2 + p[1] ** 2 - R * R
+    t = (-b + math.sqrt(max(b * b - 4 * c, 0.0))) / 2
+    return p[0] + t * u[0], p[1] + t * u[1]

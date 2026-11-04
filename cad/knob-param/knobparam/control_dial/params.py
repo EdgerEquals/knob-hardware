@@ -86,6 +86,8 @@ P = dict(
     strap_lines=14,   # [A] 2-layer PI flex, clear over the rod/nut, % dynamic limit
     strap_strain_max=0.3,   # [A] 2-layer PI flex, clear over the rod/nut, % dynamic limit
     dial_spring=0.4,   # [A] centring spring rate N*mm/deg (torque = k*theta)
+    cc_chamfer=0.3,   # [A] v0.30 (cc_on): 45° lead-in on the Hall bar's two lower side edges over its first link (pads 1-2), so the
+                      # bar going down the slot pushes a spring end back if a print leaves it standing proud of the arm's face
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     fan_on=True,   # [Ed] v0.16 fan arm + lever (False = v0.15 bar only)
     hv_spoke_w=3.0,   # [A] spoke width; spoke bottom this far above the thrust balls / cage
@@ -217,7 +219,8 @@ EXPORTS = ["z_hub0", "z_lip0", "z_web0", "dial_hub_od", "r_web", "gusset", "lip_
            "kb_rc", "kb_zc", "kb_pcd", "kb_n", "kb_gap", "kb_c_dial", "kb_c_knob", "kb_r_collar",   # -> main_knob (ball circle + faces)
            "kb_seat_c_knob", "kb_groove_h",                                                  # -> base_drive (cradle groove)
            "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs", "sp_ped", "sp_hw", "ad_land_half",   # -> base_drive (arc / split detent + tracks)
-           "dial_shape", "cone_deg", "cone_under_r0", "cone_lip_r"]                          # -> main_knob (v0.21 cone top)
+           "dial_shape", "cone_deg", "cone_under_r0", "cone_lip_r",                          # -> main_knob (v0.21 cone top)
+           "dial_spring"]                                                                    # -> base_drive (v0.30 compression springs)
 
 
 def derive(D):

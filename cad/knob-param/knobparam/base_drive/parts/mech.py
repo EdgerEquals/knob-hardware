@@ -6,6 +6,8 @@ over the arm from two columns; three ball tracks (big, small, big) whose layout 
 import math
 from build123d import *
 from ...common.util import A, cyl, sector
+from . import hall_slot
+SRC_DEPS = [hall_slot]   # v0.30: the compression springs are built in hall_slot
 
 def _pol(r, a): return r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
 
@@ -131,11 +133,11 @@ def stop_blocks(D):
     return s
 
 def cradle_add(D):
-    s = stop_blocks(D)
+    s = None if D["cc_on"] else stop_blocks(D)   # v0.30 [Ed 4 Nov 15:15]: the hard stop is in the Hall slot, no anchor posts
     if _block(D): return s   # v0.25: the wall, bracket and boss are the separate detent block
-    if _split(D): return s + split_mount(D)
-    if _arc(D): return s + arc_bridge(D)
-    for a in D["det_angs"]: s += det_block(D, a)
+    if _split(D): return split_mount(D) if s is None else s + split_mount(D)
+    if _arc(D): return arc_bridge(D) if s is None else s + arc_bridge(D)
+    for a in D["det_angs"]: s = det_block(D, a) if s is None else s + det_block(D, a)
     return s
 
 def cradle_cut(D):
@@ -145,7 +147,7 @@ def cradle_cut(D):
             s += cyl(D["dt_pin"][0] / 2, D["plate_t"] - D["dt_pin"][1], D["dt_pin"][1] + 0.01, x, y)
     else:
         for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
-    for (px, py) in D["sl_anchor_xy"]:
+    for (px, py) in ([] if D["cc_on"] else D["sl_anchor_xy"]):
         z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
         s += cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post + 0.01, px, py)   # anchor pin press hole
     return s
@@ -212,6 +214,10 @@ def build(D):
         md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
         for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
             out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
+    if D["cc_on"]:   # v0.30 [Ed 4 Nov 15:15]: two compression springs in arc pockets in the plate (no anchor pins)
+        for k, coil in enumerate(hall_slot.springs(D), 1):
+            out[f"centring spring {k} (compression, 316, non-magnetic)"] = coil
+        return out
     for k, coil in enumerate(springs_at(D, 0.0), 1):
         out[f"centring spring {k} (non-magnetic)"] = coil
     for k, (ax, ay) in enumerate(D["sl_anchor_xy"], 1):

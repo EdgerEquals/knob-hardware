@@ -7,7 +7,7 @@ Tags: [Ed] Ed's value, [K] KiCad, [S] datasheet/spec, [M] motor drawing, [A] ass
 Sub-assemblies may READ every key of derive_interface() but never write one. Changing a value here is an interface change:
 assembly agent only (see AGENTS.md)."""
 import math
-from ..common.util import tooth_tip
+from ..common.util import tooth_tip, cc_face, cc_on_circle
 from ..common import gearcheck
 
 P = dict(
@@ -202,6 +202,13 @@ P = dict(
     sl_pin_d=0.8,   # [A]
     sl_spring=(1.2, 2.6, 0.15),   # [Ed] v0.17: OD, hook-to-hook, wire. Shorter than the v0.16 4.5 so the anchors clear the detent ears (non-magnetic: phosphor bronze / 316)
     sl_spring_gap=0.40,   # [A] v0.17: coil above the lever. The anchors sit 0.3 above the lever so ±travel sweeps under them.
+    cc_r=7.4,   # [Ed 4 Nov 15:15, sketch] v0.30 compression springs: axis radius (the largest with plate room on both sides)
+    cc_z=2.6,   # [A] spring axis height (the Hall bar is in the plate over z 1.75-3.5)
+    cc_od=1.5,   # [A] spring OD (316 stainless, non-magnetic: the Hall magnets are beside it)
+    cc_on=False,   # [Ed 4 Nov 15:15, WIP: off until the + spring access is settled] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
+                  # first link, and the hard stop in the Hall slot (two stop faces the arm's links meet at ±travel). No lever on the dial,
+                  # no stop blocks, no anchor posts or pins. The sl_* values still place the detent and the webs as before (no other
+                  # geometry moves). False = v0.17-v0.29: the lever, two extension springs on anchor posts, the r 7 stop blocks.
     cu_on=False,   # [Ed] v0.17: cushion magnets removed (v0.16 had three Ø1.5×0.5 repelling cushions)
     cu_mag=(1.5, 0.5),   # [Ed/A] unused when cu_on is False (kept so a --set cu_on=True rebuilds v0.16)
     cu_mag_r=7.8,   # [A] cushion magnet radius on the lever end
@@ -931,6 +938,25 @@ def _place_mech(D):
     _place_det_columns(D)
 
 
+def _cc_seats(D):
+    """v0.30 [Ed 4 Nov 15:15]: the two compression springs push the Hall bar's first link (the pads either side of cc_r). Its side
+    faces lean off the springs' end planes (the bar is an arc), so each spring gets a flat radial seat recessed into the link at the
+    face's most inboard angle across the spring's end (no part of the arm gets wider). cc_seat_ang[s]: that plane at rest;
+    cc_seat_depth[s]: the recess at its deepest."""
+    R, h = D["cc_r"], D["cc_od"] / 2
+    i = max(k for k in range(len(D["hv_r"]) - 1) if D["hv_r"][k] <= R)
+    D["cc_link"] = i; D["cc_seat_ang"], D["cc_seat_depth"], D["cc_lean"] = {}, {}, {}
+    for s in (-1, 1):
+        p, u, o, L = cc_face(D, i, s)
+        angs = {}
+        for r in (R - h, R, R + h):
+            x, y = cc_on_circle(p, u, r); angs[r] = math.degrees(math.atan2(y, x)) % 360.0
+        a_in = max(angs.values()) if s < 0 else min(angs.values())          # most inboard across the spring's end
+        D["cc_seat_ang"][s] = a_in
+        D["cc_seat_depth"][s] = max(abs(a - a_in) * math.pi / 180 * r for r, a in angs.items())
+        D["cc_lean"][s] = math.degrees(math.atan2(abs(angs[R + h] - angs[R - h]) * math.pi / 180 * R, 2 * h))
+
+
 def derive(D):
     """Interface-derived values (pure function of the interface params). Adds keys to D in place."""
     R2D = math.degrees
@@ -1024,6 +1050,8 @@ def derive(D):
         D["hv_z_elems"] = [mid["elem_z"] if (mid and i == mid["idx"]) else D["hv_z_elem"] for i in range(n)]
         D["hv_parts"] = [mid["part"] if (mid and i == mid["idx"]) else sw["part"] for i in range(n)]
         D["hv_mid_elem_gap"] = (D["hv_z_mag0"] - mid["elem_z"]) if mid else None
+        if D["cc_on"]:
+            _cc_seats(D)
     _place_feel(D)
     _place_mech(D)
     _place_outer_thrust(D)

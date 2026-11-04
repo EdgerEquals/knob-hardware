@@ -1,6 +1,7 @@
 """base_drive own params + derive (cradle, brass tube, rod/sleeve/nuts, 1220 motor + pinion, idlers).
 Reads: interface + own + IMPORTS (control_dial thrust-ball ring for the cradle groove)."""
 import math
+from ..common.util import cc_face, cc_on_circle
 
 P = dict(
     # ---- 1220 motor [M] ----
@@ -118,11 +119,29 @@ P = dict(
     dt_glue_E=2500.0,   # [A] cured epoxy modulus, N/mm²
     dt_glue_lap=10.0,   # [A] epoxy on sanded SLA resin, lap shear / tension allowable, MPa (conservative; datasheets 15-25)
     dt_pcb_E=10000.0,   # [A] FR4 through-thickness modulus, N/mm² (the PCB under the cradle plate, in the lift's seat term)
+    # ---- v0.30 [Ed 4 Nov 15:15] (interface cc_on): two compression centring springs on an arc in the cradle plate, one each side
+    # of the Hall arm's first link, and the hard stop in the Hall slot: two stop faces the arm's links meet flush at ±travel.
+    # Danny's idea (13:03 "compression springs", 13:48 "an arc would be more ideal"). Sketch docs/img/dial-cspring-sketch.png. ----
+    cc_wire=0.16,   # [A] (OD cc_od and axis cc_r, cc_z are interface params: the dial's seats use them too)
+    cc_n=None,   # [A] active coils; None = derived from the dial's centring rate (dial_spring), to 1/4 coil
+    cc_ends=2.0,   # [A] closed ends: solid length = (n + ends) x wire
+    cc_G=69000.0,   # [A] 316 spring wire shear modulus, N/mm²
+    cc_uts=1689.0,   # [S] Gibbs Type 316 spring wire, min tensile at its smallest listed size (0.009 in = 0.23 mm); finer wire is not weaker
+    cc_tau_frac=0.45,   # [A] static allowable shear / tensile, set removed (spring-maker rule of thumb)
+    cc_solid_margin=0.3,   # [A] the spring stays this much over solid with the arm at the hard stop
+    cc_gap=0.0,   # [A, Ed 15:15 no preload] free end to its seat in the arm at centre: each spring pushes
+                  # only when the arm moves toward it (the springs go in before the dial; preloaded they would block the bar going in)
+    cc_pocket_clear=0.1,   # [A] pocket over the spring OD, radially and under it; open at the plate top
+    cc_stops=((-1, 3, 13.6, 15.5), (1, 2, 10.9, 12.6)),   # [A, sketch] (side, link from pad index, r0, r1): the - stop on the arm's
+                  # outer link (pads 4-5, 2.3-3.7 of plate behind it), the + stop on pads 3-4 (r 14-16 is ~1.0 from the block's pin hole)
+    cc_stop_depth=0.8,   # [A] stop face block depth into the slot wall (the 0.5 slot clearance + 0.3 into the wall)
+    cc_stop_z0=1.6,   # [A] stop face from z 1.6 (the bar bottom, hv_z_mag0 1.75, - 0.15) to the plate top; the sensor openings below stay open
 )
 
 IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
                             "arm_det", "ad_r", "ad_ang", "ad_z_land", "tk", "tk_webs",   # v0.21 arc detent + tracks
-                            "sp_ped", "sp_hw", "ad_land_half"],   # v0.22 split arm: pedestal, flange half-width / half-angle
+                            "sp_ped", "sp_hw", "ad_land_half",   # v0.22 split arm: pedestal, flange half-width / half-angle
+                            "dial_spring"],   # v0.30 compression centring springs: the dial's centring rate
            "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
 
@@ -296,6 +315,45 @@ def _detent_block_joint(D, r0, r1, rm, t, L, e):
     D["dt_screw_need"] = {"M2": 1.6 + 2 * 0.8, "M1.6": 1.25 + 2 * 0.8}      # foot width a tapped screw needs (tap drill + SLA walls)
 
 
+def _ccspring(D):
+    """v0.30 [Ed 4 Nov 15:15]: the compression centring springs (one per side, on an arc at cc_r, each pushing its flat seat in the
+    Hall bar's first link only when the arm turns toward it; seats from the interface) and the hard stop in the Hall slot (stop
+    faces the bar's links meet flush at ±travel)."""
+    R2D = math.degrees; T = D["travel_deg"]; R = D["cc_r"]
+    d, od = D["cc_wire"], D["cc_od"]; Dm = od - d
+    D["cc_travel_arc"] = R * math.radians(T)
+    # coils for the dial's centring rate with one spring working per side: k R² (rad) = dial_spring (per deg), to 1/4 coil
+    k_need = D["dial_spring"] * 180.0 / math.pi / (R * R)
+    n = D["cc_n"] if D["cc_n"] else round(D["cc_G"] * d ** 4 / (8 * Dm ** 3 * k_need) * 4) / 4
+    D["cc_n_used"] = n
+    D["cc_k"] = D["cc_G"] * d ** 4 / (8 * Dm ** 3 * n)                      # N/mm
+    D["cc_solid"] = (n + D["cc_ends"]) * d
+    D["cc_L_stop"] = D["cc_solid"] + D["cc_solid_margin"]                 # spring length with the arm at the hard stop
+    pre = D["cc_gap"]                                                      # arm travel before it meets the spring
+    D["cc_L0"] = D["cc_travel_arc"] + D["cc_L_stop"] - pre                 # free length
+    D["cc_dead_deg"] = R2D(pre / R)                                        # each side of centre, nominal
+    D["cc_pocket_ang"] = {s: D["cc_seat_ang"][s] + s * R2D((D["cc_travel_arc"] + D["cc_L_stop"]) / R) for s in (-1, 1)}
+    D["cc_free_ang"] = {s: D["cc_seat_ang"][s] + s * R2D(pre / R) for s in (-1, 1)}
+    D["cc_F_max"] = D["cc_k"] * (D["cc_travel_arc"] - pre)
+    D["cc_T_end"] = D["cc_F_max"] * R                                      # N·mm at ±travel (one spring)
+    D["cc_rate"] = D["cc_k"] * R * R * math.pi / 180.0                     # N·mm/deg, one spring per side
+    C = Dm / d; Kw = (4 * C - 1) / (4 * C - 4) + 0.615 / C
+    D["cc_C"] = C
+    D["cc_tau"] = 8 * D["cc_F_max"] * Dm * Kw / (math.pi * d ** 3)
+    D["cc_tau_allow"] = D["cc_tau_frac"] * D["cc_uts"]
+    # stop faces: the link's side face rotated to ±travel, between r0 and r1, cc_stop_depth into the slot wall
+    D["cc_stop_polys"] = []
+    for s, j, r0, r1 in D["cc_stops"]:
+        p, u, o, L = cc_face(D, j, s)
+        ca, sa = math.cos(math.radians(s * T)), math.sin(math.radians(s * T))
+        rot = lambda q: (q[0] * ca - q[1] * sa, q[0] * sa + q[1] * ca)
+        a_, b_ = cc_on_circle(p, u, r0), cc_on_circle(p, u, r1)
+        e = D["cc_stop_depth"]
+        poly = [rot(a_), rot(b_), rot((b_[0] + e * o[0], b_[1] + e * o[1])), rot((a_[0] + e * o[0], a_[1] + e * o[1]))]
+        D["cc_stop_polys"].append((s, j, r0, r1, poly))
+    D["cc_stop_h"] = D["plate_t"] - D["hv_z_mag0"]                         # contact height: the bar in the plate (its bottom = the magnets' bottom)
+
+
 def derive(D):
     R2D = math.degrees; M = D["motor"]
     D["fm_screw_d"] = D["feel"]["can_d"] * D["saddle_k_small"]
@@ -330,6 +388,8 @@ def derive(D):
         D["hv_slot_r1"] = D["skirt_id"] / 2 + 0.5
         dev = max(abs(a - D["ha_ang0"]) for a in D["hv_phi_m"] + D["hv_phi_s"])
         D["hv_slot_half"] = dev + D["travel_deg"] + R2D((D["hv_pad_r"] + D["hv_slot_clear"]) / D["hv_slot_r0"])
+        if D["cc_on"]:
+            _ccspring(D)
     # ---- v0.16 detents (v0.21: one detent on the arc, riding a land flush with the rib top) ----
     db = D["det_ball"]
     arc = D["arm_det"] in ("arc", "split") and D["ad_r"] is not None   # v0.22: split shares the arc keys
