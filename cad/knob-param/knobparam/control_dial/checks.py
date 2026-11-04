@@ -255,6 +255,11 @@ def _cart_v025_rows(D, parts, row, bezel, dial, panel, P):
         f"{min(seat):g} a side (seat only, the key sets the angle); MJF ±0.25 a part: fit the key on the parts")
     row("cartridge key: rib inner face to its slot's inner face (radial)", D["bz"]["slot_r_clear"], D["cm_gap"] - 1e-6,
         f"rib r {bz['rib_r_in']:g}-{D['bz_bore_r']:g}, slot from r {D['rib_slot_r0']:g} out through the dial wall (r {ct['outer_r']:g})")
+    lw = D["rib_slot_r0"] - D["ct_land_r"]
+    row("cartridge key: dial wall between the land step and each rib slot (radial, mm)", lw, mjf["wall"] - 1e-6,
+        f"land step r {D['ct_land_r']:g} to the slot's inner face r {D['rib_slot_r0']:g}, over z {D['db_z0']:.2f}-{D['db_z1']:.2f} "
+        f"({D['db_z1'] - D['db_z0']:.2f} tall, beside the board's top edge); below the ledge {D['rib_slot_r0'] - ct['pocket_r']:.2f} "
+        f"(pocket r {ct['pocket_r']:g})" + (f"; TIGHT: at PCBWay's {mjf['wall']:g} MJF wall, no margin" if lw < mjf["wall"] + 0.05 else ""))
     gaps = []
     for a, cl, k in D["cart_ribs"]:
         from .parts.dial import rib_box, to_mech
