@@ -272,11 +272,10 @@ def _cart_v025_rows(D, parts, row, bezel, dial, panel, P):
         f"{bz['slot_depth']:g} x {D['rib_engage_r']:.2f}; PA-12 {D['pa12_uts']:g} MPa / 2", higher_ok=False)
     row("cartridge key: dial under the slot floor (MJF wall)", D["rib_floor_wall"], mjf["wall"],
         f"slot floor z {D['rib_z0']:.2f} over the flat underside z {D['z_lip0']:.2f}")
-    row("plug / receptacle with the key seated: stand-off over full mate (the plug never carries the cartridge)", bz["plug_standoff"], 0.05,
-        f"plug's flex z {D['plug_flex_z']:.2f} = board top {D['db_z1']:.2f} + mated {D['zp']['mated']:g} [S] + {bz['plug_standoff']:g} [A]; "
-        f"still {D['plug_engage']:.2f} into the receptacle (≥ 0.2); pad glued with a {bz['plug_standoff']:g} shim, cartridge seated")
-    row("plug / receptacle with the key seated: stand-off not over the contact wipe (mm)", bz["plug_standoff"], 0.15,
-        "[A] 24-pin 0.4 B2B effective mating length ~0.3 class [C: the chosen part's]", higher_ok=False)
+    row("plug / receptacle with the ribs seated: fully mated (stand-off over full mate, mm)", bz["plug_standoff"], 0.001,
+        f"[Ed 4 Nov 12:37] plug's flex z {D['plug_flex_z']:.2f} = board top {D['db_z1']:.2f} + mated {D['zp']['mated']:g} [S]; "
+        f"{D['plug_engage']:.2f} into the receptacle; the pad is glued to the arm with the ribs seated and the plug home (no shim): "
+        "the lock clicks, and the plug shares a press on the glass with the ribs", higher_ok=False)
 
 
 def _cart_tail(D, parts, r):

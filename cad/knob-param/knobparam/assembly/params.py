@@ -3,7 +3,8 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.28",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.29",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.29 [Ed 4 Nov 12:37]: the screen's plug fully mated with the cartridge's ribs seated (was 0.10 short)
                        # v0.28 [Ed 4 Nov 12:12]: cartridge seat ribs kept; their slots 0.50 a side (was 0.25), every slot's inner
                        # face 0.3 inside its rib (was 0.1)
                        # v0.27 [Ed 4 Nov 11:46]: cartridge magnets: six Ø1 x 0.5 pairs at 0/30/120/150/240/270 (were three

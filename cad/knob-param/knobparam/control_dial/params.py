@@ -184,8 +184,9 @@ P = dict(
             slot_depth=2.0,                  # [A] slot floor this far under the land top = the axial seat [Ed 19:12 item 2]
             slot_r_clear=0.3,                # [Ed 4 Nov 12:12] slot's inner face this far inside the rib's (r 18.3 in the dial; was 0.1):
                                              # as the 0.30 bore gap, so the ribs never centre the cartridge tighter than the bore
-            plug_standoff=0.10,              # [A] with the ribs seated the plug stands this far off full mate (inside its wipe): it never
-                                             # carries the cartridge [Ed 19:12 item 2]; set by gluing the pad with a 0.1 shim
+            plug_standoff=0.0,               # [Ed 4 Nov 12:37] plug fully mated with the ribs seated: the pad is glued to the arm with
+                                             # both home at once (no shim), so the lock clicks and the contacts are as designed; the plug
+                                             # shares a press on the glass with the ribs (v0.25-v0.28: 0.10 short, [Ed 19:12 item 2])
             pad_top=1.6,                     # [Ed 12:58] printed plug pad 56.8-58.3: from the plug's flex up to 1.6 behind the lens back
             arm_ang=305.0, arm_w=2.0, arm_t=1.0,   # [Ed 12:58] arm from the pad to the bezel at ~305°; [A] 2.0 wide, 1.0 thick under the pad top
             arm_glue=0.05),                  # [A] glue line between the arm end and the bezel bore
@@ -444,7 +445,8 @@ def _cart(D):
     D["db_z1"] = zb - db["behind"]                                         # 55.90 board top = the dial land
     D["db_z0"] = D["db_z1"] - db["t"]                                      # 55.10 board underside = the ledge
     D["rec_z1"] = D["db_z1"] + db["rec"][4]                                # 56.45 receptacle top
-    # v0.25 [Ed 19:12 item 2]: the ribs seat the cartridge; the plug stands plug_standoff off full mate (pad glued with a shim)
+    # v0.25 [Ed 19:12 item 2]: the ribs seat the cartridge; the plug stands plug_standoff off full mate (v0.29 [Ed 4 Nov 12:37]: 0,
+    # fully mated, the pad glued with the ribs seated and the plug home)
     D["plug_flex_z"] = D["db_z1"] + zp["mated"] + bz["plug_standoff"]      # 56.80 plug's flex (56.70 at full mate)
     D["plug_face_z"] = zb - zp["plug_face"] + bz["plug_standoff"]          # 56.18 plug mating face (56.08 [S] at full mate)
     D["plug_engage"] = D["rec_z1"] - D["plug_face_z"]                      # plug inside the receptacle
