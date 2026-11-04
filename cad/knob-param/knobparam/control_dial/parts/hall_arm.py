@@ -29,11 +29,13 @@ def arm(D, travel=0.0):
     sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
     L = rs[0] - r_in
     s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
-    lev = not D.get("cc_on")   # v0.30 [Ed 4 Nov 15:15]: no lever (compression springs in the cradle plate push the bar itself)
+    lev = not (D.get("cc_on") or D.get("es_on"))   # v0.30/v0.31: no lever (the springs push / pull the Hall arm itself)
     if D["fan_on"] and D["arm_det"] == "split":   # v0.22 [Ed]: no fan; Hall spoke + rib, lever, and the detent spoke
         if lev: s += lever(D)
         s += rib(D)
         s += split_adds(D)
+        if D.get("es_on"):
+            s += spring_column(D)
     elif D["fan_on"]:   # v0.16 [Ed]: fan widening to the perimeter + lever; v0.17 adds the tapered rib and detent ears
         s += sector(D["fan_r0"], D["fan_r1"], D["fan_half"], D["fan_z0"], z1 - D["fan_z0"], D["ha_ang0"], n=48)
         if lev: s += lever(D)
@@ -145,6 +147,17 @@ def arc_cuts(D):
         a = math.radians(D["ad_ang"] - th)
         out += Pos(r * math.cos(a), r * math.sin(a), D["ad_z_land"] + rb - D["det_dimple"]) * Sphere(rb)
     return out
+
+def es_column_top(D):
+    """v0.31: the column's top (the spring hooks sit on it) and the hook pin's top."""
+    return D["es_z"] - D["es_od"] / 2 - 0.05, D["es_z"] + D["es_od"] / 2 + 0.4
+
+def spring_column(D):
+    """v0.31 [Ed 4 Nov 16:35]: a column rising from the Hall arm's rib at es_rp (on the rib's line) to just under the springs; the
+    steel hook pin is pressed into a hole in its top (a separate part, base_drive builds the springs and pins)."""
+    z0 = D["ha_rib_z_top"] - 0.01; z1, _zp = es_column_top(D)
+    x, y = _pt(D["es_rp"], D["ha_ang0"])
+    return cyl(D["es_col_d"] / 2, z0, z1 - z0, x, y) - cyl(D["es_pin_d"] / 2, z1 - 1.5, 1.6, x, y)
 
 def _ccw(pts):
     a = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]))

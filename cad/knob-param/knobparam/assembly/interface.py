@@ -207,6 +207,14 @@ P = dict(
     cc_od=1.5,   # [A] spring OD (316 stainless, non-magnetic: the Hall magnets are beside it)
     hs_slot=True,   # [Ed 4 Nov 15:46] v0.30 (option A): the dial's hard stop in the Hall slot (stop faces the Hall bar meets at ±travel),
                     # the r 7 stop blocks gone; the lever and the two extension springs stay; anchor post 2 hangs from the detent block
+    es_on=True,   # [Ed 4 Nov 16:35] v0.31 (Danny 16:02-16:27): the centring springs lifted above the detent block: two extension
+                  # springs at z es_z pull a pin on a column rising from the Hall arm's rib (the lever goes) toward two posts printed up
+                  # from the cradle plate. The hard stop stays in the Hall slot (hs_slot). Sketch docs/img/dial-hallspring-sketch.png
+    es_rp=8.0,   # [A, sketch] the column's pin radius, on the rib's line (ha_ang0)
+    es_z=15.0,   # [A, sketch] spring axis: over the detent block top (13.55) + 0.6 + the spring's radius
+    es_od=1.5,   # [A] extension spring OD (316 stainless, non-magnetic)
+    es_pin_d=0.8,   # [A] steel hook pins pressed into the column and post tops
+    es_col_d=2.4,   # [A] the column on the rib (PA-12, part of the dial's lower part)
     cc_on=False,   # [Ed 4 Nov 15:46: option B, parked] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
                   # first link, and the hard stop in the Hall slot (two stop faces the arm's links meet at ±travel). No lever on the dial,
                   # no stop blocks, no anchor posts or pins. The sl_* values still place the detent and the webs as before (no other

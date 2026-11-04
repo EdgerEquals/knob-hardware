@@ -157,11 +157,40 @@ def cross(D, parts):
     row("feel motor vs Hall arm (±travel)", min_dist(list(ARM.values()), feels), T["hall_vs_pinions"])
     # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
     from ..base_drive.parts.mech import springs_at, track_balls_at
-    # coils seat on the anchor posts, so the cradle distance is ~0 there; check they stay clear of the drive
-    obstacles = [parts["motor"], parts["encoder pinion"], *rings]
-    spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
-    row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
-        f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
+    if D.get("es_on"):   # v0.31 [Ed 4 Nov 16:35]: the lifted springs, from the Hall arm column's pin to the posts' pins
+        from ..base_drive.parts.mech import es_springs_at
+        Db = model.view(D, "base_drive")
+        low = _dial(parts, "lower"); zs = D["es_z"]
+        fixed = {n: q for n, q in parts.items() if not n.startswith(("base cradle", "centring spring", "spring anchor pin", "spring pin on",
+                                                                       "control dial", "case"))}
+        fixed = {n: q for n, q in fixed.items() if q.bounding_box().min.Z < zs + 2 and q.bounding_box().max.Z > zs - 2}
+        smin, swho = 1e9, ""
+        for th in TR:
+            for sp in es_springs_at(Db, th):
+                for n, q in list(fixed.items()) + [("control dial lower part (turned)", Rot(0, 0, th) * low)]:
+                    d = sp.distance_to(q)
+                    if d < smin: smin, swho = d, n
+        row("lifted centring springs vs the dial's lower part and the fixed parts (±travel)", smin, T["arm_vs_cradle"],
+            f"[Ed 4 Nov 16:35] springs at z {zs:g} from the Hall arm's column pin to the posts; nearest: {swho}; "
+            f"sampled {', '.join(f'{t:+.1f}' for t in TR)}")
+        # the springs' pull twists the Hall arm's rib a little: a Hall angle offset in step with the angle (calibrated out) [A]
+        Ft = D["dial_spring"] * Tdeg / D["es_rp"]                               # net tangential pull at ±travel, N
+        zc = (D["ha_rib_z_top"] + D["ha_rib_z_low"]) / 2; Lr = D["es_rp"] - D["ha_rib_r_hub"]
+        b_, h_ = max(D["ha_rib_w0"], D["ha_rib_z_top"] - D["ha_rib_z_low"]), min(D["ha_rib_w0"], D["ha_rib_z_top"] - D["ha_rib_z_low"])
+        J = b_ * h_ ** 3 * (1 / 3 - 0.21 * h_ / b_ * (1 - h_ ** 4 / (12 * b_ ** 4)))
+        G = D.get("pa12_E", 1700.0) / 2.6
+        tw = Ft * (zs - zc) * Lr / (G * J)
+        off = math.degrees(tw * (zc - D["hv_z_mag0"]) / D["hv_r_mid"])
+        row("lifted centring springs: Hall angle offset from the rib's twist at ±travel (deg, estimate)", off, 0.05,
+            f"{Ft:.2f} N tangential at z {zs:g} on the column, rib {D['ha_rib_w0']:g} wide x {D['ha_rib_z_top'] - D['ha_rib_z_low']:.2f} deep over "
+            f"{Lr:.2f} from the tube, PA-12 G {G:.0f} [A]: twist {tw * 1e3:.2f} mrad, magnets {tw * (zc - D['hv_z_mag0']) * 1e3:.1f} µm; "
+            "in step with the angle, so a calibration removes it", higher_ok=False)
+    else:
+        # coils seat on the anchor posts, so the cradle distance is ~0 there; check they stay clear of the drive
+        obstacles = [parts["motor"], parts["encoder pinion"], *rings]
+        spr_d = min(sp.distance_to(o) for th in TR for sp in springs_at(D, th) for o in obstacles)
+        row("centring springs vs motor / encoder / ring across ±travel", spr_d, D["feel"]["clear"],
+            f"lever pin at {D['sl_ang']:.0f}° + θ; sampled {', '.join(f'{t:+.1f}' for t in TR)}")
     if D.get("arm_det") in ("arc", "split") and D.get("tk"):
         _arc_cross(D, parts, row, TR, ARM)
     else:

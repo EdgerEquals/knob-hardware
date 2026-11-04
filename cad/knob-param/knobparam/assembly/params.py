@@ -3,7 +3,10 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.30",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.31",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.31 [Ed 4 Nov 16:35] dial item 6: the centring springs lifted above the detent block: two extension springs at
+                       # z 15 from a pin on a column on the Hall arm's rib (the lever goes) to two posts printed up from the cradle plate.
+                       # The hard stop stays in the Hall slot (v0.30); v0.30's post-2 hanger goes
                        # v0.30 [Ed 4 Nov 15:46] dial item 6, option A: the hard stop in the Hall slot (two stop faces the Hall bar meets
                        # at ±travel; the r 7 stop blocks gone), anchor post 2 + its pin on an arm from the detent block (the lever and the
                        # two extension springs stay). Option B (compression springs, cc_on) is in the model, switched off

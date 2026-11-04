@@ -128,7 +128,7 @@ def stop_blocks(D):
     s = None if D["hs_slot"] else _local(D, x0, x1, w / 2, w / 2 + L, z0, z1, a + T) + _local(D, x0, x1, -w / 2 - L, -w / 2, z0, z1, a - T)
     # anchors stand above the lever; the ±travel sweep passes underneath
     z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
-    for k, (px, py) in enumerate(D["sl_anchor_xy"], 1):
+    for k, (px, py) in enumerate([] if D["es_on"] else D["sl_anchor_xy"], 1):   # v0.31: no anchor posts at plate level
         if _hung(D, k): continue
         q = cyl(D["sl_post_d"] / 2, z_post, max(D["sl_pin_top"] - z_post, 0.4), px, py)
         s = q if s is None else s + q
@@ -151,7 +151,46 @@ def hanger(D):
     arm += cyl(D["sl_post_d"] / 2, h["z_post"], z0 - h["z_post"] + 0.01, px, py)
     return arm - cyl(D["sl_pin_d"] / 2, h["z_post"] - 0.01, z1 - h["z_post"] + 0.02, px, py)
 
+def es_pins(D, theta=0.0):
+    """v0.31 [Ed 4 Nov 16:35]: hook pin positions: the Hall arm column's (turned theta with the dial) and the two posts'."""
+    import math as _m
+    x, y = D["es_P"]; c, s_ = _m.cos(_m.radians(theta)), _m.sin(_m.radians(theta))
+    return (x * c - y * s_, x * s_ + y * c), [sp["Q"] for sp in D["es_springs"]]
+
+def es_posts(D):
+    """The two anchor posts printed up from the cradle plate, a pin hole in each top."""
+    out = None
+    for sp in D["es_springs"]:
+        x, y = sp["Q"]
+        q = cyl(D["es_post_d"] / 2, D["plate_t"] - 0.01, D["es_top"] - D["plate_t"] + 0.01, x, y)
+        out = q if out is None else out + q
+    return out
+
+def es_springs_at(D, theta):
+    """The two extension springs with the dial at theta (the column's pin turned; the posts stay), as tubes between the pins."""
+    import math as _m
+    P, Qs = es_pins(D, theta); out = []
+    ro, ri = D["es_od"] / 2, D["es_od"] / 2 - D["es_wire"]; e = D["es_pin_d"] / 2 + 0.05
+    for Q in Qs:
+        dx, dy = Q[0] - P[0], Q[1] - P[1]; L = _m.hypot(dx, dy); ang = _m.degrees(_m.atan2(dy, dx))
+        body = Cylinder(ro, L - 2 * e) - Cylinder(ri, L - 2 * e + 0.02)
+        out.append(Pos((P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2, D["es_z"]) * Rot(0, 0, ang) * Rot(0, 90, 0) * body)
+    return out
+
+def _es_pin(D, x, y):
+    z1 = D["es_z"] + D["es_od"] / 2 + 0.4; z0 = D["es_top"] - 1.5
+    return cyl(D["es_pin_d"] / 2, z0, z1 - z0, x, y)
+
 def cradle_add(D):
+    if D["es_on"]:   # v0.31: the posts; with hs_slot and the detent block nothing else is added
+        st = None if D["cc_on"] else stop_blocks(D)
+        posts = es_posts(D)
+        s = posts if st is None else st + posts
+        if _block(D): return s
+        if _split(D): return s + split_mount(D)
+        if _arc(D): return s + arc_bridge(D)
+        for a in D["det_angs"]: s += det_block(D, a)
+        return s
     s = None if D["cc_on"] else stop_blocks(D)   # v0.30: option B (cc_on) has no posts; hs_slot drops the stop blocks in stop_blocks
     if _block(D): return s   # v0.25: the wall, bracket and boss are the separate detent block
     if _split(D): return split_mount(D) if s is None else s + split_mount(D)
@@ -166,7 +205,10 @@ def cradle_cut(D):
             s += cyl(D["dt_pin"][0] / 2, D["plate_t"] - D["dt_pin"][1], D["dt_pin"][1] + 0.01, x, y)
     else:
         for a in (D["det_angs"] if not _arc(D) else [D["ad_ang"]]): s += det_bore(D, a)
-    for k, (px, py) in enumerate([] if D["cc_on"] else D["sl_anchor_xy"], 1):
+    if D["es_on"]:   # v0.31: pin holes in the posts' tops
+        for sp in D["es_springs"]:
+            s += cyl(D["es_pin_d"] / 2, D["es_top"] - 1.5, 1.6, *sp["Q"])
+    for k, (px, py) in enumerate([] if (D["cc_on"] or D["es_on"]) else D["sl_anchor_xy"], 1):
         if _hung(D, k): continue   # v0.30: its hole is in the detent block's hanger
         z_post = D["sl_top"] + D["tgt"]["arm_vs_cradle"] + 0.15   # corner distance stays ≥ the 0.3 mm arm gap
         s += cyl(D["sl_pin_d"] / 2, z_post, D["sl_pin_top"] - z_post + 0.01, px, py)   # anchor pin press hole
@@ -234,6 +276,14 @@ def build(D):
         md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
         for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
             out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
+    if D["es_on"]:   # v0.31 [Ed 4 Nov 16:35]: two extension springs at es_z, the Hall arm column's pin and the posts' pins
+        for k, coil in enumerate(es_springs_at(D, 0.0), 1):
+            out[f"centring spring {k} (extension, 316, non-magnetic)"] = coil
+        P, Qs = es_pins(D, 0.0)
+        for k, Q in enumerate(Qs, 1):
+            out[f"spring anchor pin {k}"] = _es_pin(D, *Q)
+        out["spring pin on the Hall arm's column (steel)"] = _es_pin(D, *P)
+        return out
     if D["cc_on"]:   # v0.30 [Ed 4 Nov 15:15]: two compression springs in arc pockets in the plate (no anchor pins)
         for k, coil in enumerate(hall_slot.springs(D), 1):
             out[f"centring spring {k} (compression, 316, non-magnetic)"] = coil

@@ -32,8 +32,9 @@ RULES = [
     (r"top board", "board", "joystick top board (FR-4, ENIG contact pads)", "PCBWay PCBA"),
     # v0.25 (dial job): "non-magnetic" springs read as magnets and the spring anchor pins as printed anchors; the detent block's
     # name mentions its pins (hardware rule); the cap's inner hub is PA-12 [Ed 19:46]. Explicit rules ahead of the generic ones.
-    (r"^centring spring", "buy", "stainless 316 / phosphor bronze extension spring (non-magnetic)", "buy"),
-    (r"^spring anchor pin", "buy", "steel dowel (spring anchor; pin 1 pressed into the cradle, pin 2 into the detent block's post)", "buy"),
+    (r"^centring spring", "buy", "stainless 316 extension spring, OD 1.5, wire 0.2, extended hooks (non-magnetic; v0.31 rate / free lengths in check.json)", "buy"),
+    (r"^spring pin on", "buy", "steel dowel Ø0.8 (spring hook pin, pressed into the Hall arm's column)", "buy"),
+    (r"^spring anchor pin", "buy", "steel dowel Ø0.8 (spring anchor, pressed into a cradle post)", "buy"),
     (r"^detent block \(", "print", "UTR-8100 clear resin (glued on two Ø1 pins) [Ed 18:15]", "SLA"),
     (r"^knob upper-cap hub", "print", "PA-12: hub-gear teeth + 45° ball race, keyed and glued into the clear cap [Ed 19:46]", "MJF"),
     (r"magnet", "buy", "N52 magnet", "buy"),

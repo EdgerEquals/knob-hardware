@@ -109,6 +109,30 @@ def _hs_rows(D, parts, r):
               f"about the seat's weak axis, conservative); {D['dt_glue_lap']:g} MPa [A] / 4", higher_ok=False)
     return r
 
+def _es_rows(D, r):
+    """v0.31 [Ed 4 Nov 16:35]: the lifted extension springs and their posts."""
+    sps = D["es_springs"]; arms = ", ".join(f"{sp['d']:.2f}" for sp in sps)
+    r.row("lifted centring springs: the dial's centring rate, both springs (N·mm/deg)", D["es_rate"], D["dial_spring"] * 0.999,
+          f"[Ed 4 Nov 16:35] pin on the Hall arm's column at r {D['es_rp']:g}, {D['ha_ang0']:g}°, z {D['es_z']:g}; posts at "
+          + ", ".join(f"r {r_:g} {a_:g}°" for a_, r_ in D["es_posts"]) + f"; torque arms {arms}; "
+          f"one stock spring {D['es_k']:.3f} N/mm (316, OD {D['es_od']:g}, wire {D['es_wire']:g}, ~{D['es_n']:.1f} active coils, C {D['es_C']:.1f})")
+    r.row("lifted centring springs: still stretched at the far end of travel (past free length, min, mm)",
+          min(sp["stretch"] - sp["dL"] for sp in sps), D["es_margin"] - 1e-6,
+          "; ".join(f"spring {sp['k']}: {sp['L']:.2f} pin to pin, free {sp['L_free']:.2f}, ±{sp['dL']:.2f} over ±travel, "
+                    f"{sp['F_min']:.2f}-{sp['F_max']:.2f} N" for sp in sps) + f"; torques balance at centre ({D['es_T0']:.2f} N·mm each)")
+    r.row("lifted centring springs: closed body inside the free length, room for the hooks (min, mm)",
+          min(sp["L_free"] for sp in sps) - D["es_body"], 2 * D["es_od"],
+          f"body (n + 1) x wire = {D['es_body']:.2f}; two hooks need about an OD each [A]")
+    r.row("lifted centring springs: shear stress at the largest pull vs 45% of the wire's tensile (MPa)",
+          max(sp["tau"] for sp in sps), D["es_tau_allow"], f"Gibbs 316 spring wire >= {D['es_uts']:g} MPa [S]; static, set removed [A]",
+          higher_ok=False)
+    r.row("lifted centring springs: post sway at the spring under the largest pull (mm)", D["es_post_sway"], D["es_sway_max"],
+          f"Ø{D['es_post_d']:g} x {D['es_post_h']:.1f} tall (plate to the hooks), UTR-8100 E {D['ad_E'] / 1000:g} GPa [A], "
+          f"{max(sp['F_max'] for sp in sps):.2f} N at z {D['es_z']:g}", higher_ok=False)
+    r.row("lifted centring springs: post bending stress at its root (MPa)", D["es_post_sigma"], D["es_post_allow"],
+          "UTR-8100 41.6 MPa [S] / 2", higher_ok=False)
+    return r
+
 def checks(D, parts):
     T = D["tgt"]; F = D["feel"]; r = Rows("base_drive")
     r.row("1220 can vs dial tube", D["offset"] - D["can_r"] - D["dial_tube_od"] / 2, T["motor_dial_tube"])
@@ -141,6 +165,8 @@ def checks(D, parts):
         _split_rows(D, parts, r)
         if D.get("hs_slot") and D["hall_layout"] == "vernier":
             _hs_rows(D, parts, r)
+    if D.get("es_on"):
+        _es_rows(D, r)
     elif D["arm_det"] == "arc" and D["ad_r"] is not None:   # v0.21: the inboard window no longer applies; the detent is on the arc
         _arc_rows(D, parts, r)
     else:

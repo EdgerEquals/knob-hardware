@@ -148,6 +148,19 @@ P = dict(
     dt_hang_at=(0.0, 1.0),   # [A] the arm's root in the head: this far out from the head's inner radius, this many degrees in from
                              # its edge on the post's side (clear of the grub bore: row)
     dt_hang_F=1.0,   # [A] spring pull on post 2, conservative (initial tension + full travel; the springs' rate is ~0.23 N/mm)
+    # ---- v0.31 [Ed 4 Nov 16:35] (interface es_on): the centring springs lifted above the detent block. Two posts printed up from the
+    # cradle plate (UTR-8100, with the cradle) to just under the springs; two extension springs at es_z from the Hall arm's column pin
+    # to the posts' pins. The spots are the free ones a grid search found (tools/studies/dial_hallspring_sketch.py: clear of the dial
+    # swept ±travel and every other part by 0.3, plate top to z 16). ----
+    es_posts=((150.0, 6.5), (310.0, 6.5)),   # [A, search] (angle, r) of the - and + posts (the + one: the only free spot found)
+    es_post_d=2.4,   # [A] post Ø (SLA)
+    es_margin=0.6,   # [A] each spring stays this far past its free length at the far end of travel (still pulling)
+    es_Fi=0.05,   # [A] initial tension of a small stock extension spring, N
+    es_wire=0.2,   # [A] spring wire (316); with es_od and the rate it needs, the active coils follow
+    es_G=69000.0,   # [A] 316 spring wire shear modulus, N/mm²
+    es_uts=1689.0,   # [S] Gibbs Type 316 spring wire, min tensile at its smallest listed size (0.009 in); finer wire is not weaker
+    es_sway_max=0.15,   # [A] post sway at its top under the spring's largest pull
+    es_post_allow=20.8,   # [S] UTR-8100 tensile 41.6 MPa (the cradle's resin) / 2
 )
 
 IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
@@ -284,7 +297,7 @@ def _place_split_mount(D):
     D["sp_lift"] = D["det_force_max"] * e * e * h / (D["ad_E"] * I)
     if D["dt_block"]:
         _detent_block_joint(D, r0, r1, rm, t, L, e)
-        if D["hs_slot"] and not D["cc_on"]:
+        if D["hs_slot"] and not D["cc_on"] and not D["es_on"]:   # v0.30 option A only (v0.31: no anchor posts at plate level)
             _dt_hanger(D)
     # v0.22b [Ed 15:50]: pedestal is a separate block on an M2 grub, guided in a pocket
     zb = D["tk"][0]["z"]; D["sp_z_blk1"] = zb - D["bt_up"]                     # block top (train seat level)
@@ -373,6 +386,44 @@ def _dt_hanger(D):
     D["dt_hang_sigma"] = 6 * F * (z_load - D["plate_t"]) / (Ls * ts * ts)  # pull at the spring's height, about the seat's weak axis
 
 
+def _es(D):
+    """v0.31 [Ed 4 Nov 16:35]: the lifted extension springs. Pin P on the Hall arm's column (es_rp on ha_ang0), anchors Q_k on the
+    posts. Each spring's torque arm d_k = the axis's distance from its line; both stretched at all angles, so the dial's centring rate
+    is k (d1² + d2²) per radian; each spring's length changes by ±d_k θ. Rate k per spring (one stock spring for both) for dial_spring;
+    installed so the far end of travel is still es_margin past free length; tension, coils, shear stress, the posts' sway."""
+    th = math.radians(D["travel_deg"]); R2D = math.degrees
+    P = _pol(D["es_rp"], D["ha_ang0"])
+    springs = []
+    for k, (a, r) in enumerate(D["es_posts"], 1):
+        Q = _pol(r, a); L = math.hypot(Q[0] - P[0], Q[1] - P[1])
+        d = abs(P[0] * (Q[1] - P[1]) - P[1] * (Q[0] - P[0])) / L
+        springs.append(dict(k=k, Q=Q, L=L, d=d, dL=d * th))
+    ksp = D["dial_spring"] * 180.0 / math.pi / sum(sp["d"] ** 2 for sp in springs)   # N/mm, the same spring both sides
+    Dm = D["es_od"] - D["es_wire"]; n = D["es_G"] * D["es_wire"] ** 4 / (8 * Dm ** 3 * ksp)
+    C = Dm / D["es_wire"]; Kw = (4 * C - 1) / (4 * C - 4) + 0.615 / C
+    # the torques balance at centre (F_1 d_1 = F_2 d_2) with each spring >= dL + es_margin stretched there
+    T0 = max((D["es_Fi"] + ksp * (sp["dL"] + D["es_margin"])) * sp["d"] for sp in springs)
+    for sp in springs:
+        sp["F_rest"] = T0 / sp["d"]
+        sp["stretch"] = (sp["F_rest"] - D["es_Fi"]) / ksp                 # past free length at centre
+        sp["L_free"] = sp["L"] - sp["stretch"]                            # hook-to-hook (pin centres) free length
+        sp["F_max"] = sp["F_rest"] + ksp * sp["dL"]
+        sp["F_min"] = sp["F_rest"] - ksp * sp["dL"]
+        sp["tau"] = 8 * sp["F_max"] * Dm * Kw / (math.pi * D["es_wire"] ** 3)
+    D["es_T0"] = T0
+    D["es_P"] = P; D["es_springs"] = springs; D["es_k"] = ksp; D["es_n"] = n; D["es_C"] = C
+    D["es_rate"] = ksp * sum(sp["d"] ** 2 for sp in springs) * math.pi / 180.0
+    D["es_body"] = (n + 1) * D["es_wire"]                                 # closed coils
+    D["es_tau_allow"] = 0.45 * D["es_uts"]
+    zt = D["es_z"] - D["es_od"] / 2 - 0.05                                # post / column tops, the hooks sit on them
+    D["es_top"] = zt
+    h = zt - D["plate_t"]; I = math.pi * D["es_post_d"] ** 4 / 64; E = D["ad_E"]
+    Fm = max(sp["F_max"] for sp in springs); hl = D["es_z"] - D["plate_t"]  # the pull acts on the pin at the spring's axis
+    D["es_post_sway"] = Fm * hl ** 2 * (3 * h - hl) / (6 * E * I) if hl <= h else Fm * h ** 2 * (3 * hl - h) / (6 * E * I)
+    D["es_post_sigma"] = Fm * hl / (math.pi * D["es_post_d"] ** 3 / 32)
+    D["es_post_h"] = h
+
+
 def _ccspring(D):
     """v0.30 [Ed 4 Nov 15:15]: the compression centring springs (one per side, on an arc at cc_r, each pushing its flat seat in the
     Hall bar's first link only when the arm turns toward it; seats from the interface) and the hard stop in the Hall slot (stop
@@ -439,6 +490,8 @@ def derive(D):
             _ccspring(D)
         if D["hs_slot"]:
             _hs_stops(D)
+        if D["es_on"]:
+            _es(D)
     # ---- v0.16 detents (v0.21: one detent on the arc, riding a land flush with the rib top) ----
     db = D["det_ball"]
     arc = D["arm_det"] in ("arc", "split") and D["ad_r"] is not None   # v0.22: split shares the arc keys
