@@ -1,4 +1,4 @@
-Assembly insertion-path check, knob v0.36 (asm/layout-v4 @ eb3f4dd, cache built 2026-11-04 23:01), 77 steps, 212 parts. Clash = common volume > 0.001 mm³ (exact OCC) somewhere on the way in.
+Assembly insertion-path check, knob v0.36 (asm/layout-v4 @ 0dc1e2c, cache built 2026-11-05 00:11), 77 steps, 212 parts. Clash = common volume > 0.001 mm³ (exact OCC) somewhere on the way in.
 Kinds: clash (blocked), contact (touch, no volume), and the expected ones named per step (press, thread, flex, seat, inside).
 
  1. [main] Main PCB with its soldered parts (H7B0 on the front): +z, 10 mm checked -> ok
@@ -51,8 +51,7 @@ Kinds: clash (blocked), contact (touch, no volume), and the expected ones named 
 45. [main] Jack unit (jacks, jack board, power board on its headers) onto its two posts on the main board's bottom strip; the clear OLED's flex and the link flex plugged into its ZIFs: -z, 8 mm checked -> ok
 46. [shell] Front shell (clear UTR-8100) with its glow coat: +z, 0 mm checked -> ok
 47. [shell] Corner brass inserts into the shell's corner posts: +z, 8 mm checked -> ok
-48. [shell] USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge: +z, 45 mm checked -> CLASH
-      USB-C PD board  x  glow coat (inside walls): up to 1.800 mm³, depth 0.15, from 31.05 to 28.35 mm before home
+48. [shell] USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge: +z, 45 mm checked -> ok
 49. [shell] Printed key into the channel behind the USB-C board (the back cover holds it in): +z, 37 mm checked -> ok
 50. [shell] Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders: +z, 42 mm checked -> ok
 51. [shell] Four Ø2 balls into the cradle's ball seats, from the front: -z, 9 mm checked -> ok
@@ -67,8 +66,7 @@ Kinds: clash (blocked), contact (touch, no volume), and the expected ones named 
 56. [joystick top] Up-stop cushions, guide sleeves + M2 low-head screws from below: +z, 14 mm checked -> ok
 57. [joystick top] Four hold-down springs hooked to the carrier, hanging: +z, 9 mm checked -> ok
 58. [shell] Joystick top (block + carrier) in from the front through the lip ring: -z, 50 mm checked -> ok
-59. [main] Shell + joystick over the board stack (the stack goes in from the back, springs through): -z, 63 mm checked -> CLASH
-      glow coat (inside walls)  x  jack board (FR-4, the four jacks soldered on) [A]: up to 2.607 mm³, depth 0.15, from 26.03 to 22.47 mm before home
+59. [main] Shell + joystick over the board stack (the stack goes in from the back, springs through): -z, 63 mm checked -> ok
 60. [main] Jack nuts from the front (pull the jack unit to the faceplate): -z, 8 mm checked -> ok
 61. [main] Back: two cross pins through the spring anchor, hooks pulled on: -x, 37 mm checked -> ok
 62. [main] Drip O-ring stretched over the dial onto the glass: -z, 21 mm checked -> ok (1 contact)
@@ -97,4 +95,4 @@ Kinds: clash (blocked), contact (touch, no volume), and the expected ones named 
 
 Assembled state: 126 touching pairs, 0 with volume over 0.001 mm³
 
-TOTAL: 2 clash events on the insertion paths; stats {'mesh_tests': 13286, 'exact': 7, 't_exact': 0.2, 'wall': 3561.3}
+TOTAL: 0 clash events on the insertion paths; stats {'mesh_tests': 13286, 'exact': 3, 't_exact': 0.1, 'wall': 3610.9}

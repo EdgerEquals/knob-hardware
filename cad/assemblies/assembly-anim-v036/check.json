@@ -2,10 +2,10 @@
  "meta": {
   "version": "v0.36",
   "branch": "asm/layout-v4",
-  "commit": "eb3f4dd",
+  "commit": "0dc1e2c",
   "js_place_y": 40.629999999999995,
   "clash_mm3": 0.001,
-  "built": "2026-11-04 23:01",
+  "built": "2026-11-05 00:11",
   "n": 212
  },
  "thr": 0.001,
@@ -531,23 +531,7 @@
   {
    "k": 47,
    "id": "shell-usb",
-   "events": [
-    {
-     "moving": "USB-C PD board",
-     "fixed": "glow coat (inside walls)",
-     "kind": "clash",
-     "why": "",
-     "s_first": 31.05,
-     "s_last": 28.35,
-     "n_hits": 7,
-     "vmax": 1.8,
-     "s_confirmed": [
-      29.7,
-      28.35
-     ],
-     "depth": 0.15
-    }
-   ]
+   "events": []
   },
   {
    "k": 48,
@@ -663,23 +647,7 @@
   {
    "k": 58,
    "id": "shell-on",
-   "events": [
-    {
-     "moving": "glow coat (inside walls)",
-     "fixed": "jack board (FR-4, the four jacks soldered on) [A]",
-     "kind": "clash",
-     "why": "",
-     "s_first": 26.028,
-     "s_last": 22.473,
-     "n_hits": 6,
-     "vmax": 2.607,
-     "s_confirmed": [
-      23.895,
-      22.473
-     ],
-     "depth": 0.15
-    }
-   ]
+   "events": []
   },
   {
    "k": 59,
@@ -1654,8 +1622,8 @@
  "alts": {},
  "stats": {
   "mesh_tests": 13286,
-  "exact": 7,
-  "t_exact": 0.2,
-  "wall": 3561.3
+  "exact": 3,
+  "t_exact": 0.1,
+  "wall": 3610.9
  }
 }
