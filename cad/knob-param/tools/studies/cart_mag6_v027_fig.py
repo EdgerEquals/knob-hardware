@@ -19,7 +19,7 @@ def main():
     from knobparam.assembly.colours import colour, see_through
     D, JD, parts = load()
     bz = D["bz"]; d, h = bz["mag"]
-    bez = [s for n, s in parts.items() if n.startswith("cartridge bezel")][0]
+    bez = [s for n, s in parts.items() if n.startswith("dial bezel")][0]
     bb = bez.bounding_box(); cx, cy = (bb.min.X + bb.max.X) / 2, (bb.min.Y + bb.max.Y) / 2
     mags = {n: s for n, s in parts.items() if n.startswith("cartridge magnet")}
     def ctr(s):
@@ -69,12 +69,16 @@ def main():
     fig = plt.figure(figsize=(8.6, 8.6), dpi=125); ax = fig.add_axes([0.11, 0.08, 0.86, 0.85])
     near2 = (lambda b: b.min.Y <= cy <= b.max.Y) if along_x else (lambda b: b.min.X <= cx <= b.max.X)
     draw(ax, axis, at, lambda b: near2(b) and b.max.Z > zc - 8 and b.min.Z < zc + 8)
-    ax.annotate(f"bezel magnet Ø{d:g} x {h:g}, {bz['mag_dz']:g} above", (u0, zs + 0.2), (u0 - sg * 9, zs + 4.0), **k)
-    ax.annotate(f"dial magnet Ø{d:g} x {h:g}", (u0 - sg * (h + D['cm_gap']), zd - 0.2), (u0 - sg * 9, zd - 3.5), **k)
-    ax.annotate(f"{D['cm_gap']:.2f} gap (slip fit)", (u0 - sg * (h / 2 + D['cm_gap'] / 2), zc), (u0 - sg * 9, zc + 1.6), **k)
-    ax.annotate(f"skirt skin {D['cm_skin_out']:.2f}", (u0 + sg * (h / 2 + 0.5), zs), (u0 + sg * 0.6, zs + 5.0), **k)
-    ax.set_xlim(*(sorted((u0 + sg * 4.0, u0 - sg * 11.0))))
-    ax.set_ylim(zc - 7.5, zc + 7.5); ax.set_aspect("equal"); ax.grid(alpha=0.2)
+    xr = u0 + sg * 2.2                                    # labels in the clear space outside the bezel
+    ha = "left" if sg > 0 else "right"
+    ax.annotate(f"bezel magnet Ø{d:g} x {h:g},\n{bz['mag_dz']:g} above its partner", (u0, zs + 0.15), (xr, zs + 2.6), ha=ha, **k)
+    ax.annotate(f"skirt skin {D['cm_skin_out']:.2f}", (u0 + sg * (h / 2 + 0.5), zs - 0.1), (xr, zs + 0.9), ha=ha, **k)
+    ax.annotate(f"{D['cm_gap']:.2f} gap (slip fit)", (u0 - sg * (h / 2 + D['cm_gap'] / 2), zc - 0.1), (xr, zc - 1.2), ha=ha, **k)
+    ax.annotate(f"dial magnet Ø{d:g} x {h:g}", (u0 - sg * (h + D['cm_gap']), zd - 0.15), (xr, zd - 2.6), ha=ha, **k)
+    ax.annotate("bezel (cartridge)", (u0 + sg * 0.6, zc + 4.5), (xr, zc + 5.0), ha=ha, **k)
+    ax.annotate("dial", (u0 - sg * 2.5, zd - 0.8), (u0 - sg * 3.5, zd - 4.5), ha="center", **k)
+    ax.set_xlim(*(sorted((u0 + sg * 6.5, u0 - sg * 9.5))))
+    ax.set_ylim(zc - 6.5, zc + 6.5); ax.set_aspect("equal"); ax.grid(alpha=0.2)
     ax.set_xlabel(f"{'x' if along_x else 'y'} (mm)"); ax.set_ylabel("z (mm, out of the panel)")
     ax.set_title(f"2. Straight-on cut through the axis and the 0° pair, every part", fontsize=10, loc="left")
     f = os.path.join(OUT, "_cm27_2.png"); fig.savefig(f); plt.close(fig); outs.append(f)
