@@ -8,7 +8,12 @@ from ..common.checks import Rows, min_dist
 from ..common.util import cyl
 from ..common import model
 
-KNOWN = {"PCB / motor": "1220 rear boss Ø3×0.6 into the PCB front: the KiCad M1 footprint has no Ø3.2 relief hole yet (v0.13 same)"}
+KNOWN = {"PCB / motor": "1220 rear boss Ø3×0.6 into the PCB front: the KiCad M1 footprint has no Ø3.2 relief hole yet (v0.13 same)",
+         # v0.32: J10 (the 2x14 placeholder test-pad field on B.Cu, 0.05 thick) sits at y -57.27..-52.92 in the committed v0.11 board, 4 mm
+         # off the board's bottom edge (-53.3); the key's back end (behind the case rim, at the cover's face) meets those pads. Stale
+         # placement: the KiCad regeneration (handover, after step 2) puts J10 back on the board.
+         "PCB back parts (Hall decouplers, J10, DRV8837, passives) / USB-C key (printed, held by the back cover)":
+             "J10 placeholder pads 4 mm off the board edge in the v0.11 KiCad board (stale); fixed by the KiCad regeneration"}
 
 def local(D, parts, owner, subs=None):
     rows = []
