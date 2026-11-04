@@ -214,7 +214,7 @@ P = dict(
     usb_board=(12.0, 5.5, 1.0),    # [Ed 4 Nov 11:09] small PD board (PD sink, 15 V out) behind the faceplate: w, h (was 6), t
     bot_post_drop=1.0,     # [Ed 4 Nov 20:12] the bottom corner screws (inserts, posts, cover columns, PCB notches) 1.0 lower: the
                            # posts stay out of the jacks' straight path from behind
-    post_jack_air=0.4,     # [A, asked Ed 20:16] the bottom posts are cut flat this far below the jack bodies (their path from behind); 0.4 leaves 1.2 of
+    post_jack_air=0.4,     # [Ed 4 Nov 20:25 "Go"] the bottom posts are cut flat this far below the jack bodies (their path from behind); 0.4 leaves 1.2 of
                            # resin both sides of the insert (0.7 would leave 0.9 on the jack side)
     jack_lip_notch=0.5,    # [A] the side PCB ledges are notched along the jack row (jacks 1 and 4 pass them from behind) this far past the
                            # jack bodies; the side glow coat stays off the same strip [Ed 4 Nov 20:12]
