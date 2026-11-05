@@ -1,4 +1,4 @@
-jack-board v0.1 PCBWay pack, generated 2026-11-05 18:32 AWST by fab_export.py
+jack-board v0.1 PCBWay pack, generated 2026-11-05 21:45 AWST by fab_export.py
 NOT READY TO ORDER (see below)
 
 {

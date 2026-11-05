@@ -32,6 +32,6 @@ Jack board v0.1 vs knob model v0.46 (tolerance 0.005 mm)
   PASS  stack H1 at the model's x -11.15, on the back, pins along y: at (-11.150, -43.650) side B; pins span y 6.35 (model body 7.7), columns 3.90 apart
   PASS  stack H2 at the model's x 11.15, on the back, pins along y: at (11.150, -43.650) side B; pins span y 6.35 (model body 7.7), columns 3.90 apart
   PASS  every pad at least 0.25 from the board edge: nearest 0.250
-  PASS  pads of different nets at least 0.2 apart: nearest 0.314: P6.1 DN / J3.S GND
-  PASS  pads at least 0.2 from the plug holes: nearest 0.400: H2.5 CC2 / J3 hole
+  PASS  pads of different nets at least 0.2 apart: nearest 0.314: J2.S GND / P5.1 DP
+  PASS  pads at least 0.2 from the plug holes: nearest 0.400: H1.6 CC1 / J2 hole
 35/35 PASS
