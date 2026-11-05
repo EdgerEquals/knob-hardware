@@ -3,7 +3,10 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.38",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.39",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.39 [Ed 5 Nov 15:42 Q14 = B, 15:53 Q15 = A]: the real PJ366ST: body off-centre on its bushing (-4.5..+6.0), pins
+                       # T/R/S at their published positions (slots on the jack board cover them all), sleeve pins down, a jack-board tongue to
+                       # each sleeve pin, the bottom ledge notched round the tongues, jacks at 11.0 pitch (x ±5.5, ±16.5)
                        # v0.38 [Ed 5 Nov 15:34 Q12 = A]: the real vertical USB-C footprint: socket and USB-C board 0.25 up, board 6.0 tall,
                        # the 8 contacts laid round its shell legs and posts (Harwin P70-5100045), jacks 0.25 up; [C] contact gap (Q13)
                        # v0.37 [Ed 5 Nov 11:17 Q4, 11:24 Q5]: USB data on the same socket; the PD sink chip moves to the jack power board;

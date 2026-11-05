@@ -270,8 +270,8 @@ def checks(D, parts):
     if D.get("jack_lip_notch") is not None:   # step 2 [Ed 4 Nov 20:12]: the jacks come in straight from behind (later on the jack board)
         from build123d import Pos as _P, Box as _B, Align as _Al
         glow = parts.get("glow coat (inside walls)")
-        jw, jh = D["jack_w"], D["jack_h"]; z0p = D["z_rim"] - 1.0; z1p = D["z_fp0"] - 1.0   # the last 1.0 is the body at home (clash check)
-        paths = [_P(x - jw / 2, y - jh / 2, z0p) * _B(jw, jh, z1p - z0p, align=(_Al.MIN,) * 3) for x, y in D["jack_xy"]]
+        jw = D["jack_w"]; jh = D["jack_top_y"] - D["jack_bot_y"]; z0p = D["z_rim"] - 1.0; z1p = D["z_fp0"] - 1.0   # last 1.0: body at home
+        paths = [_P(x - jw / 2, D["jack_bot_y"], z0p) * _B(jw, jh, z1p - z0p, align=(_Al.MIN,) * 3) for x, y in D["jack_xy"]]
         dc = min(p_.distance_to(case) for p_ in paths)
         row("jacks' straight path from behind: clear of the case", dc, 0.3,
             f"each body ({jw:g} x {jh:g}) swept from behind the rim to 1.0 short of home; the side ledges notched y {D['jack_notch_y'][0]:.2f}.."
@@ -286,6 +286,24 @@ def checks(D, parts):
             row("jack boards + jacks (one unit) straight in from behind: clear of the case", stack.distance_to(case), 0.3,
                 f"the jack row's outline {bx1 - bx0:.1f} x {jh:g} swept from behind the rim to 1.0 short of home: both boards, the headers, "
                 "the ZIFs and the parts envelopes stay inside it [Ed 4 Nov 21:30]")
+            if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]
+                tz1 = D["jb_z1"] - 1.0
+                tg = [_P(x - D["jb_tongue_hw"], D["jb_tongue_y"], z0p) * _B(2 * D["jb_tongue_hw"], D["jack_bot_y"] - D["jb_tongue_y"], tz1 - z0p,
+                                                                           align=(_Al.MIN,) * 3) for x, _y in D["jack_xy"]]
+                dt = min(t_.distance_to(case) for t_ in tg)
+                row("jack board's sleeve-pin tongues: straight path clear of the case (corner posts, notched bottom ledge)", dt, 0.3,
+                    f"tongues ±{D['jb_tongue_hw']:.2f} down to y {D['jb_tongue_y']:.2f} at x {', '.join(f'{x:g}' for x in D['jack_xs'])} (11.0 pitch, Ed 15:53); "
+                    f"bottom ledge notched {D['jack_ledge_notch']:g} round each")
+                if glow is not None:
+                    row("jack board's sleeve-pin tongues: clear of the glow coat", min(t_.distance_to(glow) for t_ in tg), 0.1, "")
+                lw_left = D["jb_tongue_y"] - D["jack_ledge_notch"] - D["pcb_y0"]
+                row("bottom ledge left under the main board at the tongue notches", lw_left, 0.6,
+                    f"ledge y {D['pcb_y0']:.2f}..{D['pcb_y0'] + D['ledge_w']:.2f}, notched down to y {D['jb_tongue_y'] - D['jack_ledge_notch']:.2f} "
+                    "over 4 short spans; full ledge elsewhere")
+                oled_lit_y0 = D["panel_y0"] + 26.7 - 5.45 + 5.25   # [A] the lit area's bottom edge as set on 4 Nov (jack tops on it at jack_y_up 21.25)
+                row("clear OLED lit area covered by the jack bodies (mm of 15.32)", D["jack_top_y"] - oled_lit_y0, 1.6,
+                    f"jack tops y {D['jack_top_y']:.2f}; lit area from y {oled_lit_y0:.2f} [A]; about {100 * (1 - (D['jack_top_y'] - oled_lit_y0) / 15.32):.0f}% seen",
+                    higher_ok=False)
             row("jack pins through the jack board", D["jb_pin_out"], 1.0,
                 f"{D['jack_pin_len']:g} pins [S] through a {D['jb_t']:g} board [A]: room for the fillet")
             row("jack pin tips to the power board's parts", D["jb_pin_tip_air"], 0.5,

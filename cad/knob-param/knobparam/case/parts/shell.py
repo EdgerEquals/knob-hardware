@@ -198,6 +198,11 @@ def build(D):
             post = post & _box(x - 2 * D["screw_boss_r"], x + 2 * D["screw_boss_r"], D["body_y0"], D["post_clip_y"], D["z_rim"] - 1.0,
                                D["z_post_top"] + 1.0)
         case = _add(case, post)
+    if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: the bottom ledge notched round each jack-board tongue
+        n_ = D["jack_ledge_notch"]
+        for x, _y in D["jack_xy"]:
+            case = _sub(case, _box(x - D["jb_tongue_hw"] - n_, x + D["jb_tongue_hw"] + n_, D["jb_tongue_y"] - n_, D["pcb_y0"] + D["ledge_w"] + sl,
+                                   z0 - sl, z1 + sl))
     if D.get("jack_lip_notch") is not None:   # [Ed 4 Nov 20:12] side ledges notched along the jack row: jacks 1 and 4 pass from behind
         ny0, ny1 = D["jack_notch_y"]
         case = _sub(case, _box(D["x_in0"], -D["pcb_x1"] + lw + sl, ny0, ny1, z0 - sl, z1 + sl))
@@ -289,6 +294,10 @@ def build(D):
                                D["shelf_z0"] - sl, D["shelf_z1"] + sl))
     for x, y in D["corners"]:
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_post_top"] + D["glow_gap"], x, y))
+    if D.get("jb_tongue_y") is not None:   # v0.39: and where the jack board's tongues pass
+        for x, _y in D["jack_xy"]:
+            hw_ = D["jb_tongue_hw"] + D["jack_ledge_notch"] + 0.35
+            glow = _sub(glow, _box(x - hw_, x + hw_, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
     if D.get("jb_on") and D.get("jb_post_xy"):   # v0.34 [Ed 22:21] the bottom lip's coat stays off where the jack unit's posts and ears pass
         for x, _y in D["jb_post_xy"]:
             glow = _sub(glow, _box(x - 1.6, x + 1.6, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
@@ -395,7 +404,7 @@ def build(D):
         module = _box(D["mod_x0"], D["mod_x1"], D["mod_y0"], D["mod_y1"], D["tft_z0"], D["tft_z1"])
     # [Ed] 2 Nov: four PJ366ST jacks and the USB-C on its own board behind the plate (no glow coat behind them)
     for x, y in D["jack_xy"]:
-        glow = _sub(glow, _box(x - D["jack_w"] / 2 - 0.5, x + D["jack_w"] / 2 + 0.5, y - D["jack_h"] / 2 - 0.5, y + D["jack_h"] / 2 + 0.5,
+        glow = _sub(glow, _box(x - D["jack_w"] / 2 - 0.5, x + D["jack_w"] / 2 + 0.5, D["jack_bot_y"] - 0.5, D["jack_top_y"] + 0.5,
                                D["jack_depth_z0"] - D["jack_pin_len"] - 1, D["z_fp1"] + 1))
     for x, y in D["jack_xy"]:
         case = _sub(case, _cyl_z(D["jack_hole"] / 2, D["z_fp0"] - sl, D["z_fp1"] + sl, x, y))
@@ -425,9 +434,18 @@ def build(D):
     jacks = {}
     for i, (x, y) in enumerate(D["jack_xy"], 1):
         g = 0.02
-        body = _box(x - D["jack_w"] / 2, x + D["jack_w"] / 2, y - D["jack_h"] / 2, y + D["jack_h"] / 2, D["jack_depth_z0"], D["z_fp0"] - g)
-        px, py = D["jack_pin_box"]
-        pins = _box(x - px / 2, x + px / 2, y - py / 2, y + py / 2, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"])
+        body = _box(x - D["jack_w"] / 2, x + D["jack_w"] / 2, D["jack_bot_y"], D["jack_top_y"], D["jack_depth_z0"], D["z_fp0"] - g)
+        if D.get("jack_pins"):   # v0.39: tip, ring, sleeve at their published positions [S-lib]; the sleeve pin hangs below the body
+            pins = None
+            for _n, y0, _y1, _w in D["jack_pins"]:
+                p_ = _cyl_z(D["jack_pin_d"] / 2, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"] + 0.01, x, y + y0)
+                if y + y0 < D["jack_bot_y"]:   # its lug up to the body
+                    p_ = _add(p_, _box(x - D["jack_pin_d"] / 2, x + D["jack_pin_d"] / 2, y + y0, D["jack_bot_y"] + 0.01, D["jack_depth_z0"],
+                                       D["jack_depth_z0"] + 1.0))
+                pins = p_ if pins is None else _add(pins, p_)
+        else:
+            px, py = D["jack_pin_box"]
+            pins = _box(x - px / 2, x + px / 2, y - py / 2, y + py / 2, D["jack_depth_z0"] - D["jack_pin_len"], D["jack_depth_z0"])
         bush = _cyl_z(D["jack_bush_d"] / 2, D["z_fp0"], D["z_fp1"] + D["jack_nut_t"], x, y)
         nut = _sub(_cyl_z(D["jack_nut_d"] / 2, D["z_fp1"] + g, D["z_fp1"] + D["jack_nut_t"], x, y), _cyl_z(D["jack_bush_d"] / 2 + 0.01, D["z_fp1"], D["z_fp1"] + D["jack_nut_t"] + 1, x, y))
         jacks[f"jack {i} PJ366ST body + pins [S]"] = _add(body, pins)
@@ -438,8 +456,14 @@ def build(D):
         hw, hl, hx = D["jb_hdr"]
         holes = None
         for x, y in D["jack_xy"]:
-            h = _box(x - px / 2 - a, x + px / 2 + a, y - py / 2 - a, y + py / 2 + a, D["jb2_z1"] - 0.01, D["jb_z1"] + 0.01)
-            holes = h if holes is None else _add(holes, h)
+            if D.get("jack_pins"):   # v0.39 [Ed Q14 = B]: a plated slot over every published position of each pin; the parts keep jb_air off
+                for _n, y0, y1, w in D["jack_pins"]:   # the pins down to their tips
+                    h = _box(x - w / 2 - a, x + w / 2 + a, y + min(y0, y1) - w / 2 - a, y + max(y0, y1) + w / 2 + a, D["jb2_z1"] - 0.01,
+                             D["jb_z1"] + 0.01)
+                    holes = h if holes is None else _add(holes, h)
+            else:
+                h = _box(x - px / 2 - a, x + px / 2 + a, y - py / 2 - a, y + py / 2 + a, D["jb2_z1"] - 0.01, D["jb_z1"] + 0.01)
+                holes = h if holes is None else _add(holes, h)
         hdrs = None
         for sx in (-1, 1):
             h = _box(sx * hx - hw / 2, sx * hx + hw / 2, (by0 + by1) / 2 - hl / 2, (by0 + by1) / 2 + hl / 2, D["jb2_z1"] + 0.02, D["jb_z0"] - 0.02)
@@ -449,6 +473,9 @@ def build(D):
             h = _box(sx * hx - hw / 2 - a, sx * hx + hw / 2 + a, (by0 + by1) / 2 - hl / 2 - a, (by0 + by1) / 2 + hl / 2 + a, D["jb2_z0"] - 1.0, D["jb_z1"])
             hkeep = h if hkeep is None else _add(hkeep, h)
         jbb = _box(bx0, bx1, by0, by1, D["jb_z0"], D["jb_z1"] - 0.02)
+        if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: a tongue down to each sleeve pin
+            for x, _y in D["jack_xy"]:
+                jbb = _add(jbb, _box(x - D["jb_tongue_hw"], x + D["jb_tongue_hw"], D["jb_tongue_y"], by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
         if D.get("usb_pwr_tab"):   # v0.35 [Ed 22:36] tab into the USB-C channel with the power spring contacts on its front face
             tw, ty = D["usb_pwr_tab"]
             jbb = _add(jbb, _box(-tw, tw, ty, by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))

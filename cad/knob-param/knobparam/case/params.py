@@ -205,7 +205,8 @@ P = dict(
     jack_bush_d=6.0,       # [S] threaded bushing; panel hole jack_hole
     jack_nut_d=8.0,        # [S] knurled nut across flats/round
     jack_nut_t=2.0,        # [A] nut thickness on the plate front
-    jack_xs=(-17.25, -5.75, 5.75, 17.25),   # [Ed] four jacks at 11.5 mm pitch
+    jack_xs=(-16.5, -5.5, 5.5, 16.5),   # v0.39 [Ed 5 Nov 15:53 Q15 = A]: 11.0 pitch (was ±17.25, ±5.75 at 11.5) so the outer jack-board tongues
+                                        # clear the round bottom corner posts
     jack_y_up=22.0,        # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 0.25 up so the taller USB-C board keeps 0.75 below the jacks. Was 21.75: [Ed 4 Nov 10:07, 20:12] jack centre above the panel bottom edge: 5.45 lower than 26.7 (jack tops on the clear
                            # OLED's lit-area edge), then 0.5 back up (option B: room at the bottom corner posts, ~97-98% of the lit area seen)
     usb_y_up=13.0,         # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 0.25 up so the real socket's shell-leg pads sit 0.3 from the 6.0 board's edges. Was 12.75: [Ed 4 Nov 11:09] USB-C centre above the panel bottom edge: 4.35 lower than 17.1, so the 5.5 board's bottom
@@ -272,7 +273,16 @@ P = dict(
     # The library lists it untested against a real part: measure one before ordering.
     jack_depth=10.0,       # [S] body depth behind the panel
     jack_pin_len=3.5,      # [S] solder pins below the body
-    jack_pin_box=(4.0, 6.0),   # [A] placeholder block for each jack's pins (x, y); the real PJ366ST pin layout is a [C]
+    jack_pin_box=(4.0, 6.0),   # v0.33-v0.38 placeholder (no longer used for the pins)
+    # v0.39 [Ed 5 Nov 15:42 Q14 = B, 15:53 Q15 = A]: the real PJ366ST [S-lib: KiCad QingPu PJ398SM (Thonk: same footprint), 4ms, GuavTek,
+    # westlicht, clacktronics, requencer]. Body off-centre on its bushing, sleeve side down (the sleeve pin about 2 mm outside the body).
+    jack_body_y=(-4.5, 6.0),   # [S-lib] body extent in y from the axis (sleeve side down)
+    jack_pins=(("T", 4.92, 5.21, 1.43), ("R", -3.38, -3.35, 1.42), ("S", -6.48, -5.715, 1.22)),   # [S-lib] (pin, y range of the published
+                               # positions, hole Ø): the jack board's plated slots cover each range [Ed Q14 = B]; the model's pins sit at the first value
+    jack_pin_d=0.9,            # [A] pin drawn as a Ø0.9 rod
+    jack_slot_ring=0.35,       # [A] annular ring round each slot
+    jb_tongue_edge=0.3,        # [A] board outline round the sleeve pad
+    jack_ledge_notch=0.4,      # [A] bottom ledge notched this far round each tongue
     # v0.33 [Ed 4 Nov 21:30] step 2, decision 3, option B: two boards with the jack row's own outline (its path from behind). The jack
     # board sits on the jacks' backs (jacks soldered on, the small analog parts between the pins underneath); the jack power board hangs
     # jb2_gap under it on two SMD headers, with both ZIFs on its underside and the power parts (±12 V, the clear OLED's 12.5 V).
@@ -731,8 +741,13 @@ def derive(D):
     D["jack_depth_z0"] = D["z_fp0"] - D["jack_depth"]
     # step 2 [Ed 4 Nov 20:12]: the jacks' straight path from behind. The bottom posts are cut flat post_jack_air under the jack bodies;
     # the side ledges are notched (and the side glow coat left off) along the jack row.
-    D["jack_bot_y"] = D["jack_y"] - D["jack_h"] / 2
-    D["jack_top_y"] = D["jack_y"] + D["jack_h"] / 2
+    jby = D.get("jack_body_y") or (-D["jack_h"] / 2, D["jack_h"] / 2)   # v0.39: the real body sits off-centre on its bushing
+    D["jack_bot_y"] = D["jack_y"] + jby[0]
+    D["jack_top_y"] = D["jack_y"] + jby[1]
+    if D.get("jack_pins"):   # v0.39 [Ed 15:53 Q15 = A]: the jack board reaches down to each sleeve pin (a tongue)
+        _n, s0, s1, sw = [p for p in D["jack_pins"] if p[0] == "S"][0]
+        D["jb_tongue_hw"] = sw / 2 + D["jack_slot_ring"] + D["jb_tongue_edge"]
+        D["jb_tongue_y"] = D["jack_y"] + min(s0, s1) - sw / 2 - D["jack_slot_ring"] - D["jb_tongue_edge"]
     D["post_clip_y"] = D["jack_bot_y"] - D["post_jack_air"] if dr else None
     D["jack_notch_y"] = (D["jack_bot_y"] - D["jack_lip_notch"], D["jack_top_y"] + D["jack_lip_notch"])
     yb = D["corners"][0][1]; ri = D["insert_od"] / 2 + D["insert_glue"]
