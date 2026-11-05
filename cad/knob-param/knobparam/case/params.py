@@ -205,7 +205,9 @@ P = dict(
     jack_bush_d=6.0,       # [S] threaded bushing; panel hole jack_hole
     jack_nut_d=8.0,        # [S] knurled nut across flats/round
     jack_nut_t=2.0,        # [A] nut thickness on the plate front
-    jack_xs=(-16.5, -5.5, 5.5, 16.5),   # v0.39 [Ed 5 Nov 15:53 Q15 = A]: 11.0 pitch (was ±17.25, ±5.75 at 11.5) so the outer jack-board tongues
+    jack_xs=(-16.5, -5.8, 5.8, 16.5),   # v0.42 [Ed 5 Nov 17:48 Q17 = A]: the middle jacks out to ±5.8 (were ±5.5) so their sleeve slots clear the
+                                        # D+/D- contact pads on the tab (spacing 10.7 / 11.6 / 10.7). v0.39 [Ed 5 Nov 15:53 Q15 = A]: 11.0 pitch
+                                        # (was ±17.25, ±5.75 at 11.5) so the outer jack-board tongues
                                         # clear the round bottom corner posts
     jack_y_up=22.0,        # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 0.25 up so the taller USB-C board keeps 0.75 below the jacks. Was 21.75: [Ed 4 Nov 10:07, 20:12] jack centre above the panel bottom edge: 5.45 lower than 26.7 (jack tops on the clear
                            # OLED's lit-area edge), then 0.5 back up (option B: room at the bottom corner posts, ~97-98% of the lit area seen)
@@ -292,8 +294,10 @@ P = dict(
     jb2_gap=4.9,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face. v0.39: 4.9 [A], the XFCN 1.27 pair's stack
     jb2_t=1.6,             # [A] power board FR-4
     jb2_parts=2.0,         # [A] parts envelope on the power board's top face
-    jb_hdr=(3.3, 8.2, 19.6),   # v0.39 [S-dist/A]: two 2x6 1.27 mm SMD stacks (XFCN PZ127VS-12-12-H16 male C2840009 + PM127VS-12-12-H34 female
-                               # C2840010, stack about 4.9): width, length, x centre (±). Was two 1x8 (the female had 29 in stock)
+    jb_hdr=(7.7, 3.4, 11.15),  # v0.42 [A]: between the jacks (x ±11.15), pins along x: KiCad's land pattern for these stacks [S-lib] has its
+                               # feet out to ±3.15 across the rows, so at x ±19.6 (v0.39) they ran off the board's end onto jack 1/4's slots.
+                               # v0.39 [S-dist/A]: two 2x6 1.27 mm SMD stacks (XFCN PZ127VS-12-12-H16 male C2840009 + PM127VS-12-12-H34 female
+                               # C2840010, stack about 4.9): width (x), length (y), x centre (±). Was two 1x8 (the female had 29 in stock)
     zif_oled=(16.9, 5.2, 2.0, 0.0),    # v0.39 [S-lib]: 24-pin 0.5 mm flip-lock, 2.0 tall, XUNPU FPC-05F-24PH20 (LCSC C2856805) footprint incl. its
                                        # mounting pads (a dual-contact equal, HC-FPC-0.5-24P-FHH20 C19273940, if the flex's contact side needs it).
                                        # Was ER-CON24HT-1 17.65 x 4.5 [S] (not on LCSC). w, d, h; x centre on the
@@ -321,7 +325,8 @@ P = dict(
     # v0.37 [Ed 5 Nov 11:17 Q4 = A, 11:24 Q5 = B]: USB data on the same socket and the PD chip on the jack power board: 8 contacts,
     # two rows of 4 at 1.6 pitch, clear of the socket's shell legs [A]: 15 V x2, GND x2 (top row), D+, D-, CC1, CC2 (bottom row)
     # v0.38 [Ed 5 Nov 15:34 Q12 = A]: laid round the real socket's shell legs and locating posts (≥ 0.3 from their pads/holes and the edges)
-    usb_pwr_contacts=((-0.8, -51.4), (0.8, -51.4), (-0.8, -53.0), (0.8, -53.0), (-4.6, -51.4), (4.6, -51.4), (-5.0, -53.0), (5.0, -53.0)),
+    # v0.42 [Ed 5 Nov 17:48 Q17 = A]: D+/D- in to x ±4.0 (were ±4.6, on the middle jacks' sleeve slots); 0.325 to the socket's leg pads
+    usb_pwr_contacts=((-0.8, -51.4), (0.8, -51.4), (-0.8, -53.0), (0.8, -53.0), (-4.0, -51.4), (4.0, -51.4), (-5.0, -53.0), (5.0, -53.0)),
     usb_pwr_names=("15 V", "15 V", "GND", "GND", "D+", "D-", "CC1", "CC2"),
     usb_pwr_pad=1.2,       # [S-dist] Harwin P70-5100045 pad Ø (the contact found that fits 1.6 spacing)
     usb_pwr_d=1.03,        # [S-dist, unconfirmed] Harwin P70-5100045 body Ø (plunger Ø0.60); free 4.8, working 4.00 (3.85-4.20), 2 A

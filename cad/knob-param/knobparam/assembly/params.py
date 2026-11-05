@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.41",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.42",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.42 [Ed 5 Nov 17:48 Q17 = A]: middle jacks out to x ±5.8, the D+/D- spring contacts in to x ±4.0; [A] the 2x6
+                       # board-to-board stacks move between the jacks (x ±11.15, rotated)
                        # v0.41 [Ed 5 Nov 17:36 Q16 = A]: the jack board's tab ±5.85 down to y -53.90 (its lower contact pads met its edge);
                        # the key's top stepped down 0.25 along the tab's path
                        # v0.40 (5 Nov, no decision): the USB-C board laid out in KiCad; the key's pockets round its TVS and ESD grow from

@@ -27,7 +27,7 @@ import grid_router as gr
 
 NAME = "usb-c-board"
 PCB_VERSION = "v0.1"
-CAD_VERSION = "v0.40"
+CAD_VERSION = "v0.42"
 LIB = "usbc"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BW, BH, BT = 12.0, 6.0, 1.6
@@ -37,10 +37,10 @@ WIDTHS = {"default": 0.127, "VBUS": 0.3, "GND": 0.25}
 ROUTE_CLEARANCE = 0.127   # the router keeps 5 mil (+ its 0.02 grid margin) although the rule is 4 mil
 ROUTE_ORDER = ["VBUS", "GND", "DP", "DN", "CC1", "CC2"]   # first-round order: the best of 4 orders tried (14 vias; the others 16-18)
 
-# spring-contact landing pads: (name, net, panel x, panel y) from the CAD (case/params.py usb_pwr_contacts, v0.38)
+# spring-contact landing pads: (name, net, panel x, panel y) from the CAD (case/params.py usb_pwr_contacts; v0.42: D+/D- at x ±4.0)
 SOCKET_PANEL_Y = -53.40
 CONTACTS = [("15V_1", "VBUS", -0.8, -51.4), ("15V_2", "VBUS", 0.8, -51.4), ("GND_1", "GND", -0.8, -53.0), ("GND_2", "GND", 0.8, -53.0),
-            ("DP", "DP", -4.6, -51.4), ("DN", "DN", 4.6, -51.4), ("CC1", "CC1", -5.0, -53.0), ("CC2", "CC2", 5.0, -53.0)]
+            ("DP", "DP", -4.0, -51.4), ("DN", "DN", 4.0, -51.4), ("CC1", "CC1", -5.0, -53.0), ("CC2", "CC2", 5.0, -53.0)]
 
 
 def kc(px, py):   # panel (mm) -> board-local KiCad (mm)

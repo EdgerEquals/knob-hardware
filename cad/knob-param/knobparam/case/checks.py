@@ -292,7 +292,7 @@ def checks(D, parts):
                                                                            align=(_Al.MIN,) * 3) for x, _y in D["jack_xy"]]
                 dt = min(t_.distance_to(case) for t_ in tg)
                 row("jack board's sleeve-pin tongues: straight path clear of the case (corner posts, notched bottom ledge)", dt, 0.3,
-                    f"tongues ±{D['jb_tongue_hw']:.2f} down to y {D['jb_tongue_y']:.2f} at x {', '.join(f'{x:g}' for x in D['jack_xs'])} (11.0 pitch, Ed 15:53); "
+                    f"tongues ±{D['jb_tongue_hw']:.2f} down to y {D['jb_tongue_y']:.2f} at x {', '.join(f'{x:g}' for x in D['jack_xs'])} (Ed 15:53 Q15, 17:48 Q17); "
                     f"bottom ledge notched {D['jack_ledge_notch']:g} round each")
                 if glow is not None:
                     row("jack board's sleeve-pin tongues: clear of the glow coat", min(t_.distance_to(glow) for t_ in tg), 0.1, "")
@@ -395,6 +395,15 @@ def checks(D, parts):
             te = min(min(tw - abs(x) - pr_, y - pr_ - ty) for x, y in cts)
             row("USB spring-contact pads on the jack board's tab: to the tab's edges", te, 0.25,
                 f"tab ±{tw:g} down to y {ty:g}; pads Ø{2 * pr_:g} [S-dist] (v0.41, Ed 5 Nov 17:36 Q16 = A)")
+            if D.get("jack_pins"):   # v0.42 [Ed 17:48 Q17]: the jack-pin slot pads and the contact pads share the jack board's top face
+                rg = D["jack_slot_ring"]; ds = 9e9
+                for jx, jy in D["jack_xy"]:
+                    for _n, y0, y1, w in D["jack_pins"]:
+                        r_ = w / 2 + rg; ya, yb = jy + min(y0, y1), jy + max(y0, y1)
+                        for x, y in cts:
+                            ds = min(ds, (max(abs(x - jx), 0) ** 2 + max(ya - y, y - yb, 0) ** 2) ** 0.5 - r_ - pr_)
+                row("jack board: spring-contact pads clear of the jack-pin slot pads", ds, 0.2,
+                    f"slots over every published PJ366ST pin position with a {rg:g} ring; contact pads Ø{2 * pr_:g} (v0.42, Ed 17:48 Q17 = A)")
             gap = D["usb_z0"] - D["jb_z1"]; bt_ = D["usb_board"][2]
             row("USB spring contacts: gap inside the contact's working range 3.85-4.20", min(gap - 3.85, 4.20 - gap), 0.05,
                 f"gap {gap:.2f} = 12.5 - socket {D['usb_rcpt'][2]:g} - board {bt_:g} [Ed 15:40 Q13 = A]; Harwin P70-5100045 works 3.85-4.20, 4.00 nominal [S-dist]")
