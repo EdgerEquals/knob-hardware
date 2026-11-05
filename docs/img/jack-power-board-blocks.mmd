@@ -1,0 +1,28 @@
+flowchart LR
+  VB["VBUS 5-15 V<br/>(USB-C, via the contacts<br/>and the 2x6 stacks)"] --> EF["input eFuse<br/>current limit<br/>[part to pick]"]
+  CC["CC1, CC2"] --> PD["HUSB238 PD sink<br/>asks 15 V; 2 CC ESD"]
+  EF --> VS(("VSYS"))
+  VS --> POST["brass posts:<br/>VSYS + GND<br/>to the main board"]
+  VS --> BK["TPS62933 buck<br/>3.3 V"]
+  VS --> BST["TPS55340 boost<br/>about 18 V"]
+  BST --> CP["BAT54S charge pump<br/>about -17 V"]
+  BST --> LP["TPS7A4901<br/>+12.5 V"]
+  CP --> LN["TPS7A3001<br/>-12 V"]
+  LP --> OLED["clear OLED 12.5 V<br/>(filter, 24-pin ZIF)"]
+  H7["H7B0 on the main board<br/>(25-line link flex)"]
+  H7 -- "SPI" --> DAC["DAC80504<br/>16-bit x4"]
+  DAC --> OA["OPA4197<br/>CV out -5..+10 V"]
+  OA --> SW["3x TMUX7212<br/>9 switches"]
+  H7 -- "UART TX" --> MD["SN74LVC3G07<br/>MIDI TX"]
+  MD --> SW
+  SW --> JK["J1-J3 tips and rings"]
+  JK -- "100 kΩ" --> IN["TLV9064<br/>CV in scalers"]
+  IN -- "3 ADC lines" --> H7
+  H7 -- "I2C" --> EX["TCA9535<br/>I/O expander"]
+  EX -- "switch and rail enables,<br/>ring sense" --> SW
+  H7 -- "I2C" --> PD
+  H7 -- "DAC out" --> AO["OPA4197 4th amp<br/>audio out ±5 V"] --> J4["J4 audio jack"]
+  J4 -- "ring" --> AI["TLV9064 4th amp<br/>audio in"] --> H7
+  LP -. "+12.5 V" .-> OA
+  LN -. "-12 V" .-> OA
+  BK -. "3.3 V" .-> DAC
