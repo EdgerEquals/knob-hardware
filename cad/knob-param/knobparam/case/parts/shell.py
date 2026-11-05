@@ -416,6 +416,9 @@ def build(D):
         glow = _sub(glow, _box(ux - hw, ux + hw, D["pcb_y0"] - 1.0, D["usb_board_y1"] + 0.6, D["z_rim"] - sl, D["z_fp1"]))
         kw, kg = hw - D["usb_key_gap"], 0.02
         key = _box(ux - kw, ux + kw, D["body_y0"], D["y_in0"] - D["usb_key_gap"], D["z_rim_seat"] + kg, D["usb_z0"] - kg)
+        for _n, a, b, c, d, h in D.get("usb_prot") or ():   # v0.37 [Ed 5 Nov 11:24]: pockets for the board's TVS and ESD
+            pc = D["usb_pocket_clear"]
+            key = _sub(key, _box(a - pc, b + pc, c - pc, d + pc, D["usb_z0"] - h - pc, D["usb_z0"] + 0.1))
         if not D.get("usb_pwr_tab"):   # v0.32-v0.34: the key's tab restored the bottom ledge in the channel (v0.35: the jack board's tab passes there)
             key = _add(key, _box(ux - kw, ux + kw, D["y_in0"] - D["usb_key_gap"] - D["fuse"], D["pcb_y0"] + D["ledge_w"], D["z_ledge0"],
                                  D["z_ledge1"]))
@@ -450,7 +453,8 @@ def build(D):
             tw, ty = D["usb_pwr_tab"]
             jbb = _add(jbb, _box(-tw, tw, ty, by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
             for i, (x, y) in enumerate(D["usb_pwr_contacts"], 1):
-                jacks[f"USB power spring contact {i} ({'15 V' if i <= 2 else 'GND'}) [A]"] = _cyl_z(D["usb_pwr_d"] / 2, D["jb_z1"],
+                nm = D["usb_pwr_names"][i - 1] if D.get("usb_pwr_names") else ('15 V' if i <= 2 else 'GND')
+                jacks[f"USB spring contact {i} ({nm}) [A]"] = _cyl_z(D["usb_pwr_d"] / 2, D["jb_z1"],
                                                                                                    D["usb_z0"] - 0.02, x, y)
         jacks["jack board (FR-4, the four jacks soldered on) [A]"] = _sub(jbb, holes)
         jacks["jack board underside parts (envelope) [A]"] = _sub(_sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb_under_z0"],
@@ -469,7 +473,7 @@ def build(D):
                 jacks["clear OLED flex (36.0 [S], plugged on the bench)"] = _box(-6.25, 6.25, oy0 - 0.05 - ft, oy0 - 0.05, D["clear_oled"][2] / 2, zt)
                 lx0, lx1, _ly = D["link_lane"]
                 jacks["link flex (main board to the jack power board) [A]"] = _box(lx0, lx1, oy0 - 0.45 - ft, oy0 - 0.45, 0.02, zt)
-        jacks["jack power board (FR-4: ZIFs, ±12 V, the OLED's 12.5 V) [A]"] = pb
+        jacks["jack power board (FR-4: ZIFs, PD sink, ±12 V, the OLED's 12.5 V) [A]"] = pb
         jacks["jack power board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb2_z1"] + 0.02,
                                                                  D["jb2_parts_z1"]), hkeep)
         for nm, (w, dd, hh, xc) in (("jack power board ZIF, 24-pin (clear OLED flex) [A]", D["zif_oled"]),
@@ -477,7 +481,9 @@ def build(D):
             jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + D["zif_y_off"], by0 + D["zif_y_off"] + dd, D["jb2_z0"] - hh, D["jb2_z0"] - 0.02)
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
-    jacks["USB-C PD board"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
+    jacks["USB-C board (socket, TVS, ESD)"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
+    for n, a, b, c, d, h in D.get("usb_prot") or ():   # v0.37 [Ed 5 Nov 11:24] on its back face, in pockets in the printed key
+        jacks[f"USB-C board {n}"] = _box(a, b, c, d, D["z_fp1"] - ud - bt - h, D["z_fp1"] - ud - bt - 0.01)
     out = {"case": case, f"back cover ({D['cover_mat']})": cover, "glow coat (inside walls)": glow, "PCB": pcb}   # glow trimmed above
     if key is not None:
         out["USB-C key (printed, held by the back cover)"] = key

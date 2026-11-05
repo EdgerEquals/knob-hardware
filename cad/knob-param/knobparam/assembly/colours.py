@@ -76,7 +76,8 @@ def key(name):
         return "ic" if any(k in low for k in ("envelope", "header", "zif")) else "pcb"
     if low.startswith("jack ") and ("bushing" in low or "nut" in low): return "steel"
     if low.startswith("pcb back parts"): return "ic"
-    if "daughterboard" in low or low == "pcb" or low.startswith("adapter board") or "pd board" in low: return "pcb"
+    if low.startswith(("usb-c board vbus", "usb-c board data")): return "ic"     # v0.37 TVS / ESD on the USB-C board
+    if "daughterboard" in low or low == "pcb" or low.startswith("adapter board") or "pd board" in low or low.startswith("usb-c board ("): return "pcb"
     if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith("sw1") or (low.startswith("socket ") and "h11" in low):
         return "ic"
     if low.startswith("emitter "): return "led"

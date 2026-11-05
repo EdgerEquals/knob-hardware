@@ -211,7 +211,8 @@ P = dict(
     usb_y_up=12.75,        # [Ed 4 Nov 11:09] USB-C centre above the panel bottom edge: 4.35 lower than 17.1, so the 5.5 board's bottom
                            # edge is on the bottom face (y -56.4, the rail line), through the bottom wall
     usb_rcpt=(8.94, 3.26, 7.35),   # [S] USB-C receptacle opening w, h and depth behind the plate (typical mid-mount)
-    usb_board=(12.0, 5.5, 1.0),    # [Ed 4 Nov 11:09] small PD board (PD sink, 15 V out) behind the faceplate: w, h (was 6), t
+    usb_board=(12.0, 5.5, 1.0),    # [Ed 4 Nov 11:09] small USB-C board behind the faceplate: w, h (was 6), t. v0.37 [Ed 5 Nov 11:24]: socket,
+                                   # VBUS TVS and data ESD only (the PD sink chip moved to the jack power board)
     bot_post_drop=1.0,     # [Ed 4 Nov 20:12] the bottom corner screws (inserts, posts, cover columns, PCB notches) 1.0 lower: the
                            # posts stay out of the jacks' straight path from behind
     post_jack_air=0.4,     # [Ed 4 Nov 20:25 "Go"] the bottom posts are cut flat this far below the jack bodies (their path from behind); 0.4 leaves 1.2 of
@@ -299,8 +300,16 @@ P = dict(
     # through spring contacts: a tab on the jack board's bottom edge reaches into the USB-C channel and carries them; they land on gold pads
     # on the USB-C board's back face in the stack's last ~1 mm. The key's ledge tab goes (the jack board's tab passes there).
     usb_pwr_tab=(5.5, -53.6),   # [Ed 22:36 / A] jack board tab: half width, bottom edge y (0.35 above the key, inside the channel)
-    usb_pwr_contacts=((-4.5, -52.4), (-1.5, -52.4), (1.5, -52.4), (4.5, -52.4)),   # [A] one row: 15 V x2, GND x2 (1.0 clear of the key line and the board top)
-    usb_pwr_d=1.0,         # [A] contact barrel Ø; ~1.5-2 A each [C: part to find, ~4.2 mm working length]
+    # v0.37 [Ed 5 Nov 11:17 Q4 = A, 11:24 Q5 = B]: USB data on the same socket and the PD chip on the jack power board: 8 contacts,
+    # two rows of 4 at 1.6 pitch, clear of the socket's shell legs [A]: 15 V x2, GND x2 (top row), D+, D-, CC1, CC2 (bottom row)
+    usb_pwr_contacts=((-2.4, -51.75), (-0.8, -51.75), (0.8, -51.75), (2.4, -51.75),
+                      (-2.4, -52.95), (-0.8, -52.95), (0.8, -52.95), (2.4, -52.95)),
+    usb_pwr_names=("15 V", "15 V", "GND", "GND", "D+", "D-", "CC1", "CC2"),
+    usb_pwr_d=0.7,         # [A] contact barrel Ø (was 1.0): a slimmer spring contact, Ø0.6-0.7 class [C: part to find, ~4.2 working, ~1 A]
+    usb_shell_legs=((-4.9, -1.3), (4.9, -1.3), (-4.9, 1.3), (4.9, 1.3)),   # [A] socket shell legs (x, dy from the socket centre), r 0.55 pads
+    # v0.37 [Ed 11:24]: the two protection parts on the USB-C board's back face, in pockets in the printed key: (name, x0, x1, y0, y1, h)
+    usb_prot=(("VBUS TVS (DFN1610) [A]", -3.2, -1.6, -56.0, -55.0, 0.55), ("data ESD (SOT-563) [A]", 1.6, 3.2, -56.1, -54.5, 0.6)),
+    usb_pocket_clear=0.1,  # [A] key pocket round each part
     jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width

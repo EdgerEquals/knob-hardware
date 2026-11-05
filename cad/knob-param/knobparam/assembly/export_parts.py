@@ -11,7 +11,8 @@ RULES = [
     # v0.33 [Ed 4 Nov 21:30] step 2, decision 3 option B: the jack board (jacks soldered on) and the jack power board under it
     (r"^clear OLED flex", "ref", "the clear OLED's own flex (part of the display)", "-"),
     (r"^link flex", "buy", "custom FPC, 0.5 mm, ~16 lines [A]", "PCBWay"),
-    (r"^USB power spring contact", "buy", "spring contact ~4.2 working, 1.5-2 A [A][C]", "on the jack board PCBA"),
+    (r"^USB spring contact", "buy", "spring contact Ø0.6-0.7, ~4.2 working, ~1 A [A][C]", "on the jack board PCBA"),
+    (r"^USB-C board (VBUS TVS|data ESD)", "buy", "TVS / ESD (LCSC) [A]", "on the USB-C board PCBA"),
     (r"^jack unit post", "buy", "brass Ø2 pin [A] (soldered in the jack power board's tab)", "buy"),
     (r"^jack (power )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
     (r"^jack (power )?board.*(ZIF|headers)", "buy", "0.5 mm ZIF / 1.27 mm SMD header [A] (LCSC)", "on the PCBA"),
@@ -76,7 +77,7 @@ RULES = [
     (r"glass|sleeve \(borosilicate|borosilicate", "buy", "borosilicate tube", "buy"),
     (r"^back AMOLED|screen panel|^screen\b|AMOLED|clear OLED", "buy", "display", "buy"),
     (r"^jack |PJ366ST|bushing|^USB-C receptacle", "buy", "PJ366ST jack / USB-C", "buy"),
-    (r"USB-C PD board", "board", "USB-C PD board", "PCBWay PCBA"),
+    (r"^USB-C board \(socket", "board", "USB-C board (socket, TVS, ESD; v0.37: PD chip on the jack power board)", "PCBWay PCBA"),
     (r"motor coreless|feel motor coreless|^motor$|1220", "buy", "motor", "buy"),
     (r"bearing(?! 2 seat)", "buy", "F682ZZ bearing", "buy"),
     (r"bearing 2 seat", "print", "PA-12", "MJF"),

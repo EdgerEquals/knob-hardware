@@ -141,15 +141,15 @@ STEPS = [
     dict(id="jack-unit", name="Jack unit (jacks, jack board, power board on its headers) onto its two posts on the main board's bottom strip; "
          "the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
          parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack unit post",
-                r"^USB power spring contact", r"^clear OLED flex", r"^link flex"],
+                r"^USB spring contact", r"^clear OLED flex", r"^link flex"],
          note="on the bench, everything in reach; the posts (15 V, GND) soldered at both ends; the Ø6.6 jack holes give the bushings ±0.3 "
               "(L4 step 2, Ed 4 Nov 22:21, 22:52)"),
     dict(id="shell", sub="shell", base=True, name="Front shell (clear UTR-8100) with its glow coat",
          parts=[r"^case$", r"^glow coat"], note="SLA, front face polished; Shimicoat brushed inside (CD)"),
     dict(id="shell-ins", sub="shell", name="Corner brass inserts into the shell's corner posts", dir="+z", travel=8,
          parts=[r"^corner insert"], note="epoxied in the resin (CD)"),
-    dict(id="shell-usb", sub="shell", name="USB-C PD board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
-         dir="+z", travel="auto", parts=[r"^USB-C PD board", r"^USB-C receptacle"],
+    dict(id="shell-usb", sub="shell", name="USB-C board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
+         dir="+z", travel="auto", parts=[r"^USB-C board", r"^USB-C receptacle"],
          note="before the board stack: its top 2.4 is inside the box, where the main board sits; its two power wires to the jack unit "
               "(which now comes in with the stack) are decision 5 (L4 step 2, Ed 4 Nov 20:15)"),
     dict(id="shell-usb-key", sub="shell", name="Printed key into the channel behind the USB-C board (the back cover holds it in)",
