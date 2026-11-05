@@ -182,9 +182,51 @@ def import_ses(board, ses_path):
     return n_seg, n_via
 
 
-def route(pcb_path, jar, passes=60, attempts=4):
+def _inset_polygon(pts, d):
+    """Offset a simple polygon's edges inward by d (its corners as the offset edges' intersections)."""
+    n = len(pts)
+    area = sum(pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1] for i in range(n)) / 2
+    sg = 1 if area > 0 else -1
+    lines = []
+    for i in range(n):
+        (ax, ay), (bx, by) = pts[i], pts[(i + 1) % n]
+        L = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+        nx_, ny_ = -sg * (by - ay) / L, sg * (bx - ax) / L          # inward normal
+        lines.append(((ax + d * nx_, ay + d * ny_), (bx - ax, by - ay)))
+    out = []
+    for i in range(n):
+        (p1, v1), (p2, v2) = lines[i - 1], lines[i]
+        den = v1[0] * v2[1] - v1[1] * v2[0]
+        if abs(den) < 1e-12:
+            out.append(p2); continue
+        t = ((p2[0] - p1[0]) * v2[1] - (p2[1] - p1[1]) * v2[0]) / den
+        out.append((p1[0] + t * v1[0], p1[1] + t * v1[1]))
+    return out
+
+
+def _inset_dsn_boundary(dsn, inset_mm):
+    """Freerouting keeps only its default clearance to the board outline: move the outline in the .dsn inward by the difference to
+    the board's edge clearance, so routed copper keeps the real edge clearance."""
+    txt = open(dsn).read()
+    m = re.search(r"\(boundary\s*\(path pcb 0\s+([-\d\s.]+)\)", txt)
+    nums = [float(v) for v in m.group(1).split()]
+    pts = list(zip(nums[0::2], nums[1::2]))
+    closed = pts[0] == pts[-1]
+    core = pts[:-1] if closed else pts
+    k = 1000.0 if re.search(r"\(unit um\)", txt) else 1.0
+    new = _inset_polygon(core, inset_mm * k)
+    if closed:
+        new.append(new[0])
+    body = "  ".join(f"{x:.1f} {y:.1f}" for x, y in new)
+    txt = txt[:m.start(1)] + body + txt[m.end(1):]
+    open(dsn, "w").write(txt)
+
+
+def route(pcb_path, jar, passes=60, attempts=4, edge_inset=0.0):
     dsn = pcb_path.replace(".kicad_pcb", ".dsn"); ses = pcb_path.replace(".kicad_pcb", ".ses")
     _fresh("dsn", pcb_path, dsn)
+    if edge_inset > 0:
+        _inset_dsn_boundary(dsn, edge_inset)
     unrouted = open(pcb_path).read(); best = None
     for attempt in range(attempts):
         subprocess.run(["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes),

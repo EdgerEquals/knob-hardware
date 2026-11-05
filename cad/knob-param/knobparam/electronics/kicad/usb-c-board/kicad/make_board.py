@@ -35,7 +35,7 @@ RULES = dict(clearance=0.1, track=0.127, min_track=0.1, via_d=0.45, via_drill=0.
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-2.1.0.jar")
 WIDTHS = {"default": 0.127, "VBUS": 0.3, "GND": 0.25}
 ROUTE_CLEARANCE = 0.127   # the router keeps 5 mil (+ its 0.02 grid margin) although the rule is 4 mil
-ROUTE_ORDER = ["VBUS", "GND", "DP", "DN", "CC1", "CC2"]   # first-round order: the best of 4 orders tried (14 vias; the others 16-18)
+ROUTE_ORDER = ["CC1", "CC2", "DN", "DP", "GND", "VBUS"]   # first-round order: v0.42 contacts, the best of 4 orders that finished (13 vias; others 13-18)
 
 # spring-contact landing pads: (name, net, panel x, panel y) from the CAD (case/params.py usb_pwr_contacts; v0.42: D+/D- at x ±4.0)
 SOCKET_PANEL_Y = -53.40
@@ -204,9 +204,9 @@ def add_gnd_zones(pcb_path):
 def grid_route(pcb_path):
     b = pcbnew.LoadBoard(pcb_path)
     r = gr.Router(gr.board_pads(b, ORIGIN), (-BW / 2, -BH / 2, BW / 2, BH / 2), dict(RULES, hole_clearance=0.2, clearance=ROUTE_CLEARANCE), WIDTHS)
-    ok = r.run(iters=80, order=ROUTE_ORDER, h_inc=1.5, pf_mult=1.3)
+    ok = r.run(iters=150, order=ROUTE_ORDER, h_inc=1.5, pf_mult=1.3)
     if not ok:
-        raise SystemExit("grid router: nets still too close after 80 rounds")
+        raise SystemExit("grid router: nets still too close after 150 rounds")
     r.smooth()
     gr.apply(b, r, ORIGIN, RULES["via_d"], RULES["via_drill"])
     pcbnew.SaveBoard(pcb_path, b)

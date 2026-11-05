@@ -52,7 +52,9 @@ def shape_dist(X, Y, x, y, w, h, shape):
 
 
 class Router:
-    def __init__(self, pads, bounds, rules, width, g=0.025, margin=0.02, via_cost=0.8, nets=None):
+    def __init__(self, pads, bounds, rules, width, g=0.025, margin=0.02, via_cost=0.8, nets=None, outline=None):
+        """bounds: (x0, y0, x1, y1) of the board; outline: optional polygon [(x, y), ...] (board-local, KiCad y) for a board that is
+        not a rectangle: copper keeps the edge clearance from it."""
         self.g, self.m, self.rules, self.via_cost = g, margin, rules, via_cost
         x0, y0, x1, y1 = bounds
         self.nx, self.ny = int(round((x1 - x0) / g)), int(round((y1 - y0) / g))
@@ -67,6 +69,15 @@ class Router:
         for p in self.pads:
             p["dist"] = shape_dist(X, Y, p["x"], p["y"], p["w"], p["h"], "circle" if p["npth"] else p["shape"])
         d_edge = np.minimum.reduce([X - x0, x1 - X, Y - y0, y1 - Y])
+        if outline:   # signed distance to the polygon: distance to its nearest edge inside, negative outside
+            from matplotlib.path import Path
+            inside = Path(outline).contains_points(np.c_[X.ravel(), Y.ravel()]).reshape(X.shape)
+            dd = np.full(X.shape, np.inf)
+            for (ax_, ay_), (bx_, by_) in zip(outline, outline[1:] + outline[:1]):
+                vx, vy = bx_ - ax_, by_ - ay_; L2 = vx * vx + vy * vy or 1e-12
+                t = np.clip(((X - ax_) * vx + (Y - ay_) * vy) / L2, 0, 1)
+                dd = np.minimum(dd, np.hypot(X - ax_ - t * vx, Y - ay_ - t * vy))
+            d_edge = np.where(inside, dd, -dd)
         self.nets = nets or sorted({p["net"] for p in pads if p["net"] and not p["net"].startswith("unconnected")})
         self.width = {n: width.get(n, width.get("default", 0.127)) for n in self.nets}
         self.block, self.via_ok, self.terms = {}, {}, {}

@@ -1,4 +1,4 @@
-usb-c-board v0.1 PCBWay pack, generated 2026-11-05 17:26 AWST by fab_export.py
+usb-c-board v0.1 PCBWay pack, generated 2026-11-05 18:19 AWST by fab_export.py
 READY TO QUOTE
 
 {
