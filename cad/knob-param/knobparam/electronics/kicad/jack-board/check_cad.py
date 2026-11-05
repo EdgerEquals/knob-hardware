@@ -83,10 +83,10 @@ def main():
         if not part or not hp:
             row(f"stack {ref}", False, "missing"); continue
         xs = [p["xy"][0] for p in hp]; ys = [p["xy"][1] for p in hp]
-        ok = math.dist(part["xy"], (sx * hx, hy)) <= TOL and part["side"] == "B" and len(hp) == 12 and max(xs) - min(xs) < hw and max(ys) - min(ys) < 4.0
-        row(f"stack {ref} at the model's x {sx * hx:g}, on the back, pins along x", ok,
-            f"at ({part['xy'][0]:.3f}, {part['xy'][1]:.3f}) side {part['side']}; pins span x {max(xs) - min(xs):.2f} (model body {hw:g}), "
-            f"rows {max(ys) - min(ys):.2f} apart")
+        ok = math.dist(part["xy"], (sx * hx, hy)) <= TOL and part["side"] == "B" and len(hp) == 12 and max(ys) - min(ys) < hl and max(xs) - min(xs) < 4.0
+        row(f"stack {ref} at the model's x {sx * hx:g}, on the back, pins along y", ok,
+            f"at ({part['xy'][0]:.3f}, {part['xy'][1]:.3f}) side {part['side']}; pins span y {max(ys) - min(ys):.2f} (model body {hl:g}), "
+            f"columns {max(xs) - min(xs):.2f} apart")
     # every pad 0.25 from the edge; pads of different nets 0.15 apart on the same face
     edge = k_ol.exterior
     de = min(pad_shape(p).distance(edge) if pad_shape(p).within(k_ol) else -1 for p in pads if p["ref"] != "")
@@ -102,6 +102,18 @@ def main():
             if d < dmin:
                 dmin, worst = d, f"{a['ref']}.{a['num']} {a['net']} / {b['ref']}.{b['num']} {b['net']}"
     row("pads of different nets at least 0.2 apart", dmin >= 0.2 - 1e-6, f"nearest {dmin:.3f}: {worst}")
+    holes = [p for p in pads if p["num"] == "" and p["ref"].startswith("J")]
+    dh, wh = 9e9, ""
+    for h in holes:
+        hc = Point(*h["xy"]).buffer(h["drill"][0] / 2, 64)
+        for p in pads:
+            if p["num"] == "":
+                continue
+            d = pad_shape(p).distance(hc)
+            if d < dh:
+                dh, wh = d, f"{p['ref']}.{p['num']} {p['net']} / {h['ref']} hole"
+    if holes:
+        row("pads at least 0.2 from the plug holes", dh >= 0.2 - 1e-6, f"nearest {dh:.3f}: {wh}")
     out = [f"Jack board {pl['pcb_version']} vs knob model {pl['cad_version']} (tolerance {TOL} mm)"]
     out += [f"  {s}  {n}: {d}" for s, n, d in rows]
     nf = sum(1 for s, *_ in rows if s == "FAIL")

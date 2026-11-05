@@ -299,7 +299,8 @@ P = dict(
     jb2_gap=4.9,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face. v0.39: 4.9 [A], the XFCN 1.27 pair's stack
     jb2_t=1.6,             # [A] power board FR-4
     jb2_parts=2.0,         # [A] parts envelope on the power board's top face
-    jb_hdr=(7.7, 3.4, 11.15),  # v0.42 [A]: between the jacks (x ±11.15), pins along x: KiCad's land pattern for these stacks [S-lib] has its
+    jb_hdr=(3.4, 7.7, 11.15),  # v0.46 [A]: pins along y again: the Ø3.6 plug holes (Q20) leave 7.1 between them, the feet are 6.3 across the rows.
+                               # v0.42 [A]: between the jacks (x ±11.15), pins along x: KiCad's land pattern for these stacks [S-lib] has its
                                # feet out to ±3.15 across the rows, so at x ±19.6 (v0.39) they ran off the board's end onto jack 1/4's slots.
                                # v0.39 [S-dist/A]: two 2x6 1.27 mm SMD stacks (XFCN PZ127VS-12-12-H16 male C2840009 + PM127VS-12-12-H34 female
                                # C2840010, stack about 4.9): width (x), length (y), x centre (±). Was two 1x8 (the female had 29 in stock)

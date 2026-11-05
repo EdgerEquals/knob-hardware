@@ -14,12 +14,13 @@ Run with the system python that has pcbnew (KiCad 7.0.11):  /usr/bin/python3 mak
          westlicht, clacktronics, requencer]: T +4.92..+5.21 from the axis (1.43 wide), R -3.35..-3.38 (1.42), S -5.715..-6.48 (1.22);
          0.35 ring. Sleeve = GND.
   P1-P8  Harwin P70-5100045 (LCSC C21675240; element14 2664891), SMD pad Ø1.2 [S-dist], at the USB-C board's landing pads.
-  H1, H2 XFCN PZ127VS-12-12-H16-4.5-R (LCSC C2840009), 2x6 1.27 mm SMD male, rotated (pins along x) at x ∓11.15 [v0.42 A]; land
+  H1, H2 XFCN PZ127VS-12-12-H16-4.5-R (LCSC C2840009), 2x6 1.27 mm SMD male, pins along y at x ∓11.15 [v0.42, v0.46 A]; land
          pattern KiCad's PinHeader_2x06_P1.27mm_Vertical_SMD (KiCad library, CC-BY-SA 4.0 with the design exception) [C: check it
          against XFCN's drawing at the pre-quote]. 1 A a pin [S: JLCPCB listing; LCSC says 2 A]: VBUS on 4 pins, GND on 8.
-Header pinout [A] (panel view from the front; 'upper' = the row nearer the jack tops); the power board's sockets mirror it:
-  H1 (x -11.15) upper: J1_TIP GND GND GND GND J2_TIP      lower: J1_RING GND VBUS VBUS CC1 J2_RING
-  H2 (x +11.15) upper: J3_TIP GND DP DN GND J4_TIP        lower: J3_RING VBUS VBUS CC2 GND J4_RING"""
+Header pinout [A] (panel view from the front; pins along y [v0.46]; each column top = nearer the jack tops); the power board's sockets
+mirror it:
+  H1 (x -11.15) inner column (x -9.2): J2_TIP GND J2_RING CC1 VBUS VBUS     outer (x -13.1): J1_TIP GND J1_RING GND GND GND
+  H2 (x +11.15) inner column (x +9.2): J3_TIP GND J3_RING CC2 VBUS VBUS     outer (x +13.1): J4_TIP GND J4_RING GND DP DN"""
 import os, sys, subprocess, json
 import pcbnew
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +32,7 @@ import grid_router as gr
 
 NAME = "jack-board"
 PCB_VERSION = "v0.1"
-CAD_VERSION = "v0.45"
+CAD_VERSION = "v0.46"
 LIB = "jackb"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BT = 1.6
@@ -57,8 +58,9 @@ TAB = (5.85, -53.90)                         # [Q16]
 CONTACTS = [("15V_1", "VBUS", -0.8, -51.4), ("15V_2", "VBUS", 0.8, -51.4), ("GND_1", "GND", -0.8, -53.0), ("GND_2", "GND", 0.8, -53.0),
             ("DP", "DP", -4.0, -51.4), ("DN", "DN", 4.0, -51.4), ("CC1", "CC1", -5.0, -53.0), ("CC2", "CC2", 5.0, -53.0)]
 HDR_X, HDR_Y = 11.15, (JY + BODY_Y[0] + JY + BODY_Y[1]) / 2
-HDR_NETS = {"H1": (["J1_TIP", "GND", "GND", "GND", "GND", "J2_TIP"], ["J1_RING", "GND", "VBUS", "VBUS", "CC1", "J2_RING"]),
-            "H2": (["J3_TIP", "GND", "DP", "DN", "GND", "J4_TIP"], ["J3_RING", "VBUS", "VBUS", "CC2", "GND", "J4_RING"])}
+HDR_NETS = {"H1": (["J2_TIP", "GND", "J2_RING", "CC1", "VBUS", "VBUS"], ["J1_TIP", "GND", "J1_RING", "GND", "GND", "GND"]),
+            "H2": (["J3_TIP", "GND", "J3_RING", "CC2", "VBUS", "VBUS"], ["J4_TIP", "GND", "J4_RING", "GND", "DP", "DN"])}
+# (inner column = nearer x 0, outer column; each top (jack tops) to bottom (the tab))
 
 
 def kc(px, py):   # panel (mm) -> board-local KiCad (mm)
@@ -129,7 +131,7 @@ def comps(hdr_nets):
                         fields={"MPN": "P70-5100045", "Manufacturer": "Harwin", "LCSC": "C21675240", "Contact": nm}))
     for ref, sx in (("H1", -1), ("H2", 1)):
         out.append(dict(ref=ref, sym="Conn_2x06", value="PZ127VS-12-12-H16-4.5-R", fp="PinHeader_2x06_P1.27mm_Vertical_SMD",
-                        pos=kc(sx * HDR_X, HDR_Y), rot=90, side="B",
+                        pos=kc(sx * HDR_X, HDR_Y), rot=0, side="B",
                         pins=[(str(n), str(n), "passive", "L" if n % 2 else "R") for n in range(1, 13)], nets=hdr_nets.get(ref, {}),
                         fields={"MPN": "PZ127VS-12-12-H16-4.5-R", "Manufacturer": "XFCN", "LCSC": "C2840009"}))
     for c in out:
@@ -184,16 +186,17 @@ def build():
         for k, v in c["fields"].items():
             fp.SetProperty(k, v)
         placed[c["ref"]] = (fp, c)
-    # header nets by position: upper row = nearer the jack tops (panel y higher), each row left to right in panel x
+    # header nets by position: inner column (nearer x 0) and outer column, each from the top (panel y higher) down
     hdr_nets = {}
     for ref in ("H1", "H2"):
         fp, c = placed[ref]
         pads = [(pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], JY - (pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]), p.GetNumber()) for p in fp.Pads()]
-        ymid = sum(p[1] for p in pads) / len(pads)
-        upper = sorted([p for p in pads if p[1] > ymid]); lower = sorted([p for p in pads if p[1] < ymid])
+        xmid = sum(p[0] for p in pads) / len(pads)
+        inner = sorted([p for p in pads if abs(p[0]) < abs(xmid)], key=lambda q: -q[1])
+        outer = sorted([p for p in pads if abs(p[0]) > abs(xmid)], key=lambda q: -q[1])
         m = {}
-        for row, names in zip((upper, lower), HDR_NETS[ref]):
-            for (_x, _y, num), n in zip(row, names):
+        for col, names in zip((inner, outer), HDR_NETS[ref]):
+            for (_x, _y, num), n in zip(col, names):
                 m[num] = n
         hdr_nets[ref] = m
     for ref, (fp, c) in placed.items():
