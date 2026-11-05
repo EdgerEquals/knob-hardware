@@ -284,6 +284,7 @@ P = dict(
     jack_pin_d=0.9,            # [A] pin drawn as a Ø0.9 rod
     jack_slot_ring=0.35,       # [A] annular ring round each slot
     jb_tongue_edge=0.3,        # [A] board outline round the sleeve pad
+    jb_tongue_inner=0.5,       # v0.44 [A]: the outer two jack-board tongues this much wider on their inner side (room for the sleeve's ground)
     jb_tip_bump=(2.7, 0.55),   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump (width, height) on the jack board's top edge round each tip slot (its pad
                                #   reached axis +6.28, past the edge at the jack tops, axis +6.0): pad 0.25 from the edge
     jack_ledge_notch=0.4,      # [A] bottom ledge notched this far round each tongue
@@ -763,6 +764,11 @@ def derive(D):
         _n, s0, s1, sw = [p for p in D["jack_pins"] if p[0] == "S"][0]
         D["jb_tongue_hw"] = sw / 2 + D["jack_slot_ring"] + D["jb_tongue_edge"]
         D["jb_tongue_y"] = D["jack_y"] + min(s0, s1) - sw / 2 - D["jack_slot_ring"] - D["jb_tongue_edge"]
+        # v0.44 [A]: the outer two tongues 0.5 wider on their inner side (toward x 0), so the sleeve's ground can leave the tongue past
+        # the ring slot's pad (0.63 between pad and the tongue's inside corner was too tight to route); (x0, x1) per jack
+        ti = D.get("jb_tongue_inner", 0.0); xo0, xo1 = min(D["jack_xs"]), max(D["jack_xs"]); hw_ = D["jb_tongue_hw"]
+        D["jb_tongue_x"] = tuple((x - hw_, x + hw_ + ti) if x == xo0 else (x - hw_ - ti, x + hw_) if x == xo1 else (x - hw_, x + hw_)
+                                 for x in D["jack_xs"])
     D["post_clip_y"] = D["jack_bot_y"] - D["post_jack_air"] if dr else None
     D["jack_notch_y"] = (D["jack_bot_y"] - D["jack_lip_notch"], D["jack_top_y"] + D["jack_lip_notch"])
     yb = D["corners"][0][1]; ri = D["insert_od"] / 2 + D["insert_glue"]

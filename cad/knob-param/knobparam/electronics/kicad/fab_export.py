@@ -10,7 +10,7 @@ KiCad 7 (the cloud workspace has 7.0.11): kicad-cli 7 has no BOM, ERC or DRC com
 footprint fields and DRC runs through pcbnew (kicad7_tools.drc, no schematic parity); ERC is reported as not run."""
 import os, sys, csv, glob, re, json, shutil, subprocess, tempfile, zipfile, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
-BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad"}
+BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad"}
 NOTES = {"knob-main-pcb": "Board: 2 layers, FR-4, 1.6 mm; HASL or ENIG; green mask, white silk [A].\n"
                           "Hand-fit parts (excluded from BOM/CPL): H1 rod pad, M1 1220 motor, M2 716 motor leads, J10 MCU-link pads.\n",
          "screen-adapter": "Board: 2 layers, FR-4, 1.0 mm; HASL or ENIG; green mask, white silk [A].\n"
@@ -18,7 +18,12 @@ NOTES = {"knob-main-pcb": "Board: 2 layers, FR-4, 1.6 mm; HASL or ENIG; green ma
          "usb-c-board": "Board: 2 layers, FR-4, 1.6 mm, 12.0 x 6.0 mm; ENIG (the 8 spring-contact landing pads P1-P8 are bare gold, no paste);\n"
                         "green mask, no silk. Min track 0.127, min gap 0.1 by rule (routed to 0.127 + margin), vias 0.45 / 0.2 drill.\n"
                         "J1: 16 SMD pads plus 4 shell legs in plated slots (through-hole solder from the top side; they don't come through).\n"
-                        "Not parts (excluded from BOM/CPL): P1-P8 landing pads. J1 on the top side; D1, U1 on the bottom side.\n"}
+                        "Not parts (excluded from BOM/CPL): P1-P8 landing pads. J1 on the top side; D1, U1 on the bottom side.\n",
+         "jack-board": "Board: 2 layers, FR-4, 1.6 mm, 43.0 x 16.05 mm outline with tongues and a tab (see Edge.Cuts); HASL or ENIG; BLACK mask [A]\n"
+                       "(it shows through the clear OLED above the jacks), white silk on the back only. Plated oval slots for the jack pins.\n"
+                       "Top: J1-J4 Thonk PJ366ST (through-hole, hand / selective solder) and P1-P8 Harwin P70-5100045 spring contacts (SMD).\n"
+                       "Bottom: H1, H2 XFCN 2x6 1.27 mm SMD headers. Two-sided SMT. Inside corners of the outline: router radius per PCBWay [C].\n"
+                       "Thonk PJ366ST is not an LCSC part: supplied separately (Thonk) or sourced by PCBWay [C].\n"}
 LAYERS = "F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts"
 
 def run(*a): return subprocess.run(["kicad-cli", *a], capture_output=True, text=True)

@@ -200,8 +200,8 @@ def build(D):
         case = _add(case, post)
     if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: the bottom ledge notched round each jack-board tongue
         n_ = D["jack_ledge_notch"]
-        for x, _y in D["jack_xy"]:
-            case = _sub(case, _box(x - D["jb_tongue_hw"] - n_, x + D["jb_tongue_hw"] + n_, D["jb_tongue_y"] - n_, D["pcb_y0"] + D["ledge_w"] + sl,
+        for tx0, tx1 in D["jb_tongue_x"]:
+            case = _sub(case, _box(tx0 - n_, tx1 + n_, D["jb_tongue_y"] - n_, D["pcb_y0"] + D["ledge_w"] + sl,
                                    z0 - sl, z1 + sl))
     if D.get("jack_lip_notch") is not None:   # [Ed 4 Nov 20:12] side ledges notched along the jack row: jacks 1 and 4 pass from behind
         ny0, ny1 = D["jack_notch_y"]
@@ -295,9 +295,9 @@ def build(D):
     for x, y in D["corners"]:
         glow = _sub(glow, _cyl_z(D["screw_boss_r"] + D["glow_gap"], D["z_rim"] - sl, D["z_post_top"] + D["glow_gap"], x, y))
     if D.get("jb_tongue_y") is not None:   # v0.39: and where the jack board's tongues pass
-        for x, _y in D["jack_xy"]:
-            hw_ = D["jb_tongue_hw"] + D["jack_ledge_notch"] + 0.35
-            glow = _sub(glow, _box(x - hw_, x + hw_, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
+        for tx0, tx1 in D["jb_tongue_x"]:
+            m_ = D["jack_ledge_notch"] + 0.35
+            glow = _sub(glow, _box(tx0 - m_, tx1 + m_, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
     if D.get("jb_on") and D.get("jb_post_xy"):   # v0.34 [Ed 22:21] the bottom lip's coat stays off where the jack unit's posts and ears pass
         for x, _y in D["jb_post_xy"]:
             glow = _sub(glow, _box(x - 1.6, x + 1.6, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
@@ -477,8 +477,8 @@ def build(D):
             hkeep = h if hkeep is None else _add(hkeep, h)
         jbb = _box(bx0, bx1, by0, by1, D["jb_z0"], D["jb_z1"] - 0.02)
         if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: a tongue down to each sleeve pin
-            for x, _y in D["jack_xy"]:
-                jbb = _add(jbb, _box(x - D["jb_tongue_hw"], x + D["jb_tongue_hw"], D["jb_tongue_y"], by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
+            for tx0, tx1 in D["jb_tongue_x"]:
+                jbb = _add(jbb, _box(tx0, tx1, D["jb_tongue_y"], by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
         if D.get("jb_tip_bump"):   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump on the top edge round each tip slot
             bw_, bh_ = D["jb_tip_bump"]
             for x, _y in D["jack_xy"]:

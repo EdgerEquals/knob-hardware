@@ -1,0 +1,32 @@
+Jack board v0.1 vs knob model v0.44 (tolerance 0.005 mm)
+  PASS  outline = the model's jack board (jack row, tip bumps, sleeve tongues, USB tab): area 543.350 vs model 543.350; difference 0.0000 mm²; bounds (-21.5, -53.9, 21.5, -37.85)
+  PASS  board thickness: 1.6 vs model 1.6
+  PASS  jack J1 at the model's jack x -16.5: J1 at (-16.500, -44.400) side F
+  PASS  J1 T slot over every published position: slot 1.43 x 1.72 at y -39.335, pad 2.13 x 2.42 (model: 1.43 x 1.720 at y -39.335, ring 0.35)
+  PASS  J1 R slot over every published position: slot 1.42 x 1.45 at y -47.765, pad 2.12 x 2.15 (model: 1.42 x 1.450 at y -47.765, ring 0.35)
+  PASS  J1 S slot over every published position: slot 1.22 x 1.99 at y -50.498, pad 1.92 x 2.69 (model: 1.22 x 1.985 at y -50.498, ring 0.35)
+  PASS  jack J2 at the model's jack x -5.8: J2 at (-5.800, -44.400) side F
+  PASS  J2 T slot over every published position: slot 1.43 x 1.72 at y -39.335, pad 2.13 x 2.42 (model: 1.43 x 1.720 at y -39.335, ring 0.35)
+  PASS  J2 R slot over every published position: slot 1.42 x 1.45 at y -47.765, pad 2.12 x 2.15 (model: 1.42 x 1.450 at y -47.765, ring 0.35)
+  PASS  J2 S slot over every published position: slot 1.22 x 1.99 at y -50.498, pad 1.92 x 2.69 (model: 1.22 x 1.985 at y -50.498, ring 0.35)
+  PASS  jack J3 at the model's jack x 5.8: J3 at (5.800, -44.400) side F
+  PASS  J3 T slot over every published position: slot 1.43 x 1.72 at y -39.335, pad 2.13 x 2.42 (model: 1.43 x 1.720 at y -39.335, ring 0.35)
+  PASS  J3 R slot over every published position: slot 1.42 x 1.45 at y -47.765, pad 2.12 x 2.15 (model: 1.42 x 1.450 at y -47.765, ring 0.35)
+  PASS  J3 S slot over every published position: slot 1.22 x 1.99 at y -50.498, pad 1.92 x 2.69 (model: 1.22 x 1.985 at y -50.498, ring 0.35)
+  PASS  jack J4 at the model's jack x 16.5: J4 at (16.500, -44.400) side F
+  PASS  J4 T slot over every published position: slot 1.43 x 1.72 at y -39.335, pad 2.13 x 2.42 (model: 1.43 x 1.720 at y -39.335, ring 0.35)
+  PASS  J4 R slot over every published position: slot 1.42 x 1.45 at y -47.765, pad 2.12 x 2.15 (model: 1.42 x 1.450 at y -47.765, ring 0.35)
+  PASS  J4 S slot over every published position: slot 1.22 x 1.99 at y -50.498, pad 1.92 x 2.69 (model: 1.22 x 1.985 at y -50.498, ring 0.35)
+  PASS  spring contact 15 V at (-0.8, -51.4): P1 net VBUS, pad Ø1.2
+  PASS  spring contact 15 V at (0.8, -51.4): P2 net VBUS, pad Ø1.2
+  PASS  spring contact GND at (-0.8, -53.0): P3 net GND, pad Ø1.2
+  PASS  spring contact GND at (0.8, -53.0): P4 net GND, pad Ø1.2
+  PASS  spring contact D+ at (-4.0, -51.4): P5 net DP, pad Ø1.2
+  PASS  spring contact D- at (4.0, -51.4): P6 net DN, pad Ø1.2
+  PASS  spring contact CC1 at (-5.0, -53.0): P7 net CC1, pad Ø1.2
+  PASS  spring contact CC2 at (5.0, -53.0): P8 net CC2, pad Ø1.2
+  PASS  stack H1 at the model's x -11.15, on the back, pins along x: at (-11.150, -43.650) side B; pins span x 6.35 (model body 7.7), rows 3.90 apart
+  PASS  stack H2 at the model's x 11.15, on the back, pins along x: at (11.150, -43.650) side B; pins span x 6.35 (model body 7.7), rows 3.90 apart
+  PASS  every pad at least 0.25 from the board edge: nearest 0.250
+  PASS  pads of different nets at least 0.2 apart: nearest 0.314: P5.1 DP / J2.S GND
+30/30 PASS

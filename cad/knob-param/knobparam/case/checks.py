@@ -288,11 +288,11 @@ def checks(D, parts):
                 "the ZIFs and the parts envelopes stay inside it [Ed 4 Nov 21:30]")
             if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]
                 tz1 = D["jb_z1"] - 1.0
-                tg = [_P(x - D["jb_tongue_hw"], D["jb_tongue_y"], z0p) * _B(2 * D["jb_tongue_hw"], D["jack_bot_y"] - D["jb_tongue_y"], tz1 - z0p,
-                                                                           align=(_Al.MIN,) * 3) for x, _y in D["jack_xy"]]
+                tg = [_P(tx0, D["jb_tongue_y"], z0p) * _B(tx1 - tx0, D["jack_bot_y"] - D["jb_tongue_y"], tz1 - z0p,
+                                                          align=(_Al.MIN,) * 3) for tx0, tx1 in D["jb_tongue_x"]]
                 dt = min(t_.distance_to(case) for t_ in tg)
                 row("jack board's sleeve-pin tongues: straight path clear of the case (corner posts, notched bottom ledge)", dt, 0.3,
-                    f"tongues ±{D['jb_tongue_hw']:.2f} down to y {D['jb_tongue_y']:.2f} at x {', '.join(f'{x:g}' for x in D['jack_xs'])} (Ed 15:53 Q15, 17:48 Q17); "
+                    f"tongues ±{D['jb_tongue_hw']:.2f} (the outer two {D.get('jb_tongue_inner', 0):g} wider inward) down to y {D['jb_tongue_y']:.2f} at x {', '.join(f'{x:g}' for x in D['jack_xs'])} (Ed 15:53 Q15, 17:48 Q17); "
                     f"bottom ledge notched {D['jack_ledge_notch']:g} round each")
                 if glow is not None:
                     row("jack board's sleeve-pin tongues: clear of the glow coat", min(t_.distance_to(glow) for t_ in tg), 0.1, "")
