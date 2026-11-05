@@ -71,6 +71,11 @@ class FP:
         s.SetStart(V(x0, y0)); s.SetEnd(V(x1, y1)); s.SetLayer(layer); s.SetWidth(mm(w)); s.SetLocalCoord()
         self.fp.Add(s)
 
+    def poly(self, pts, layer, w=0.05):
+        s = pcbnew.FP_SHAPE(self.fp, pcbnew.SHAPE_T_POLY)
+        s.SetPolyPoints([V(x, y) for x, y in pts]); s.SetLayer(layer); s.SetWidth(mm(w)); s.SetLocalCoord()
+        self.fp.Add(s)
+
     def done(self, ref_y=0.0):
         self.fp.Reference().SetPosition(V(0, ref_y)); self.fp.Reference().SetLayer(pcbnew.F_Fab)
         self.fp.Reference().SetTextSize(V(0.5, 0.5)); self.fp.Reference().SetTextThickness(mm(0.08))
@@ -84,7 +89,20 @@ def save_fp(lib_dir, fp):
     pcbnew.FootprintSave(lib_dir, fp)
 
 
-def write_project(here, name, rules, libs):
+def _netclass(name, clearance, track, via_d, via_drill):
+    # KiCad 7 drops a net class that lacks any of its keys (and falls back to clearance 0.2, via 0.6), so all are written
+    return {"name": name, "clearance": clearance, "track_width": track, "via_diameter": via_d, "via_drill": via_drill,
+            "microvia_diameter": 0.3, "microvia_drill": 0.1, "diff_pair_width": 0.2, "diff_pair_gap": 0.25, "diff_pair_via_gap": 0.25,
+            "bus_width": 12, "wire_width": 6, "line_style": 0, "pcb_color": "rgba(0, 0, 0, 0.000)", "schematic_color": "rgba(0, 0, 0, 0.000)"}
+
+
+def write_project(here, name, rules, libs, classes=()):
+    """classes: extra net classes [(name, clearance, track, [net names])] on top of Default (from rules)."""
+    ncs = [_netclass("Default", rules["clearance"], rules["track"], rules["via_d"], rules["via_drill"])]
+    pats = []
+    for cn, cl, tr, nets in classes:
+        ncs.append(_netclass(cn, cl, tr, rules["via_d"], rules["via_drill"]))
+        pats += [{"netclass": cn, "pattern": n} for n in nets]
     pro = {"meta": {"filename": name + ".kicad_pro", "version": 1},
            "board": {"design_settings": {"rules": {"min_clearance": rules["clearance"], "min_track_width": rules["min_track"],
                                                    "min_via_diameter": rules["via_d"], "min_through_hole_diameter": rules["via_drill"],
@@ -93,13 +111,8 @@ def write_project(here, name, rules, libs):
                                                    "min_text_height": 0.5},
                                          "track_widths": [0.0, rules["track"], 0.3, 0.4],
                                          "via_dimensions": [{"diameter": 0.0, "drill": 0.0}, {"diameter": rules["via_d"], "drill": rules["via_drill"]}]}},
-           # KiCad 7 drops a net class that lacks any of its keys (and falls back to clearance 0.2, via 0.6), so all are written
-           "net_settings": {"classes": [{"name": "Default", "clearance": rules["clearance"], "track_width": rules["track"],
-                                         "via_diameter": rules["via_d"], "via_drill": rules["via_drill"], "microvia_diameter": 0.3,
-                                         "microvia_drill": 0.1, "diff_pair_width": 0.2, "diff_pair_gap": 0.25, "diff_pair_via_gap": 0.25,
-                                         "bus_width": 12, "wire_width": 6, "line_style": 0, "pcb_color": "rgba(0, 0, 0, 0.000)",
-                                         "schematic_color": "rgba(0, 0, 0, 0.000)"}],
-                            "meta": {"version": 3}, "net_colors": None, "netclass_assignments": None, "netclass_patterns": []},
+           "net_settings": {"classes": ncs, "meta": {"version": 3}, "net_colors": None, "netclass_assignments": None,
+                            "netclass_patterns": pats},
            "sheets": [], "libraries": {"pinned_footprint_libs": [], "pinned_symbol_libs": []}}
     json.dump(pro, open(os.path.join(here, name + ".kicad_pro"), "w"), indent=2)
     rows = "".join(f'  (lib (name "{n}")(type "KiCad")(uri "{u}")(options "")(descr ""))\n' for n, u in libs)

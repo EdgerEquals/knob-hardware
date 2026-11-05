@@ -479,6 +479,10 @@ def build(D):
         if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: a tongue down to each sleeve pin
             for x, _y in D["jack_xy"]:
                 jbb = _add(jbb, _box(x - D["jb_tongue_hw"], x + D["jb_tongue_hw"], D["jb_tongue_y"], by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
+        if D.get("jb_tip_bump"):   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump on the top edge round each tip slot
+            bw_, bh_ = D["jb_tip_bump"]
+            for x, _y in D["jack_xy"]:
+                jbb = _add(jbb, _box(x - bw_ / 2, x + bw_ / 2, by1 - D["fuse"], by1 + bh_, D["jb_z0"], D["jb_z1"] - 0.02))
         if D.get("usb_pwr_tab"):   # v0.35 [Ed 22:36] tab into the USB-C channel with the power spring contacts on its front face
             tw, ty = D["usb_pwr_tab"]
             jbb = _add(jbb, _box(-tw, tw, ty, by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))

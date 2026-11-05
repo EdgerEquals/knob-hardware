@@ -300,9 +300,19 @@ def checks(D, parts):
                 row("bottom ledge left under the main board at the tongue notches", lw_left, 0.6,
                     f"ledge y {D['pcb_y0']:.2f}..{D['pcb_y0'] + D['ledge_w']:.2f}, notched down to y {D['jb_tongue_y'] - D['jack_ledge_notch']:.2f} "
                     "over 4 short spans; full ledge elsewhere")
+            if D.get("jb_tip_bump"):   # v0.43 [Ed 17:59 Q18 = A]
+                bw_, bh_ = D["jb_tip_bump"]; tz1 = D["jb_z1"] - 1.0
+                bp = [_P(x - bw_ / 2, D["jack_top_y"], z0p) * _B(bw_, bh_, tz1 - z0p, align=(_Al.MIN,) * 3) for x, _y in D["jack_xy"]]
+                row("jack board's tip-slot bumps: straight path clear of the case", min(b_.distance_to(case) for b_ in bp), 0.3,
+                    f"{bw_:g} x {bh_:g} on the top edge at each jack (Ed 17:59 Q18 = A); the tip pads 0.25 from their edge")
+                if glow is not None:
+                    row("jack board's tip-slot bumps: clear of the glow coat", min(b_.distance_to(glow) for b_ in bp), 0.1, "")
+            if D.get("jb_tongue_y") is not None:
                 oled_lit_y0 = D["panel_y0"] + 26.7 - 5.45 + 5.25   # [A] the lit area's bottom edge as set on 4 Nov (jack tops on it at jack_y_up 21.25)
                 row("clear OLED lit area covered by the jack bodies (mm of 15.32)", D["jack_top_y"] - oled_lit_y0, 1.6,
-                    f"jack tops y {D['jack_top_y']:.2f}; lit area from y {oled_lit_y0:.2f} [A]; about {100 * (1 - (D['jack_top_y'] - oled_lit_y0) / 15.32):.0f}% seen",
+                    f"jack tops y {D['jack_top_y']:.2f}; lit area from y {oled_lit_y0:.2f} [A]; about {100 * (1 - (D['jack_top_y'] - oled_lit_y0) / 15.32):.0f}% seen"
+                    + (f"; the jack board's tip bumps reach {D['jb_tip_bump'][1]:g} higher over {D['jb_tip_bump'][0]:g} at each jack (behind them)"
+                       if D.get("jb_tip_bump") else ""),
                     higher_ok=False)
             row("jack pins through the jack board", D["jb_pin_out"], 1.0,
                 f"{D['jack_pin_len']:g} pins [S] through a {D['jb_t']:g} board [A]: room for the fillet")

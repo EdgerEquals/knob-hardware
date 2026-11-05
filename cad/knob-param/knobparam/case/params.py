@@ -284,6 +284,8 @@ P = dict(
     jack_pin_d=0.9,            # [A] pin drawn as a Ø0.9 rod
     jack_slot_ring=0.35,       # [A] annular ring round each slot
     jb_tongue_edge=0.3,        # [A] board outline round the sleeve pad
+    jb_tip_bump=(2.7, 0.55),   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump (width, height) on the jack board's top edge round each tip slot (its pad
+                               #   reached axis +6.28, past the edge at the jack tops, axis +6.0): pad 0.25 from the edge
     jack_ledge_notch=0.4,      # [A] bottom ledge notched this far round each tongue
     # v0.33 [Ed 4 Nov 21:30] step 2, decision 3, option B: two boards with the jack row's own outline (its path from behind). The jack
     # board sits on the jacks' backs (jacks soldered on, the small analog parts between the pins underneath); the jack power board hangs

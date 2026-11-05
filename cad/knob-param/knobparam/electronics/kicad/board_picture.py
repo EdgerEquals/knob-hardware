@@ -12,11 +12,35 @@ mm = pcbnew.ToMM
 bb = b.GetBoardEdgesBoundingBox()
 X0, X1 = mm(bb.GetX()) - O, mm(bb.GetRight()) - O
 Y0, Y1 = -(mm(bb.GetBottom()) - O), -(mm(bb.GetY()) - O)
+# the outline as one polygon when Edge.Cuts is a chain of straight segments (else the bounding box)
+segs = [((mm(d.GetStart().x) - O, -(mm(d.GetStart().y) - O)), (mm(d.GetEnd().x) - O, -(mm(d.GetEnd().y) - O)))
+        for d in b.GetDrawings() if d.GetLayer() == pcbnew.Edge_Cuts and d.GetClass() == "PCB_SHAPE" and d.GetShape() == pcbnew.SHAPE_T_SEGMENT]
+EDGE = []
+if segs:
+    left = segs[1:]; EDGE = [segs[0][0], segs[0][1]]
+    while left:
+        nxt = next((s_ for s_ in left if abs(s_[0][0] - EDGE[-1][0]) < 1e-4 and abs(s_[0][1] - EDGE[-1][1]) < 1e-4), None)
+        if nxt is None:
+            EDGE = []; break
+        left.remove(nxt); EDGE.append(nxt[1])
 NC = {"VBUS": "#d32f2f", "GND": "#424242", "DP": "#1976d2", "DN": "#7b1fa2", "CC1": "#2e7d32", "CC2": "#ef6c00"}
-def col(n): return NC.get(n, "#9e9e9e")
+PAL = ["#00897b", "#5e35b1", "#c0ca33", "#f4511e", "#3949ab", "#8d6e63", "#d81b60", "#43a047", "#fb8c00", "#039be5"]
+
+
+def col(n):
+    if n in NC:
+        return NC[n]
+    if not n or n.startswith("unconnected"):
+        return "#9e9e9e"
+    return PAL[sum(map(ord, n)) % len(PAL)]
 fig, axs = plt.subplots(1, 2, figsize=(13, 4.4), dpi=150)
-for ax, L, title in ((axs[0], pcbnew.F_Cu, "F side (socket side, seen from the front)"), (axs[1], pcbnew.B_Cu, "B side (contact side, seen from the back)")):
-    ax.add_patch(Rectangle((X0, Y0), X1 - X0, Y1 - Y0, fc="#e8f5e9", ec="black", lw=1))
+T_F = sys.argv[4] if len(sys.argv) > 4 else "F side, seen from the front"
+T_B = sys.argv[5] if len(sys.argv) > 5 else "B side, seen from the back"
+for ax, L, title in ((axs[0], pcbnew.F_Cu, T_F), (axs[1], pcbnew.B_Cu, T_B)):
+    if EDGE:
+        ax.add_patch(Polygon(EDGE, fc="#e8f5e9", ec="black", lw=1))
+    else:
+        ax.add_patch(Rectangle((X0, Y0), X1 - X0, Y1 - Y0, fc="#e8f5e9", ec="black", lw=1))
     for z in b.Zones():
         if z.IsOnLayer(L):
             for i in range(z.GetFilledPolysList(L).OutlineCount()):
@@ -55,8 +79,9 @@ for ax, L, title in ((axs[0], pcbnew.F_Cu, "F side (socket side, seen from the f
     ax.set_xlim(X0 - 0.3, X1 + 0.3); ax.set_ylim(Y0 - 0.3, Y1 + 0.3); ax.set_aspect("equal"); ax.set_title(title, fontsize=9, loc="left"); ax.grid(alpha=0.15)
     if L == pcbnew.B_Cu:
         ax.invert_xaxis()
-h = [plt.Line2D([], [], color=c, lw=3, label=n) for n, c in NC.items()]
-fig.legend(handles=h, loc="lower center", ncol=6, fontsize=8, frameon=False)
+used = sorted({p.GetNetname() for f in b.GetFootprints() for p in f.Pads() if p.GetNetname() and not p.GetNetname().startswith("unconnected")})
+h = [plt.Line2D([], [], color=col(n), lw=3, label=n) for n in used]
+fig.legend(handles=h, loc="lower center", ncol=min(len(h), 10), fontsize=8, frameon=False)
 if TITLE:
     fig.suptitle(TITLE, fontsize=10, x=0.01, ha="left")
 fig.tight_layout(rect=(0, 0.06, 1, 0.95 if TITLE else 1)); fig.savefig(out)
