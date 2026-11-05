@@ -1,0 +1,24 @@
+%% Step 2 boards, Q7 (5 Nov): one switchable jack (x3) on the jack power board. Render: mmdc -i switchable-jack.mmd -o switchable-jack.png -w 1400
+flowchart LR
+  subgraph H7["H7B0 (main board, over the link flex)"]
+    SPI["SPI"]
+    TX["UART TX\n(MIDI, 31.25 kbaud)"]
+    ADC["ADC input"]
+    I2C["I2C"]
+  end
+  subgraph PB["Jack power board (one of three identical channels)"]
+    DAC["16-bit DAC channel\n(one quad DAC: 3 jacks + 1 spare)"]
+    OUT["Op-amp output stage\n-5 to +10 V, 1 kΩ inside the loop\n(±12.5 / -12 V rails)"]
+    MID["MIDI driver\ntip: 10 Ω from TX (DIN pin 5)\nring: 33 Ω to 3.3 V (DIN pin 4) [C]"]
+    SW["Analog switch\n(rated for ±12 V signals)\nall open at power-up"]
+    IN["Input: 100 kΩ, scaled and clamped\nreads ±10 V, survives ±12 V\n(also reads back the output)"]
+    EXP["I/O expander\n(switch settings, ring sense)"]
+    RS["Ring sense\n(a mono plug grounds the ring)"]
+  end
+  JACK(("Jack\ntip / ring"))
+  SPI --> DAC --> OUT --> SW
+  TX --> MID --> SW
+  SW -->|tip / ring| JACK
+  JACK -->|tip| IN --> ADC
+  JACK -->|ring| RS --> EXP
+  I2C --> EXP -->|sets| SW
