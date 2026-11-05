@@ -1,9 +1,35 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-board/kicad/jack-board.kicad_pcb **
-** Created on 2026-11-05 18:31:30 **
+** Created on 2026-11-05 21:02:04 **
 
-** Found 0 DRC violations **
+** Found 6 DRC violations **
+[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0050 mm)
+    Rule: board setup constraints hole; Severity: error
+    @(94.2000 mm, 100.0000 mm): NPTH pad of J2
+    @(92.0250 mm, 101.2000 mm): Pad 12 [J2_RING] of H1 on B.Cu
+[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0050 mm)
+    Rule: board setup constraints hole; Severity: error
+    @(116.5000 mm, 100.0000 mm): NPTH pad of J4
+    @(114.3250 mm, 101.2000 mm): Pad 12 [J4_RING] of H2 on B.Cu
+[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0050 mm)
+    Rule: board setup constraints hole; Severity: error
+    @(83.5000 mm, 100.0000 mm): NPTH pad of J1
+    @(85.6750 mm, 101.2000 mm): Pad 2 [J1_RING] of H1 on B.Cu
+[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0050 mm)
+    Rule: board setup constraints hole; Severity: error
+    @(105.8000 mm, 100.0000 mm): NPTH pad of J3
+    @(107.9750 mm, 101.2000 mm): Pad 2 [J3_RING] of H2 on B.Cu
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(103.6204 mm, 97.0720 mm): Track [DP] on F.Cu, length 0.6167 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(103.6204 mm, 97.0720 mm): Track [DP] on B.Cu, length 0.6167 mm
 
-** Found 0 unconnected pads **
+** Found 1 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(100.8000 mm, 107.0000 mm): Track [VBUS] on F.Cu, length 1.6000 mm
+    @(109.2450 mm, 102.8519 mm): Track [VBUS] on B.Cu, length 0.1251 mm
 
 ** Found 0 Footprint errors **
 

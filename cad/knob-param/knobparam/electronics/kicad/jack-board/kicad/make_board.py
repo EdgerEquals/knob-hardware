@@ -6,7 +6,8 @@ Run with the system python that has pcbnew (KiCad 7.0.11):  /usr/bin/python3 mak
   power board 4.9 below. No other parts: the jack circuits are on the power board [Q2, Q7].
   Outline (panel frame, y up): the jack row 43.0 x 10.5 (y -48.90..-38.40), a 2.7 x 0.55 bump over each tip slot [Q18], a tongue
   ±1.26 down to y -52.14 under each sleeve slot [Q15] (the outer two 0.5 wider inward [v0.44 A]: room for the sleeve's ground past the
-  ring slot), the tab ±5.85 down to y -53.90 into the USB-C channel [Q16]. 1.6 mm, 2 layers.
+  ring slot), the tab ±5.85 down to y -53.90 into the USB-C channel [Q16], and a Ø3.6 hole under each jack axis for a plug's
+  tip [Q20]. 1.6 mm, 2 layers.
   KiCad frame: x = panel x, y = -(panel y - JY), JY = the jack axes (panel y -44.40); KiCad origin (100, 100).
   J1-J4  Thonk PJ366ST at x -16.5, -5.8, +5.8, +16.5 [Q15, Q17]; J1-J3 switchable [Q1, Q2], J4 the audio jack: tip = audio out,
          ring = audio in [Q9, Q10]. Slots [S-lib: KiCad's PJ398SM footprint, which Thonk says the stereo shares; 4ms, GuavTek,
@@ -30,7 +31,7 @@ import grid_router as gr
 
 NAME = "jack-board"
 PCB_VERSION = "v0.1"
-CAD_VERSION = "v0.44"
+CAD_VERSION = "v0.45"
 LIB = "jackb"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BT = 1.6
@@ -47,6 +48,7 @@ BODY_Y = (-4.5, 6.0)                         # PJ366ST body from its axis (sleev
 PINS = (("T", 4.92, 5.21, 1.43), ("R", -3.38, -3.35, 1.42), ("S", -6.48, -5.715, 1.22))
 RING = 0.35
 BARREL_KEEP = 4.0                            # Ø, no copper on the top face round each jack axis [S-dist 3 mm; A 4]
+PLUG_HOLE = 3.6                              # [Ed 5 Nov 20:46 Q20 = A] Ø hole through the board under each axis (Thonk: drill 3 mm [S])
 BOARD_X = (-21.5, 21.5)
 BUMP = (2.7, 0.55)                           # [Q18]
 TONGUE = (1.26, -52.14)                      # half width, bottom y [Q15]
@@ -98,6 +100,7 @@ def fp_jack(board):
     for n, y0, y1, w in PINS:
         L = (y1 - y0) + w
         f.pth(n, 0, -(y0 + y1) / 2, w + 2 * RING, L + 2 * RING, w, L)
+    f.npth(0, 0, PLUG_HOLE)   # [Ed 20:46 Q20 = A] a plug's tip comes out of the back of the body here
     f.rect(-5.0, -BODY_Y[1], 5.0, -BODY_Y[0], pcbnew.F_Fab)
     tn, t0, t1, tw = PINS[0]; sn, s0, s1, sw = PINS[2]
     yt, yb, hl, yl = -(t1 + tw / 2 + RING + 0.1), -BODY_Y[0] + 0.25, sw / 2 + RING + 0.1, -(s0 - sw / 2 - RING - 0.1)
@@ -212,7 +215,7 @@ def build():
             a = 2 * 3.141592653589793 * i / 24
             ol.Append(mm(ORIGIN[0] + cx + BARREL_KEEP / 2 * __import__("math").cos(a)), mm(ORIGIN[1] + cy + BARREL_KEEP / 2 * __import__("math").sin(a)))
         board.Add(k)
-    t = pcbnew.PCB_TEXT(board); t.SetText(f"jack board {PCB_VERSION} / knob {CAD_VERSION}"); t.SetPosition(P(0.0, kc(0, HDR_Y)[1]))
+    t = pcbnew.PCB_TEXT(board); t.SetText(f"jack {PCB_VERSION}"); t.SetPosition(P(0.0, -2.8))   # between the middle plug holes
     t.SetLayer(pcbnew.B_SilkS); t.SetTextSize(V(0.7, 0.7)); t.SetTextThickness(mm(0.12)); t.SetMirrored(True); board.Add(t)
     ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
     C = comps(hdr_nets)
@@ -280,7 +283,7 @@ if __name__ == "__main__":
     pcbnew.SaveBoard(pcb_path, board)
     write_project(HERE, NAME, rc, libs, ROUTE_CLASSES)
     if "--route" in sys.argv:   # Freerouting (this board is roomy enough), the outline moved in 0.105 for it so tracks keep the 0.25 edge
-        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=4, edge_inset=RULES["edge"] - 0.15 + 0.005))
+        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=6, edge_inset=RULES["edge"] - 0.15 + 0.005))
         add_gnd_zones(pcb_path)
     elif "--grid" in sys.argv:
         print("grid router: vias", grid_route(pcb_path))

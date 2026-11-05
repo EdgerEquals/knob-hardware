@@ -65,6 +65,10 @@ def main():
             row(f"J{i} {n} slot over every published position", ok,
                 f"slot {p['drill'][0]:.2f} x {p['drill'][1]:.2f} at y {p['xy'][1]:.3f}, pad {p['size'][0]:.2f} x {p['size'][1]:.2f} "
                 f"(model: {w:g} x {L:.3f} at y {cy:.3f}, ring {ring:g})")
+        if D.get("jb_plug_hole"):
+            h = [q for q in pads if q["ref"] == f"J{i}" and q["num"] == "" and math.dist(q["xy"], (x, y)) <= TOL]
+            row(f"J{i} plug-tip hole under the axis", len(h) == 1 and abs(h[0]["drill"][0] - D["jb_plug_hole"]) <= TOL,
+                f"Ø{h[0]['drill'][0]:g} (model Ø{D['jb_plug_hole']:g}, Ed 20:46 Q20 = A)" if h else "no hole")
     # contacts
     for (x, y), nm in zip(D["usb_pwr_contacts"], D["usb_pwr_names"]):
         near = [p for p in pads if p["ref"].startswith("P") and math.dist(p["xy"], (x, y)) <= TOL]
@@ -92,7 +96,7 @@ def main():
     for i in range(len(pads)):
         for j in range(i + 1, len(pads)):
             a, b = pads[i], pads[j]
-            if a["net"] == b["net"] or not set(face(a)) & set(face(b)):
+            if a["net"] == b["net"] or not set(face(a)) & set(face(b)) or "" in (a["num"], b["num"]):
                 continue
             d = pad_shape(a).distance(pad_shape(b))
             if d < dmin:
