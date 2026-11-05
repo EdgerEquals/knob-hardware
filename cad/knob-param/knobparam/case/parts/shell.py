@@ -486,7 +486,7 @@ def build(D):
         jacks["jack board (FR-4, the four jacks soldered on) [A]"] = _sub(jbb, holes)
         jacks["jack board underside parts (envelope) [A]"] = _sub(_sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb_under_z0"],
                                                                          D["jb_z0"] - 0.02), holes), hkeep)
-        jacks["jack board headers (2 x 1x8 1.27, SMD) [A]"] = hdrs
+        jacks["jack board headers (2 x 2x6 1.27, SMD) [A]"] = hdrs
         pb = _box(bx0, bx1, by0, by1, D["jb2_z0"], D["jb2_z1"])
         if D.get("jb_post_xy"):   # v0.34 [Ed 22:21] the tab down over the posts in the main board's strip
             hx, ty = D["jb_tab"]
@@ -503,8 +503,8 @@ def build(D):
         jacks["jack power board (FR-4: ZIFs, PD sink, ±12 V, the OLED's 12.5 V) [A]"] = pb
         jacks["jack power board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb2_z1"] + 0.02,
                                                                  D["jb2_parts_z1"]), hkeep)
-        for nm, (w, dd, hh, xc) in (("jack power board ZIF, 24-pin (clear OLED flex) [A]", D["zif_oled"]),
-                                    ("jack power board ZIF, link flex to the main board [A]", D["zif_link"])):
+        for nm, (w, dd, hh, xc) in (("jack power board ZIF, 24-pin 0.5 (clear OLED flex)", D["zif_oled"]),
+                                    ("jack power board FPC connector, 25-pin 0.3 (link flex)", D["zif_link"])):
             jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + D["zif_y_off"], by0 + D["zif_y_off"] + dd, D["jb2_z0"] - hh, D["jb2_z0"] - 0.02)
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)

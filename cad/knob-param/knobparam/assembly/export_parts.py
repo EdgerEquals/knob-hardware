@@ -15,7 +15,7 @@ RULES = [
     (r"^USB-C board (VBUS TVS|data ESD)", "buy", "TVS / ESD (LCSC) [A]", "on the USB-C board PCBA"),
     (r"^jack unit post", "buy", "brass Ø2 pin [A] (soldered in the jack power board's tab)", "buy"),
     (r"^jack (power )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
-    (r"^jack (power )?board.*(ZIF|headers)", "buy", "0.5 mm ZIF / 1.27 mm SMD header [A] (LCSC)", "on the PCBA"),
+    (r"^jack (power )?board.*(ZIF|headers|FPC connector)", "buy", "FPC connector (XUNPU C2856805 / Hirose FH26W C2904698) / XFCN 1.27 stack (C2840009 + C2840010)", "on the PCBA"),
     (r"^jack board|^jack power board", "board", "jack boards, FR-4 1.6 [A] (KiCad with step 2)", "PCBWay PCBA"),
     # [Ed 3 Nov 12:41-12:58] v0.24 dial screen as a bezel cartridge (Waveshare Z132A2441), dial board, rod-link board, strap loop
     (r"^dial bezel", "print", "PA-12, dyed black [A] (bezel material open: MJF to match the dial, or SLA [C])", "MJF"),

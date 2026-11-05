@@ -289,13 +289,17 @@ P = dict(
     jb_on=True,            # [Ed 4 Nov 21:30]
     jb_t=1.6,              # [A] jack board FR-4
     jb_under=2.0,          # [A] parts envelope under the jack board (between the pins)
-    jb2_gap=5.0,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face
+    jb2_gap=4.9,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face. v0.39: 4.9 [A], the XFCN 1.27 pair's stack
     jb2_t=1.6,             # [A] power board FR-4
     jb2_parts=2.0,         # [A] parts envelope on the power board's top face
-    jb_hdr=(1.27, 10.2, 20.75),   # [A] two 1x8 1.27 mm SMD headers: width, length, x centre (±), at the boards' outer ends
-    zif_oled=(17.65, 4.5, 2.0, 0.0),   # [S] ER-CON24HT-1, the clear OLED's matching ZIF (docs/screens-2026-11-02.md): w, d, h; x centre on the
+    jb_hdr=(3.3, 8.2, 19.6),   # v0.39 [S-dist/A]: two 2x6 1.27 mm SMD stacks (XFCN PZ127VS-12-12-H16 male C2840009 + PM127VS-12-12-H34 female
+                               # C2840010, stack about 4.9): width, length, x centre (±). Was two 1x8 (the female had 29 in stock)
+    zif_oled=(16.9, 5.2, 2.0, 0.0),    # v0.39 [S-lib]: 24-pin 0.5 mm flip-lock, 2.0 tall, XUNPU FPC-05F-24PH20 (LCSC C2856805) footprint incl. its
+                                       # mounting pads (a dual-contact equal, HC-FPC-0.5-24P-FHH20 C19273940, if the flex's contact side needs it).
+                                       # Was ER-CON24HT-1 17.65 x 4.5 [S] (not on LCSC). w, d, h; x centre on the
                                        # flex, which leaves the middle of the OLED's long edge [S]; on the power board's underside
-    zif_link=(10.0, 5.5, 2.0, 14.1),   # [A] ~16-pin 0.5 mm ZIF for the link flex: w, d, h, x centre (v0.36: over its lane, 0.28 from the OLED's)
+    zif_link=(9.0, 3.7, 1.0, 14.1),    # v0.39 [S]: Hirose FH26W-25S-0.3SHW(60) (LCSC C2904698), 25 positions at 0.3 (no 24 exists; the 25th is a
+                                       # ground), 9.0 long, footprint 3.7 deep, 1.0 tall: w, d, h, x centre (over its lane)
     zif_y_off=0.75,        # [A] ZIFs start this far above the boards' bottom edge (0.3 clear of the posts)
     # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack, held on two posts standing in the
     # main board's strip under the clear OLED; both flexes are plugged into its ZIFs on the bench. The power board gets a tab down over them.
