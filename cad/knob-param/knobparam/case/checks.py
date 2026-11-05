@@ -373,9 +373,13 @@ def checks(D, parts):
                     dmin = min(dmin, ((cts[i][0] - cts[j][0]) ** 2 + (cts[i][1] - cts[j][1]) ** 2) ** 0.5 - D["usb_pwr_d"])
             row("USB spring contacts: gap between pads", dmin + D["usb_pwr_d"] - D.get("usb_pwr_pad", D["usb_pwr_d"]), 0.3,
                 f"{len(cts)} contacts (Harwin P70-5100045, body Ø{D['usb_pwr_d']:g}), pads Ø{D.get('usb_pwr_pad', D['usb_pwr_d']):g} (v0.38, Ed 5 Nov 15:34)")
-            gap = D["usb_z0"] - D["jb_z1"]
-            row("USB spring contacts: gap inside the contact's working range 3.85-4.20", min(gap - 3.85, 4.20 - gap), 0.1,
-                f"gap {gap:.2f}; Harwin P70-5100045 works 3.85-4.20, 4.00 nominal [S-dist]; [C] the real socket height and the board thickness set it")
+            gap = D["usb_z0"] - D["jb_z1"]; bt_ = D["usb_board"][2]
+            row("USB spring contacts: gap inside the contact's working range 3.85-4.20", min(gap - 3.85, 4.20 - gap), 0.05,
+                f"gap {gap:.2f} = 12.5 - socket {D['usb_rcpt'][2]:g} - board {bt_:g} [Ed 15:40 Q13 = A]; Harwin P70-5100045 works 3.85-4.20, 4.00 nominal [S-dist]")
+            row("USB spring contacts never over-compressed (board +10 %)", gap - 0.1 * bt_ - 3.85, 0.0,
+                f"gap {gap - 0.1 * bt_:.2f} with the board at +10 % (PCBWay thickness tolerance [A]); the printed ledge can be retuned after the first prototype")
+            row("USB spring contacts still pressed (board -10 %)", 4.8 - (gap + 0.1 * bt_), 0.3,
+                f"gap {gap + 0.1 * bt_:.2f} vs the contact's free height 4.8 [S-dist]: lighter force, still touching")
             if D.get("usb_shell_legs"):
                 cy_ = D["usb_xy"][1]; lw_, lh_ = D["usb_leg_pad"]; pr = D.get("usb_pwr_pad", D["usb_pwr_d"]) / 2
 

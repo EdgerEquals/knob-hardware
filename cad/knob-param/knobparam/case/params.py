@@ -210,8 +210,10 @@ P = dict(
                            # OLED's lit-area edge), then 0.5 back up (option B: room at the bottom corner posts, ~97-98% of the lit area seen)
     usb_y_up=13.0,         # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 0.25 up so the real socket's shell-leg pads sit 0.3 from the 6.0 board's edges. Was 12.75: [Ed 4 Nov 11:09] USB-C centre above the panel bottom edge: 4.35 lower than 17.1, so the 5.5 board's bottom
                            # edge is on the bottom face (y -56.4, the rail line), through the bottom wall
-    usb_rcpt=(8.94, 3.26, 7.35),   # [S] USB-C receptacle opening w, h and depth behind the plate (typical mid-mount)
-    usb_board=(12.0, 6.0, 1.0),    # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 6.0 tall (was 5.5) for the real socket's legs. [Ed 4 Nov 11:09] small USB-C board behind the faceplate: w, h (was 6), t. v0.37 [Ed 5 Nov 11:24]: socket,
+    usb_rcpt=(8.94, 3.16, 6.8),    # v0.38 [Ed 5 Nov 15:40 Q13 = A]: SHOU HAN TYPE-C 16P LTH6.8 (LCSC C5187468): shell 8.94 x 3.16 [S-lib], 6.8 tall
+                                   # from the board to its face, flush with the plate front [S-dist]. Was (8.94, 3.26, 7.35) [S, typical mid-mount]
+    usb_board=(12.0, 6.0, 1.6),    # v0.38 [Ed 5 Nov 15:34 Q12 = A]: 6.0 tall (was 5.5) for the real socket's legs; [Ed 15:40 Q13 = A]: 1.6 thick
+                                   # (was 1.0) so the spring-contact gap is 4.10 (Harwin P70: 3.85-4.20). [Ed 4 Nov 11:09] small USB-C board behind the faceplate: w, h (was 6), t. v0.37 [Ed 5 Nov 11:24]: socket,
                                    # VBUS TVS and data ESD only (the PD sink chip moved to the jack power board)
     bot_post_drop=1.0,     # [Ed 4 Nov 20:12] the bottom corner screws (inserts, posts, cover columns, PCB notches) 1.0 lower: the
                            # posts stay out of the jacks' straight path from behind
