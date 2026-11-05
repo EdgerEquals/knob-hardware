@@ -329,7 +329,7 @@ P = dict(
     usb_post_hole=0.8,
     # v0.37 [Ed 11:24]: the two protection parts on the USB-C board's back face, in pockets in the printed key: (name, x0, x1, y0, y1, h)
     usb_prot=(("VBUS TVS (DFN1610) [A]", -1.4, 0.2, -56.05, -55.05, 0.55), ("data ESD (SOT-5X3) [A]", 3.4, 5.0, -56.05, -54.45, 0.6)),
-    usb_pocket_clear=0.1,  # [A] key pocket round each part
+    usb_pocket_clear=0.2,  # [A] key pocket round each part (v0.40: 0.2, was 0.1, so it also clears the ESD's pads, 1.85 across)
     jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips
     usb_w=12.0,            # [A] upright USB-C, plug keep-out width

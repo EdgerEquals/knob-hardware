@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.39",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.40",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.40 (5 Nov, no decision): the USB-C board laid out in KiCad; the key's pockets round its TVS and ESD grow from
+                       # 0.1 to 0.2 so they also clear the ESD's land pattern (its pads reach 0.125 past the part)
                        # v0.39 [Ed 5 Nov 15:42 Q14 = B, 15:53 Q15 = A]: the real PJ366ST: body off-centre on its bushing (-4.5..+6.0), pins
                        # T/R/S at their published positions (slots on the jack board cover them all), sleeve pins down, a jack-board tongue to
                        # each sleeve pin, the bottom ledge notched round the tongues, jacks at 11.0 pitch (x ±5.5, ±16.5)

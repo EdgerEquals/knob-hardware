@@ -12,7 +12,10 @@ Run with the system python that has pcbnew (KiCad 7.0.11):  /usr/bin/python3 mak
   U1  TI TPD2E2U06DRLR data ESD (LCSC C1972959), SOT-5X3: 1 NC, 2 NC, 3 IO1, 4 GND, 5 IO2 [S: TI pin table]; KiCad SOT-553 footprint
       (KiCad library, CC-BY-SA 4.0 with the design exception).
   P1-P8 landing pads Ø1.20 for the Harwin P70-5100045 spring contacts on the jack board's tab [S-dist], no paste.
-CC1/CC2 go to the HUSB238 on the jack power board (its CC ESD, PESD24VL1BA, sits there too). SBU1/SBU2 not connected."""
+CC1/CC2 go to the HUSB238 on the jack power board (its CC ESD, PESD24VL1BA, sits there too). SBU1/SBU2 not connected.
+Routing (--route): ../../grid_router.py (negotiated-congestion grid router, 0.025 mm grid), then pulled tight, then GND poured on both
+sides (solid pad connections). Freerouting (--freerouting) leaves this board part-routed even with the right rules, so it is not the default.
+Tracks: 0.127 signals, 0.3 VBUS, 0.25 GND; vias 0.45 / 0.2 drill; rule clearance 0.1 (PCBWay standard 4/4 mil, 0.2 drill), routed to 0.127."""
 import os, sys, json, subprocess
 import pcbnew
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -20,15 +23,19 @@ KI = os.path.normpath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, KI)
 import sch_gen
 from kicad7_tools import FP, V, mm, save_fp, write_project, drc, route
+import grid_router as gr
 
 NAME = "usb-c-board"
 PCB_VERSION = "v0.1"
-CAD_VERSION = "v0.39"
+CAD_VERSION = "v0.40"
 LIB = "usbc"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BW, BH, BT = 12.0, 6.0, 1.6
 RULES = dict(clearance=0.1, track=0.127, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.25)   # PCBWay standard: 4/4 mil, 0.2 drill
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-2.1.0.jar")
+WIDTHS = {"default": 0.127, "VBUS": 0.3, "GND": 0.25}
+ROUTE_CLEARANCE = 0.127   # the router keeps 5 mil (+ its 0.02 grid margin) although the rule is 4 mil
+ROUTE_ORDER = ["VBUS", "GND", "DP", "DN", "CC1", "CC2"]   # first-round order: the best of 4 orders tried (14 vias; the others 16-18)
 
 # spring-contact landing pads: (name, net, panel x, panel y) from the CAD (case/params.py usb_pwr_contacts, v0.38)
 SOCKET_PANEL_Y = -53.40
@@ -120,7 +127,11 @@ def build():
         save_fp(LIB_DIR, fn(board))
     # KiCad's own SOT-553 (KiCad footprint library, CC-BY-SA 4.0 with the design exception), copied in so the project stands alone
     sot = pcbnew.FootprintLoad("/usr/share/kicad/footprints/Package_TO_SOT_SMD.pretty", "SOT-553")
-    sot.SetFPID(pcbnew.LIB_ID(LIB, "SOT-553")); save_fp(LIB_DIR, sot)
+    sot.SetFPID(pcbnew.LIB_ID(LIB, "SOT-553"))
+    for g in list(sot.GraphicalItems()):   # the board copy has no silk (below), so neither has the library copy
+        if g.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS):
+            sot.Remove(g)
+    save_fp(LIB_DIR, sot)
     builders["SOT-553"] = lambda b: pcbnew.FootprintLoad(LIB_DIR, "SOT-553")
     nets = {}
 
@@ -181,7 +192,7 @@ def add_gnd_zones(pcb_path):
     for layer in (pcbnew.F_Cu, pcbnew.B_Cu):
         z = pcbnew.ZONE(b); z.SetLayer(layer); z.SetNet(gnd)
         z.SetLocalClearance(mm(0.2)); z.SetMinThickness(mm(0.15)); z.SetThermalReliefGap(mm(0.2)); z.SetThermalReliefSpokeWidth(mm(0.25))
-        z.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
+        z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)   # spokes starve on the 0.3 mm socket pads
         ol = z.Outline(); ol.NewOutline()
         for x, y in ((-BW / 2, -BH / 2), (BW / 2, -BH / 2), (BW / 2, BH / 2), (-BW / 2, BH / 2)):
             ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] + y))
@@ -190,19 +201,55 @@ def add_gnd_zones(pcb_path):
     pcbnew.SaveBoard(pcb_path, b)
 
 
+def grid_route(pcb_path):
+    b = pcbnew.LoadBoard(pcb_path)
+    r = gr.Router(gr.board_pads(b, ORIGIN), (-BW / 2, -BH / 2, BW / 2, BH / 2), dict(RULES, hole_clearance=0.2, clearance=ROUTE_CLEARANCE), WIDTHS)
+    ok = r.run(iters=80, order=ROUTE_ORDER, h_inc=1.5, pf_mult=1.3)
+    if not ok:
+        raise SystemExit("grid router: nets still too close after 80 rounds")
+    r.smooth()
+    gr.apply(b, r, ORIGIN, RULES["via_d"], RULES["via_drill"])
+    pcbnew.SaveBoard(pcb_path, b)
+    return sum(len(r.paths[n][1]) for n in r.nets)
+
+
+def write_placement(pcb_path, out):
+    """Pad and part positions in the knob's panel frame (x as KiCad, y up the panel; z not used) for check_cad.py."""
+    b = pcbnew.LoadBoard(pcb_path)
+    to_panel = lambda x, y: (round(pcbnew.ToMM(x) - ORIGIN[0], 4), round(SOCKET_PANEL_Y - (pcbnew.ToMM(y) - ORIGIN[1]), 4))
+    d = dict(board=dict(w=BW, h=BH, t=BT, centre=(0.0, SOCKET_PANEL_Y)), cad_version=CAD_VERSION, pcb_version=PCB_VERSION, parts={}, pads=[])
+    for f in b.GetFootprints():
+        bb = f.GetFpPadsLocalBbox() if hasattr(f, "GetFpPadsLocalBbox") else None
+        fab = [g for g in f.GraphicalItems() if g.GetLayer() in (pcbnew.F_Fab, pcbnew.B_Fab) and hasattr(g, "GetShape") and g.GetShape() == pcbnew.SHAPE_T_RECT]
+        box = None
+        if fab:
+            (x0, y0), (x1, y1) = to_panel(fab[0].GetStart().x, fab[0].GetStart().y), to_panel(fab[0].GetEnd().x, fab[0].GetEnd().y)
+            box = (min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1))
+        d["parts"][f.GetReference()] = dict(xy=to_panel(f.GetPosition().x, f.GetPosition().y), side="B" if f.IsFlipped() else "F",
+                                            rot=f.GetOrientationDegrees(), fab_box=box, value=f.GetValue())
+        for p in f.Pads():
+            d["pads"].append(dict(ref=f.GetReference(), num=p.GetNumber(), net=p.GetNetname(), xy=to_panel(p.GetPosition().x, p.GetPosition().y),
+                                  size=(round(pcbnew.ToMM(p.GetSize().x), 4), round(pcbnew.ToMM(p.GetSize().y), 4)),
+                                  drill=round(pcbnew.ToMM(p.GetDrillSize().x), 4)))
+    json.dump(d, open(out, "w"), indent=1)
+
+
 if __name__ == "__main__":
-    board, placed = build()
     pcb_path = os.path.join(HERE, NAME + ".kicad_pcb")
+    libs = [(LIB, "${KIPRJMOD}/" + LIB + ".pretty")]
+    write_project(HERE, NAME, RULES, libs)   # before any save, so nothing writes KiCad's default net class over it
+    board, placed = build()
     pcbnew.SaveBoard(pcb_path, board)
-    write_project(HERE, NAME, RULES, [(LIB, "${KIPRJMOD}/" + LIB + ".pretty")])
+    write_project(HERE, NAME, RULES, libs)
     if "--route" in sys.argv:
+        print("grid router: vias", grid_route(pcb_path))
+        add_gnd_zones(pcb_path)
+    elif "--freerouting" in sys.argv:
         print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=6))
         add_gnd_zones(pcb_path)
-        write_project(HERE, NAME, RULES, [(LIB, "${KIPRJMOD}/" + LIB + ".pretty")])
+    write_project(HERE, NAME, RULES, libs)
     nv, nu, rep = drc(pcb_path, os.path.join(HERE, "drc.rpt"))
     print("DRC violations", nv, "unconnected", nu)
     step = os.path.join(HERE, "..", NAME + ".step")
     subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "-o", step, pcb_path], check=True, capture_output=True)
-    for ref, f in placed.items():
-        print(ref, round(pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], 3), round(pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1], 3),
-              "B" if f.IsFlipped() else "F")
+    write_placement(pcb_path, os.path.join(HERE, "..", "placement.json"))

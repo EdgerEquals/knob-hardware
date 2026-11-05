@@ -93,20 +93,31 @@ def write_project(here, name, rules, libs):
                                                    "min_text_height": 0.5},
                                          "track_widths": [0.0, rules["track"], 0.3, 0.4],
                                          "via_dimensions": [{"diameter": 0.0, "drill": 0.0}, {"diameter": rules["via_d"], "drill": rules["via_drill"]}]}},
+           # KiCad 7 drops a net class that lacks any of its keys (and falls back to clearance 0.2, via 0.6), so all are written
            "net_settings": {"classes": [{"name": "Default", "clearance": rules["clearance"], "track_width": rules["track"],
                                          "via_diameter": rules["via_d"], "via_drill": rules["via_drill"], "microvia_diameter": 0.3,
-                                         "microvia_drill": 0.1, "diff_pair_width": 0.2, "diff_pair_gap": 0.25}], "meta": {"version": 3}},
+                                         "microvia_drill": 0.1, "diff_pair_width": 0.2, "diff_pair_gap": 0.25, "diff_pair_via_gap": 0.25,
+                                         "bus_width": 12, "wire_width": 6, "line_style": 0, "pcb_color": "rgba(0, 0, 0, 0.000)",
+                                         "schematic_color": "rgba(0, 0, 0, 0.000)"}],
+                            "meta": {"version": 3}, "net_colors": None, "netclass_assignments": None, "netclass_patterns": []},
            "sheets": [], "libraries": {"pinned_footprint_libs": [], "pinned_symbol_libs": []}}
     json.dump(pro, open(os.path.join(here, name + ".kicad_pro"), "w"), indent=2)
     rows = "".join(f'  (lib (name "{n}")(type "KiCad")(uri "{u}")(options "")(descr ""))\n' for n, u in libs)
     open(os.path.join(here, "fp-lib-table"), "w").write(f"(fp_lib_table\n{rows})\n")
 
 
+def _fresh(*args):
+    """Run one of this file's commands in a new process. A board saved earlier in this process leaves its project (with KiCad's
+    default net class: clearance 0.2, via 0.6) open in pcbnew's settings manager, and later loads reuse it instead of the
+    .kicad_pro on disk; a new process reads the file."""
+    import sys
+    subprocess.run([sys.executable, os.path.abspath(__file__)] + [str(a) for a in args], check=True, capture_output=True)
+
+
 def drc(pcb_path, report=None):
-    """Run DRC (KiCad 7 python). Returns (violations, unconnected, text)."""
-    b = pcbnew.LoadBoard(pcb_path)
+    """Run DRC (KiCad 7 python, in a new process). Returns (violations, unconnected, text)."""
     rep = report or pcb_path.replace(".kicad_pcb", "_drc.rpt")
-    pcbnew.WriteDRCReport(b, rep, pcbnew.EDA_UNITS_MILLIMETRES, True)
+    _fresh("drc", pcb_path, rep)
     txt = open(rep).read()
     v = re.search(r"\*\* Found (\d+) DRC violations", txt); u = re.search(r"\*\* Found (\d+) unconnected pads", txt)
     return (int(v.group(1)) if v else -1), (int(u.group(1)) if u else -1), txt
@@ -160,8 +171,7 @@ def import_ses(board, ses_path):
 
 def route(pcb_path, jar, passes=60, attempts=4):
     dsn = pcb_path.replace(".kicad_pcb", ".dsn"); ses = pcb_path.replace(".kicad_pcb", ".ses")
-    b = pcbnew.LoadBoard(pcb_path)
-    assert pcbnew.ExportSpecctraDSN(b, dsn), "DSN export failed"
+    _fresh("dsn", pcb_path, dsn)
     unrouted = open(pcb_path).read(); best = None
     for attempt in range(attempts):
         subprocess.run(["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes),
@@ -181,3 +191,13 @@ def route(pcb_path, jar, passes=60, attempts=4):
         if os.path.exists(p):
             os.remove(p)
     return best[0]
+
+
+if __name__ == "__main__":   # commands run by _fresh()
+    import sys
+    cmd, a = sys.argv[1], sys.argv[2:]
+    b = pcbnew.LoadBoard(a[0])
+    if cmd == "drc":
+        pcbnew.WriteDRCReport(b, a[1], pcbnew.EDA_UNITS_MILLIMETRES, True)
+    elif cmd == "dsn":
+        assert pcbnew.ExportSpecctraDSN(b, a[1]), "DSN export failed"
