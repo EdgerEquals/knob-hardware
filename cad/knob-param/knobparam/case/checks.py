@@ -391,6 +391,10 @@ def checks(D, parts):
                     dmin = min(dmin, ((cts[i][0] - cts[j][0]) ** 2 + (cts[i][1] - cts[j][1]) ** 2) ** 0.5 - D["usb_pwr_d"])
             row("USB spring contacts: gap between pads", dmin + D["usb_pwr_d"] - D.get("usb_pwr_pad", D["usb_pwr_d"]), 0.3,
                 f"{len(cts)} contacts (Harwin P70-5100045, body Ø{D['usb_pwr_d']:g}), pads Ø{D.get('usb_pwr_pad', D['usb_pwr_d']):g} (v0.38, Ed 5 Nov 15:34)")
+            pr_ = D.get("usb_pwr_pad", D["usb_pwr_d"]) / 2
+            te = min(min(tw - abs(x) - pr_, y - pr_ - ty) for x, y in cts)
+            row("USB spring-contact pads on the jack board's tab: to the tab's edges", te, 0.25,
+                f"tab ±{tw:g} down to y {ty:g}; pads Ø{2 * pr_:g} [S-dist] (v0.41, Ed 5 Nov 17:36 Q16 = A)")
             gap = D["usb_z0"] - D["jb_z1"]; bt_ = D["usb_board"][2]
             row("USB spring contacts: gap inside the contact's working range 3.85-4.20", min(gap - 3.85, 4.20 - gap), 0.05,
                 f"gap {gap:.2f} = 12.5 - socket {D['usb_rcpt'][2]:g} - board {bt_:g} [Ed 15:40 Q13 = A]; Harwin P70-5100045 works 3.85-4.20, 4.00 nominal [S-dist]")

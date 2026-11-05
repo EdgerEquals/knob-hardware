@@ -315,7 +315,9 @@ P = dict(
     # v0.35 [Ed 4 Nov 22:36] step 2, decision 5, option A: the USB-C board (in the shell first) reaches the jack unit (in with the stack)
     # through spring contacts: a tab on the jack board's bottom edge reaches into the USB-C channel and carries them; they land on gold pads
     # on the USB-C board's back face in the stack's last ~1 mm. The key's ledge tab goes (the jack board's tab passes there).
-    usb_pwr_tab=(5.8, -53.6),   # v0.38: half width 5.5 -> 5.8 for the contacts at x ±5.0.   # [Ed 22:36 / A] jack board tab: half width, bottom edge y (0.35 above the key, inside the channel)
+    usb_pwr_tab=(5.85, -53.9),  # v0.41 [Ed 5 Nov 17:36 Q16 = A]: ±5.85 down to -53.90 (was ±5.8 to -53.6, where the lower pads Ø1.2 met the
+                                #   tab's edge): pads 0.30 from the bottom, 0.25 from the sides, 0.30 to the channel walls.
+                                # v0.38: half width 5.5 -> 5.8 for the contacts at x ±5.0.   # [Ed 22:36 / A] jack board tab: half width, bottom edge y (0.35 above the key, inside the channel)
     # v0.37 [Ed 5 Nov 11:17 Q4 = A, 11:24 Q5 = B]: USB data on the same socket and the PD chip on the jack power board: 8 contacts,
     # two rows of 4 at 1.6 pitch, clear of the socket's shell legs [A]: 15 V x2, GND x2 (top row), D+, D-, CC1, CC2 (bottom row)
     # v0.38 [Ed 5 Nov 15:34 Q12 = A]: laid round the real socket's shell legs and locating posts (≥ 0.3 from their pads/holes and the edges)
@@ -329,6 +331,8 @@ P = dict(
     usb_post_hole=0.8,
     # v0.37 [Ed 11:24]: the two protection parts on the USB-C board's back face, in pockets in the printed key: (name, x0, x1, y0, y1, h)
     usb_prot=(("VBUS TVS (DFN1610) [A]", -1.4, 0.2, -56.05, -55.05, 0.55), ("data ESD (SOT-5X3) [A]", 3.4, 5.0, -56.05, -54.45, 0.6)),
+    usb_key_tab_step=0.25,  # v0.41 [Ed 5 Nov 17:36 Q16 = A]: the key's top stepped down this much along the tab's path (behind z of the
+                            #   tab's face + 0.3), so the longer tab keeps 0.30 to it; full height where the key presses the USB-C board
     usb_pocket_clear=0.2,  # [A] key pocket round each part (v0.40: 0.2, was 0.1, so it also clears the ESD's pads, 1.85 across)
     jb_air=0.3,            # [A] clearance round the pins / headers in the boards and envelopes
     post_jack_clear=1.0,   # [A] air from the top of a corner post to the jack pin tips

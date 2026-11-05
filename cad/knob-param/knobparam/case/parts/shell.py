@@ -428,6 +428,9 @@ def build(D):
         for _n, a, b, c, d, h in D.get("usb_prot") or ():   # v0.37 [Ed 5 Nov 11:24]: pockets for the board's TVS and ESD
             pc = D["usb_pocket_clear"]
             key = _sub(key, _box(a - pc, b + pc, c - pc, d + pc, D["usb_z0"] - h - pc, D["usb_z0"] + 0.1))
+        if D.get("usb_pwr_tab") and D.get("jb_on") and D.get("usb_key_tab_step"):   # v0.41 [Ed 5 Nov 17:36 Q16 = A]: a step along the tab's path
+            kt = D["y_in0"] - D["usb_key_gap"]
+            key = _sub(key, _box(ux - kw - sl, ux + kw + sl, kt - D["usb_key_tab_step"], kt + sl, D["z_rim_seat"] - sl, D["jb_z1"] + 0.3))
         if not D.get("usb_pwr_tab"):   # v0.32-v0.34: the key's tab restored the bottom ledge in the channel (v0.35: the jack board's tab passes there)
             key = _add(key, _box(ux - kw, ux + kw, D["y_in0"] - D["usb_key_gap"] - D["fuse"], D["pcb_y0"] + D["ledge_w"], D["z_ledge0"],
                                  D["z_ledge1"]))
