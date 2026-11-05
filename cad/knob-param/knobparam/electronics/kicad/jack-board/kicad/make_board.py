@@ -205,16 +205,20 @@ def build():
                 pad.SetNet(net(n))
     # no copper on the top face under each jack's barrel: a plug's tip comes through the back of the body there [S-dist Thonk: keep
     # copper out from under the barrel, 3 mm]; kept out to Ø4 [A]
+    # and no tracks or vias on either face round the plug-tip hole (Freerouting keeps only its own clearance from a plain hole)
+    import math
     for jx in JACK_X:
-        k = pcbnew.ZONE(board); k.SetIsRuleArea(True); k.SetLayer(pcbnew.F_Cu)
-        k.SetDoNotAllowTracks(True); k.SetDoNotAllowVias(True); k.SetDoNotAllowCopperPour(True); k.SetDoNotAllowPads(False)
-        k.SetDoNotAllowFootprints(False)
-        ol = k.Outline(); ol.NewOutline()
-        cx, cy = kc(jx, JY)
-        for i in range(24):
-            a = 2 * 3.141592653589793 * i / 24
-            ol.Append(mm(ORIGIN[0] + cx + BARREL_KEEP / 2 * __import__("math").cos(a)), mm(ORIGIN[1] + cy + BARREL_KEEP / 2 * __import__("math").sin(a)))
-        board.Add(k)
+        for layer, dia, pour in ((pcbnew.F_Cu, max(BARREL_KEEP, PLUG_HOLE + 0.5), False), (pcbnew.B_Cu, PLUG_HOLE + 0.5, True)):
+            k = pcbnew.ZONE(board); k.SetIsRuleArea(True); k.SetLayer(layer)
+            k.SetDoNotAllowTracks(True); k.SetDoNotAllowVias(True); k.SetDoNotAllowCopperPour(not pour); k.SetDoNotAllowPads(False)
+            k.SetDoNotAllowFootprints(False)
+            ol = k.Outline(); ol.NewOutline()
+            cx, cy = kc(jx, JY)
+            for i in range(32):
+                a = 2 * math.pi * i / 32
+                r = dia / 2 / math.cos(math.pi / 32)        # the polygon's flats outside the circle
+                ol.Append(mm(ORIGIN[0] + cx + r * math.cos(a)), mm(ORIGIN[1] + cy + r * math.sin(a)))
+            board.Add(k)
     t = pcbnew.PCB_TEXT(board); t.SetText(f"jack {PCB_VERSION}"); t.SetPosition(P(0.0, -2.8))   # between the middle plug holes
     t.SetLayer(pcbnew.B_SilkS); t.SetTextSize(V(0.7, 0.7)); t.SetTextThickness(mm(0.12)); t.SetMirrored(True); board.Add(t)
     ds.SetAuxOrigin(P(0, 0)); ds.SetGridOrigin(P(0, 0))
