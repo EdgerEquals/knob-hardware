@@ -3,133 +3,156 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a CAD workspace. Header toolbar on top, model browser on the left, the 3D viewport filling the rest
-   (ViewCube and navigation bar top right, status bar along the bottom). */
+/* Layout: the 3D viewport fills the whole page. One drop-down panel (tools + part switches) hangs from the top
+   on a tab: pull it down to work, push it up for the full view. ViewCube and navigation bar top right. */
 :root {
-  --bg: #e9ecef;          /* chrome behind panels */
-  --panel: #f6f7f8;       /* browser, header, menus */
+  --bg: #e9ecef;          /* behind everything */
+  --panel: #f6f7f8;       /* drop-down, cards, menus */
   --fg: #1c2228;
   --muted: #5b6670;
   --line: #d3d8dd;
   --hover: #e2e7ec;
-  --accent: #1f6fd1;      /* selection blue */
+  --accent: #1f6fd1;      /* selection blue, switches on */
   --accent-soft: #d6e6fa;
+  --off: #b6bec6;         /* switch off */
+  --mixed: #8db4e6;       /* group partly on */
   --vp-top: #fbfcfd;      /* viewport gradient */
   --vp-bot: #c4ced7;
   --chip: #ffffff;
   --shadow: 0 1px 2px rgba(20, 30, 40, .12), 0 4px 14px rgba(20, 30, 40, .10);
+  --top: 0px;             /* height of the open drop-down; floating tools sit below it */
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #121518; --panel: #1b1f23; --fg: #e4e8ec; --muted: #95a0aa; --line: #2d3339; --hover: #252a30;
-    --accent: #4f9cff; --accent-soft: #1d3350; --vp-top: #3b434b; --vp-bot: #15181b; --chip: #22272c;
+    --accent: #4f9cff; --accent-soft: #1d3350; --off: #48515a; --mixed: #2f5b91; --vp-top: #3b434b; --vp-bot: #15181b; --chip: #22272c;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .35); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #121518; --panel: #1b1f23; --fg: #e4e8ec; --muted: #95a0aa; --line: #2d3339; --hover: #252a30;
-  --accent: #4f9cff; --accent-soft: #1d3350; --vp-top: #3b434b; --vp-bot: #15181b; --chip: #22272c;
+  --accent: #4f9cff; --accent-soft: #1d3350; --off: #48515a; --mixed: #2f5b91; --vp-top: #3b434b; --vp-bot: #15181b; --chip: #22272c;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .35); color-scheme: dark;
 }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font: 13px/1.4 var(--sans); overflow: hidden; }
 button, select, input { font: inherit; color: inherit; }
-.app { height: 100%; display: grid; grid-template-columns: 290px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.app { position: relative; height: 100%; overflow: hidden; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* header toolbar */
-.bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; background: var(--panel);
-  border-bottom: 1px solid var(--line); padding-block: 7px; padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px)); position: relative; z-index: 5; }
-.ttl { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+/* the drop-down */
+.drop { position: absolute; top: 0; left: 0; right: 0; z-index: 20; transition: transform .22s ease; }
+.drop.closed { transform: translateY(-100%); }
+.dropin { background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); max-height: min(74vh, 720px);
+  overflow: auto; padding-block: 10px 12px; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 10px; }
+.drop.closed .dropin { visibility: hidden; transition: visibility 0s .22s; }
+.tab { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 7px;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px;
+  padding: 5px 16px 6px; box-shadow: var(--shadow); cursor: pointer; font-weight: 500; white-space: nowrap; }
+.tab:hover { background: var(--hover); }
+.tab svg { transition: transform .22s; }
+.drop.closed .tab svg { transform: rotate(180deg); }
+.dhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.ttl { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .ttl b { font-weight: 600; font-size: 14px; letter-spacing: .01em; white-space: nowrap; }
 .ver { font: 500 11px var(--mono); background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 1px 6px; }
-.src { font: 11px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.src { font: 11px var(--mono); color: var(--muted); }
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-left: auto; }
 .fld { display: flex; align-items: center; gap: 5px; }
-.fld > span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.fld > span, .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 select, .btn, input[type="number"], input[type="search"] { background: var(--chip); border: 1px solid var(--line); border-radius: 5px;
-  padding: 3px 7px; min-height: 26px; }
-.btn { cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  padding: 3px 7px; min-height: 28px; }
+.btn { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .btn:hover { background: var(--hover); }
 .btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-.chk { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chk { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
 details.set { position: relative; }
 details.set > summary { list-style: none; }
 details.set > summary::-webkit-details-marker { display: none; }
 .pop { position: absolute; right: 0; top: calc(100% + 6px); background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-  box-shadow: var(--shadow); padding: 10px 12px; display: grid; gap: 8px; width: 270px; z-index: 20; }
+  box-shadow: var(--shadow); padding: 10px 12px; display: grid; gap: 8px; width: min(280px, calc(100vw - 32px)); z-index: 25; }
 .pop label { display: flex; gap: 8px; align-items: center; }
 .pop .hint { font-size: 11.5px; color: var(--muted); }
-.only-narrow { display: none; }
-.bwrap { display: contents; }
-.browser { grid-column: 1; grid-row: 2; }
-.vp { grid-column: 2; grid-row: 2; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.phead .lbl { margin-right: 4px; }
+#filter { width: 200px; max-width: 100%; }
+.help { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+.help kbd { font: 11px var(--mono); background: var(--chip); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
 
-/* model browser */
-.browser { background: var(--panel); border-right: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
-.bhead { padding: 10px 12px 8px; display: grid; gap: 7px; border-bottom: 1px solid var(--line); }
-.bhead h2 { margin: 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-.brow { display: flex; gap: 6px; }
-.brow .btn { flex: 1; justify-content: center; font-size: 12px; }
-#filter { width: 100%; }
-.tree { overflow: auto; padding: 4px 0 10px; }
-.row { display: flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; cursor: default; white-space: nowrap; min-height: 24px; }
+/* on/off switches */
+.sw { position: relative; display: inline-block; width: 32px; height: 18px; flex: none; }
+.sw input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.sw .trk { position: absolute; inset: 0; border-radius: 9px; background: var(--off); transition: background .15s; }
+.sw .trk::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3); transition: transform .15s; }
+.sw input:checked + .trk { background: var(--accent); }
+.sw input:checked + .trk::after { transform: translateX(14px); }
+.sw input:indeterminate + .trk { background: var(--mixed); }
+.sw input:indeterminate + .trk::after { transform: translateX(7px); }
+.sw input:focus-visible + .trk { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw.sm { width: 26px; height: 15px; }
+.sw.sm .trk::after { width: 11px; height: 11px; }
+.sw.sm input:checked + .trk::after { transform: translateX(11px); }
+
+/* group cards */
+.groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; align-items: start; }
+.gcard { background: var(--chip); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.gcard.sel { border-color: var(--accent); }
+.ghead { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 10px; }
+.gname { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: 0; background: none; padding: 2px 0; cursor: pointer; text-align: left; font-weight: 500; }
+.gname .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cnt { margin-left: auto; font: 11px var(--mono); color: var(--muted); white-space: nowrap; }
+.gname svg { flex: none; color: var(--muted); transition: transform .12s; }
+.gname[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.gcard.off .nm { color: var(--muted); }
+.plist { border-top: 1px solid var(--line); max-height: 280px; overflow: auto; padding: 3px 0; }
+.row { display: flex; align-items: center; gap: 7px; padding: 3px 10px; min-height: 26px; cursor: default; }
 .row:hover { background: var(--hover); }
 .row.sel { background: var(--accent-soft); }
 .row.sel .pn { color: var(--accent); font-weight: 500; }
-.row input { margin: 0; flex: none; accent-color: var(--accent); }
-.row .pn { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.row .pn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 12.5px; }
 .row.off .pn { color: var(--muted); }
-.root { font-weight: 600; }
-.grow { font-weight: 500; }
-.chev { width: 16px; height: 16px; border: 0; background: none; padding: 0; cursor: pointer; flex: none; color: var(--muted); display: grid; place-items: center; }
-.chev svg { transition: transform .12s; }
-.chev[aria-expanded="false"] svg { transform: rotate(-90deg); }
-.cnt { margin-left: auto; font: 11px var(--mono); color: var(--muted); padding-left: 6px; }
-.prow { padding-left: 30px; }
-.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; border: 1px solid rgba(0, 0, 0, .25); }
-.plist[hidden] { display: none; }
-.bfoot { border-top: 1px solid var(--line); padding: 8px 12px; font-size: 11.5px; color: var(--muted); }
+.swc { width: 10px; height: 10px; border-radius: 2px; flex: none; border: 1px solid rgba(0, 0, 0, .25); }
 
 /* viewport */
-.vp { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: linear-gradient(180deg, var(--vp-top), var(--vp-bot)); }
+.vp { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, var(--vp-top), var(--vp-bot)); }
 #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
-#gl.pan { cursor: move; } #gl.orbit { cursor: grab; } #gl.zoom { cursor: ns-resize; } #gl.measure { cursor: crosshair; }
-.cubewrap { position: absolute; top: 10px; right: max(10px, env(safe-area-inset-right, 0px)); width: 124px; height: 124px; }
+#gl.pan { cursor: move; } #gl.orbit { cursor: grab; } #gl.zoom { cursor: ns-resize; } #gl.measure, #gl.hide { cursor: crosshair; }
+.float { transition: top .22s ease; }
+.cubewrap { position: absolute; top: calc(var(--top) + 10px); right: max(10px, env(safe-area-inset-right, 0px)); width: 124px; height: 124px; }
 #cube { width: 124px; height: 124px; display: block; cursor: pointer; touch-action: none; }
 #homeBtn { position: absolute; left: 2px; top: 2px; width: 24px; height: 24px; border-radius: 5px; border: 1px solid var(--line);
-  background: var(--chip); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  background: var(--chip); display: grid; place-items: center; cursor: pointer; padding: 0; color: var(--fg); }
 #homeBtn:hover { background: var(--hover); }
-.nav { position: absolute; top: 142px; right: max(14px, env(safe-area-inset-right, 0px)); display: grid; gap: 2px; background: var(--panel);
+.nav { position: absolute; top: calc(var(--top) + 142px); right: max(14px, env(safe-area-inset-right, 0px)); display: grid; gap: 2px; background: var(--panel);
   border: 1px solid var(--line); border-radius: 8px; padding: 3px; box-shadow: var(--shadow); }
-.nav button { width: 32px; height: 32px; border: 0; border-radius: 5px; background: none; display: grid; place-items: center; cursor: pointer; color: var(--fg); }
+.nav button { width: 34px; height: 34px; border: 0; border-radius: 5px; background: none; display: grid; place-items: center; cursor: pointer; color: var(--fg); }
 .nav button:hover { background: var(--hover); }
 .nav button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .nav hr { border: 0; border-top: 1px solid var(--line); margin: 2px 4px; }
-#triad { position: absolute; left: 10px; bottom: 34px; width: 76px; height: 76px; pointer-events: none; }
-.status { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 14px; align-items: center; background: var(--panel);
-  border-top: 1px solid var(--line); padding-block: 4px; padding-left: max(12px, env(safe-area-inset-left, 0px));
-  padding-right: max(12px, env(safe-area-inset-right, 0px)); font-size: 11.5px; min-height: 26px; }
-#mode { font-weight: 500; white-space: nowrap; }
-#hint { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#triad { position: absolute; left: max(8px, env(safe-area-inset-left, 0px)); bottom: 8px; width: 76px; height: 76px; pointer-events: none; }
+.status { position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 4px 12px; font-size: 12px; box-shadow: var(--shadow); max-width: calc(100% - 200px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
-.props { left: 96px; bottom: 36px; width: min(360px, calc(100% - 120px)); padding: 10px 12px; display: grid; gap: 6px; }
+.props { left: 92px; bottom: 44px; width: min(360px, calc(100% - 180px)); padding: 10px 12px; display: grid; gap: 6px; }
 .props h3 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; }
 .props dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
 .props dt { color: var(--muted); }
 .props dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.props .brow { margin-top: 2px; }
-.sec { top: 10px; left: 10px; padding: 10px 12px; display: grid; gap: 7px; width: 300px; }
+.brow { display: flex; gap: 6px; }
+.brow .btn { flex: 1; font-size: 12px; }
+.sec { top: calc(var(--top) + 44px); left: max(10px, env(safe-area-inset-left, 0px)); padding: 10px 12px; display: grid; gap: 7px; width: 300px; }
 .sec h3 { margin: 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .srow { display: grid; grid-template-columns: 52px minmax(0, 1fr) 78px; gap: 8px; align-items: center; }
 .srow input[type="range"] { width: 100%; accent-color: var(--accent); }
 .srow input[type="number"] { width: 78px; padding: 2px 5px; }
-.meas { top: 10px; left: 50%; transform: translateX(-50%); padding: 8px 12px; font-size: 12px; display: grid; gap: 3px; max-width: calc(100% - 300px); }
+.meas { bottom: 44px; right: 64px; padding: 8px 12px; font-size: 12px; display: grid; gap: 3px; max-width: min(360px, calc(100% - 140px)); }
 .meas b { font: 600 15px var(--mono); }
 .mk { position: absolute; width: 9px; height: 9px; margin: -5px 0 0 -5px; border-radius: 50%; background: #ff5a1f; border: 2px solid #fff; pointer-events: none; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .pivot { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #18a058; background: rgba(24,160,88,.25); pointer-events: none; }
@@ -144,95 +167,42 @@ details.set > summary::-webkit-details-marker { display: none; }
 .pbar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .1s; }
 
 @media (max-width: 760px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
-  .vp { grid-column: 1; }
-  .browser { position: fixed; z-index: 25; top: 0; bottom: 0; left: 0; width: min(320px, 88vw); box-shadow: var(--shadow);
-    transform: translateX(-102%); transition: transform .18s; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .browser.open { transform: none; }
-  .only-narrow { display: inline-flex; }
   .cubewrap { width: 92px; height: 92px; } #cube { width: 92px; height: 92px; }
-  .nav { top: 108px; }
-  .sec { width: calc(100% - 80px); }
-  .props { left: 10px; width: calc(100% - 20px); bottom: 34px; }
+  .nav { top: calc(var(--top) + 108px); }
+  .sec { width: calc(100% - 84px); }
+  .props { left: 8px; width: calc(100% - 64px); bottom: 44px; }
+  .meas { left: 8px; right: 60px; bottom: auto; top: calc(var(--top) + 44px); max-width: none; }
   #triad { display: none; }
-  #hint { display: none; }
-  .meas { max-width: calc(100% - 130px); left: 10px; transform: none; }
+  .status { max-width: calc(100% - 24px); }
+  .help { display: none; }
+  .groups { grid-template-columns: minmax(0, 1fr); }
+  .tools { margin-left: 0; }
+  #filter { flex: 1 1 140px; width: auto; }
 }
-@media (prefers-reduced-motion: reduce) { .browser, .chev svg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .drop, .float, .tab svg, .gname svg, .sw .trk, .sw .trk::after { transition: none; } }
 </style>
 
 <div class="app" id="app">
-  <header class="bar">
-    <button class="btn only-narrow" id="partsBtn" aria-controls="browser" aria-expanded="false">Parts</button>
-    <div class="ttl"><b>Knob module</b><span class="ver" id="ver">v0.36</span><span class="src" id="src">asm/layout-v4</span></div>
-    <div class="tools">
-      <label class="fld"><span>Style</span>
-        <select id="style">
-          <option value="se" selected>Shaded with edges</option>
-          <option value="s">Shaded</option>
-          <option value="w">Wireframe</option>
-        </select></label>
-      <label class="fld"><span>Camera</span>
-        <select id="proj">
-          <option value="o" selected>Orthographic</option>
-          <option value="p">Perspective</option>
-        </select></label>
-      <label class="fld"><span>Section</span>
-        <select id="secMode">
-          <option value="off" selected>Off</option>
-          <option value="half">Half</option>
-          <option value="quarter">Quarter</option>
-        </select></label>
-      <label class="chk"><input type="checkbox" id="clear" checked> See-through clear parts</label>
-      <button class="btn" id="measBtn" aria-pressed="false" title="Measure the distance between two points (M)">Measure</button>
-      <details class="set" id="setDlg">
-        <summary class="btn">Navigation</summary>
-        <div class="pop">
-          <label><input type="checkbox" id="revZoom"> Reverse zoom direction</label>
-          <div class="hint">Off (Inventor's default): wheel forward zooms out, dragging up with F3 zooms out.</div>
-          <label>Orbit
-            <select id="orbitType"><option value="free" selected>Free (relative to screen)</option><option value="con">Constrained (y stays up)</option></select></label>
-          <label><input type="checkbox" id="nearPivot" checked> Orbit about the model point under the cursor</label>
-          <label><input type="checkbox" id="zoomCursor" checked> Zoom toward the cursor</label>
-          <div class="hint">With a part selected, orbit turns about that part, as in Inventor.</div>
-        </div>
-      </details>
-    </div>
-  </header>
-
-  <div class="bwrap">
-  <aside class="browser" id="browser" aria-label="Model browser">
-    <div class="bhead">
-      <div class="brow" style="align-items:center"><h2 style="flex:1">Model browser</h2><button class="btn only-narrow" id="closeParts" style="flex:none">Close</button></div>
-      <input type="search" id="filter" placeholder="Filter parts" autocomplete="off">
-      <div class="brow">
-        <button class="btn" id="showAll">Show all</button>
-        <button class="btn" id="isoBtn" title="Show only the selected part">Isolate</button>
-        <button class="btn" id="invBtn" title="Swap shown and hidden">Invert</button>
-      </div>
-    </div>
-    <div class="tree" id="tree"></div>
-    <div class="bfoot" id="bfoot">Click a name to select it, double-click to zoom to it.</div>
-  </aside>
-  </div>
-
   <main class="vp" id="vp">
     <canvas id="gl" tabindex="0" aria-label="3D view of the knob module"></canvas>
     <canvas id="triad" width="152" height="152"></canvas>
-    <div class="cubewrap">
+    <div class="cubewrap float">
       <canvas id="cube"></canvas>
       <button id="homeBtn" title="Home view (F6)" aria-label="Home view"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8 8 2.5 14 8M4 7v6.5h3V10h2v3.5h3V7"/></svg></button>
     </div>
-    <div class="nav" id="nav" role="toolbar" aria-label="Navigation">
+    <div class="nav float" id="nav" role="toolbar" aria-label="Navigation">
       <button data-act="all" title="Zoom all (Home, or double-click the middle button)" aria-label="Zoom all"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4"/><rect x="6" y="6" width="6" height="6"/></svg></button>
       <button data-tool="pan" aria-pressed="false" title="Pan (F2, or drag with the middle button)" aria-label="Pan"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 1.5v15M1.5 9h15M9 1.5 7 3.5M9 1.5l2 2M9 16.5l-2-2M9 16.5l2-2M1.5 9l2-2M1.5 9l2 2M16.5 9l-2-2M16.5 9l-2 2"/></svg></button>
       <button data-tool="zoom" aria-pressed="false" title="Zoom (F3, drag up or down)" aria-label="Zoom"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7.5" cy="7.5" r="5"/><path d="M11.2 11.2 16 16M5 7.5h5M7.5 5v5"/></svg></button>
       <button data-tool="orbit" aria-pressed="false" title="Orbit (F4, or Shift + middle button)" aria-label="Orbit"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="9" cy="9" rx="7.5" ry="3.2"/><ellipse cx="9" cy="9" rx="3.2" ry="7.5"/><path d="M15.2 4.5l1.2 1.6-2 .3"/></svg></button>
       <hr>
+      <button data-tool="hide" aria-pressed="false" title="Hide parts by clicking them (H)" aria-label="Hide parts by clicking"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z"/><circle cx="9" cy="9" r="2.3"/><path d="M2.5 15.5 15.5 2.5"/></svg></button>
+      <button data-act="showall" title="Show all parts" aria-label="Show all parts"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 9s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z"/><circle cx="9" cy="9" r="2.3"/></svg></button>
+      <hr>
       <button data-act="prev" title="Previous view (F5)" aria-label="Previous view"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4 3 8l4 4M3 8h8a4 4 0 0 1 0 8H9"/></svg></button>
       <button data-act="home" title="Home view (F6)" aria-label="Home view"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8 8 2.5 14 8M4 7v6.5h3V10h2v3.5h3V7"/></svg></button>
     </div>
-    <div class="card sec" id="secPanel" hidden>
+    <div class="card sec float" id="secPanel" hidden>
       <h3 id="secTitle">Half section</h3>
       <label class="srow"><span id="axLbl">Plane</span>
         <select id="secAxis" style="grid-column: span 2">
@@ -252,9 +222,64 @@ details.set > summary::-webkit-details-marker { display: none; }
     <div id="marks"></div>
     <div class="pivot" id="pivot" hidden></div>
     <div class="card props" id="props" hidden></div>
-    <div class="status"><span id="mode">Select</span><span id="hint">Middle drag: pan · Shift + middle drag: orbit · Wheel: zoom (forward = out) · Double-click middle: zoom all · F2 pan · F3 zoom · F4 orbit · F5 previous · F6 home</span></div>
+    <div class="status" id="status" hidden><span id="mode">Select</span></div>
     <div class="loading" id="loading"><div class="card"><div id="loadTxt">Loading the model…</div><div class="pbar"><i id="loadBar"></i></div></div></div>
   </main>
+
+  <div class="drop" id="drop">
+    <div class="dropin" id="dropin">
+      <div class="dhead">
+        <div class="ttl"><b>Knob module</b><span class="ver" id="ver">v0.36</span><span class="src" id="src">asm/layout-v4</span></div>
+        <div class="tools">
+          <label class="fld"><span>Style</span>
+            <select id="style">
+              <option value="se" selected>Shaded with edges</option>
+              <option value="s">Shaded</option>
+              <option value="w">Wireframe</option>
+            </select></label>
+          <label class="fld"><span>Camera</span>
+            <select id="proj">
+              <option value="o" selected>Orthographic</option>
+              <option value="p">Perspective</option>
+            </select></label>
+          <label class="fld"><span>Section</span>
+            <select id="secMode">
+              <option value="off" selected>Off</option>
+              <option value="half">Half</option>
+              <option value="quarter">Quarter</option>
+            </select></label>
+          <label class="chk"><span class="sw sm"><input type="checkbox" id="clear" checked><span class="trk"></span></span> See-through clear parts</label>
+          <button class="btn" id="measBtn" aria-pressed="false" title="Measure the distance between two points (M)">Measure</button>
+          <details class="set" id="setDlg">
+            <summary class="btn">Navigation</summary>
+            <div class="pop">
+              <label><input type="checkbox" id="revZoom"> Reverse zoom direction</label>
+              <div class="hint">Off (Inventor's default): wheel forward zooms out, dragging up with F3 zooms out.</div>
+              <label>Orbit
+                <select id="orbitType"><option value="free" selected>Free (relative to screen)</option><option value="con">Constrained (y stays up)</option></select></label>
+              <label><input type="checkbox" id="nearPivot" checked> Orbit about the model point under the cursor</label>
+              <label><input type="checkbox" id="zoomCursor" checked> Zoom toward the cursor</label>
+              <div class="hint">With a part selected, orbit turns about that part, as in Inventor.</div>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="phead">
+        <span class="lbl">Parts</span>
+        <span class="sw"><input type="checkbox" id="rootChk" checked aria-label="All parts on or off"><span class="trk"></span></span>
+        <span class="cnt" id="rootCnt" style="margin-left:0">212 / 212 on</span>
+        <input type="search" id="filter" placeholder="Find a part" autocomplete="off">
+        <button class="btn" id="showAll">Show all</button>
+        <button class="btn" id="hideAll">Hide all</button>
+        <button class="btn" id="invBtn" title="Swap shown and hidden">Invert</button>
+        <button class="btn" id="isoBtn" title="Show only the selected part">Isolate selected</button>
+        <button class="btn" id="expAll" aria-pressed="false">List every part</button>
+      </div>
+      <div class="groups" id="tree"></div>
+      <div class="help">Middle drag <kbd>pan</kbd> · Shift + middle drag <kbd>orbit</kbd> · Wheel <kbd>zoom</kbd> (forward = <span id="zdir">out</span>) · Double-click middle <kbd>zoom all</kbd> · <kbd>F2</kbd> pan · <kbd>F3</kbd> zoom · <kbd>F4</kbd> orbit · <kbd>F5</kbd> previous · <kbd>F6</kbd> home · <kbd>H</kbd> hide by clicking · <kbd>M</kbd> measure · right-click a part for Hide / Isolate</div>
+    </div>
+    <button class="tab" id="tab" aria-expanded="true" aria-controls="dropin"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 8 6 4l4 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span id="tabTxt">Hide menu</span></button>
+  </div>
 </div>
 <div class="card menu" id="menu" hidden role="menu"></div>
 
@@ -469,8 +494,10 @@ function setTool(t) {
 function modeText() {
   const t = curTool();
   const txt = { pan: 'Pan: drag with the left button (Esc to stop)', zoom: 'Zoom: drag up or down (Esc to stop)',
-    orbit: 'Orbit: drag with the left button (Esc to stop)', measure: 'Measure: click two points on the model (Esc to stop)' };
-  $('mode').textContent = t ? txt[t] : (selected ? 'Selected: ' + selected.r.n : 'Select');
+    orbit: 'Orbit: drag with the left button (Esc to stop)', measure: 'Measure: click two points on the model (Esc to stop)',
+    hide: 'Hide: click parts to switch them off (Esc to stop)' };
+  const s = t ? txt[t] : (selected ? 'Selected: ' + selected.r.n : '');
+  $('mode').textContent = s; $('status').hidden = !s;
   gl.className = t || '';
 }
 gl.addEventListener('contextmenu', e => e.preventDefault());
@@ -491,7 +518,7 @@ gl.addEventListener('pointerdown', e => {
   } else if (e.button === 0) {
     const t = curTool();
     if (t === 'pan' || t === 'zoom' || t === 'orbit') op = t;
-    else op = t === 'measure' ? 'measure' : 'select';
+    else op = t === 'measure' ? 'measure' : t === 'hide' ? 'hide' : 'select';
   } else if (e.button === 2) op = 'menu';
   if (!op) return;
   drag = { op, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, id: e.pointerId };
@@ -515,12 +542,15 @@ function endDrag(e) {
   if (!d.moved) {
     if (d.op === 'select') select(pickPart(e.clientX, e.clientY), true);
     else if (d.op === 'measure') measureClick(e.clientX, e.clientY);
+    else if (d.op === 'hide') hideAt(e.clientX, e.clientY);
     else if (d.op === 'menu') openMenu(e.clientX, e.clientY);
   }
 }
 gl.addEventListener('pointerup', endDrag);
 gl.addEventListener('pointercancel', endDrag);
 function pickPart(cx, cy) { const h = pick(cx, cy); return h ? h.part : null; }
+function hideAt(cx, cy) { const p = pickPart(cx, cy); if (p) { setVis(p, false); refreshTree(); } }
+function showAllParts() { for (const p of parts) setVis(p, true); refreshTree(); }
 gl.addEventListener('wheel', e => {
   e.preventDefault(); hideMenu();
   const now = performance.now();
@@ -558,7 +588,9 @@ function onTouchMove(e) {
 function onTouchUp(e) {
   const t = touches.get(e.pointerId); touches.delete(e.pointerId);
   if (drag && drag.op === 'torbit' && !drag.moved && t && performance.now() - t.t < 400) {
-    if (curTool() === 'measure') measureClick(e.clientX, e.clientY); else select(pickPart(e.clientX, e.clientY), true);
+    if (curTool() === 'measure') measureClick(e.clientX, e.clientY);
+    else if (curTool() === 'hide') hideAt(e.clientX, e.clientY);
+    else select(pickPart(e.clientX, e.clientY), true);
   }
   if (touches.size === 0) { drag = null; showPivot(null); }
   else if (touches.size === 1) { const [r] = [...touches.values()]; drag = { op: 'torbit', pivot: st.t.clone(), moved: true }; r.x0 = r.x; r.y0 = r.y; }
@@ -575,6 +607,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Home') { e.preventDefault(); zoomAll(); return; }
   if (e.key === 'Escape') { hideMenu(); if (tool) setTool(tool); else if (selected) select(null); clearMeasure(); return; }
   if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey) { setTool('measure'); return; }
+  if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) { setTool('hide'); return; }
 });
 window.addEventListener('keyup', e => {
   if ({ F2: 1, F3: 1, F4: 1 }[e.key]) { tempTool = null; modeText(); }
@@ -583,7 +616,7 @@ window.addEventListener('blur', () => { tempTool = null; modeText(); });
 for (const b of document.querySelectorAll('#nav [data-tool]')) b.addEventListener('click', () => setTool(b.dataset.tool));
 $('nav').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  ({ all: zoomAll, prev: prevView, home: homeView })[b.dataset.act]();
+  ({ all: zoomAll, prev: prevView, home: homeView, showall: showAllParts })[b.dataset.act]();
 });
 $('homeBtn').addEventListener('click', homeView);
 $('measBtn').addEventListener('click', () => setTool('measure'));
@@ -774,10 +807,7 @@ for (const id of ['revZoom', 'nearPivot', 'zoomCursor']) {
 }
 if (prefs.orbitType) $('orbitType').value = prefs.orbitType;
 $('orbitType').addEventListener('change', e => { prefs.orbitType = e.target.value; savePrefs(); });
-function hintText() {
-  $('hint').textContent = 'Middle drag: pan · Shift + middle drag: orbit · Wheel: zoom (forward = ' + ($('revZoom').checked ? 'in' : 'out') +
-    ') · Double-click middle: zoom all · F2 pan · F3 zoom · F4 orbit · F5 previous · F6 home';
-}
+function hintText() { $('zdir').textContent = $('revZoom').checked ? 'in' : 'out'; }
 hintText();
 document.addEventListener('click', e => { const d = $('setDlg'); if (d.open && !d.contains(e.target)) d.open = false; });
 
@@ -790,20 +820,21 @@ function refreshTree() {
   for (const g of groups) {
     const n = g.parts.filter(p => p.on).length; all += n;
     g.chk.checked = n === g.parts.length; g.chk.indeterminate = n > 0 && n < g.parts.length;
-    g.row.classList.toggle('off', n === 0);
+    g.cnt.textContent = n + '/' + g.parts.length; g.card.classList.toggle('off', n === 0);
   }
   rootChk.checked = all === parts.length; rootChk.indeterminate = all > 0 && all < parts.length;
+  $('rootCnt').textContent = all + ' / ' + parts.length + ' on';
   applyStyle();
 }
 function select(p, fromView) {
   if (p && !p.on) p = null;
   if (selected && selected.row) selected.row.classList.remove('sel');
   selected = p || null;
+  for (const g of groups) g.card.classList.toggle('sel', !!selected && g.id === selected.r.g);
   if (selected) {
     selected.row.classList.add('sel');
     const g = groups.find(x => x.id === selected.r.g);
-    if (g && g.list.hidden) setOpen(g, true);
-    if (fromView) selected.row.scrollIntoView({ block: 'nearest' });
+    if (fromView && menuOpen()) { if (g && g.list.hidden) setOpen(g, true); selected.row.scrollIntoView({ block: 'nearest' }); }
   }
   showProps(); modeText(); applyStyle();
 }
@@ -832,7 +863,8 @@ function showProps() {
   el.appendChild(br); el.hidden = false;
 }
 function isolate(p) { if (!p) return; for (const q of parts) setVis(q, q === p); refreshTree(); select(p); zoomTo(p); }
-$('showAll').addEventListener('click', () => { for (const p of parts) setVis(p, true); refreshTree(); });
+$('showAll').addEventListener('click', showAllParts);
+$('hideAll').addEventListener('click', () => { for (const p of parts) setVis(p, false); refreshTree(); });
 $('isoBtn').addEventListener('click', () => isolate(selected));
 $('invBtn').addEventListener('click', () => { for (const p of parts) setVis(p, !p.on); refreshTree(); });
 
@@ -903,45 +935,58 @@ function syncOverlays() {
   if (pivotPt) { const [x, y] = proj(pivotPt); const e = $('pivot'); e.style.left = x + 'px'; e.style.top = y + 'px'; }
 }
 
-// ---------------- model browser ----------------
-const tree = $('tree');
-let rootChk;
+// ---------------- drop-down menu and part switches ----------------
+const tree = $('tree'), rootChk = $('rootChk'), drop = $('drop');
 const chevSvg = '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-function setOpen(g, open) { g.list.hidden = !open; g.chev.setAttribute('aria-expanded', String(open)); }
+function menuOpen() { return !drop.classList.contains('closed'); }
+function updTop() { document.documentElement.style.setProperty('--top', menuOpen() ? $('dropin').offsetHeight + 'px' : '0px'); }
+function setDrop(open, remember) {
+  drop.classList.toggle('closed', !open);
+  $('tab').setAttribute('aria-expanded', String(open));
+  $('tabTxt').textContent = open ? 'Hide menu' : 'Menu';
+  updTop();
+  if (remember) { prefs.menuOpen = open; savePrefs(); }
+}
+$('tab').addEventListener('click', () => setDrop(!menuOpen(), true));
+new ResizeObserver(updTop).observe($('dropin'));
+setDrop(prefs.menuOpen !== false, false);
+function mkSwitch(small, label) {
+  const w = document.createElement('span'); w.className = 'sw' + (small ? ' sm' : '');
+  const i = document.createElement('input'); i.type = 'checkbox'; i.checked = true; i.setAttribute('role', 'switch'); i.setAttribute('aria-label', label);
+  const t = document.createElement('span'); t.className = 'trk';
+  w.append(i, t); return [w, i];
+}
+function setOpen(g, open) { g.list.hidden = !open; g.btn.setAttribute('aria-expanded', String(open)); }
+rootChk.addEventListener('change', () => { for (const p of parts) setVis(p, rootChk.checked); refreshTree(); });
 function buildTree() {
   tree.innerHTML = '';
-  const root = document.createElement('div'); root.className = 'row root';
-  rootChk = document.createElement('input'); rootChk.type = 'checkbox'; rootChk.checked = true; rootChk.setAttribute('aria-label', 'Show or hide everything');
-  const rn = document.createElement('span'); rn.className = 'pn'; rn.textContent = 'Knob module ' + (META.version || '');
-  const rc = document.createElement('span'); rc.className = 'cnt'; rc.textContent = parts.length;
-  root.append(rootChk, rn, rc); tree.appendChild(root);
-  rootChk.addEventListener('change', () => { for (const p of parts) setVis(p, rootChk.checked); refreshTree(); });
   for (const g of groups) {
-    const wrap = document.createElement('div');
-    const row = document.createElement('div'); row.className = 'row grow';
-    const chev = document.createElement('button'); chev.className = 'chev'; chev.innerHTML = chevSvg; chev.setAttribute('aria-label', 'Expand ' + g.name);
-    const chk = document.createElement('input'); chk.type = 'checkbox'; chk.checked = true; chk.setAttribute('aria-label', 'Show or hide ' + g.name);
-    const nm = document.createElement('span'); nm.className = 'pn'; nm.textContent = g.name;
-    const cnt = document.createElement('span'); cnt.className = 'cnt'; cnt.textContent = g.parts.length;
-    row.append(chev, chk, nm, cnt);
-    const list = document.createElement('div'); list.className = 'plist';
-    g.row = row; g.chk = chk; g.list = list; g.chev = chev;
-    setOpen(g, false);
-    chev.addEventListener('click', () => setOpen(g, list.hidden));
-    nm.addEventListener('click', () => setOpen(g, list.hidden));
+    const card = document.createElement('section'); card.className = 'gcard';
+    const head = document.createElement('div'); head.className = 'ghead';
+    const [sw, chk] = mkSwitch(false, 'Show ' + g.name);
+    const btn = document.createElement('button'); btn.className = 'gname'; btn.setAttribute('aria-expanded', 'false');
+    btn.title = 'List the parts in ' + g.name;
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = g.name;
+    const cnt = document.createElement('span'); cnt.className = 'cnt';
+    btn.append(nm, cnt); btn.insertAdjacentHTML('beforeend', chevSvg);
+    head.append(sw, btn);
+    const list = document.createElement('div'); list.className = 'plist'; list.hidden = true;
+    card.append(head, list);
+    Object.assign(g, { card, chk, btn, list, cnt });
+    btn.addEventListener('click', () => setOpen(g, list.hidden));
     chk.addEventListener('change', () => { for (const p of g.parts) setVis(p, chk.checked); refreshTree(); });
     for (const p of g.parts) {
-      const pr = document.createElement('div'); pr.className = 'row prow'; pr.title = p.r.n;
-      const pc = document.createElement('input'); pc.type = 'checkbox'; pc.checked = true; pc.setAttribute('aria-label', 'Show ' + p.r.n);
-      const sw = document.createElement('i'); sw.className = 'sw'; sw.style.background = p.r.c;
+      const row = document.createElement('div'); row.className = 'row'; row.title = p.r.n + ' (' + p.r.m + ')';
+      const [psw, pc] = mkSwitch(true, 'Show ' + p.r.n);
+      const swc = document.createElement('i'); swc.className = 'swc'; swc.style.background = p.r.c;
       const pn = document.createElement('span'); pn.className = 'pn'; pn.textContent = p.r.n;
-      pr.append(pc, sw, pn); list.appendChild(pr);
-      p.row = pr; p.chk = pc;
+      row.append(psw, swc, pn); list.appendChild(row);
+      p.row = row; p.chk = pc;
       pc.addEventListener('change', () => { setVis(p, pc.checked); refreshTree(); });
-      pr.addEventListener('click', e => { if (e.target === pc) return; select(p === selected ? null : p); });
-      pr.addEventListener('dblclick', e => { if (e.target === pc) return; select(p); zoomTo(p); });
+      row.addEventListener('click', e => { if (e.target === pc) return; select(p === selected ? null : p); });
+      row.addEventListener('dblclick', e => { if (e.target === pc) return; select(p); zoomTo(p); });
     }
-    wrap.append(row, list); tree.appendChild(wrap); g.wrap = wrap;
+    tree.appendChild(card);
   }
 }
 $('filter').addEventListener('input', e => {
@@ -949,13 +994,15 @@ $('filter').addEventListener('input', e => {
   for (const g of groups) {
     let n = 0;
     for (const p of g.parts) { const m = !q || p.r.n.toLowerCase().includes(q) || (p.r.m || '').toLowerCase().includes(q); p.row.hidden = !m; if (m) n++; }
-    g.wrap.hidden = q && n === 0;
-    if (q) setOpen(g, n > 0);
+    g.card.hidden = !!q && n === 0;
+    setOpen(g, !!q && n > 0);
   }
 });
-function drawer(open) { $('browser').classList.toggle('open', open); $('partsBtn').setAttribute('aria-expanded', String(open)); }
-$('partsBtn').addEventListener('click', () => drawer(!$('browser').classList.contains('open')));
-$('closeParts').addEventListener('click', () => drawer(false));
+$('expAll').addEventListener('click', () => {
+  const on = $('expAll').getAttribute('aria-pressed') !== 'true';
+  $('expAll').setAttribute('aria-pressed', String(on));
+  for (const g of groups) setOpen(g, on);
+});
 
 // ---------------- loading the model ----------------
 async function fetchModel() {
@@ -1020,8 +1067,7 @@ function build(buf) {
     ALLBOX.union(p.box);
   }
   C = ALLBOX.getCenter(new V3()); RAD = ALLBOX.getBoundingSphere(new THREE.Sphere()).radius;
-  buildTree();
-  const kg = groups.find(g => g.id === 'main_knob'); if (kg) setOpen(kg, true);
+  buildTree(); refreshTree();
   updateSection();
   resize();
   st.q.copy(viewQ(HOME_DIR)); st.t.copy(C); st.h = fitH(ALLBOX); st.persp = $('proj').value === 'p';
