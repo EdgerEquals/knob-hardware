@@ -336,7 +336,7 @@ def checks(D, parts):
         key = parts.get("USB-C key (printed, held by the back cover)")
         brd = parts.get("USB-C board (socket, TVS, ESD)"); rc = parts.get("USB-C receptacle [S]")
         row("USB-C board to the jack bodies", D["usb_jack_air"], 0.5,
-            f"board y {D['usb_board_y0']:.2f}..{D['usb_board_y1']:.2f} (5.5 tall), jack bodies from y {D['jack_bot_y']:.2f}")
+            f"board y {D['usb_board_y0']:.2f}..{D['usb_board_y1']:.2f} ({D['usb_board'][1]:g} tall), jack bodies from y {D['jack_bot_y']:.2f}")
         row("USB-C board's edge not past the bottom face", -D["usb_board_out"], 0.0,
             f"board edge y {D['usb_board_y0']:.2f}, bottom face y {D['body_y0']:.2f} (the rail line) [Ed 11:09]")
         row("USB-C ledge each side of the receptacle (board edge on it)", D["usb_ledge_side"], 1.0,
@@ -362,7 +362,7 @@ def checks(D, parts):
                 f"tab ±{tw:g} down to y {ty:g}, swept from behind the rim to its home; the key (in the channel, shell first) is the nearest")
             row("USB power spring contacts: working length", D["usb_z0"] - D["jb_z1"], 3.0,
                 f"{len(D['usb_pwr_contacts'])} contacts Ø{D['usb_pwr_d']:g} [A] from the tab's face z {D['jb_z1']:.2f} to the USB-C board's back z "
-                f"{D['usb_z0']:.2f}; they meet in the stack's last ~1 [C: a part ~4.2 working, ~1 A each, 2 per power line]")
+                f"{D['usb_z0']:.2f}; they meet in the stack's last ~1 (Harwin P70-5100045, 2 A each, 2 per power line)")
             py = [y for _x, y in D["usb_pwr_contacts"]]
             row("USB power contacts land on the USB-C board (inside the box, above the key)", min(min(py) - D["usb_pwr_d"] / 2 - D["y_in0"],
                 D["usb_board_y1"] - (max(py) + D["usb_pwr_d"] / 2)), 0.3,
@@ -371,13 +371,28 @@ def checks(D, parts):
             for i in range(len(cts)):
                 for j in range(i + 1, len(cts)):
                     dmin = min(dmin, ((cts[i][0] - cts[j][0]) ** 2 + (cts[i][1] - cts[j][1]) ** 2) ** 0.5 - D["usb_pwr_d"])
-            row("USB spring contacts: gap between barrels", dmin, 0.4,
-                f"{len(cts)} contacts Ø{D['usb_pwr_d']:g} [A] in two rows (v0.37, Ed 5 Nov 11:24); gold pads about Ø{D['usb_pwr_d'] + 0.1:g}")
+            row("USB spring contacts: gap between pads", dmin + D["usb_pwr_d"] - D.get("usb_pwr_pad", D["usb_pwr_d"]), 0.3,
+                f"{len(cts)} contacts (Harwin P70-5100045, body Ø{D['usb_pwr_d']:g}), pads Ø{D.get('usb_pwr_pad', D['usb_pwr_d']):g} (v0.38, Ed 5 Nov 15:34)")
+            gap = D["usb_z0"] - D["jb_z1"]
+            row("USB spring contacts: gap inside the contact's working range 3.85-4.20", min(gap - 3.85, 4.20 - gap), 0.1,
+                f"gap {gap:.2f}; Harwin P70-5100045 works 3.85-4.20, 4.00 nominal [S-dist]; [C] the real socket height and the board thickness set it")
             if D.get("usb_shell_legs"):
-                cy_ = D["usb_xy"][1]
-                dl = min(((x - lx) ** 2 + (y - cy_ - ly) ** 2) ** 0.5 - D["usb_pwr_d"] / 2 - 0.55 for x, y in cts for lx, ly in D["usb_shell_legs"])
-                row("USB spring contacts clear of the socket's shell-leg pads", dl, 0.5,
-                    "legs at x ±4.9, ±1.3 from the socket centre, pads r 0.55 [A: socket part not chosen]")
+                cy_ = D["usb_xy"][1]; lw_, lh_ = D["usb_leg_pad"]; pr = D.get("usb_pwr_pad", D["usb_pwr_d"]) / 2
+
+                def _rc(cx, cy2, x, y):
+                    return (max(abs(x - cx) - lw_ / 2, 0) ** 2 + max(abs(y - cy2) - lh_ / 2, 0) ** 2) ** 0.5
+                dl = min(_rc(lx, cy_ + ly, x, y) - pr for x, y in cts for lx, ly in D["usb_shell_legs"])
+                row("USB spring-contact pads clear of the socket's shell-leg pads", dl, 0.3,
+                    f"legs at (±2.40, ±2.15) from the socket centre, pads {lw_:g} x {lh_:g} [S-lib]; contact pads Ø{2 * pr:g} [S-dist]")
+                dp = min(((x - px) ** 2 + (y - cy_ - py) ** 2) ** 0.5 - pr - D["usb_post_hole"] / 2 for x, y in cts for px, py in D["usb_posts"])
+                row("USB spring-contact pads clear of the socket's locating-post holes", dp, 0.3, "posts at (±3.75, 0), holes Ø0.8 [S-lib]")
+                de = min(min(D["usb_board"][0] / 2 - abs(x) - pr, D["usb_board_y1"] - y - pr) for x, y in cts)
+                row("USB spring-contact pads to the USB-C board's edges", de, 0.3, "")
+                le = min(D["usb_board_y1"] - (cy_ + 2.15 + lh_ / 2), (cy_ - 2.15 - lh_ / 2) - D["usb_board_y0"])
+                row("USB-C socket shell-leg pads to the board's top and bottom edges", le, 0.3,
+                    f"v0.38 [Ed 5 Nov 15:34]: socket and board 0.25 up, board {D['usb_board'][1]:g} tall")
+                dk = min(y - pr - (D["y_in0"] - D["usb_key_gap"]) for x, y in cts)
+                row("USB spring-contact pads above the printed key's face", dk, 0.3, "the key presses the board below this line")
         if key is not None:
             row("USB-C key: clear of the channel walls", key.distance_to(case), 0.03, f"{D['usb_key_gap']:g} a side [A]")
             if brd is not None:

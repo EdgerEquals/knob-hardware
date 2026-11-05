@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.37",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.38",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.38 [Ed 5 Nov 15:34 Q12 = A]: the real vertical USB-C footprint: socket and USB-C board 0.25 up, board 6.0 tall,
+                       # the 8 contacts laid round its shell legs and posts (Harwin P70-5100045), jacks 0.25 up; [C] contact gap (Q13)
                        # v0.37 [Ed 5 Nov 11:17 Q4, 11:24 Q5]: USB data on the same socket; the PD sink chip moves to the jack power board;
                        # 8 spring contacts (15 V x2, GND x2, D+, D-, CC1, CC2) Ø0.7 in two rows; the USB-C board keeps the socket, a TVS and
                        # an ESD chip, in pockets in the printed key
