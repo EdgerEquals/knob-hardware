@@ -3,7 +3,8 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.44",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.45",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.45 [Ed 5 Nov 20:46 Q20 = A]: a Ø3.6 hole through the jack board under each jack for a plug's tip
                        # v0.44 [A, no decision]: the outer two jack-board tongues 0.5 wider on their inner side (the sleeve's ground could
                        # not be routed out past the ring slot's pad); the bottom ledge notch follows
                        # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a 2.7 x 0.55 bump on the jack board's top edge round each tip slot

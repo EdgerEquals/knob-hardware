@@ -300,6 +300,14 @@ def checks(D, parts):
                 row("bottom ledge left under the main board at the tongue notches", lw_left, 0.6,
                     f"ledge y {D['pcb_y0']:.2f}..{D['pcb_y0'] + D['ledge_w']:.2f}, notched down to y {D['jb_tongue_y'] - D['jack_ledge_notch']:.2f} "
                     "over 4 short spans; full ledge elsewhere")
+            if D.get("jb_plug_hole"):   # v0.45 [Ed 20:46 Q20 = A]
+                mouth = D["z_fp1"] + D["jack_nut_t"]      # [A] the bushing ends at the nut's front (not measured)
+                row("a 17 mm plug's tip (through the jack board's hole) to the power board's parts", (mouth - 17.0) - D["jb2_parts_z1"], 1.0,
+                    f"mouth z {mouth:.2f} [A]; tip z {mouth - 17.0:.2f}; 15 mm plugs stop at z {mouth - 15.0:.2f} (board top {D['jb_z1']:.2f}); "
+                    f"hole Ø{D['jb_plug_hole']:g} (Ed 20:46 Q20 = A)")
+                rg = D["jack_slot_ring"]; hr = D["jb_plug_hole"] / 2
+                dh = min(abs((y0 + y1) / 2) - (abs(y1 - y0) + w) / 2 - rg - hr for _n, y0, y1, w in D["jack_pins"])
+                row("jack board: plug-tip hole to the jack-pin slot pads", dh, 0.2, "copper to a drilled hole")
             if D.get("jb_tip_bump"):   # v0.43 [Ed 17:59 Q18 = A]
                 bw_, bh_ = D["jb_tip_bump"]; tz1 = D["jb_z1"] - 1.0
                 bp = [_P(x - bw_ / 2, D["jack_top_y"], z0p) * _B(bw_, bh_, tz1 - z0p, align=(_Al.MIN,) * 3) for x, _y in D["jack_xy"]]

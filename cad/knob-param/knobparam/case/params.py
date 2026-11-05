@@ -284,6 +284,8 @@ P = dict(
     jack_pin_d=0.9,            # [A] pin drawn as a Ø0.9 rod
     jack_slot_ring=0.35,       # [A] annular ring round each slot
     jb_tongue_edge=0.3,        # [A] board outline round the sleeve pad
+    jb_plug_hole=3.6,          # v0.45 [Ed 5 Nov 20:46 Q20 = A]: a hole through the jack board under each jack axis for a plug's tip (it comes out
+                               #   of the back of the body; Thonk: drill 3 mm [S]); 3.6 lets a long 17 mm plug's full tip through
     jb_tongue_inner=0.5,       # v0.44 [A]: the outer two jack-board tongues this much wider on their inner side (room for the sleeve's ground)
     jb_tip_bump=(2.7, 0.55),   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump (width, height) on the jack board's top edge round each tip slot (its pad
                                #   reached axis +6.28, past the edge at the jack tops, axis +6.0): pad 0.25 from the edge

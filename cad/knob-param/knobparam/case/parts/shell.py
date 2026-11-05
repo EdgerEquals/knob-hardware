@@ -479,6 +479,9 @@ def build(D):
         if D.get("jb_tongue_y") is not None:   # v0.39 [Ed 15:53 Q15 = A]: a tongue down to each sleeve pin
             for tx0, tx1 in D["jb_tongue_x"]:
                 jbb = _add(jbb, _box(tx0, tx1, D["jb_tongue_y"], by0 + D["fuse"], D["jb_z0"], D["jb_z1"] - 0.02))
+        if D.get("jb_plug_hole"):   # v0.45 [Ed 5 Nov 20:46 Q20 = A]: a hole under each jack axis for a plug's tip
+            for x, y in D["jack_xy"]:
+                jbb = _sub(jbb, _cyl_z(D["jb_plug_hole"] / 2, D["jb_z0"] - 1.0, D["jb_z1"] + 1.0, x, y))
         if D.get("jb_tip_bump"):   # v0.43 [Ed 5 Nov 17:59 Q18 = A]: a bump on the top edge round each tip slot
             bw_, bh_ = D["jb_tip_bump"]
             for x, _y in D["jack_xy"]:
