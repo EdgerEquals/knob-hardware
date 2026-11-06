@@ -259,11 +259,11 @@ def zone_of(p, which, owner=None):
         if n & {"J1_TIP", "J1_RING", "SW1_CV", "MT1", "MR1", "MY1", "RS1", "CV1_S"} - {"MY1"} and not v.startswith("TCA"):
             return "L"
         if n & {"P_FB", "P_NR"} or v.startswith("TPS7A49") or n == {"P12_EN", "GND"}:
-            return "L"
+            return "LM"
         if n & {"N_FB", "N_NR"} or v.startswith("TPS7A30") or n == {"N12_EN", "GND"} or (n == {"VNEG_RAW", "GND"}):
-            return "R"
+            return "MR"
         if n & {"SW_3", "BST_3", "SS_3", "FB_3"} or v.startswith("TPS62933"):
-            return "R"
+            return "MR"
         return "M"
     if n & {"SW_B", "CP_R", "CP_A", "B_SS", "B_COMP", "B_CZ", "B_FB", "B_FREQ"} or v.startswith(("TPS55340", "BAT54S", "PMEG")) or \
             n == {"VNEG_RAW", "GND"} or n == {"BOOST", "GND"} or (n == {"VSYS", "GND"}):
@@ -661,8 +661,8 @@ def refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, rounds, log=p
                     hot_parts.add(p["ref"])
         else:
             log(f"{which} refine round {rnd + 1}: walled-in pins on {walled}")
-        for r_ in hot_parts:
-            MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.08, 0.5), 3)
+        for r_ in hot_parts:   # small steps, low cap: on a board this full, big margins leave no legal placement
+            MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.05, 0.25), 3)
         json.dump(MARGINS[which], open(mfile, "w"), indent=1)
     json.dump(best[1], open(pin_file, "w"), indent=1)
     shutil.copy(pcb + ".best", pcb); os.remove(pcb + ".best")
@@ -729,7 +729,7 @@ def main():
             if not refs:
                 break
             for r_ in refs:
-                MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.1, 0.4), 3)
+                MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.1, 0.3), 3)
             json.dump(MARGINS[which], open(mfile, "w"), indent=1)
         if "--refine" in sys.argv:
             print(which, "refined:", refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, int(os.environ.get("REFINE_ROUNDS", "6"))))
