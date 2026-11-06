@@ -397,12 +397,12 @@ class Router4:
                 bad[n] = cnt
         return bad
 
-    def run(self, iters=80, pf0=0.5, pf_mult=1.35, h_inc=0.4, order=None, time_limit=None, pf_max=30.0, shuffle=True):
+    def run(self, iters=80, pf0=0.5, pf_mult=1.35, h_inc=0.4, order=None, time_limit=None, pf_max=30.0, shuffle=True, seed=7):
         self.h_inc = h_inc
         order = order or sorted(self.nets, key=lambda n: (n == self.gnd, -self.width[n], -len(self.terms[n])))
         pf = pf0; t0 = time.time(); best = None
         import random
-        rng = random.Random(7)
+        rng = random.Random(seed); self.seed = seed
         for it in range(iters):
             if shuffle and it >= 3:   # after a few rounds: the crowded nets first, the rest in a new random order each round
                 bad_now = getattr(self, "_bad", {})
@@ -430,18 +430,27 @@ class Router4:
             self._stamp(n, -1); self.state[n]["segs"] = best[1][n]["segs"]; self.state[n]["vias"] = best[1][n]["vias"]; self._stamp(n, +1)
         return self.cleanup()
 
-    def cleanup(self, rounds=12, pf=1e4):
+    def cleanup(self, rounds=24, pf=1e4, reach=0.8):
         """Last pass from the best round: reroute only the nets still crowded, each with the others' space all but forbidden (a net
         that can get round them takes that way), keeping whatever is best."""
         import random
-        rng = random.Random(11)
+        rng = random.Random(getattr(self, "seed", 7) + 11)
         bad = self.overuse()
         score = lambda b: (sum(self.failed.values()), sum(b.values()))
         best = (score(bad), {n: (list(map(list, self.state[n]["segs"])), list(self.state[n]["vias"])) for n in self.nets})
         for rd in range(rounds):
             if not bad and sum(self.failed.values()) == 0:
                 break
-            nets = list(bad); rng.shuffle(nets)
+            # the crowded nets and, every other round, the nets with copper near the crowded spots (so they can make room)
+            nets = set(bad)
+            if rd % 2:
+                hot = self.hot_cells()
+                for n in self.nets:
+                    per, vias = self._copper(n)
+                    pts = [self._xy(c) for L in range(3) for c in per[L][::4]] + [self._xy(c) for c in vias]
+                    if any(abs(px - hx) < reach and abs(py - hy) < reach for _n, _L, hx, hy in hot for px, py in pts):
+                        nets.add(n)
+            nets = list(nets); rng.shuffle(nets)
             for n in nets:
                 self._stamp(n, -1); self.route_net(n, pf); self._stamp(n, +1)
             self.hist *= 0.0; self.hist_v *= 0.0   # no history needed here: overuse() below only counts

@@ -538,7 +538,7 @@ GRID_WIDTHS = {"default": 0.127, "GND": 0.25, "VBUS": 0.3, "VSYS": 0.3,   # [C] 
                **{n: 0.15 for n in ("BOOST", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC")}}   # rails, all under 60 mA [A]
 
 
-def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, margin=0.036):
+def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, margin=0.036, seed=7):
     """Route with router4 (Ed Q26 = A): 3 routing layers (F, In2, B), In1 the ground plane; then pull tight. Returns (ok, router)."""
     import router4
     b = pcbnew.LoadBoard(pcb_path)
@@ -547,7 +547,7 @@ def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, ma
     ol = [kc(x, y) for x, y in outline(which)]
     r = router4.Router4(router4.board_pads(b, ORIGIN), ol, dict(RULES, hole_clearance=0.2), GRID_WIDTHS, g=g, margin=margin, log=log)
     log(f"{which}: grid {r.nx} x {r.ny} x 3 layers, {len(r.nets)} nets")
-    ok = r.run(iters=iters, time_limit=time_limit)
+    ok = r.run(iters=iters, time_limit=time_limit, seed=seed)
     r.smooth()
     log(f"{which}: tracks, vias {r.apply(b, ORIGIN, RULES['via_d'], RULES['via_drill'])}")
     save_board(pcb_path, b)
@@ -669,6 +669,30 @@ def refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, rounds, log=p
     return best[0]
 
 
+def finish(which, pcb, d, tries, log=print):
+    """Route the placed board a few times (different orders), check each with KiCad's DRC after the planes are poured, keep the best;
+    stop at DRC 0 / unconnected 0."""
+    import shutil
+    best = None
+    base = pcb + ".unrouted"; shutil.copy(pcb, base)
+    for k in range(tries):
+        shutil.copy(base, pcb)
+        ok, r = grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "90")), time_limit=int(os.environ.get("GRID_TIME", "1500")),
+                           g=float(os.environ.get("GRID_G", "0.025")), margin=float(os.environ.get("GRID_M", "0.018")), seed=100 + k,
+                           log=lambda s: None)
+        add_planes(pcb, which)
+        nv, nu, _ = drc(pcb, os.path.join(d, "drc.rpt"))
+        log(f"{which} finish try {k + 1}: DRC {nv} violations, {nu} unconnected (router: {len(r.hot_cells())} crowded cells)")
+        if best is None or (nu, nv) < best[0]:
+            best = ((nu, nv), k); shutil.copy(pcb, pcb + ".best"); shutil.copy(os.path.join(d, "drc.rpt"), pcb + ".best.rpt")
+        if (nu, nv) == (0, 0):
+            break
+    shutil.copy(pcb + ".best", pcb); shutil.copy(pcb + ".best.rpt", os.path.join(d, "drc.rpt"))
+    for f_ in (base, pcb + ".best", pcb + ".best.rpt"):
+        os.remove(f_)
+    return best
+
+
 def main():
     which_list = [w for w in ("upper", "lower") if w in sys.argv] or ["upper", "lower"]
     allp = design.build()
@@ -741,7 +765,9 @@ def main():
                     tca["pins"][port_num[port]] = f
         schematic(which, parts, hdr, os.path.join(d, cfg["name"] + ".kicad_sch"))
         write_project(d, cfg["name"], RULES, libs, CLASSES)
-        if "--grid" in sys.argv and "--refine" not in sys.argv:
+        if "--finish" in sys.argv:
+            print(which, "finished:", finish(which, pcb, d, int(os.environ.get("FINISH_TRIES", "6"))))
+        elif "--grid" in sys.argv and "--refine" not in sys.argv:
             print(which, "grid route complete:", grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "80")),
                                                            time_limit=int(os.environ.get("GRID_TIME", "3000")),
                                                            g=float(os.environ.get("GRID_G", "0.025")),
