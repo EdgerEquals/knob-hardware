@@ -613,6 +613,14 @@ def write_placement(pcb_path, out, which):
     json.dump(d, open(out, "w"), indent=1)
 
 
+def write_rules(d, name):
+    """Custom DRC rules next to the project (KiCad 7 reads <name>.kicad_dru). [A] The ground post pin may sit in the outer pours with
+    one thermal spoke: the In1 plane connects it in full, and fewer spokes make the hand-soldered pin easier."""
+    open(os.path.join(d, name + ".kicad_dru"), "w").write(
+        '(version 1)\n(rule "post pins: one thermal spoke is enough on the outer pours (the In1 plane is a full connection)"\n'
+        '  (condition "A.Pad_Type == \'Through-hole\' && A.NetName == \'GND\'")\n  (constraint min_resolved_spokes 1))\n')
+
+
 def _build_saved(which, allp, fixed, hdr, placement_in, pcb, d, libs, reswap):
     """Build and save a board from a placement {ref: (x, y, side, rot), _tca_ports: ...}; returns (parts, placement_in)."""
     parts = [dict(p, pins=dict(p["pins"])) for p in allp if p["board"] == which]
@@ -625,7 +633,7 @@ def _build_saved(which, allp, fixed, hdr, placement_in, pcb, d, libs, reswap):
             port_num = {v: k for k, v in tca["names"].items()}
             for f, port in swap.items():
                 tca["pins"][port_num[port]] = f
-    write_project(d, BOARDS[which]["name"], RULES, libs, CLASSES)
+    write_project(d, BOARDS[which]["name"], RULES, libs, CLASSES); write_rules(d, BOARDS[which]["name"])
     save_board(pcb, build(which, placement, parts, hdr))
     return parts, placement_in
 
@@ -753,7 +761,7 @@ def main():
                     port_num = {v: k for k, v in tca["names"].items()}
                     for f, port in swap.items():
                         tca["pins"][port_num[port]] = f
-            write_project(d, cfg["name"], RULES, libs, CLASSES)
+            write_project(d, cfg["name"], RULES, libs, CLASSES); write_rules(d, cfg["name"])
             board = build(which, placement, parts, hdr)
             if "--grid" not in sys.argv:
                 print(which, "ground vias (placed, no room):", fanout_gnd(board, which))
@@ -781,7 +789,7 @@ def main():
                 for f, port in sw.items():
                     tca["pins"][port_num[port]] = f
         schematic(which, parts, hdr, os.path.join(d, cfg["name"] + ".kicad_sch"))
-        write_project(d, cfg["name"], RULES, libs, CLASSES)
+        write_project(d, cfg["name"], RULES, libs, CLASSES); write_rules(d, cfg["name"])
         if "--finish" in sys.argv:
             print(which, "finished:", finish(which, pcb, d, int(os.environ.get("FINISH_TRIES", "6")), settle=os.environ.get("SETTLE") == "1"))
         elif "--grid" in sys.argv and "--refine" not in sys.argv:
