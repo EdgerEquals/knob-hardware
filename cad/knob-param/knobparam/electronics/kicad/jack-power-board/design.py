@@ -10,6 +10,7 @@ the standard ones). Nets in CAPS; the jack lines keep the jack board's names (J1
 
 PARTS = []
 _count = {}
+_B = ["upper"]   # the board the next parts go on [Ed 6 Nov Q23 = A]: "upper" = the power board (on the posts), "lower" = the board under it
 
 
 def _ref(prefix):
@@ -17,10 +18,10 @@ def _ref(prefix):
     return f"{prefix}{_count[prefix]}"
 
 
-def part(prefix, value, fp, pins, block, lcsc="", mpn="", note="", names=None, ref=None):
+def part(prefix, value, fp, pins, block, lcsc="", mpn="", note="", names=None, ref=None, side=None):
     r = ref or _ref(prefix)
     PARTS.append(dict(ref=r, value=value, fp=fp, pins={str(k): v for k, v in pins.items()}, block=block, lcsc=lcsc, mpn=mpn,
-                      note=note, names={str(k): v for k, v in (names or {}).items()}))
+                      note=note, names={str(k): v for k, v in (names or {}).items()}, board=_B[0], side=side))
     return r
 
 
@@ -38,6 +39,7 @@ def C(val, a, b, block, size="0402", note=""):
 
 def build():
     PARTS.clear(); _count.clear()
+    _B[0] = "upper"
     # ------------------------------------------------------------------ connectors
     # H1/H2: XFCN PM127VS-12-12-H34 2x6 1.27 SMD female (LCSC C2840010) on the top face, under the jack board's males; nets by position
     # from the jack board's placement.json (make_board.py maps them), so only listed here.
@@ -45,16 +47,19 @@ def build():
          mpn="PM127VS-12-12-H34-4.5-R", note="nets by position from the jack board's H1", ref="H1")
     part("H", "PM127VS-12-12-H34", "Connector_PinSocket_1.27mm:PinSocket_2x06_P1.27mm_Vertical_SMD", {}, "connectors", lcsc="C2840010",
          mpn="PM127VS-12-12-H34-4.5-R", note="nets by position from the jack board's H2", ref="H2")
+    _B[0] = "lower"
     # link flex: Hirose FH26W-25S-0.3SHW(60), 25 positions at 0.3 [Q11: 17 signals + 7 grounds; the 25th a ground] [A order: SCK at the
     # far edge, grounds either side of the USB pair, the CV inputs and the audio]
     LINK = ["SCK", "GND", "MOSI", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES", "SCL", "SDA", "IO_INT", "MIDI_TX", "GND", "DP", "DN", "GND",
             "CV_IN1", "CV_IN2", "CV_IN3", "GND", "AOUT", "GND", "AIN", "GND", "GND", "GND"]
     part("J", "FH26W-25S-0.3SHW(60)", "jpb:Hirose_FH26W-25S-0.3SHW", {i + 1: n for i, n in enumerate(LINK)}, "connectors",
          lcsc="C2904698", mpn="FH26W-25S-0.3SHW(60)", note="link flex to the main board [Q11]", ref="J6")
+    _B[0] = "upper"
     # the two Ø2 brass posts to the main board [Ed 4 Nov 22:21, 22:52]: GND (left ear, x -16.5) and VSYS = 15 V after the eFuse (right ear,
-    # x +8.0); plated holes in the ears (size open: the ear is 2.6 wide and reaches only 1.05 below the post's centre)
+    # x +8.0); each steps down to a Ø1.0 pin through a plated Ø1.15 hole, Ø1.6 pad [Ed 6 Nov Q24 = A]
     part("MP", "post GND", "jpb:Post_Pad", {1: "GND"}, "connectors", note="Ø2 brass post, left ear", ref="MP1")
     part("MP", "post VSYS", "jpb:Post_Pad", {1: "VSYS"}, "connectors", note="Ø2 brass post, right ear", ref="MP2")
+    _B[0] = "lower"
     # clear OLED, ER-OLED1.51-1 (SSD1309), 24-pin 0.5 flex into the XUNPU FPC-05F-24PH20 ZIF [pins: EastRising datasheet, in the repo]:
     # 4-wire SPI (BS1 = BS2 = 0), R/W# and E/RD# and D3-D7 to VSS, D2 open in serial mode, NC 1/24 (supports) to ground, NC 4 open [S]
     OLED = {1: "GND", 2: "GND", 3: "GND", 4: None, 5: "3V3", 6: "GND", 7: "GND", 8: "CS_OLED", 9: "OLED_RES", 10: "OLED_DC",
@@ -71,6 +76,7 @@ def build():
     C("10uF 25V", "OLED_VCC", "GND", "oled", size="0805"); C("100nF 25V", "OLED_VCC", "GND", "oled")
     C("4.7uF 25V", "VCOMH", "GND", "oled", size="0805"); R("910k", "IREF", "GND", "oled")
     C("4.7uF", "3V3", "GND", "oled", size="0603"); C("100nF", "3V3", "GND", "oled")
+    _B[0] = "upper"
     # ------------------------------------------------------------------ USB-C power in: PD sink, CC ESD, eFuse
     # HUSB238_002DD (DFN-10 3x3 + pad): 1 VIN, 2 D+, 3 D-, 4 CC1, 5 CC2, 6 SDA, 7 SCL, 8 VSET, 9 ISET, 10 GATE, pad GND [S Rev 2.1];
     # VSET 14.0k = 15 V (open would ask 20 V and trip the OVLO), ISET 22.6k = 3 A; D+/D- and GATE open (no load switch) [S]
@@ -94,6 +100,7 @@ def build():
     R("102k", "VBUS", "EF_EN", "power in"); R("30.1k", "EF_EN", "EF_OV", "power in"); R("10.0k", "EF_OV", "GND", "power in")
     R("1.00k", "EF_ILM", "GND", "power in", note="3.33 A"); C("1nF 25V", "EF_DVDT", "GND", "power in"); C("2.2nF", "EF_TMR", "GND", "power in")
     C("1uF 50V", "VBUS", "GND", "power in", size="0603"); C("10uF 25V", "VSYS", "GND", "power in", size="0805")
+    _B[0] = "lower"
     # ------------------------------------------------------------------ rails [Ed Q6]: boost to 18 V, charge pump, +12.5 V and -12 V LDOs
     # TPS55340RTE: 1/15/16 SW, 2 VIN, 3 EN, 4 SS, 5 SYNC, 6 AGND, 7 COMP, 8 FB, 9 FREQ, 10/14 NC (to ground), 11-13 PGND, pad AGND [S]
     #   VOUT = 1.229 x (1 + 137k/10.0k) = 18.07 V [S VREF, R2 about 10k]; 78.7k = 600 kHz [S]: on-time 240 ns at 15.75 V in (77 ns min),
@@ -118,6 +125,7 @@ def build():
     part("D", "BAT54SFILM", "Package_TO_SOT_SMD:SOT-23", {1: "VNEG_RAW", 2: "GND", 3: "CP_A"}, "supply", lcsc="C377935",
          mpn="BAT54SFILM", note="1 A1, 2 K2, 3 K1/A2: VNEG_RAW -> CP_A -> GND")
     C("4.7uF 50V", "VNEG_RAW", "GND", "supply", size="0805")
+    _B[0] = "lower"   # the +12.5 V LDO sits with the boost (both boards then about 71 % full) [A]
     # TPS7A4901DGN: 1 OUT, 2 FB, 3 NC, 4 GND, 5 EN, 6 NR/SS, 7 DNC (no net at all), 8 IN, pad GND or open [S]
     #   VOUT = 1.188 x (1 + 95.3k/10.0k) = 12.51 V (12.57 V with the 1.194 V of the Japanese sheet) [S]; CFF 10 nF, NR 10 nF [S]
     part("U", "TPS7A4901DGNR", "Package_SO:HVSSOP-8-1EP_3x3mm_P0.65mm_EP1.57x1.89mm",
@@ -126,12 +134,15 @@ def build():
     R("95.3k 0.5%", "P12V5", "P_FB", "supply"); R("10.0k 0.5%", "P_FB", "GND", "supply"); C("10nF 25V", "P12V5", "P_FB", "supply")
     C("10nF", "P_NR", "GND", "supply"); C("4.7uF 50V", "BOOST", "GND", "supply", size="0805")
     C("10uF 25V", "P12V5", "GND", "supply", size="0805")
+    _B[0] = "upper"
     # TPS7A3001DGN: same pins; VOUT = -1.176 x (1 + 93.1k/10.0k) = -12.13 V [S Table 2: -12 V = 93.1k / 10k]; EN high (3.3 V) enables [S]
     part("U", "TPS7A3001DGNR", "Package_SO:HVSSOP-8-1EP_3x3mm_P0.65mm_EP1.57x1.89mm",
          {1: "N12V", 2: "N_FB", 3: None, 4: "GND", 5: "N12_EN", 6: "N_NR", 7: None, 8: "VNEG_RAW", 9: "GND"}, "supply", lcsc="C33835",
          mpn="TPS7A3001DGNR", names={1: "OUT", 2: "FB", 3: "NC", 4: "GND", 5: "EN", 6: "NR/SS", 7: "DNC", 8: "IN", 9: "PAD"})
+    C("4.7uF 50V", "VNEG_RAW", "GND", "supply", size="0805", note="the LDO's input: VNEG_RAW comes up the second stacks")
     R("93.1k 0.5%", "N12V", "N_FB", "supply"); R("10.0k 0.5%", "N_FB", "GND", "supply"); C("10nF 25V", "N12V", "N_FB", "supply")
     C("10nF", "N_NR", "GND", "supply"); C("10uF 25V", "N12V", "GND", "supply", size="0805")
+    _B[0] = "lower"
     # 3.3 V: TPS62933DRLR: 1 RT, 2 EN, 3 VIN, 4 GND, 5 SW, 6 BST, 7 SS, 8 FB [S]; RT to GND = 1.2 MHz, 2.2 uH, >= 10 uF effective [S table];
     #   EN floating = on (0.7 uA pull-up; 6 V abs max, so never to VSYS) [S]: the board's 3.3 V is up whenever VSYS is, so the expander
     #   holds every switch open and every rail off from the start; VOUT = 0.8 x (1 + 30.9k/10.0k) = 3.27 V (the OLED's VDD max is 3.3) [S/A]
@@ -143,6 +154,7 @@ def build():
     R("30.9k", "3V3", "FB_3", "supply"); R("10.0k", "FB_3", "GND", "supply")
     C("10uF 25V", "VSYS", "GND", "supply", size="0805"); C("100nF 50V", "VSYS", "GND", "supply")
     C("22uF 10V", "3V3", "GND", "supply", size="0805"); C("22uF 10V", "3V3", "GND", "supply", size="0805")
+    _B[0] = "lower"
     # ------------------------------------------------------------------ jack circuits
     # DAC80504 (RTE): 3 CV channels + 1 spare; 0-2.5 V: internal 2.5 V reference divided by 2 (REFDIV high, required below VDD 3.3 V)
     # and gain 2 (GAIN high) [S]; resets to midscale (RSTSEL high: the outputs read +2.5 V, the switches are open anyway); LDAC low
@@ -184,6 +196,7 @@ def build():
          {1: "CV_IN1", 2: "CI1_N", 3: "VMID", 4: "3V3", 5: "VMID", 6: "CI2_N", 7: "CV_IN2", 8: "CV_IN3", 9: "CI3_N", 10: "VMID",
           11: "GND", 12: "ABIAS", 13: "AI_N", 14: "AIN"}, "jack circuits", lcsc="C779410", mpn="TLV9064IPWR", note="CV ins A-C, audio in D")
     C("100nF", "3V3", "GND", "jack circuits")
+    _B[0] = "upper"
     # MIDI out [Q2, Q7]: one UART TX into the three open-drain buffers; tip = pin 5 (sink, 10 R), ring = pin 4 (33 R to 3.3 V) [S CA-033]
     part("U", "SN74LVC3G07DCUR", "Package_SO:VSSOP-8_2.3x2mm_P0.5mm",
          {1: "MIDI_TX", 2: "MY3", 3: "MIDI_TX", 4: "GND", 5: "MY2", 6: "MIDI_TX", 7: "MY1", 8: "3V3"}, "digital", lcsc="C131955",
@@ -191,7 +204,8 @@ def build():
     C("100nF", "3V3", "GND", "digital")
     for k in (1, 2, 3):
         R("10R", f"MY{k}", f"MT{k}", f"jack{k}", note="MIDI RC (pin 5)")
-        R("33R 0.5W", "3V3", f"MR{k}", f"jack{k}", size="1206", note="MIDI RA (pin 4); 0.33 W if a mono plug shorts the ring")
+        R("33R 0.5W", "3V3", f"MR{k}", f"jack{k}", size="0805", note="MIDI RA (pin 4); 0.33 W if a mono plug shorts the ring: an 0805 "
+              "anti-surge part rated 0.5 W (e.g. Panasonic ERJ-P06) [A]")
     # switches: one TMUX7212 per switchable jack: SW1 CV out -> tip, SW2 MIDI sink -> tip, SW3 MIDI source -> ring, SW4 spare
     # ring sense: 100k in series, 470k pull-up, BAV99 clamp to GND / 3.3 V (the expander's pins are not 12 V tolerant)
     for k in (1, 2, 3):
@@ -225,7 +239,23 @@ def build():
     for en in ("P12_EN", "N12_EN"):   # the boost's EN has its own 950k pull-down [S]
         R("100k", en, "GND", "supply", note="off by default [Ed Q6]")
     R("10k", "EFUSE_FLT", "3V3", "supply")
+    # ------------------------------------------------------------------ the second stacks [Ed 6 Nov Q23 = A]: power board underside (males)
+    # to the lower board's top face (sockets), at x ∓11.15 under the first ones; 21 lines + 3 grounds [A]. Each list: inner column then
+    # outer column, each from the top (nearer the jack tops) down, as the jack board's HDR_NETS.
+    for ref_m, ref_f, cols in (("H3", "H5", STACK2["left"]), ("H4", "H6", STACK2["right"])):
+        _B[0] = "upper"
+        part("H", "PZ127VS-12-12-H16", "Connector_PinHeader_1.27mm:PinHeader_2x06_P1.27mm_Vertical_SMD", {}, "connectors",
+             lcsc="C2840009", mpn="PZ127VS-12-12-H16-4.5-R", note="second stack, male, on the power board's underside", ref=ref_m, side="B")
+        _B[0] = "lower"
+        part("H", "PM127VS-12-12-H34", "Connector_PinSocket_1.27mm:PinSocket_2x06_P1.27mm_Vertical_SMD", {}, "connectors",
+             lcsc="C2840010", mpn="PM127VS-12-12-H34-4.5-R", note="second stack, female, on the lower board's top face", ref=ref_f, side="F")
     return PARTS
+
+
+# the second stacks' pinout [A]: (inner column, outer column), each top to bottom. Power and the left jacks on the left; the I2C, MIDI,
+# USB data and the right jacks on the right (the link flex connector is at x +14.1 on the lower board).
+STACK2 = {"left": (["CV2_S", "J2_TIP", "3V3", "P12V5", "N12V", "GND"], ["CV1_S", "J1_TIP", "BOOST_EN", "P12_EN", "VNEG_RAW", "VSYS"]),
+          "right": (["CV3_S", "J3_TIP", "MIDI_TX", "IO_INT", "SCL", "SDA"], ["J4_TIP", "J4_RING", "GND", "DP", "DN", "GND"])}
 
 
 if __name__ == "__main__":
