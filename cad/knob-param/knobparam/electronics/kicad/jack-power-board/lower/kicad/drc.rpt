@@ -1,19 +1,7 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-power-board/lower/kicad/jack-lower-board.kicad_pcb **
-** Created on 2026-11-06 17:01:23 **
+** Created on 2026-11-06 17:07:25 **
 
-** Found 3 DRC violations **
-[clearance]: Clearance violation (netclass 'Supply' clearance 0.1000 mm; actual 0.0913 mm)
-    Rule: netclass 'Supply'; Severity: error
-    @(91.0500 mm, 98.1500 mm): Track [OLED_VCC] on B.Cu, length 0.6364 mm
-    @(91.0250 mm, 97.8000 mm): Track [IREF] on B.Cu, length 0.9250 mm
-[clearance]: Clearance violation (netclass 'Supply' clearance 0.1000 mm; actual 0.0000 mm)
-    Rule: netclass 'Supply'; Severity: error
-    @(91.0500 mm, 98.1500 mm): Track [OLED_VCC] on B.Cu, length 0.6364 mm
-    @(90.6500 mm, 98.1750 mm): Track [IREF] on B.Cu, length 0.5303 mm
-[clearance]: Clearance violation (netclass 'Default' clearance 0.1000 mm; actual 0.0000 mm)
-    Rule: netclass 'Default'; Severity: error
-    @(110.4000 mm, 95.4000 mm): Track [CV3_S] on In2.Cu, length 0.4950 mm
-    @(110.3500 mm, 95.8000 mm): Track [J2_TIP] on In2.Cu, length 0.7071 mm
+** Found 0 DRC violations **
 
 ** Found 0 unconnected pads **
 
