@@ -299,6 +299,14 @@ P = dict(
     jb2_gap=4.9,           # [Ed 4 Nov 21:30] jack board underside to the power board's top face. v0.39: 4.9 [A], the XFCN 1.27 pair's stack
     jb2_t=1.6,             # [A] power board FR-4
     jb2_parts=2.0,         # [A] parts envelope on the power board's top face
+    # v0.47 [Ed 6 Nov 11:27 Q23 = A]: the parts need 839 mm² of footprint, the power board has 603 free (139 %): a second board under it,
+    # the jack row's outline (no ears: the posts pass its bottom edge), jb3_gap below on two more XFCN 2x6 stacks at x ±jb_hdr[2]; both
+    # flex connectors move to its underside (the 17 mm of air there is hidden behind the jacks). 69 % full over the two boards.
+    jb3_on=True,           # [Ed 6 Nov Q23 = A]
+    jb3_gap=4.9,           # [A] the power board's underside to the lower board's top face: the same XFCN pair's stack
+    jb3_t=1.6,             # [A] lower board FR-4, 4 layers
+    jb3_parts=2.0,         # [A] parts envelope on the lower board's top face
+    jb2_under=2.0,         # [A] parts envelope on the power board's underside
     jb_hdr=(3.4, 7.7, 11.15),  # v0.46 [A]: pins along y again: the Ø3.6 plug holes (Q20) leave 7.1 between them, the feet are 6.3 across the rows.
                                # v0.42 [A]: between the jacks (x ±11.15), pins along x: KiCad's land pattern for these stacks [S-lib] has its
                                # feet out to ±3.15 across the rows, so at x ±19.6 (v0.39) they ran off the board's end onto jack 1/4's slots.
@@ -787,7 +795,13 @@ def derive(D):
     D["jb_env_air"] = D["jb_under_z0"] - D["jb2_parts_z1"]                 # between the two parts envelopes
     D["jb_pin_tip_air"] = (D["jack_depth_z0"] - D["jack_pin_len"]) - D["jb2_parts_z1"]   # jack pin tips to the power board's parts
     D["jb_pin_out"] = D["jb_z0"] - (D["jack_depth_z0"] - D["jack_pin_len"])   # pins through the jack board
-    D["zif_z0"] = D["jb2_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
+    if D.get("jb3_on"):   # v0.47 [Ed 6 Nov Q23 = A] the lower board, with both flex connectors on its underside
+        D["jb3_z1"] = D["jb2_z0"] - D["jb3_gap"]; D["jb3_z0"] = D["jb3_z1"] - D["jb3_t"]
+        D["jb2_under_z0"] = D["jb2_z0"] - D["jb2_under"]; D["jb3_parts_z1"] = D["jb3_z1"] + D["jb3_parts"]
+        D["jb3_env_air"] = D["jb2_under_z0"] - D["jb3_parts_z1"]               # between the power board's underside and the lower board's top
+        D["zif_z0"] = D["jb3_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
+    else:
+        D["zif_z0"] = D["jb2_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
     # [Ed 4 Nov 20:15] USB-C: channel through the bottom wall from the back edge to the board's front face, a ledge in front, a key behind
     uw, uh, ud = D["usb_rcpt"]; bw, bh, bt = D["usb_board"]
     D["usb_z1"] = D["z_fp1"] - ud            # board front face (bears on the ledge)

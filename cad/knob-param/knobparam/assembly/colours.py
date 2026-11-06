@@ -72,8 +72,8 @@ def key(name):
     if "socket" in low and "fpc" in low: return "ic"           # FPC socket on the joystick board
     if low.startswith(("clear oled flex", "link flex")): return "flex"
     if low.startswith("jack unit post"): return "brass"
-    if low.startswith(("jack board", "jack power board")):     # v0.33 [Ed 21:30]: the two jack boards and what is on them
-        return "ic" if any(k in low for k in ("envelope", "header", "zif", "fpc connector")) else "pcb"
+    if low.startswith(("jack board", "jack power board", "jack lower board")):   # v0.33 [Ed 21:30], v0.47 [Ed Q23 = A]: the jack boards
+        return "ic" if any(k in low for k in ("envelope", "header", "stacks", "zif", "fpc connector")) else "pcb"
     if low.startswith("jack ") and ("bushing" in low or "nut" in low): return "steel"
     if low.startswith("pcb back parts"): return "ic"
     if low.startswith(("usb-c board vbus", "usb-c board data")): return "ic"     # v0.37 TVS / ESD on the USB-C board

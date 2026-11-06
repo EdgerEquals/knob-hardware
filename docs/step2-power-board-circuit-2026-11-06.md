@@ -19,7 +19,7 @@ Picture: `docs/img/power-board-area-sketch.png`. `jack-power-board/area.py` make
 - More board above the jack row would sit in front of the clear OLED's lit area. **Under the power board there is 17 mm of air** down
   to the clear OLED, inside the jack row's outline, hidden behind the jacks; the model has nothing else in it (checked on v0.46).
 
-**Q23 (open): A** a second board under the power board (same outline, about 4.9 below it on two more 2x6 stacks; the flex
+**Q23 [Ed 6 Nov 11:27] = A (v0.47).** Asked as: **A** a second board under the power board (same outline, about 4.9 below it on two more 2x6 stacks; the flex
 connectors move to its underside; the posts pass its bottom edge to the power board's ears): 1,221 mm² free, 69 % full. **B** cut
 the circuit to fit one board (no MIDI out, no ring sense, smallest packages, 0201 passives): about 86 % full, very likely not routable.
 

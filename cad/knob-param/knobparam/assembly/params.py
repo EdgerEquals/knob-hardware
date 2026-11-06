@@ -3,7 +3,9 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.46",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+    version="v0.47",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19)
+                       # v0.47 [Ed 6 Nov 11:27 Q23 = A]: a second board under the jack power board (the parts need 839 mm² of footprint, it had
+                       #   603 free); both flex connectors move to its underside
                        # v0.46 [A, no decision]: the 2x6 stacks turned back to pins along y (their feet clear the plug holes by 0.4)
                        # v0.45 [Ed 5 Nov 20:46 Q20 = A]: a Ø3.6 hole through the jack board under each jack for a plug's tip
                        # v0.44 [A, no decision]: the outer two jack-board tongues 0.5 wider on their inner side (the sleeve's ground could

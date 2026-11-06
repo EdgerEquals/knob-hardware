@@ -510,12 +510,32 @@ def build(D):
                 jacks["clear OLED flex (36.0 [S], plugged on the bench)"] = _box(-6.25, 6.25, oy0 - 0.05 - ft, oy0 - 0.05, D["clear_oled"][2] / 2, zt)
                 lx0, lx1, _ly = D["link_lane"]
                 jacks["link flex (main board to the jack power board) [A]"] = _box(lx0, lx1, oy0 - 0.45 - ft, oy0 - 0.45, 0.02, zt)
-        jacks["jack power board (FR-4: ZIFs, PD sink, ±12 V, the OLED's 12.5 V) [A]"] = pb
+        lower = bool(D.get("jb3_on"))
+        jacks["jack power board (FR-4, 4 layers: PD sink, eFuse, ±12 V LDOs, jack switching, I/O expander) [A]" if lower else
+              "jack power board (FR-4: ZIFs, PD sink, ±12 V, the OLED's 12.5 V) [A]"] = pb
         jacks["jack power board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb2_z1"] + 0.02,
                                                                  D["jb2_parts_z1"]), hkeep)
-        for nm, (w, dd, hh, xc) in (("jack power board ZIF, 24-pin 0.5 (clear OLED flex)", D["zif_oled"]),
-                                    ("jack power board FPC connector, 25-pin 0.3 (link flex)", D["zif_link"])):
-            jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + D["zif_y_off"], by0 + D["zif_y_off"] + dd, D["jb2_z0"] - hh, D["jb2_z0"] - 0.02)
+        zb = D["jb3_z0"] if lower else D["jb2_z0"]
+        if lower:   # v0.47 [Ed 6 Nov Q23 = A]: the lower board on two more 2x6 stacks, the flex connectors under it
+            hdr2, keep2 = None, None
+            for sx in (-1, 1):
+                h = _box(sx * hx - hw / 2, sx * hx + hw / 2, (by0 + by1) / 2 - hl / 2, (by0 + by1) / 2 + hl / 2, D["jb3_z1"] + 0.02,
+                         D["jb2_z0"] - 0.02)
+                hdr2 = h if hdr2 is None else _add(hdr2, h)
+                k = _box(sx * hx - hw / 2 - a, sx * hx + hw / 2 + a, (by0 + by1) / 2 - hl / 2 - a, (by0 + by1) / 2 + hl / 2 + a,
+                         D["jb3_z1"], D["jb2_z0"])
+                keep2 = k if keep2 is None else _add(keep2, k)
+            jacks["jack lower board (FR-4, 4 layers: DAC, op-amps, boost, 3.3 V, the OLED's parts, both flex connectors) [A]"] = \
+                _box(bx0, bx1, by0, by1, D["jb3_z0"], D["jb3_z1"])
+            jacks["jack power board to lower board stacks (2 x 2x6 1.27, SMD) [A]"] = hdr2
+            jacks["jack power board underside parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3,
+                                                                              D["jb2_under_z0"], D["jb2_z0"] - 0.02), keep2)
+            jacks["jack lower board parts (envelope) [A]"] = _sub(_box(bx0 + 0.3, bx1 - 0.3, by0 + 0.3, by1 - 0.3, D["jb3_z1"] + 0.02,
+                                                                    D["jb3_parts_z1"]), keep2)
+        brd = "jack lower board" if lower else "jack power board"
+        for nm, (w, dd, hh, xc) in ((f"{brd} ZIF, 24-pin 0.5 (clear OLED flex)", D["zif_oled"]),
+                                    (f"{brd} FPC connector, 25-pin 0.3 (link flex)", D["zif_link"])):
+            jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + D["zif_y_off"], by0 + D["zif_y_off"] + dd, zb - hh, zb - 0.02)
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C board (socket, TVS, ESD)"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)

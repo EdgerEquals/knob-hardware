@@ -354,9 +354,16 @@ def checks(D, parts):
                     row("jack nuts still cover the holes", (D["jack_nut_d"] - D["jack_hole"]) / 2, 0.5, f"Ø{D['jack_nut_d']:g} nuts")
                 zf = D["zif_z0"]; oz_ = D["clear_oled"][2] / 2
                 need = (zf + 1.0 - oz_) + 3.0
+                brd = "the lower board" if D.get("jb3_on") else "the power board"
                 row("the clear OLED's flex reaches its ZIF (slack)", D["oled_flex_len"] - need, 3.0,
-                    f"{D['oled_flex_len']:g} flex [S] from the OLED's edge (z {oz_:.2f}) up to the ZIF under the power board (face z {zf:.2f}): "
+                    f"{D['oled_flex_len']:g} flex [S] from the OLED's edge (z {oz_:.2f}) up to the ZIF under {brd} (face z {zf:.2f}): "
                     f"~{need:.1f} of path incl. the turn and 3 into the ZIF [A]; the rest folds (plugged on the bench)")
+                if D.get("jb3_on"):   # v0.47 [Ed 6 Nov Q23 = A]
+                    row("jack unit posts: past the lower board's bottom edge", D["jack_bot_y"] - (py + r_), 0.3,
+                        f"the lower board is the jack row only (y {D['jack_bot_y']:.2f} up); the posts go on up to the power board's ears")
+                    row("between the power board's underside parts and the lower board's parts", D["jb3_env_air"], 0.5,
+                        f"power board underside parts to z {D['jb2_under_z0']:.2f} [A], lower board parts to z {D['jb3_parts_z1']:.2f} [A]; "
+                        f"boards {D['jb3_gap']:g} apart on the second stacks (Ed 6 Nov Q23 = A)")
             oz = D["clear_oled"][2]
             row("ZIFs to the clear OLED below (room for the two flexes to turn up into them)", D["zif_z0"] - oz, 8.0,
                 f"ZIF faces z {D['zif_z0']:.2f}, OLED front z {oz:.2f} [A: target]")
