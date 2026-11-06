@@ -549,7 +549,8 @@ def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, ma
     ol = [kc(x, y) for x, y in outline(which)]
     r = router4.Router4(router4.board_pads(b, ORIGIN), ol, dict(RULES, hole_clearance=0.2), GRID_WIDTHS, g=g, margin=margin, log=log)
     log(f"{which}: grid {r.nx} x {r.ny} x 3 layers, {len(r.nets)} nets")
-    ok = r.run(iters=iters, time_limit=time_limit, seed=seed)
+    ok = r.run(iters=iters, time_limit=time_limit, seed=seed, pf_mult=float(os.environ.get("GRID_PFM", "1.35")),
+               h_inc=float(os.environ.get("GRID_HINC", "0.4")))
     if settle and not ok:
         left = r.settle()
         json.dump(dict(sorted(left.items())), open(pcb_path.replace(".kicad_pcb", ".left_out.json"), "w"), indent=1)
@@ -685,7 +686,7 @@ def finish(which, pcb, d, tries, log=print, settle=False):
     for k in range(tries):
         shutil.copy(base, pcb)
         ok, r = grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "90")), time_limit=int(os.environ.get("GRID_TIME", "1500")),
-                           g=float(os.environ.get("GRID_G", "0.025")), margin=float(os.environ.get("GRID_M", "0.018")), seed=100 + k,
+                           g=float(os.environ.get("GRID_G", "0.025")), margin=float(os.environ.get("GRID_M", "0.018")), seed=int(os.environ.get("GRID_SEED", "100")) + k,
                            log=lambda s: None, settle=settle)
         add_planes(pcb, which)
         nv, nu, _ = drc(pcb, os.path.join(d, "drc.rpt"))

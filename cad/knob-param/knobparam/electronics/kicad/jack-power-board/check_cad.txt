@@ -4,7 +4,7 @@ Jack power board v0.1 + jack lower board v0.1 vs knob model v0.48 (tolerance 0.0
   PASS  power board: every pad at least 0.25 from the edge: nearest 0.250 (MP1.1)
   PASS  lower board outline = the model's: area 451.50 vs model 451.50; difference 0.0000 mm²
   PASS  lower board thickness: 1.6
-  PASS  lower board: every pad at least 0.25 from the edge: nearest 0.340 (C43.1)
+  PASS  lower board: every pad at least 0.25 from the edge: nearest 0.330 (R37.1)
   PASS  post 1 pin pad at the model's post (-16.5, -50.45): GND drill Ø1.15 pad Ø1.6 (model Ø1.15 / Ø1.6, Q24 = A)
   PASS  post 2 pin pad at the model's post (8, -50.45): VSYS drill Ø1.15 pad Ø1.6 (model Ø1.15 / Ø1.6, Q24 = A)
   PASS  jack board H1 / power board H1: same place, same nets pin for pin: centres (-11.150, -43.650) / (-11.150, -43.650); 12/12 nets agree
