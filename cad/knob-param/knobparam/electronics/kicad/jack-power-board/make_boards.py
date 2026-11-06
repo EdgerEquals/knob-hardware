@@ -743,7 +743,9 @@ def main():
         write_project(d, cfg["name"], RULES, libs, CLASSES)
         if "--grid" in sys.argv and "--refine" not in sys.argv:
             print(which, "grid route complete:", grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "80")),
-                                                           time_limit=int(os.environ.get("GRID_TIME", "3000")))[0])
+                                                           time_limit=int(os.environ.get("GRID_TIME", "3000")),
+                                                           g=float(os.environ.get("GRID_G", "0.025")),
+                                                           margin=float(os.environ.get("GRID_M", "0.018")))[0])
         elif "--route" in sys.argv:
             import kicad7_tools as kt
             # ground is left to the planes: Freerouting skips the GND class (-inc) and sees no plane, so other nets' vias pass In1

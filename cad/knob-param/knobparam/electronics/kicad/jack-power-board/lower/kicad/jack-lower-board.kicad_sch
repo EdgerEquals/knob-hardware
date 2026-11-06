@@ -599,7 +599,7 @@
   (uuid "922aecd3-2bc7-580d-9551-10d1570c09c5")
   (property "Reference" "J5" (at 49.53 80.05 0) (effects (font (size 1.27 1.27))))
   (property "Value" "FPC-05F-24PH20" (at 49.53 118.07 0) (effects (font (size 1.27 1.27))))
-  (property "Footprint" "jpb:" (at 49.53 120.07 0) (effects (font (size 1.27 1.27)) (hide yes)))
+  (property "Footprint" "jpb:XUNPU_FPC-05F-24PH20" (at 49.53 120.07 0) (effects (font (size 1.27 1.27)) (hide yes)))
   (property "Datasheet" "" (at 49.53 99.06 0) (effects (font (size 1.27 1.27)) (hide yes)))
   (property "MPN" "FPC-05F-24PH20" (at 49.53 99.06 0) (effects (font (size 1.27 1.27)) (hide yes)))
   (property "LCSC" "C2856805" (at 49.53 99.06 0) (effects (font (size 1.27 1.27)) (hide yes)))

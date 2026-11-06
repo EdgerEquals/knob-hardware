@@ -1,31 +1,11 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-power-board/lower/kicad/jack-lower-board.kicad_pcb **
-** Created on 2026-11-06 16:12:03 **
+** Created on 2026-11-06 16:54:19 **
 
-** Found 6 DRC violations **
-[solder_mask_bridge]: Front solder mask aperture bridges items with different nets
-    Rule: board setup solder mask min width; Severity: error
-    @(92.5500 mm, 100.1750 mm): Via [GND] on F.Cu - B.Cu
-    @(93.0500 mm, 100.3600 mm): Pad 1 [DAC2] of R24 on F.Cu
-[courtyards_overlap]: Courtyards overlap
-    Rule: board setup constraints courtyard; Severity: error
-    @(116.7873 mm, 97.3226 mm): Footprint U9
-    @(114.1000 mm, 101.4250 mm): Footprint J6
-[clearance]: Clearance violation (netclass 'GND' clearance 0.1000 mm; actual 0.0000 mm)
-    Rule: netclass 'GND'; Severity: error
-    @(92.5500 mm, 100.1750 mm): Via [GND] on F.Cu - B.Cu
-    @(93.0500 mm, 100.3600 mm): Pad 1 [DAC2] of R24 on F.Cu
-[clearance]: Clearance violation (netclass 'Default' clearance 0.1000 mm; actual 0.0851 mm)
-    Rule: netclass 'Default'; Severity: error
-    @(101.6500 mm, 95.8750 mm): Track [CV1_N] on B.Cu, length 0.0250 mm
-    @(101.6750 mm, 96.2250 mm): Track [CV1_O] on B.Cu, length 0.4950 mm
+** Found 1 DRC violations **
 [clearance]: Clearance violation (netclass 'Default' clearance 0.1000 mm; actual 0.0000 mm)
     Rule: netclass 'Default'; Severity: error
-    @(101.6500 mm, 95.9000 mm): Track [CV1_N] on B.Cu, length 0.6010 mm
-    @(101.6750 mm, 96.2250 mm): Track [CV1_O] on B.Cu, length 0.4950 mm
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.0839 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(93.0500 mm, 100.3600 mm): Pad 1 [DAC2] of R24 on F.Cu
-    @(92.5500 mm, 100.1750 mm): Via [GND] on F.Cu - B.Cu
+    @(101.0750 mm, 103.9250 mm): Track [DAC3] on F.Cu, length 0.4950 mm
+    @(101.1000 mm, 103.5500 mm): Track [CV3_N] on F.Cu, length 0.6364 mm
 
 ** Found 0 unconnected pads **
 

@@ -428,7 +428,32 @@ class Router4:
         self.log(f"  best round: {best[0][0]} unroutable, {best[0][1]} crowded cells")
         for n in self.nets:
             self._stamp(n, -1); self.state[n]["segs"] = best[1][n]["segs"]; self.state[n]["vias"] = best[1][n]["vias"]; self._stamp(n, +1)
-        return False
+        return self.cleanup()
+
+    def cleanup(self, rounds=12, pf=1e4):
+        """Last pass from the best round: reroute only the nets still crowded, each with the others' space all but forbidden (a net
+        that can get round them takes that way), keeping whatever is best."""
+        import random
+        rng = random.Random(11)
+        bad = self.overuse()
+        score = lambda b: (sum(self.failed.values()), sum(b.values()))
+        best = (score(bad), {n: (list(map(list, self.state[n]["segs"])), list(self.state[n]["vias"])) for n in self.nets})
+        for rd in range(rounds):
+            if not bad and sum(self.failed.values()) == 0:
+                break
+            nets = list(bad); rng.shuffle(nets)
+            for n in nets:
+                self._stamp(n, -1); self.route_net(n, pf); self._stamp(n, +1)
+            self.hist *= 0.0; self.hist_v *= 0.0   # no history needed here: overuse() below only counts
+            bad = self.overuse()
+            s = score(bad)
+            self.log(f"  cleanup {rd + 1}: {s[1]} crowded cells on {len(bad)} nets, {s[0]} unroutable")
+            if s < best[0]:
+                best = (s, {n: (list(map(list, self.state[n]["segs"])), list(self.state[n]["vias"])) for n in self.nets})
+        for n in self.nets:
+            self._stamp(n, -1); self.state[n]["segs"], self.state[n]["vias"] = best[1][n]; self._stamp(n, +1)
+        self._bad = self.overuse()
+        return best[0] == (0, 0)
 
     # ---- pull tight ----
     def _xy(self, c):
