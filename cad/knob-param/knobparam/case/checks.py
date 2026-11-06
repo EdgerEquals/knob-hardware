@@ -358,6 +358,12 @@ def checks(D, parts):
                 row("the clear OLED's flex reaches its ZIF (slack)", D["oled_flex_len"] - need, 3.0,
                     f"{D['oled_flex_len']:g} flex [S] from the OLED's edge (z {oz_:.2f}) up to the ZIF under {brd} (face z {zf:.2f}): "
                     f"~{need:.1f} of path incl. the turn and 3 into the ZIF [A]; the rest folds (plugged on the bench)")
+                if D.get("jb_post_pin"):   # v0.48 [Ed 6 Nov Q24 = A]
+                    pd_, ph_, ppad, _pa = D["jb_post_pin"]; hx_, ty_ = D["jb_tab"]
+                    row("post pins: pad to the power board ear's edges", min(hx_ - ppad / 2, (py - ty_) - ppad / 2), 0.25,
+                        f"Ø{pd_:g} pin in a plated Ø{ph_:g} hole, Ø{ppad:g} pad; ear ±{hx_:g} down to y {ty_:g}, post centre y {py:.2f} "
+                        "(Ed 6 Nov Q24 = A)")
+                    row("post pins: annular ring", (ppad - ph_) / 2, 0.15, "PCBWay's minimum 0.15 [S]")
                 if D.get("jb3_on"):   # v0.47 [Ed 6 Nov Q23 = A]
                     row("jack unit posts: past the lower board's bottom edge", D["jack_bot_y"] - (py + r_), 0.3,
                         f"the lower board is the jack row only (y {D['jack_bot_y']:.2f} up); the posts go on up to the power board's ears")

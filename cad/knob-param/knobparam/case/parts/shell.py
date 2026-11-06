@@ -502,9 +502,13 @@ def build(D):
             hx, ty = D["jb_tab"]
             for x, y in D["jb_post_xy"]:
                 pb = _add(pb, _box(x - hx, x + hx, ty, by0 + D["fuse"], D["jb2_z0"], D["jb2_z1"]))
+            pin = D.get("jb_post_pin")
             for i, (x, y) in enumerate(D["jb_post_xy"], 1):
-                jacks[f"jack unit post {i} (Ø{D['jb_post_d']:g} brass, {'GND' if i == 1 else '15 V'}) [A]"] = _cyl_z(D["jb_post_d"] / 2, 0.02,
-                                                                                                         D["jb2_z0"] - 0.02, x, y)
+                post = _cyl_z(D["jb_post_d"] / 2, 0.02, D["jb2_z0"] - 0.02, x, y)
+                if pin:   # v0.48 [Ed 6 Nov Q24 = A]: a Ø1.0 pin through a plated hole in the ear, the board on the Ø2 shoulder
+                    post = _add(post, _cyl_z(pin[0] / 2, D["jb2_z0"] - 0.03, D["jb2_z1"] + pin[3], x, y))
+                    pb = _sub(pb, _cyl_z(pin[1] / 2, D["jb2_z0"] - 0.5, D["jb2_z1"] + 0.5, x, y))
+                jacks[f"jack unit post {i} (Ø{D['jb_post_d']:g} brass, {'GND' if i == 1 else '15 V'}) [A]"] = post
             if D.get("link_lane"):   # v0.36 [Ed 22:52]: the two flexes, drawn as straight risers from the strip up to their ZIFs
                 oy0 = D["clear_oled_xy"][1] - D["clear_oled"][1] / 2; ft = D["flex_t"]; zt = D["zif_z0"] - 0.02
                 jacks["clear OLED flex (36.0 [S], plugged on the bench)"] = _box(-6.25, 6.25, oy0 - 0.05 - ft, oy0 - 0.05, D["clear_oled"][2] / 2, zt)

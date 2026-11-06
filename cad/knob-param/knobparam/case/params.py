@@ -324,6 +324,9 @@ P = dict(
     jb_post_xy=((-16.5, -50.45), (8.0, -50.45)),    # [Ed 22:21, 22:52] post centres: 0.65 from the OLED's edge, 0.35 from the bottom ledge;
                            # v0.36 the right post moves in to x 8 (between the OLED's flex and the link flex's lane)
     jb_post_d=2.0,         # [Ed 4 Nov 22:21] Ø2 posts; [Ed 22:52] brass, soldered at both ends, they carry 15 V and GND to the main board
+    jb_post_pin=(1.0, 1.15, 1.6, 0.5),   # v0.48 [Ed 6 Nov 11:35 Q24 = A]: each post steps down to a pin through the power board's ear
+                           # (the ear reaches only 1.05 below the post's centre, so a Ø2 hole had no board under it): pin Ø, plated hole Ø,
+                           # pad Ø (0.25 from the ear's edges), pin above the board for the fillet [A]; the board sits on the Ø2 shoulder
     link_lane=(9.5, 18.5, -50.6),   # [Ed 22:52 / A] the link flex's lane: x from, x to, and its pads' lowest y in the strip (clear of the
                            # board's corner notch); ~16 lines at 0.5 mm, signals only
     flex_t=0.15,           # [A] flex thickness (drawn as a straight riser from the strip to its ZIF)
