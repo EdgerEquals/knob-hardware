@@ -109,6 +109,15 @@ class Placer:
             r = self.rng.choice(self.reg[i][o[0]])
             self.x[i] = self.rng.uniform(r[0], r[2]); self.y[i] = self.rng.uniform(r[1], r[3])
 
+    def init_from(self, placement):
+        """Start from a placement {ref: (x, y, side, rot)} (refining it), random where a part is missing."""
+        self.init_random()
+        for i, it in enumerate(self.items):
+            if not self.fixed[i] and it["ref"] in placement:
+                x, y, s, r = placement[it["ref"]]
+                if (s, int(r) % 360) in it["geoms"]:
+                    self.x[i], self.y[i], self.o[i] = x, y, (s, int(r) % 360)
+
     def _local(self, ids):
         ks = set()
         for i in ids:
@@ -267,6 +276,7 @@ class Placer:
         mov = [i for i in range(self.n) if not self.fixed[i]]
         bad = sorted([i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9],
                      key=lambda i: (lambda r: (r[2] - r[0]) * (r[3] - r[1]))(self.rect(i)))
+        bad = bad + bad   # a second pass: a part whose neighbour moved away may be free now, or may find room further out
         for i in bad:
             if self.overlap(i) < 1e-9 and self.out_area(i) < 1e-9:
                 continue

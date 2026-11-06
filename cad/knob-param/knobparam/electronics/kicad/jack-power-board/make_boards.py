@@ -43,7 +43,9 @@ BOARDS = {"upper": dict(name="jack-power-board", dir="upper", title="Jack power 
 CLASSES = [("GND", 0.1, 0.25, ["GND"]),          # not routed: every ground pad has its via to the In1 plane (fanout_gnd) or the pours
            ("Power", 0.1, 0.5, ["VBUS", "VSYS"]),
            ("Supply", 0.1, 0.3, ["SW_B", "BOOST", "SW_3", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC", "CP_R", "CP_A"])]
+MARGINS = {}          # {board: {ref: margin}}: parts given more room after the router found pins walled in (main() fills it)
 ESCAPE = 0.0          # (0.9 tried 6 Nov: no legal placement) mm kept free beside the stacks' pad rows and in front of the flex connectors' pads (escape tracks and vias)
+EDGE_IC = 0.55        # mm from a chip's courtyard to the board edge: with 0.15 its pins facing the edge were walled in (6 Nov)
 IC_MARGIN = 0.08      # (0.35 tried 6 Nov: no legal placement) mm between an IC's courtyard and its neighbours' (room for its fanout)
 POWER = {"3V3": 0.2, "P12V5": 0.2, "N12V": 0.2, "GND": 0.0, "VBUS": 1.0, "VSYS": 1.0, "SW_B": 3.0, "CP_R": 2.0, "CP_A": 2.0,
          "BOOST": 1.0, "VNEG_RAW": 0.5, "SW_3": 3.0, "BST_3": 2.0, "OLED_VCC": 0.5}
@@ -265,7 +267,8 @@ def tca_pin_swap(parts, placement, log=print):
     tca = next((p for p in parts if p["value"].startswith("TCA9535")), None)
     if tca is None or tca["ref"] not in placement:
         return {}
-    port_pins = {k: v for k, v in tca["names"].items() if v.startswith("P")}       # pin number -> P00..P17
+    import re
+    port_pins = {k: v for k, v in tca["names"].items() if re.fullmatch(r"P[01][0-7]", v)}   # pin number -> P00..P17
     funcs = [tca["pins"][k] for k in port_pins]                                       # nets now on the ports
     def pad_xy(ref, num):
         p = next(q for q in parts if q["ref"] == ref)
@@ -292,7 +295,7 @@ def tca_pin_swap(parts, placement, log=print):
     return {f: port_pins[pn] for pn, f in new.items()}
 
 
-def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
+def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print, init=None):
     rx0, rx1 = ROW_X; ky_top = kc(0, ROW_Y[1])[1]; ky_bot = kc(0, ROW_Y[0])[1]
     region = [(rx0 + 0.15, ky_top + 0.15, rx1 - 0.15, ky_bot - 0.15)]   # courtyards 0.15 inside the edge: every pad >= 0.25 from it
     items, nets = [], {}
@@ -314,7 +317,9 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
                 for rot in (0, 90, 180, 270):
                     g[(s, rot)] = geometry(p["fp"], s, rot)
             zx0, zx1 = ZONES[which][zone_of(p, which, owner)]
-            zr = [(max(rx0 + 0.15, zx0), ky_top + 0.15, min(rx1 - 0.15, zx1), ky_bot - 0.15)]
+            # a chip's pins need room for a track along the edge: fine-pitch parts keep EDGE_IC from it, the rest 0.15
+            e = EDGE_IC if r[0] == "U" else 0.15
+            zr = [(max(rx0 + e, zx0), ky_top + e, min(rx1 - e, zx1), ky_bot - e)]
             items.append(dict(ref=r, geoms=g, regions={"F": zr, "B": zr}))
     # room to escape: no parts within ESCAPE of the stacks' pad rows (either face: their vias go through) or in front of the flex
     # connectors' pads; ICs keep IC_MARGIN, passives the default
@@ -334,6 +339,8 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     for it in items:
         if it.get("fixed") is None and it["ref"][0] in "UJ":
             it["margin"] = IC_MARGIN
+        if it["ref"] in MARGINS.get(which, {}):
+            it["margin"] = MARGINS[which][it["ref"]]
     netlist = [(POWER.get(n, 1.0), pins) for n, pins in nets.items()]
     # decoupling: each capacitor between a supply and ground to the pin of the same supply on the part made just before it
     last_ic = None
@@ -348,8 +355,12 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
                 if ic_pins:
                     netlist.append((2.0, [(p["ref"], cap_pin), (last_ic["ref"], ic_pins[0])]))
     pl = placer.Placer(items, {"F": region, "B": region}, netlist, margin=0.08, seed=seed)
-    pl.init_random()
-    pl.run(iters=iters, log=log)
+    if init:   # refine a placement: start from it, cool and short-stepped, overlaps already costly
+        pl.init_from(init)
+        pl.run(iters=iters, log=log, t0=0.08, step0=0.8, lam0=200.0)
+    else:
+        pl.init_random()
+        pl.run(iters=iters, log=log)
     pl.snap(0.05)
     ok = pl.repair(rounds=120, tries=200, log=log)
     pl.snap(0.05)
@@ -364,7 +375,7 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     if not ok:
         ok = pl.relocate(g=0.25, log=log)
     if not ok:
-        ok = pl.nudge(maxd=2.0, log=log)
+        ok = pl.nudge(maxd=5.0, log=log)
     wl, ov, out = pl.total()
     log(f"{which}: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}")
     res = {k: v for k, v in pl.result().items() if not k.startswith("KEEP_")}
@@ -506,6 +517,27 @@ def fanout_gnd(board, which, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
     return n_ok, n_fail
 
 
+GRID_WIDTHS = {"default": 0.127, "GND": 0.25, "VBUS": 0.3, "VSYS": 0.3,   # [C] VBUS/VSYS 0.3: they reach 0.5-pitch pins
+               **{n: 0.25 for n in ("SW_B", "SW_3", "CP_R", "CP_A")},            # switching loops
+               **{n: 0.15 for n in ("BOOST", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC")}}   # rails, all under 60 mA [A]
+
+
+def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, margin=0.036):
+    """Route with router4 (Ed Q26 = A): 3 routing layers (F, In2, B), In1 the ground plane; then pull tight. Returns (ok, router)."""
+    import router4
+    b = pcbnew.LoadBoard(pcb_path)
+    for t in list(b.GetTracks()):
+        b.Remove(t); _KEEP.append(t)   # keep the wrappers alive (KiCad 7 SWIG)
+    ol = [kc(x, y) for x, y in outline(which)]
+    r = router4.Router4(router4.board_pads(b, ORIGIN), ol, dict(RULES, hole_clearance=0.2), GRID_WIDTHS, g=g, margin=margin, log=log)
+    log(f"{which}: grid {r.nx} x {r.ny} x 3 layers, {len(r.nets)} nets")
+    ok = r.run(iters=iters, time_limit=time_limit)
+    r.smooth()
+    log(f"{which}: tracks, vias {r.apply(b, ORIGIN, RULES['via_d'], RULES['via_drill'])}")
+    save_board(pcb_path, b)
+    return ok, r
+
+
 def add_planes(pcb_path, which, inner_only=False):
     """Ground: a plane on In1 (before routing, so Freerouting sees it as the plane), and pours on F and B (after routing)."""
     b = pcbnew.LoadBoard(pcb_path)
@@ -557,6 +589,70 @@ def write_placement(pcb_path, out, which):
     json.dump(d, open(out, "w"), indent=1)
 
 
+def _build_saved(which, allp, fixed, hdr, placement_in, pcb, d, libs, reswap):
+    """Build and save a board from a placement {ref: (x, y, side, rot), _tca_ports: ...}; returns (parts, placement_in)."""
+    parts = [dict(p, pins=dict(p["pins"])) for p in allp if p["board"] == which]
+    placement = dict(placement_in); swap = placement.pop("_tca_ports", None); placement.update(fixed)
+    if which == "upper":
+        tca = next(p for p in parts if p["value"].startswith("TCA9535"))
+        if swap is None or reswap:
+            swap = tca_pin_swap(parts, placement); placement_in = dict(placement_in, _tca_ports=swap)
+        else:
+            port_num = {v: k for k, v in tca["names"].items()}
+            for f, port in swap.items():
+                tca["pins"][port_num[port]] = f
+    write_project(d, BOARDS[which]["name"], RULES, libs, CLASSES)
+    save_board(pcb, build(which, placement, parts, hdr))
+    return parts, placement_in
+
+
+def refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, rounds, log=print):
+    """Ed Q26 = A: route, then give the parts round the crowded spots more room, re-place them from where they are (cool, short
+    steps), and route again; keep the best. Walled-in pins found before routing get room the same way."""
+    import shutil, router4
+    best = None
+    place = json.load(open(pin_file))
+    for rnd in range(rounds):
+        if rnd:
+            parts = [dict(p, pins=dict(p["pins"])) for p in allp if p["board"] == which]
+            init = {k: v for k, v in place.items() if not k.startswith("_")}
+            res, _ = run_placer(which, parts, fixed, hdr, int(os.environ.get("REFINE_ITERS", "250000")), seed=rnd, init=init,
+                                log=lambda s: None)
+            place = dict(res, _tca_ports=place.get("_tca_ports"))
+        parts, place = _build_saved(which, allp, fixed, hdr, place, pcb, d, libs, reswap=rnd > 0)
+        rb = pcbnew.LoadBoard(pcb)
+        isl = router4.Router4(router4.board_pads(rb, ORIGIN), [kc(x, y) for x, y in outline(which)], dict(RULES, hole_clearance=0.2),
+                              GRID_WIDTHS, log=lambda *a: None).islands()
+        walled = sorted({nm.split(".")[0] for groups in isl.values() for g_ in groups[1:] for nm in g_} - set(fixed))
+        hot_parts = set(walled)
+        if not walled:
+            ok, r = grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "60")), time_limit=int(os.environ.get("GRID_TIME", "900")),
+                               g=float(os.environ.get("GRID_G", "0.05")), margin=float(os.environ.get("GRID_M", "0.036")), log=lambda s: None)
+            hc = r.hot_cells(); nf = sum(r.failed.values())
+            score = (nf, len(hc))
+            log(f"{which} refine round {rnd + 1}: {nf} unroutable, {len(hc)} crowded cells")
+            if best is None or score < best[0]:
+                best = (score, dict(place)); shutil.copy(pcb, pcb + ".best")
+            if score == (0, 0):
+                break
+            # parts whose courtyard (+0.3) holds a crowded cell
+            for p in parts:
+                if p["ref"] in fixed:
+                    continue
+                x, y, s, rot = place[p["ref"]]
+                x0, y0, x1, y1, _ = geometry(p["fp"], s, rot)
+                if any(x + x0 - 0.3 <= hx <= x + x1 + 0.3 and y + y0 - 0.3 <= hy <= y + y1 + 0.3 for _n, _L, hx, hy in hc):
+                    hot_parts.add(p["ref"])
+        else:
+            log(f"{which} refine round {rnd + 1}: walled-in pins on {walled}")
+        for r_ in hot_parts:
+            MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.08, 0.5), 3)
+        json.dump(MARGINS[which], open(mfile, "w"), indent=1)
+    json.dump(best[1], open(pin_file, "w"), indent=1)
+    shutil.copy(pcb + ".best", pcb); os.remove(pcb + ".best")
+    return best[0]
+
+
 def main():
     which_list = [w for w in ("upper", "lower") if w in sys.argv] or ["upper", "lower"]
     allp = design.build()
@@ -573,35 +669,66 @@ def main():
         fixed = fixed_parts(which, parts)
         hdr = header_nets(parts, fixed)
         pin_file = os.path.join(HERE, cfg["dir"], "placement_in.json")
-        if "--place" in sys.argv or not os.path.exists(pin_file):
-            iters = int(os.environ.get("PLACE_ITERS", "150000"))
-            best = None
-            for seed in range(1, int(os.environ.get("PLACE_SEEDS", "1")) + 1):
-                res, (wl, ov, out) = run_placer(which, parts, fixed, hdr, iters, seed=seed)
-                if best is None or (ov + out, wl) < best[0]:
-                    best = ((ov + out, wl), res)
-            json.dump(best[1], open(pin_file, "w"), indent=1)
-        placement = json.load(open(pin_file))
-        swap = placement.pop("_tca_ports", None)
-        placement.update(fixed)
-        if which == "upper":
-            if swap is None or "--place" in sys.argv:
-                swap = tca_pin_swap(parts, placement)
-                saved = json.load(open(pin_file)); saved["_tca_ports"] = swap; json.dump(saved, open(pin_file, "w"), indent=1)
-            else:
-                tca = next(p for p in parts if p["value"].startswith("TCA9535"))
-                port_num = {v: k for k, v in tca["names"].items()}
-                for f, port in swap.items():
-                    tca["pins"][port_num[port]] = f
+        mfile = os.path.join(HERE, cfg["dir"], "margins.json")
+        MARGINS[which] = json.load(open(mfile)) if os.path.exists(mfile) else {}
         pcb = os.path.join(d, cfg["name"] + ".kicad_pcb")
         libs = [(LIB, "${KIPRJMOD}/../../" + LIB + ".pretty")]
-        write_project(d, cfg["name"], RULES, libs, CLASSES)
-        board = build(which, placement, parts, hdr)
-        print(which, "ground vias (placed, no room):", fanout_gnd(board, which))
-        save_board(pcb, board)
+        placing = "--place" in sys.argv or not os.path.exists(pin_file)
+        for attempt in range(int(os.environ.get("PLACE_ROUNDS", "4")) if placing else 1):
+            parts = [dict(p, pins=dict(p["pins"])) for p in allp if p["board"] == which]
+            if placing:
+                iters = int(os.environ.get("PLACE_ITERS", "150000"))
+                best = None
+                for seed in range(1, int(os.environ.get("PLACE_SEEDS", "1")) + 1):
+                    res, (wl, ov, out) = run_placer(which, parts, fixed, hdr, iters, seed=seed)
+                    if best is None or (ov + out, wl) < best[0]:
+                        best = ((ov + out, wl), res)
+                json.dump(best[1], open(pin_file, "w"), indent=1)
+            placement = json.load(open(pin_file))
+            swap = placement.pop("_tca_ports", None)
+            placement.update(fixed)
+            if which == "upper":
+                if swap is None or placing:
+                    swap = tca_pin_swap(parts, placement)
+                    saved = json.load(open(pin_file)); saved["_tca_ports"] = swap; json.dump(saved, open(pin_file, "w"), indent=1)
+                else:
+                    tca = next(p for p in parts if p["value"].startswith("TCA9535"))
+                    port_num = {v: k for k, v in tca["names"].items()}
+                    for f, port in swap.items():
+                        tca["pins"][port_num[port]] = f
+            write_project(d, cfg["name"], RULES, libs, CLASSES)
+            board = build(which, placement, parts, hdr)
+            if "--grid" not in sys.argv:
+                print(which, "ground vias (placed, no room):", fanout_gnd(board, which))
+            save_board(pcb, board)
+            if not placing:
+                break
+            # pins walled in by their neighbours: give those parts more room and place again [the router can never reach them]
+            import router4
+            rb = pcbnew.LoadBoard(pcb)
+            isl = router4.Router4(router4.board_pads(rb, ORIGIN), [kc(x, y) for x, y in outline(which)], dict(RULES, hole_clearance=0.2),
+                                  GRID_WIDTHS, log=lambda *a: None).islands()
+            refs = sorted({nm.split(".")[0] for groups in isl.values() for g_ in groups[1:] for nm in g_} - set(fixed))
+            print(which, f"placement round {attempt + 1}: walled-in pins on {len(isl)} nets, parts {refs}")
+            if not refs:
+                break
+            for r_ in refs:
+                MARGINS[which][r_] = round(min(MARGINS[which].get(r_, IC_MARGIN if r_[0] in "UJ" else 0.08) + 0.1, 0.4), 3)
+            json.dump(MARGINS[which], open(mfile, "w"), indent=1)
+        if "--refine" in sys.argv:
+            print(which, "refined:", refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, int(os.environ.get("REFINE_ROUNDS", "6"))))
+            parts, _ = [dict(p, pins=dict(p["pins"])) for p in allp if p["board"] == which], None
+            sw = json.load(open(pin_file)).get("_tca_ports")
+            if which == "upper" and sw:
+                tca = next(p for p in parts if p["value"].startswith("TCA9535")); port_num = {v: k for k, v in tca["names"].items()}
+                for f, port in sw.items():
+                    tca["pins"][port_num[port]] = f
         schematic(which, parts, hdr, os.path.join(d, cfg["name"] + ".kicad_sch"))
         write_project(d, cfg["name"], RULES, libs, CLASSES)
-        if "--route" in sys.argv:
+        if "--grid" in sys.argv and "--refine" not in sys.argv:
+            print(which, "grid route complete:", grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "80")),
+                                                           time_limit=int(os.environ.get("GRID_TIME", "3000")))[0])
+        elif "--route" in sys.argv:
             import kicad7_tools as kt
             # ground is left to the planes: Freerouting skips the GND class (-inc) and sees no plane, so other nets' vias pass In1
             print(which, "routed:", kt.route(pcb, FREEROUTING, passes=int(os.environ.get("ROUTE_PASSES", "100")),
