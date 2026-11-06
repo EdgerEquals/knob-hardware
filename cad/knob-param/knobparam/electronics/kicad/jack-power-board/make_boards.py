@@ -538,8 +538,10 @@ GRID_WIDTHS = {"default": 0.127, "GND": 0.25, "VBUS": 0.3, "VSYS": 0.3,   # [C] 
                **{n: 0.15 for n in ("BOOST", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC")}}   # rails, all under 60 mA [A]
 
 
-def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, margin=0.036, seed=7):
-    """Route with router4 (Ed Q26 = A): 3 routing layers (F, In2, B), In1 the ground plane; then pull tight. Returns (ok, router)."""
+def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, margin=0.036, seed=7, settle=False):
+    """Route with router4 (Ed Q26 = A): 3 routing layers (F, In2, B), In1 the ground plane; then pull tight. Returns (ok, router).
+    settle (Ed Q26 B, the end-of-day fallback): leave out the connections that still crowd others, so the copper that is there is
+    clean and the rest is ratsnest to finish by hand; the list goes to <board>.left_out.json."""
     import router4
     b = pcbnew.LoadBoard(pcb_path)
     for t in list(b.GetTracks()):
@@ -548,6 +550,11 @@ def grid_route(pcb_path, which, iters=80, time_limit=3000, log=print, g=0.05, ma
     r = router4.Router4(router4.board_pads(b, ORIGIN), ol, dict(RULES, hole_clearance=0.2), GRID_WIDTHS, g=g, margin=margin, log=log)
     log(f"{which}: grid {r.nx} x {r.ny} x 3 layers, {len(r.nets)} nets")
     ok = r.run(iters=iters, time_limit=time_limit, seed=seed)
+    if settle and not ok:
+        left = r.settle()
+        json.dump(dict(sorted(left.items())), open(pcb_path.replace(".kicad_pcb", ".left_out.json"), "w"), indent=1)
+    elif os.path.exists(pcb_path.replace(".kicad_pcb", ".left_out.json")):
+        os.remove(pcb_path.replace(".kicad_pcb", ".left_out.json"))
     r.smooth()
     log(f"{which}: tracks, vias {r.apply(b, ORIGIN, RULES['via_d'], RULES['via_drill'])}")
     save_board(pcb_path, b)
@@ -669,9 +676,9 @@ def refine(which, allp, fixed, hdr, pin_file, mfile, pcb, d, libs, rounds, log=p
     return best[0]
 
 
-def finish(which, pcb, d, tries, log=print):
+def finish(which, pcb, d, tries, log=print, settle=False):
     """Route the placed board a few times (different orders), check each with KiCad's DRC after the planes are poured, keep the best;
-    stop at DRC 0 / unconnected 0."""
+    stop at DRC 0 / unconnected 0. settle: see grid_route."""
     import shutil
     best = None
     base = pcb + ".unrouted"; shutil.copy(pcb, base)
@@ -679,15 +686,24 @@ def finish(which, pcb, d, tries, log=print):
         shutil.copy(base, pcb)
         ok, r = grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "90")), time_limit=int(os.environ.get("GRID_TIME", "1500")),
                            g=float(os.environ.get("GRID_G", "0.025")), margin=float(os.environ.get("GRID_M", "0.018")), seed=100 + k,
-                           log=lambda s: None)
+                           log=lambda s: None, settle=settle)
         add_planes(pcb, which)
         nv, nu, _ = drc(pcb, os.path.join(d, "drc.rpt"))
         log(f"{which} finish try {k + 1}: DRC {nv} violations, {nu} unconnected (router: {len(r.hot_cells())} crowded cells)")
-        if best is None or (nu, nv) < best[0]:
-            best = ((nu, nv), k); shutil.copy(pcb, pcb + ".best"); shutil.copy(os.path.join(d, "drc.rpt"), pcb + ".best.rpt")
+        key = (nv, nu) if settle else (nu, nv)   # settling: clean copper first, then the fewest left for hand-finishing
+        lo = pcb.replace(".kicad_pcb", ".left_out.json")
+        if best is None or key < best[0]:
+            best = (key, k); shutil.copy(pcb, pcb + ".best"); shutil.copy(os.path.join(d, "drc.rpt"), pcb + ".best.rpt")
+            if os.path.exists(lo):
+                shutil.copy(lo, lo + ".best")
         if (nu, nv) == (0, 0):
             break
     shutil.copy(pcb + ".best", pcb); shutil.copy(pcb + ".best.rpt", os.path.join(d, "drc.rpt"))
+    lo = pcb.replace(".kicad_pcb", ".left_out.json")
+    if os.path.exists(lo + ".best"):
+        shutil.move(lo + ".best", lo)
+    elif os.path.exists(lo):
+        os.remove(lo)
     for f_ in (base, pcb + ".best", pcb + ".best.rpt"):
         os.remove(f_)
     return best
@@ -766,7 +782,7 @@ def main():
         schematic(which, parts, hdr, os.path.join(d, cfg["name"] + ".kicad_sch"))
         write_project(d, cfg["name"], RULES, libs, CLASSES)
         if "--finish" in sys.argv:
-            print(which, "finished:", finish(which, pcb, d, int(os.environ.get("FINISH_TRIES", "6"))))
+            print(which, "finished:", finish(which, pcb, d, int(os.environ.get("FINISH_TRIES", "6")), settle=os.environ.get("SETTLE") == "1"))
         elif "--grid" in sys.argv and "--refine" not in sys.argv:
             print(which, "grid route complete:", grid_route(pcb, which, iters=int(os.environ.get("GRID_ITERS", "80")),
                                                            time_limit=int(os.environ.get("GRID_TIME", "3000")),

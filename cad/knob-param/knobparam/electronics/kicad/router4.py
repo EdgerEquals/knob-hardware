@@ -54,7 +54,10 @@ def shape_dist(X, Y, x, y, w, h, shape):
     return np.where((dx < 0) & (dy < 0), np.maximum(dx, dy), out)
 
 
-def board_pads(board, origin):
+def board_pads(board, origin, layers=None):
+    """layers: the routing layers in order (default F.Cu, In2.Cu, B.Cu); SMD pads go on the first or last."""
+    layers = layers or LAYERS
+    last = len(layers) - 1
     out = []
     for f in board.GetFootprints():
         for p in f.Pads():
@@ -66,7 +69,7 @@ def board_pads(board, origin):
             tht = p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH
             if not (npth or tht or p.IsOnLayer(pcbnew.F_Cu) or p.IsOnLayer(pcbnew.B_Cu)):
                 continue   # paste-only apertures (the exposed pads' paste segments): no copper
-            lay = {0, 1, 2} if (tht or npth) else ({0} if p.IsOnLayer(pcbnew.F_Cu) else {2})
+            lay = set(range(len(layers))) if (tht or npth) else ({0} if p.IsOnLayer(pcbnew.F_Cu) else {last})
             d = p.GetDrillSize()
             out.append(dict(ref=f.GetReference(), num=p.GetNumber(), net=p.GetNetname(), x=pcbnew.ToMM(pos.x) - origin[0],
                             y=pcbnew.ToMM(pos.y) - origin[1], w=w, h=h, shape=SHAPE.get(p.GetShape(), "rect"), layers=lay,
@@ -75,8 +78,12 @@ def board_pads(board, origin):
 
 
 class Router4:
-    def __init__(self, pads, outline, rules, widths, g=0.05, margin=0.036, via_cost=1.2, gnd="GND", ep_min=1.4, log=print):
+    def __init__(self, pads, outline, rules, widths, g=0.05, margin=0.036, via_cost=1.2, gnd="GND", ep_min=1.4, log=print,
+                 layer_cost=None):
+        """pads from board_pads(board, origin, layers); layer_cost: a cost factor per routing layer (default 1 each)."""
         self.lib = _lib(); self.log = log
+        self.nl = max(max(p["layers"]) for p in pads if p["layers"]) + 1
+        self.layer_cost = np.asarray(layer_cost or [1.0] * self.nl, np.float32).reshape(-1, 1)
         self.g, self.rules, self.via_cost, self.gnd = g, rules, via_cost, gnd
         self.c = rules["clearance"]; self.vr = rules["via_d"] / 2; self.mt = margin
         xs = [p[0] for p in outline]; ys = [p[1] for p in outline]
@@ -85,7 +92,7 @@ class Router4:
         # at 0.5 pitch get a row of cells on their centre line (half a cell off, both of a narrow pad's middle cells can be blocked)
         self.x0, self.y0 = math.floor(x0 / g) * g, math.floor(y0 / g) * g
         self.nx, self.ny = int(math.ceil((x1 - self.x0) / g)) + 1, int(math.ceil((y1 - self.y0) / g)) + 1
-        self.N = self.nx * self.ny; self.nl = 3
+        self.N = self.nx * self.ny
         X, Y = np.meshgrid(self.x0 + g * np.arange(self.nx), self.y0 + g * np.arange(self.ny))
         from matplotlib.path import Path
         inside = Path(outline).contains_points(np.c_[X.ravel(), Y.ravel()]).reshape(X.shape)
@@ -103,7 +110,7 @@ class Router4:
         ms, c, vr, hole_c = margin, self.c, self.vr, rules.get("hole_clearance", 0.2)
         Rmax = max(self.classes) / 2 + c + ms + vr + 0.3
         nk = len(self.classes)
-        self.owner = np.full((nk, 3, self.ny, self.nx), -1, np.int32)
+        self.owner = np.full((nk, self.nl, self.ny, self.nx), -1, np.int32)
         self.owner_v = np.full((self.ny, self.nx), -1, np.int32)
         self.near_pad_v = np.zeros((self.ny, self.nx), bool)
         self.hole_blk = np.zeros((nk, self.ny, self.nx), bool); self.hole_v = np.zeros((self.ny, self.nx), bool)
@@ -142,8 +149,8 @@ class Router4:
                 nodes = np.concatenate([L * self.N + cells for L in sorted(p["layers"])])
                 self.terms[p["net"]].append((i, nodes))
         self.X, self.Y = X, Y
-        self.occ = np.zeros((nk, 3, self.N), np.int16); self.occv = np.zeros(self.N, np.int16)
-        self.hist = np.zeros((3, self.N), np.float32); self.hist_v = np.zeros(self.N, np.float32)
+        self.occ = np.zeros((nk, self.nl, self.N), np.int16); self.occv = np.zeros(self.N, np.int16)
+        self.hist = np.zeros((self.nl, self.N), np.float32); self.hist_v = np.zeros(self.N, np.float32)
         self.state = {n: dict(segs=[], vias=[], stamps=None) for n in names}
         self.fixed_vias = {n: [] for n in names}
         self.done_pads = set(); self.failed = {}
@@ -174,8 +181,8 @@ class Router4:
         for n in self.nets:
             if n == self.gnd:
                 continue
-            blk = self.blocked(n).reshape(3, self.ny, self.nx); vok = self.via_ok(n)
-            lab = [ndimage.label(~blk[L], structure=np.ones((3, 3)))[0].ravel() for L in range(3)]
+            blk = self.blocked(n).reshape(self.nl, self.ny, self.nx); vok = self.via_ok(n)
+            lab = [ndimage.label(~blk[L], structure=np.ones((3, 3)))[0].ravel() for L in range(self.nl)]
             parent = {}
 
             def f(a):
@@ -183,7 +190,7 @@ class Router4:
                     a = parent[a]
                 return a
             for c in np.flatnonzero(vok):
-                ls = [(L, int(lab[L][c])) for L in range(3) if lab[L][c] > 0]
+                ls = [(L, int(lab[L][c])) for L in range(self.nl) if lab[L][c] > 0]
                 for a_ in ls[1:]:
                     parent[f(a_)] = f(ls[0])
             groups = []
@@ -203,7 +210,7 @@ class Router4:
     def blocked(self, n):
         k, q = self.kof[n], self.nid[n]
         o = self.owner[k]
-        return ((o != -1) & (o != q)).reshape(3, self.N) | (self.hole_blk[k] | self.edge_blk[k]).reshape(1, self.N)
+        return ((o != -1) & (o != q)).reshape(self.nl, self.N) | (self.hole_blk[k] | self.edge_blk[k]).reshape(1, self.N)
 
     def via_ok(self, n):
         q = self.nid[n]
@@ -231,10 +238,10 @@ class Router4:
 
     def _copper(self, n):
         st = self.state[n]
-        per = [[] for _ in range(3)]
+        per = [[] for _ in range(self.nl)]
         for path in st["segs"]:
             path = np.asarray(path)
-            for L in range(3):
+            for L in range(self.nl):
                 per[L].append(path[path // self.N == L] % self.N)
         per = [np.unique(np.concatenate(a)) if a else np.zeros(0, np.int64) for a in per]
         vias = np.unique(np.asarray(st["vias"] + self.fixed_vias[n], np.int64))
@@ -246,7 +253,7 @@ class Router4:
             if st["stamps"] is None:
                 return
             for k in range(len(self.classes)):
-                for L in range(3):
+                for L in range(self.nl):
                     self.occ[k, L, st["stamps"][0][k][L]] -= 1
             self.occv[st["stamps"][1]] -= 1
             st["stamps"] = None
@@ -257,11 +264,11 @@ class Router4:
         for k, wk in enumerate(self.classes):
             vd = self._dilate(vias, vr + wk / 2 + c + mt)
             row = []
-            for L in range(3):
+            for L in range(self.nl):
                 idx = np.unique(np.concatenate([self._dilate(per[L], w / 2 + wk / 2 + c + mt), vd]))
                 self.occ[k, L, idx] += 1; row.append(idx)
             ks.append(row)
-        vidx = np.unique(np.concatenate([self._dilate(per[L], w / 2 + vr + c + mt) for L in range(3)] +
+        vidx = np.unique(np.concatenate([self._dilate(per[L], w / 2 + vr + c + mt) for L in range(self.nl)] +
                                         [self._dilate(vias, 2 * vr + c + mt)]))
         self.occv[vidx] += 1
         st["stamps"] = (ks, vidx)
@@ -271,7 +278,7 @@ class Router4:
         out = np.zeros(200000, np.int32); rs = ctypes.c_int(0)
         src = np.ascontiguousarray(src, np.int32)
         tb = np.ascontiguousarray(tboxes, np.int32) if tboxes is not None else None
-        n = self.lib.route_search(self.nx, self.ny, 3, _ptr(cost, ctypes.c_float), _ptr(vcost, ctypes.c_float), _ptr(blk, ctypes.c_uint8),
+        n = self.lib.route_search(self.nx, self.ny, self.nl, _ptr(cost, ctypes.c_float), _ptr(vcost, ctypes.c_float), _ptr(blk, ctypes.c_uint8),
                                   _ptr(src, ctypes.c_int), len(src), _ptr(tgt, ctypes.c_uint8), _ptr(sinkc, ctypes.c_float),
                                   _ptr(tb, ctypes.c_int), 0 if tb is None else len(tb), self.g, _ptr(out, ctypes.c_int), len(out),
                                   ctypes.byref(rs), maxexp)
@@ -280,7 +287,7 @@ class Router4:
     def _costs(self, n, pf):
         k = self.kof[n]
         blk = self.blocked(n)
-        cost = ((1.0 + self.hist) * (1.0 + pf * self.occ[k])).astype(np.float32)
+        cost = ((1.0 + self.hist) * (1.0 + pf * self.occ[k]) * self.layer_cost).astype(np.float32)
         cost[blk] = INF
         vc = (self.via_cost * (1.0 + self.hist_v) * (1.0 + pf * self.occv)).astype(np.float32)
         vc[~self.via_ok(n)] = INF
@@ -304,7 +311,7 @@ class Router4:
         tree = set(terms[0][1].tolist()); left = list(range(1, len(terms))); fail = 0
         owner = {}
         while left:
-            tgt = np.zeros(3 * self.N, np.uint8)
+            tgt = np.zeros(self.nl * self.N, np.uint8)
             for t in left:
                 tgt[terms[t][1]] = 1
                 for u in terms[t][1].tolist():
@@ -323,12 +330,12 @@ class Router4:
     def route_gnd(self, pf):
         n = self.gnd; st = self.state[n]
         cost, vc, blk = self._costs(n, pf)
-        sinkc = np.full(3 * self.N, INF, np.float32)
-        for L in range(3):
+        sinkc = np.full(self.nl * self.N, INF, np.float32)
+        for L in range(self.nl):
             sinkc[L * self.N:(L + 1) * self.N] = vc
-        cu = np.zeros(3 * self.N, bool)
+        cu = np.zeros(self.nl * self.N, bool)
         for v in self.fixed_vias[n]:
-            cu[[v, self.N + v, 2 * self.N + v]] = True
+            cu[[L_ * self.N + v for L_ in range(self.nl)]] = True
         for i, nodes in self.terms[n]:
             if i in self.done_pads:
                 cu[nodes] = True
@@ -350,7 +357,7 @@ class Router4:
             self._space_own_vias(vc, new_v, sinkc)
             cu[path] = True; sinkc[path] = 0.0
             for v in new_v:
-                cu[[v, self.N + v, 2 * self.N + v]] = True; sinkc[[v, self.N + v, 2 * self.N + v]] = 0.0
+                cu[[L_ * self.N + v for L_ in range(self.nl)]] = True; sinkc[[L_ * self.N + v for L_ in range(self.nl)]] = 0.0
             cu[nodes] = True; sinkc[nodes] = 0.0
         self.failed[n] = fail
         return fail
@@ -364,7 +371,7 @@ class Router4:
         keep = vc[vias].copy()
         vc[near] = INF; vc[vias] = keep
         if sinkc is not None:
-            for L in range(3):
+            for L in range(self.nl):
                 s = sinkc[L * self.N:(L + 1) * self.N]
                 kk = s[vias].copy(); s[near] = np.where(s[near] == 0.0, 0.0, INF); s[vias] = kk
 
@@ -374,7 +381,7 @@ class Router4:
         out = []
         for n in self.nets:
             per, vias = self._copper(n); k = self.kof[n]
-            for L in range(3):
+            for L in range(self.nl):
                 if len(per[L]):
                     out += [(n, L) + self._xy(c) for c in per[L][self.occ[k, L, per[L]] > 1]]
             if len(vias):
@@ -386,7 +393,7 @@ class Router4:
         for n in self.nets:
             per, vias = self._copper(n)
             k = self.kof[n]; cnt = 0
-            for L in range(3):
+            for L in range(self.nl):
                 if len(per[L]):
                     cl = self.occ[k, L, per[L]] > 1
                     cnt += int(cl.sum()); self.hist[L, per[L][cl]] += self.h_inc
@@ -430,6 +437,75 @@ class Router4:
             self._stamp(n, -1); self.state[n]["segs"] = best[1][n]["segs"]; self.state[n]["vias"] = best[1][n]["vias"]; self._stamp(n, +1)
         return self.cleanup()
 
+    def settle(self, retry=True):
+        """Fallback for a board that won't route clean (Ed Q26 B): leave out the connections that still crowd others, so what is
+        left is clean copper and the rest shows in KiCad as ratsnest to finish by hand. A connection that hangs off a dropped one
+        goes with it. Then each net that lost something gets one strict re-route, kept only if it adds no crowding.
+        Returns {net: number of connections left out}."""
+        def owner_of(n):
+            """seg index -> index of the seg its start hangs off (None: a pad or a fixed via)."""
+            st = self.state[n]; pads = set()
+            for _i, nodes in self.terms[n]:
+                pads.update(nodes.tolist())
+            for v in self.fixed_vias[n]:
+                pads.update(L_ * self.N + v for L_ in range(self.nl))
+            dep = []
+            for j, path in enumerate(st["segs"]):
+                s0 = path[0]; d = None
+                if s0 not in pads:
+                    for i in range(j - 1, -1, -1):
+                        if s0 in st["segs"][i]:
+                            d = i; break
+                dep.append(d)
+            return dep
+
+        def drop(n, j):
+            st = self.state[n]; dep = owner_of(n); gone = {j}
+            changed = True
+            while changed:
+                changed = False
+                for i, d in enumerate(dep):
+                    if d in gone and i not in gone:
+                        gone.add(i); changed = True
+            self._stamp(n, -1)
+            keep = [p for i, p in enumerate(st["segs"]) if i not in gone]
+            vias = set()
+            for p in keep:
+                vias.update(self._vias_of(p))
+                if n == self.gnd:
+                    vias.add(p[-1] % self.N)   # a ground path ends on its via down to the plane
+            st["segs"] = keep; st["vias"] = [v for v in st["vias"] if v in vias]
+            self._stamp(n, +1)
+            return len(gone)
+
+        left_out = {n: f for n, f in self.failed.items() if f}   # never routed at all
+        self.h_inc = 0.0
+        while True:
+            hot = self.hot_cells()
+            score = {}; sets = {}
+            for n, L, x, y in hot:
+                if n not in sets:
+                    sets[n] = [(set(p), set(self._vias_of(p)) | {p[-1] % self.N}) for p in self.state[n]["segs"]]
+                c = int(round((y - self.y0) / self.g)) * self.nx + int(round((x - self.x0) / self.g))
+                for j, (ps, vs) in enumerate(sets[n]):
+                    if (L >= 0 and (L * self.N + c) in ps) or (L < 0 and c in vs):
+                        score[(n, j)] = score.get((n, j), 0) + 1
+            if not score:
+                break
+            (n, j), cnt = max(score.items(), key=lambda kv: (kv[1], -len(self.state[kv[0][0]]["segs"][kv[0][1]])))
+            left_out[n] = left_out.get(n, 0) + drop(n, j)
+        self.log(f"  settle: left out {sum(left_out.values())} connections on {len(left_out)} nets")
+        if retry:
+            for n in sorted(left_out):
+                old = (list(map(list, self.state[n]["segs"])), list(self.state[n]["vias"]))
+                self._stamp(n, -1); self.route_net(n, 1e6); self._stamp(n, +1)
+                if self.failed[n] == 0 and n not in self.overuse() and not any(h[0] == n for h in self.hot_cells()):
+                    self.log(f"  settle: {n} re-routed clean"); left_out.pop(n)
+                else:
+                    self._stamp(n, -1); self.state[n]["segs"], self.state[n]["vias"] = old; self._stamp(n, +1)
+            self.failed = {n: 0 for n in self.nets}
+        return left_out
+
     def cleanup(self, rounds=24, pf=1e4, reach=0.8):
         """Last pass from the best round: reroute only the nets still crowded, each with the others' space all but forbidden (a net
         that can get round them takes that way), keeping whatever is best."""
@@ -447,7 +523,7 @@ class Router4:
                 hot = self.hot_cells()
                 for n in self.nets:
                     per, vias = self._copper(n)
-                    pts = [self._xy(c) for L in range(3) for c in per[L][::4]] + [self._xy(c) for c in vias]
+                    pts = [self._xy(c) for L in range(self.nl) for c in per[L][::4]] + [self._xy(c) for c in vias]
                     if any(abs(px - hx) < reach and abs(py - hy) < reach for _n, _L, hx, hy in hot for px, py in pts):
                         nets.add(n)
             nets = list(nets); rng.shuffle(nets)
@@ -498,8 +574,8 @@ class Router4:
         for n in self.nets:
             self._stamp(n, -1)
             k = self.kof[n]; blk = self.blocked(n)
-            free = [(~blk[L]) & (self.occ[k, L] == 0) for L in range(3)]
-            out, cells = [], [[] for _ in range(3)]
+            free = [(~blk[L]) & (self.occ[k, L] == 0) for L in range(self.nl)]
+            out, cells = [], [[] for _ in range(self.nl)]
             for L, run in self._runs(n):
                 pts = [self._xy(c) for c in run]
                 pulled = self._pull(pts, free[L])
@@ -538,7 +614,8 @@ class Router4:
             out.append(pts[j]); i = j
         return out
 
-    def apply(self, board, origin, via_d, via_drill):
+    def apply(self, board, origin, via_d, via_drill, layers=None):
+        layers = layers or LAYERS
         V = lambda x, y: pcbnew.VECTOR2I(pcbnew.FromMM(origin[0] + x), pcbnew.FromMM(origin[1] + y))
         nt = nv = 0
         for n in self.nets:
@@ -547,7 +624,7 @@ class Router4:
             for L, pts in lines:
                 for (ax, ay), (bx, by) in zip(pts, pts[1:]):
                     t = pcbnew.PCB_TRACK(board); t.SetStart(V(ax, ay)); t.SetEnd(V(bx, by))
-                    t.SetWidth(pcbnew.FromMM(self.width[n])); t.SetLayer(LAYERS[L]); t.SetNet(ni); board.Add(t); nt += 1
+                    t.SetWidth(pcbnew.FromMM(self.width[n])); t.SetLayer(layers[L]); t.SetNet(ni); board.Add(t); nt += 1
             for c in sorted(set(self.state[n]["vias"] + self.fixed_vias[n])):
                 x, y = self._xy(c)
                 v = pcbnew.PCB_VIA(board); v.SetPosition(V(x, y)); v.SetWidth(pcbnew.FromMM(via_d)); v.SetDrill(pcbnew.FromMM(via_drill))

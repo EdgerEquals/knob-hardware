@@ -1,7 +1,9 @@
 """Picture of a routed 4-layer jack board (knob step 2, 6 Nov 2026): F.Cu, In2.Cu and B.Cu one above the other, all seen from the
 front (panel x to the right, panel y up); In1.Cu is the ground plane and is not drawn. Tracks coloured by net (ground grey), pads
-outlined, vias as rings. Run with the system python that has pcbnew:  /usr/bin/python3 routed_picture.py <board.kicad_pcb> <out.png> [title]"""
-import sys
+outlined, vias as rings. With a DRC report, the connections still missing are drawn as dashed black lines on every panel (what is
+left to route by hand). Run with the system python that has pcbnew:
+  /usr/bin/python3 routed_picture.py <board.kicad_pcb> <out.png> [title] [drc.rpt]"""
+import re, sys
 import pcbnew, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -21,8 +23,20 @@ def P(x, y):   # board-local KiCad nm -> panel mm
     return pcbnew.ToMM(x) - O, JY - (pcbnew.ToMM(y) - O)
 
 
-def main(pcb, out, title=""):
+def missing(rpt):
+    """[(net, (x0, y0), (x1, y1))] panel mm, from the [unconnected_items] entries of a KiCad DRC report."""
+    out = []
+    for blk in open(rpt).read().split("[unconnected_items]")[1:]:
+        pts = re.findall(r"@\(([-\d.]+) mm, ([-\d.]+) mm\): \w+[^\[]*\[([^\]]+)\]", blk)[:2]
+        if len(pts) == 2:
+            (ax, ay, n), (bx, by, _) = pts
+            out.append((n, (float(ax) - O, JY - (float(ay) - O)), (float(bx) - O, JY - (float(by) - O))))
+    return out
+
+
+def main(pcb, out, title="", rpt=None):
     b = pcbnew.LoadBoard(pcb)
+    miss = missing(rpt) if rpt else []
     edge = [P(d.GetStart().x, d.GetStart().y) for d in b.GetDrawings() if d.GetLayer() == pcbnew.Edge_Cuts]
     layers = [(pcbnew.F_Cu, "F.Cu (top face)"), (pcbnew.In2_Cu, "In2.Cu (inner signal layer; In1.Cu is the ground plane)"),
               (pcbnew.B_Cu, "B.Cu (underside, seen through from the front)")]
@@ -53,16 +67,21 @@ def main(pcb, out, title=""):
             elif t.GetLayer() == L:
                 (x0, y0), (x1, y1) = P(t.GetStart().x, t.GetStart().y), P(t.GetEnd().x, t.GetEnd().y)
                 ax.plot([x0, x1], [y0, y1], color=col(n), lw=pcbnew.ToMM(t.GetWidth()) * 72 / 25.4 * 2.6, solid_capstyle="round", zorder=4)
+        for n, a, c in miss:
+            ax.plot([a[0], c[0]], [a[1], c[1]], color="black", lw=0.9, ls=(0, (3, 2)), zorder=7)
+            ax.plot(*a, "o", ms=2.2, color="black", zorder=7); ax.plot(*c, "o", ms=2.2, color="black", zorder=7)
         ax.set_xlim(min(xs) - 0.4, max(xs) + 0.4); ax.set_ylim(min(ys) - 0.4, max(ys) + 0.4); ax.set_aspect("equal")
         ax.set_title(name, fontsize=9, loc="left"); ax.grid(alpha=0.12)
     axs[-1].set_xlabel("x (mm, panel)")
     h = [plt.Line2D([], [], color=c, lw=3, label=n) for n, c in NC.items()]
-    fig.legend(handles=h + [plt.Line2D([], [], color="#5e35b1", lw=3, label="signals (one colour per net)")], loc="lower center",
-               ncol=7, fontsize=8, frameon=False)
+    h += [plt.Line2D([], [], color="#5e35b1", lw=3, label="signals (one colour per net)")]
+    if miss:
+        h += [plt.Line2D([], [], color="black", lw=0.9, ls=(0, (3, 2)), label=f"left to route by hand ({len(miss)})")]
+    fig.legend(handles=h, loc="lower center", ncol=8, fontsize=8, frameon=False)
     if title:
         fig.suptitle(title, fontsize=10, x=0.01, ha="left")
     fig.tight_layout(rect=(0, 0.03, 1, 0.97 if title else 1)); fig.savefig(out); print("wrote", out)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "")
+    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "", sys.argv[4] if len(sys.argv) > 4 else None)
