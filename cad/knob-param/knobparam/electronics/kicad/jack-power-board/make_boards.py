@@ -99,7 +99,19 @@ ALIAS = {"jpb:Hirose_FH26W-25S-0.3SHW": "Connector_FFC-FPC:Hirose_FH26-25S-0.3SH
 _KEEP = []
 
 
+_FP_CACHE = {}
+_SCRATCH = []
+
+
 def load_fp(board, name):
+    """A fresh copy of a footprint. Each library is read once: pcbnew.FootprintLoad caches the whole .pretty folder on every call and
+    never frees it (about 400 MB per board build before this cache, 6 Nov)."""
+    if name not in _FP_CACHE:
+        _FP_CACHE[name] = _load_fp(board, name)
+    return _FP_CACHE[name].Duplicate().Cast()   # Duplicate: new IDs for the footprint and its pads
+
+
+def _load_fp(board, name):
     if name in OWN:
         f = OWN[name](board)
     else:
@@ -125,7 +137,9 @@ def geometry(name, side, rot, cache={}):
     key = (name, side, rot)
     if key in cache:
         return cache[key]
-    b = pcbnew.BOARD(); f = load_fp(b, name); b.Add(f)
+    if not _SCRATCH:
+        _SCRATCH.append(pcbnew.BOARD())
+    b = _SCRATCH[0]; f = load_fp(b, name); b.Add(f); _KEEP.append(f)
     f.SetPosition(V(0, 0)); f.SetOrientationDegrees(rot)
     if side == "B":
         f.Flip(f.GetPosition(), False)
@@ -376,6 +390,8 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print, init=None):
         ok = pl.relocate(g=0.25, log=log)
     if not ok:
         ok = pl.nudge(maxd=5.0, log=log)
+    if not ok:
+        ok = pl.evict(log=log)
     wl, ov, out = pl.total()
     log(f"{which}: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}")
     res = {k: v for k, v in pl.result().items() if not k.startswith("KEEP_")}

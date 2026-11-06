@@ -155,8 +155,15 @@ class Router4:
                 if p["tht"]:
                     self.done_pads.add(i)
                 elif min(p["w"], p["h"]) >= ep_min:
-                    cell = int(round((p["y"] - self.y0) / g)) * self.nx + int(round((p["x"] - self.x0) / g))
-                    self.fixed_vias[gnd].append(cell); self.done_pads.add(i)
+                    # the via goes through every layer: a part on the other face may have a pad right over it, so pick the cell
+                    # nearest the pad's middle that is clear of every other net's pads on all layers (else route it as a pad)
+                    q = self.nid[gnd]
+                    ok = (((self.owner_v == -1) | (self.owner_v == q)) & ~self.edge_v & ~self.hole_v).ravel()
+                    cand = self.pad_cells[i][ok[self.pad_cells[i]]]
+                    if cand.size:
+                        cy, cx = np.divmod(cand, self.nx)
+                        dd2 = (self.x0 + cx * g - p["x"]) ** 2 + (self.y0 + cy * g - p["y"]) ** 2
+                        self.fixed_vias[gnd].append(int(cand[np.argmin(dd2)])); self.done_pads.add(i)
             self._stamp(gnd, +1)
 
     def islands(self):

@@ -303,6 +303,58 @@ class Placer:
                 self.x[i], self.y[i], self.o[i] = x0, y0, o0; self.reg[i] = keep
         return not [i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9]
 
+    def evict(self, g=0.25, log=None):
+        """For a big part with no free spot: put it where it overlaps no fixed part and the least area of small parts, then find
+        free spots for the parts it pushed out (relocate). Repeats while it helps."""
+        mov = [i for i in range(self.n) if not self.fixed[i]]
+        area = lambda i: (lambda r: (r[2] - r[0]) * (r[3] - r[1]))(self.rect(i))
+        for _round in range(3):
+            bad = sorted([i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9], key=lambda i: -area(i))
+            if not bad:
+                return True
+            i = bad[0]
+            best = None
+            for o in self.opts[i]:
+                self.o[i] = o
+                for rg in self.reg[i][o[0]]:
+                    x = rg[0]
+                    while x <= rg[2]:
+                        y = rg[1]
+                        while y <= rg[3]:
+                            self.x[i], self.y[i] = x, y
+                            if self.out_area(i) < 1e-9:
+                                x0, y0, x1, y1 = self.rect(i)
+                                hit, cost, okf = [], 0.0, True
+                                for j in range(self.n):
+                                    if j == i or self.o[j][0] != o[0]:
+                                        continue
+                                    a0, b0, a1, b1 = self.rect(j)
+                                    if min(x1, a1) - max(x0, a0) > 1e-9 and min(y1, b1) - max(y0, b0) > 1e-9:
+                                        if self.fixed[j] or area(j) >= area(i):
+                                            okf = False; break
+                                        hit.append(j); cost += area(j)
+                                if okf:
+                                    s = (cost, sum(self.net_cost(k) for k in self.part_nets[i]))
+                                    if best is None or s < best[0]:
+                                        best = (s, x, y, o, hit)
+                            y += g
+                        x += g
+            if best is None:
+                if log:
+                    log(f"  evict: no place at all for {self.items[i]['ref']}")
+                return False
+            self.x[i], self.y[i], self.o[i] = best[1], best[2], best[3]
+            if log:
+                log(f"  evict: {self.items[i]['ref']} moved, pushing out {[self.items[j]['ref'] for j in best[4]]}")
+            orig = {j: (self.x[j], self.y[j], self.o[j]) for j in best[4]}
+            for j in best[4]:   # park the pushed-out parts far away, then let relocate find them free spots
+                self.x[j] = -1e3
+            self.relocate(g=0.25, log=log)
+            for j, (x_, y_, o_) in orig.items():   # no spot found: back where it was (still overlapping; the next round tries it)
+                if self.x[j] < -100:
+                    self.x[j], self.y[j], self.o[j] = x_, y_, o_
+        return not [i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9]
+
     def snap(self, g=0.05):
         for i in range(self.n):
             if not self.fixed[i]:
