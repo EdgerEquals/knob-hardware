@@ -17,6 +17,8 @@ class Placer:
         regions: {side: [(x0, y0, x1, y1), ...]} allowed areas (a courtyard must sit inside one of them)
         nets: [(weight, [(ref, pad), ...])]  (pads on parts without that pad are ignored)"""
         self.items = items; self.n = len(items); self.margin = margin
+        self.mi = [it.get("margin", margin) for it in items]   # per-part spacing (ICs and connectors get room to escape)
+        self.mscale = 1.0                                       # 0 = courtyards may touch (the last repair)
         self.rng = random.Random(seed)
         self.idx = {it["ref"]: i for i, it in enumerate(items)}
         self.regions = regions
@@ -72,11 +74,12 @@ class Placer:
         return (a - best) * 4.0
 
     def overlap(self, i):
-        x0, y0, x1, y1 = self.rect(i); s = self.o[i][0]; m = self.margin
+        x0, y0, x1, y1 = self.rect(i); s = self.o[i][0]; mi = self.mi[i] * self.mscale
         tot = 0.0
         for j in range(self.n):
             if j == i or self.o[j][0] != s:
                 continue
+            m = max(mi, self.mi[j] * self.mscale)
             a0, b0, a1, b1 = self.rect(j)
             ix = min(x1 + m, a1) - max(x0 - m, a0)
             if ix <= 0:
@@ -159,7 +162,6 @@ class Placer:
 
     def legalise(self, rounds=400):
         """Push overlapping courtyards apart along the shorter penetration, keep each inside its face's regions."""
-        m = self.margin
         for _ in range(rounds):
             moved = False
             for i in range(self.n):
@@ -179,6 +181,7 @@ class Placer:
                     if j == i or self.o[j][0] != self.o[i][0]:
                         continue
                     x0, y0, x1, y1 = self.rect(i); a0, b0, a1, b1 = self.rect(j)
+                    m = max(self.mi[i], self.mi[j]) * self.mscale
                     ix = min(x1 + m, a1) - max(x0 - m, a0); iy = min(y1 + m, b1) - max(y0 - m, b0)
                     if ix <= 1e-6 or iy <= 1e-6:
                         continue

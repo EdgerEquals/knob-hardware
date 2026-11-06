@@ -239,9 +239,12 @@ def route(pcb_path, jar, passes=60, attempts=4, edge_inset=0.0, extra=(), timeou
         _inset_dsn_boundary(dsn, edge_inset)
     unrouted = open(pcb_path).read(); best = None
     for attempt in range(attempts):
-        subprocess.run(["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes),
-                        "--router.max_passes=" + str(passes), "-dct", "0", "--gui.enabled=false", *extra], check=True, timeout=timeout,
-                       capture_output=True)
+        if "1.9" in os.path.basename(jar):   # Freerouting 1.9.0 needs a display (xvfb) but honours -mp and -inc (2.1.0 ignores both)
+            cmd = ["xvfb-run", "-a", "java", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes), *extra]
+        else:
+            cmd = ["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes),
+                   "--router.max_passes=" + str(passes), "-dct", "0", "--gui.enabled=false", *extra]
+        subprocess.run(cmd, check=True, timeout=timeout, capture_output=True)
         open(pcb_path, "w").write(unrouted); b = pcbnew.LoadBoard(pcb_path)
         print("imported", import_ses(b, ses))
         save_board(pcb_path, b)

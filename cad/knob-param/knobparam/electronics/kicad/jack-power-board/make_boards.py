@@ -27,7 +27,7 @@ KLIB = "/usr/share/kicad/footprints"
 ORIGIN = (100.0, 100.0)
 BT = 1.6
 RULES = dict(clearance=0.1, track=0.127, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.25)
-FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-2.1.0.jar")
+FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-1.9.0.jar")   # 1.9.0: -mp and -inc work (2.1.0 ignores them)
 JY = -44.40
 ROW_X = (-21.5, 21.5); ROW_Y = (-48.9, -38.4)          # the jack row (panel)
 POSTS = [(-16.5, -50.45, "GND"), (8.0, -50.45, "VSYS")]
@@ -43,6 +43,8 @@ BOARDS = {"upper": dict(name="jack-power-board", dir="upper", title="Jack power 
 CLASSES = [("GND", 0.1, 0.25, ["GND"]),          # not routed: every ground pad has its via to the In1 plane (fanout_gnd) or the pours
            ("Power", 0.1, 0.5, ["VBUS", "VSYS"]),
            ("Supply", 0.1, 0.3, ["SW_B", "BOOST", "SW_3", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC", "CP_R", "CP_A"])]
+ESCAPE = 0.0          # (0.9 tried 6 Nov: no legal placement) mm kept free beside the stacks' pad rows and in front of the flex connectors' pads (escape tracks and vias)
+IC_MARGIN = 0.08      # (0.35 tried 6 Nov: no legal placement) mm between an IC's courtyard and its neighbours' (room for its fanout)
 POWER = {"3V3": 0.2, "P12V5": 0.2, "N12V": 0.2, "GND": 0.0, "VBUS": 1.0, "VSYS": 1.0, "SW_B": 3.0, "CP_R": 2.0, "CP_A": 2.0,
          "BOOST": 1.0, "VNEG_RAW": 0.5, "SW_3": 3.0, "BST_3": 2.0, "OLED_VCC": 0.5}
 
@@ -240,6 +242,24 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
                 for rot in (0, 90, 180, 270):
                     g[(s, rot)] = geometry(p["fp"], s, rot)
             items.append(dict(ref=r, geoms=g))
+    # room to escape: no parts within ESCAPE of the stacks' pad rows (either face: their vias go through) or in front of the flex
+    # connectors' pads; ICs keep IC_MARGIN, passives the default
+    for r, (x, y, s, rot) in fixed.items():
+        p = next(q for q in parts if q["ref"] == r)
+        x0, y0, x1, y1, _pads = geometry(p["fp"], s, rot)
+        if ESCAPE <= 0:
+            continue
+        if r.startswith("H"):
+            box_ = (x0 - ESCAPE, y0, x1 + ESCAPE, y1)
+        elif r in ("J5", "J6"):
+            box_ = (x0, y0 - ESCAPE, x1, y1)
+        else:
+            continue
+        for face in ("F", "B"):
+            items.append(dict(ref=f"KEEP_{r}_{face}", geoms={(face, 0): (*box_, {})}, fixed=(x, y, face, 0)))
+    for it in items:
+        if it.get("fixed") is None and it["ref"][0] in "UJ":
+            it["margin"] = IC_MARGIN
     netlist = [(POWER.get(n, 1.0), pins) for n, pins in nets.items()]
     # decoupling: each capacitor between a supply and ground to the pin of the same supply on the part made just before it
     last_ic = None
@@ -261,7 +281,7 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     pl.snap(0.05)
     ok = pl.repair(rounds=60, tries=200, log=log)
     if not ok:   # the margin is for routing room; a DRC-legal placement needs only the courtyards apart
-        pl.margin = 0.0
+        pl.mscale = 0.0
         ok = pl.repair(rounds=60, tries=200, log=log)
     if not ok:   # shove the last few apart, then tidy what that disturbed
         pl.legalise(rounds=300)
@@ -271,7 +291,8 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
         ok = pl.relocate(g=0.25, log=log)
     wl, ov, out = pl.total()
     log(f"{which}: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}")
-    return pl.result(), (wl, ov, out)
+    res = {k: v for k, v in pl.result().items() if not k.startswith("KEEP_")}
+    return res, (wl, ov, out)
 
 
 # ------------------------------------------------------------------ the board

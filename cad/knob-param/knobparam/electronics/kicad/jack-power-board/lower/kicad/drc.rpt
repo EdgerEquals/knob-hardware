@@ -1,16 +1,13 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-power-board/lower/kicad/jack-lower-board.kicad_pcb **
-** Created on 2026-11-06 12:33:54 **
+** Created on 2026-11-06 14:20:57 **
 
-** Found 2 DRC violations **
+** Found 1 DRC violations **
 [courtyards_overlap]: Courtyards overlap
     Rule: board setup constraints courtyard; Severity: error
     @(117.3644 mm, 96.9205 mm): Footprint U9
     @(114.1000 mm, 101.4250 mm): Footprint J6
-[isolated_copper]: Isolated copper fill
-    Local override; Severity: warning
-    @(78.5000 mm, 94.0000 mm): Zone [GND] on In1.Cu
 
-** Found 140 unconnected pads **
+** Found 138 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(99.7500 mm, 97.5850 mm): Pad 13 [SCK] of J5 on B.Cu
@@ -47,14 +44,6 @@
     Local override; Severity: error
     @(112.9500 mm, 99.8850 mm): Pad 7 [DP] of H6 on F.Cu
     @(114.1000 mm, 100.0250 mm): Pad 13 [DP] of J6 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(84.3000 mm, 97.5000 mm): Pad 17 [GND] of U3 on B.Cu
-    @(83.7800 mm, 97.7500 mm): Pad 2 [GND] of C15 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(96.4700 mm, 94.8500 mm): Pad 2 [GND] of C36 on B.Cu
-    @(94.7500 mm, 94.9500 mm): Pad 2 [GND] of C3 on F.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(115.1000 mm, 94.9700 mm): Pad 1 [CV_IN2] of C47 on F.Cu
