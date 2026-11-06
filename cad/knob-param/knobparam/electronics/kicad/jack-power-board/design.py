@@ -125,7 +125,7 @@ def build():
     part("D", "BAT54SFILM", "Package_TO_SOT_SMD:SOT-23", {1: "VNEG_RAW", 2: "GND", 3: "CP_A"}, "supply", lcsc="C377935",
          mpn="BAT54SFILM", note="1 A1, 2 K2, 3 K1/A2: VNEG_RAW -> CP_A -> GND")
     C("4.7uF 50V", "VNEG_RAW", "GND", "supply", size="0805")
-    _B[0] = "lower"   # the +12.5 V LDO sits with the boost (both boards then about 71 % full) [A]
+    _B[0] = "upper"   # [Ed 6 Nov 11:56 Q25 = A] the +12.5 V LDO and the 3.3 V buck on the power board (both boards about 63 % full)
     # TPS7A4901DGN: 1 OUT, 2 FB, 3 NC, 4 GND, 5 EN, 6 NR/SS, 7 DNC (no net at all), 8 IN, pad GND or open [S]
     #   VOUT = 1.188 x (1 + 95.3k/10.0k) = 12.51 V (12.57 V with the 1.194 V of the Japanese sheet) [S]; CFF 10 nF, NR 10 nF [S]
     part("U", "TPS7A4901DGNR", "Package_SO:HVSSOP-8-1EP_3x3mm_P0.65mm_EP1.57x1.89mm",
@@ -142,7 +142,7 @@ def build():
     C("4.7uF 50V", "VNEG_RAW", "GND", "supply", size="0805", note="the LDO's input: VNEG_RAW comes up the second stacks")
     R("93.1k 0.5%", "N12V", "N_FB", "supply"); R("10.0k 0.5%", "N_FB", "GND", "supply"); C("10nF 25V", "N12V", "N_FB", "supply")
     C("10nF", "N_NR", "GND", "supply"); C("10uF 25V", "N12V", "GND", "supply", size="0805")
-    _B[0] = "lower"
+    _B[0] = "upper"
     # 3.3 V: TPS62933DRLR: 1 RT, 2 EN, 3 VIN, 4 GND, 5 SW, 6 BST, 7 SS, 8 FB [S]; RT to GND = 1.2 MHz, 2.2 uH, >= 10 uF effective [S table];
     #   EN floating = on (0.7 uA pull-up; 6 V abs max, so never to VSYS) [S]: the board's 3.3 V is up whenever VSYS is, so the expander
     #   holds every switch open and every rail off from the start; VOUT = 0.8 x (1 + 30.9k/10.0k) = 3.27 V (the OLED's VDD max is 3.3) [S/A]
@@ -212,28 +212,31 @@ def build():
         R("100k", f"J{k}_RING", f"RS{k}", f"jack{k}"); R("470k", f"RS{k}", "3V3", f"jack{k}")
         part("D", "BAV99", "Package_TO_SOT_SMD:SOT-23", {1: "GND", 2: "3V3", 3: f"RS{k}"}, f"jack{k}", lcsc="C2500", mpn="BAV99",
              note="pin 1 A1, 2 K2, 3 K1/A2 [C: confirm on C2500's datasheet]")
-    # TMUX7212PWR: 1 SEL1, 2 D1, 3 S1, 4 VSS, 5 GND, 6 S4, 7 D4, 8 SEL4, 9 SEL3, 10 D3, 11 S3, 12 NC, 13 VDD, 14 S2, 15 D2, 16 SEL2 [S];
+    # TMUX7212RUMR [Ed 6 Nov Q25 = A: the same chip in WQFN-16 4x4, 0.65 pitch]: 1 S1, 2 VSS, 3 GND, 4 S4, 5 D4, 6 SEL4, 7 SEL3, 8 D3,
+    #   9 S3, 10 NC, 11 VDD, 12 S2, 13 D2, 14 SEL2, 15 SEL1, 16 D1, pad not connected inside (to ground here) [S TI pin table];
     #   SEL high = closed, 4 M pull-downs (open at power-up), VIH 1.3 V; ±4.5..±22 V supplies (here +12.5 / -12) [S]
     for k in (1, 2, 3):
-        part("U", "TMUX7212PWR", "Package_SO:TSSOP-16_4.4x5mm_P0.65mm",
-             {1: f"SW{k}_CV", 2: f"J{k}_TIP", 3: f"CV{k}_S", 4: "N12V", 5: "GND", 6: "GND", 7: "GND", 8: "GND", 9: f"SW{k}_MR",
-              10: f"J{k}_RING", 11: f"MR{k}", 12: "GND", 13: "P12V5", 14: f"MT{k}", 15: f"J{k}_TIP", 16: f"SW{k}_MT"}, f"jack{k}",
-             lcsc="C5220038", mpn="TMUX7212PWR", note=f"jack {k}: SW1 CV out, SW2 MIDI tip, SW3 MIDI ring, SW4 spare",
-             names={1: "SEL1", 2: "D1", 3: "S1", 4: "VSS", 5: "GND", 6: "S4", 7: "D4", 8: "SEL4", 9: "SEL3", 10: "D3", 11: "S3",
-                    12: "NC", 13: "VDD", 14: "S2", 15: "D2", 16: "SEL2"})
+        part("U", "TMUX7212RUMR", "Package_DFN_QFN:QFN-16-1EP_4x4mm_P0.65mm_EP2.5x2.5mm",
+             {15: f"SW{k}_CV", 16: f"J{k}_TIP", 1: f"CV{k}_S", 2: "N12V", 3: "GND", 4: "GND", 5: "GND", 6: "GND", 7: f"SW{k}_MR",
+              8: f"J{k}_RING", 9: f"MR{k}", 10: "GND", 11: "P12V5", 12: f"MT{k}", 13: f"J{k}_TIP", 14: f"SW{k}_MT", 17: "GND"}, f"jack{k}",
+             lcsc="C3657300", mpn="TMUX7212RUMR", note=f"jack {k}: SW1 CV out, SW2 MIDI tip, SW3 MIDI ring, SW4 spare; land pattern KiCad's "
+             "generic 4x4 QFN-16 [C: TI RUM0016A]",
+             names={15: "SEL1", 16: "D1", 1: "S1", 2: "VSS", 3: "GND", 4: "S4", 5: "D4", 6: "SEL4", 7: "SEL3", 8: "D3", 9: "S3",
+                    10: "NC", 11: "VDD", 12: "S2", 13: "D2", 14: "SEL2", 17: "PAD"})
         C("100nF 25V", "P12V5", "GND", f"jack{k}"); C("100nF 25V", "N12V", "GND", f"jack{k}")
     # I/O expander (TCA9535, 0x20): switch controls, ring sense, rail enables, eFuse fault  [A allocation; may be swapped for routing]
     IO = {"P00": "SW1_CV", "P01": "SW1_MT", "P02": "SW1_MR", "P03": "SW2_CV", "P04": "SW2_MT", "P05": "SW2_MR", "P06": "SW3_CV",
           "P07": "SW3_MT", "P10": "SW3_MR", "P11": "RS1", "P12": "RS2", "P13": "RS3", "P14": "BOOST_EN", "P15": "P12_EN",
           "P16": "N12_EN", "P17": "EFUSE_FLT"}
-    TCA = {"INT": 1, "A1": 2, "A2": 3, "P00": 4, "P01": 5, "P02": 6, "P03": 7, "P04": 8, "P05": 9, "P06": 10, "P07": 11, "GND": 12,
-           "P10": 13, "P11": 14, "P12": 15, "P13": 16, "P14": 17, "P15": 18, "P16": 19, "P17": 20, "A0": 21, "SCL": 22, "SDA": 23, "VCC": 24}
+    # [Ed 6 Nov Q25 = A] TCA9535RGER, VQFN-24 4x4: pins as TI's table for RTW/RGE [S]; the centre pad to ground (or open) [S]
+    TCA = {"P00": 1, "P01": 2, "P02": 3, "P03": 4, "P04": 5, "P05": 6, "P06": 7, "P07": 8, "GND": 9, "P10": 10, "P11": 11, "P12": 12,
+           "P13": 13, "P14": 14, "P15": 15, "P16": 16, "P17": 17, "A0": 18, "SCL": 19, "SDA": 20, "VCC": 21, "INT": 22, "A1": 23, "A2": 24}
     pins = {TCA[k]: v for k, v in IO.items()}
     pins.update({TCA["INT"]: "IO_INT", TCA["A0"]: "GND", TCA["A1"]: "GND", TCA["A2"]: "GND", TCA["GND"]: "GND", TCA["SCL"]: "SCL",
-                 TCA["SDA"]: "SDA", TCA["VCC"]: "3V3"})
-    part("U", "TCA9535PWR", "Package_SO:TSSOP-24_4.4x7.8mm_P0.65mm", pins, "digital", lcsc="C130204", mpn="TCA9535PWR",
-         note="I2C 0x20; inputs at power-up, no pull-ups [S]; pins as the KiCad TCA9535 symbol (24-pin TSSOP/SSOP)",
-         names={v: k for k, v in TCA.items()})
+                 TCA["SDA"]: "SDA", TCA["VCC"]: "3V3", 25: "GND"})
+    part("U", "TCA9535RGER", "Package_DFN_QFN:Texas_RGE0024C_VQFN-24-1EP_4x4mm_P0.5mm_EP2.1x2.1mm", pins, "digital", lcsc="C527428",
+         mpn="TCA9535RGER", note="I2C 0x20; inputs at power-up, no pull-ups [S]; LCSC had 51 in stock on 6 Nov",
+         names={**{v: k for k, v in TCA.items()}, 25: "PAD"})
     C("100nF", "3V3", "GND", "digital")
     R("4.7k", "SCL", "3V3", "digital"); R("4.7k", "SDA", "3V3", "digital"); R("10k", "IO_INT", "3V3", "digital")
     for en in ("P12_EN", "N12_EN"):   # the boost's EN has its own 950k pull-down [S]
@@ -254,7 +257,7 @@ def build():
 
 # the second stacks' pinout [A]: (inner column, outer column), each top to bottom. Power and the left jacks on the left; the I2C, MIDI,
 # USB data and the right jacks on the right (the link flex connector is at x +14.1 on the lower board).
-STACK2 = {"left": (["CV2_S", "J2_TIP", "3V3", "P12V5", "N12V", "GND"], ["CV1_S", "J1_TIP", "BOOST_EN", "P12_EN", "VNEG_RAW", "VSYS"]),
+STACK2 = {"left": (["CV2_S", "J2_TIP", "3V3", "P12V5", "N12V", "GND"], ["CV1_S", "J1_TIP", "BOOST_EN", "BOOST", "VNEG_RAW", "VSYS"]),
           "right": (["CV3_S", "J3_TIP", "MIDI_TX", "IO_INT", "SCL", "SDA"], ["J4_TIP", "J4_RING", "GND", "DP", "DN", "GND"])}
 
 
