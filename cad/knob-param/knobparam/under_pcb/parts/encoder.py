@@ -85,7 +85,7 @@ def daughterboard(D):
 def build(D):
     T = Pos(*D["enc_xy"], 0)
     S = Rot(0, 0, D["sens_dir"] - 270.0)   # v0.19: sensor round the wheel (built at -Y, i.e. 270)
-    board, header, stands = daughterboard(D)
+    board, header, stands = daughterboard(D) if D["enc_riser"] else (None, None, None)
     return {"encoder bearing 1 (cradle+PCB)": T * bearing(D, D["h_brg_top"]),
             "encoder pinion": T * Rot(0, 0, ring_phase(D, D["enc_ang"])) * pinion(D),
             "encoder pinion cap": T * fresnel_cap(
@@ -98,6 +98,5 @@ def build(D):
             **({"encoder bearing 2 seat (printed, glued)": T * seat2(D)} if D["brg2_on_pcb"] else {}),
             "encoder disc + slotted rim": T * wheel(D),
             "encoder sensor EE-SX1321": T * S * sensor(D),
-            "encoder daughterboard": T * S * board,
-            "encoder header": T * S * header,
+            **({"encoder daughterboard": T * S * board, "encoder header": T * S * header} if board is not None else {}),
             **({"encoder standoff": T * S * stands} if stands is not None else {})}

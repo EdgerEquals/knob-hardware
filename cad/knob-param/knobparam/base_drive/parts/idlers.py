@@ -50,7 +50,7 @@ def build(D):
             2 * (root_r - D["cap_root_inset"]), D["pin_head"][0] + 2 * D["cap_fit_gap"], D["h_pin1"] + D["cap_seat_gap"],
             D["cap_t"], D["cap_rings"], D["cap_step_h"], D["cap_step_w"])
         pin = cyl(D["pin_d"] / 2, 0, D["pin_z1"] - ht, x, y) + cyl(hd / 2, D["pin_z1"] - ht, ht, x, y)
-        if i - 1 == D["fg_idler"]:
+        if D["feel_on"] and i - 1 == D["fg_idler"]:   # Q27: without the feel motor both idlers are plain
             pin += cyl(D["pin_d"] / 2, D["fg_z_bot"], -D["fg_z_bot"], x, y)   # same pin, down through the PCB
             out[f"feel compound gear {D['fg_z_gear']}T"] = Pos(x, y, 0) * Rot(0, 0, spin) * compound_gear(D)
         out[f"idler pin {i}"] = pin

@@ -86,8 +86,8 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
 - **Cradle:** no big cut. The ligaments where the 54° and 150° idler pockets break the OD are opened at the narrowest point with R0.5 fillets, leaving a 1.2 mm web round each pin. The feel pinion is no longer in that plane (it moved under the PCB), so that bridge went away with the pocket. The Hall window is one smooth offset of the swept bar, even clearance, not the old stepped zig-zag.
 - **Outer thrust** [Ed]: flat horizontal race, no 45° faces. Ø1.5 steel balls on r 19.54, between a torus groove in the skirt underside and a carrier printed as part of the cradle (located on the centre-tube clamp and the existing encoder Ø5 press; no new PCB holes). The carrier skips 124–137°, the C20–C22/U20 keep-out. Floor under the seat is 1.0 mm. Radial land in the skirt wall is **0.51 mm** — see open items. The 45° cone race between knob and dial is unchanged; this race takes the vertical clamp load, and the pinions locate the knob radially.
 - **Screen carrier** [Ed]: the Ø2×1 magnet and steel disc are two Ø3×1 N52 magnets facing each other (attracting), one in the carrier and one in the dial shoulder, at 90°, opposite the Ø1 pin at 270°. Stray field at H3 is 0.016 mT.
-- **Feel second stage** [Ed], no extra shaft. The 716 stays at 102°, shaft down. The 150° idler (the one away from the 1220) is a compound gear: its 14T stays in the 75T ring, and a printed 32T m0.5 gear on the same pin, under the PCB, is driven by a **KHK DS0.5-15** POM pinion (Duracon, bore Ø2, face 3, hub Ø4.5×4). Brass alternate: KHK BSS0.5-15A, bore Ø3. Overall ratio **(32/15)×(75/14) = 11.43:1**. Centre distance is 0.015 mm tight of nominal, inside the tooth-backlash relief. The 716 shaft stick-out to the bottom of the pinion is **12.2 mm**.
-- **Encoder:** the compound gear occupies the old disc depth, so the disc and the EE-SX1321 drop **3.6 mm**. The sensor sits on a small daughterboard (0.8 mm) on a header and two standoffs. CAD proxy only. KiCad is not done: see open items.
+- **Feel second stage** [Ed] (left out since v0.49, Q27), no extra shaft. The 716 stays at 102°, shaft down. The 150° idler (the one away from the 1220) is a compound gear: its 14T stays in the 75T ring, and a printed 32T m0.5 gear on the same pin, under the PCB, is driven by a **KHK DS0.5-15** POM pinion (Duracon, bore Ø2, face 3, hub Ø4.5×4). Brass alternate: KHK BSS0.5-15A, bore Ø3. Overall ratio **(32/15)×(75/14) = 11.43:1**. Centre distance is 0.015 mm tight of nominal, inside the tooth-backlash relief. The 716 shaft stick-out to the bottom of the pinion is **12.2 mm**.
+- **Encoder:** (v0.49: back on the main board, no riser, Q27) the compound gear occupies the old disc depth, so the disc and the EE-SX1321 drop **3.6 mm**. The sensor sits on a small daughterboard (0.8 mm) on a header and two standoffs. CAD proxy only. KiCad is not done: see open items.
 
 ## v0.16b changes (Ed, 1 Nov 2026)
 - **Relative knob-vs-dial sensor removed** (duplicate of the encoder + Hall row): no ring magnet in the knob, no
@@ -114,6 +114,14 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   by linear constant-current (no PWM). The screens show an *analogy* of the parameter being changed.
 
 ## Motor, feel and sensing
+- **v0.49 [Ed 6 Nov 19:33, Q27 = A]: no feel motor.** Danny's bench test of the motors (6 Nov): the 1220 coreless has very
+  little backlash, just enough that the encoder sees the hand's direction inside it before the motor takes over, and the hand does
+  not feel it because pushing the dial takes a little effort anyway. The cheaper N30 has much more and would need the feel motor.
+  So the 716, its open saddle, its pinion and the 39T compound gear are left out; the model keeps them behind `feel_on` (False;
+  True brings them back, e.g. with the N30). Idler 1 is a plain idler again. The EE-SX1321 is back on the main board's back as on
+  main PCB v0.11 [Ed 19:42], no riser board or header. The back depth is held at v0.48 (`rear_hold`) until Ed decides whether the
+  cover comes up with the encoder. The KiCad main board still has M2 / U20 / C20-C22 until the main-board pass regenerates it
+  (`design.py` already follows `feel_on`).
 - **Main motor:** a 1220 coreless planetary (N30 as a parameter swap), offset from the dial axis and soldered to
   the main PCB by its tabs. Its 19T pinion drives the 24T knob hub gear (m0.5, ratio 1.263).
   The design is motor-agnostic: the encoder reads the dial, not the motor, and boot calibration learns
@@ -123,7 +131,7 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   freewheel on a sustained stall, and the screen says why.
 - **Motor voice:** a switchable mode in which audio is modulated onto the motor drive and recorded back through
   back-EMF sensing and a contact mic. A bypassable filter keeps the normal mode quiet.
-- **Feel motor (v0.16):** a 716 coreless, axial and inverted (shaft down) inside the base cradle at 102°,
+- **Feel motor (v0.16; left out since v0.49, `feel_on`):** a 716 coreless, axial and inverted (shaft down) inside the base cradle at 102°,
   between the bottom-ring idlers at 54° and 150°. It has its own 22T pinion into the 75T bottom internal ring
   (ratio 3.41). It is held by an **open saddle clamp**: an inboard seat (2 bands + spine onto a cradle rib) and an
   outboard strap (2 × 1.2 mm C-bands, ears + M1 screw). Most of the can stays open for airflow.

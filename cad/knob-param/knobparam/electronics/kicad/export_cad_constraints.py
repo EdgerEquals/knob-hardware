@@ -45,7 +45,8 @@ def main():
         clear_oled=dict(size=D.get("clear_oled"), xy=D.get("clear_oled_xy")),
         mcu=D.get("mcu"),   # [Ed 18:34] H7B0 LQFP100 on B.Cu at the low middle (PANEL frame), D notched round it; court = keep-out for its caps
         drv=__import__("knobparam.electronics.parts.pcb", fromlist=["drv_place"]).drv_place(D),   # v0.19b U20, C20–C22 (B.Cu)
-        fm_pad_xy=D["fm_pad_xy"], fm_xy=D["fm_xy"], fm_ang=D["fm_ang"], fm_cd=D["fm_cd"], feel=D["feel"],
+        feel_on=D["feel_on"],   # Q27 [Ed 6 Nov 19:33]: False = no 716 (no M2 lead pads, no DRV8837 cluster)
+        fm_pad_xy=D["fm_pad_xy"] if D["feel_on"] else [], fm_xy=D["fm_xy"], fm_ang=D["fm_ang"], fm_cd=D["fm_cd"], feel=D["feel"],
         rod_pad_r=D["rod_pad_r"], rod_pad_clear=D["rod_pad_clear"], h1_hole=D["h1_hole"],
         enc_xy=D["enc_xy"], brg=D["brg"], offset=D["offset"], motor={k: D["motor"][k] for k in ("term_w", "term_t", "term_pitch", "rear_boss_d", "rear_boss_len", "body_d")},
         idler_xy=D["idler_xy"], det_angs=D["det_angs"], det_r=D["det_r"], sl_anchor_xy=D["sl_anchor_xy"],

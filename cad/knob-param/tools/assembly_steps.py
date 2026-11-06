@@ -30,16 +30,17 @@ import math
 STEPS = [
     # ------------------------------------------------------------------ main PCB, bench, front face up
     dict(id="pcb", name="Main PCB with its soldered parts (H7B0 on the front)", base=True, dir="+z", travel=10,
-         parts=[r"^PCB$", r"^PCB back parts", r"^PCB rod pad", r"^emitter ", r"^MCU ", r"^hall sensor "],
-         note="PCBWay PCBA: emitters, Hall row, H7B0 under the joystick, rod pad (BOM 'board'; L4 step 1)"),
+         parts=[r"^PCB$", r"^PCB back parts", r"^PCB rod pad", r"^emitter ", r"^MCU ", r"^hall sensor ", r"^encoder sensor"],
+         note="PCBWay PCBA: emitters, Hall row, H7B0 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back "
+              "(BOM 'board'; L4 step 1)"),
     dict(id="vboards", name="Vertical boards L and R onto the main board (hybrid headers, male pins on top)", dir="-z",
          travel="auto", parts=[r"^vertical board [LR]"],
          note="PCBA: THT legs through the main board, SMT legs over the encoder riser; no standoff (L4 Ed 13:31-13:39)"),
     dict(id="oled", name="Clear OLED onto the PCB front over window D", dir="-z", travel="auto",
          parts=[r"^clear OLED(?! flex)"], note="sits on the 1.6 ledge round window D [A: bonded with a tape ring]; its flex is plugged into the jack unit later (v0.34)"),
-    dict(id="back", name="Back-side parts: encoder riser board, bearing-2 seat + bearing, joystick spring anchor",
+    dict(id="back", name="Back-side parts: bearing-2 seat + bearing, joystick spring anchor (+ the encoder riser board with the feel stage)",
          dir="+z", travel="auto",
-         parts=[r"^encoder (daughterboard|header|sensor)", r"^encoder bearing 2", r"^joystick: rear spring anchor"],
+         parts=[r"^encoder (daughterboard|header)", r"^encoder bearing 2", r"^joystick: rear spring anchor"],
          note="riser on its hybrid 6-pin header, no standoffs (L4 Ed 13:35); bearing-2 seat glued, bearing pressed; anchor glued (TJ)"),
     # ------------------------------------------------------------------ base drive
     dict(id="cradle", name="Base cradle + brass centre tube onto the PCB", dir="-z", travel="auto",
@@ -131,7 +132,7 @@ STEPS = [
          parts=[r"^rod (M1\.6|nut top)"], note="down the brass tube and through the PCB (DN)"),
     dict(id="rod-nut", name="Back: bottom rod nut onto the VBUS pad", dir="+z", travel="auto",
          parts=[r"^rod nut bottom"], note="clamps rod-link board -> tube -> PCB, straight onto the B.Cu pad, no washer (DN)"),
-    dict(id="disc", name="Back: encoder disc on its shaft (after the rod nut and the feel pinion: it covers both)", dir="+z",
+    dict(id="disc", name="Back: encoder disc on its shaft (after the rod nut: it covers it)", dir="+z",
          travel="auto", parts=[r"^encoder disc"], note="pressed / glued on the shaft end [A]; rim into the EE-SX1321 slot"),
     dict(id="dialboard", name="Dial board PCBA (ESP32 underneath) into the dial top, strap loop to the rod-link board",
          dir="-z", travel="auto", parts=[r"^dial board", r"^dial strap loop"],

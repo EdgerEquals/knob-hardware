@@ -6,6 +6,8 @@ from ...common.util import overlay, A, cyl, ext_gear, fresnel_cap
 from ...common.saddle import clamp
 
 def build(D):
+    if not D["feel_on"]:   # Q27 [Ed 6 Nov 19:33]: no feel motor
+        return {}
     F = D["feel"]; x, y = D["fm_xy"]; ang = D["fm_ang"]
     can_r = F["can_d"] / 2; z0, grip, wall = D["fm_z_can0"], D["fm_grip"], D["fm_wall"]
     glue = D["motor_glue"]

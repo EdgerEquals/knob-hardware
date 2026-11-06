@@ -12,7 +12,7 @@ KNOWN = {"PCB / motor": "1220 rear boss Ø3×0.6 into the PCB front: the KiCad M
          # v0.32: J10 (the 2x14 placeholder test-pad field on B.Cu, 0.05 thick) sits at y -57.27..-52.92 in the committed v0.11 board, 4 mm
          # off the board's bottom edge (-53.3); the key's back end (behind the case rim, at the cover's face) meets those pads. Stale
          # placement: the KiCad regeneration (handover, after step 2) puts J10 back on the board.
-         "PCB back parts (Hall decouplers, J10, DRV8837, passives) / USB-C key (printed, held by the back cover)":
+         "PCB back parts (Hall decouplers, J10, passives) / USB-C key (printed, held by the back cover)":
              "J10 placeholder pads 4 mm off the board edge in the v0.11 KiCad board (stale); fixed by the KiCad regeneration"}
 
 def local(D, parts, owner, subs=None):
@@ -146,20 +146,21 @@ def cross(D, parts):
         kb = [parts[n] for n in parts if n.startswith("knob") and "ball" not in n]
         row("seat: dial vs knob (race region)", min(_dial(parts, "dish").distance_to(q) for q in kb), T["seat_vs_knob"])
     row("idler 1 vs 1220 can", math.hypot(D["idler_xy"][0][0] - D["offset"], D["idler_xy"][0][1]) - D["can_r"] - D["d_pin_tip"] / 2, T["idler_motor"])
-    feel_names = [n for n in parts if n.startswith("feel motor")]
-    feels = [parts[n] for n in feel_names]
-    clip = parts["feel motor saddle seat [A]"].fuse(parts["feel motor saddle strap [A]"])
-    can = [parts[n] for n in feel_names if "shaft" not in n and "saddle" not in n and "pinion" not in n][0]
-    pin = [parts[n] for n in feel_names if "pinion" in n][0]
     knob = parts["knob glass sleeve"]
     rings = [parts[n] for n in parts if n.startswith("bottom internal ring")]
     ring = rings[0] if len(rings) == 1 else rings[0].fuse(*rings[1:])
-    row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
-        f"can {can.distance_to(knob):.2f} inside the skirt; {D['fg_pinion']['part']} at {D['fm_ang']:.1f}°, overall {D['fm_ratio']:.2f}:1, knob Ø{D['knob_od']:.2f}")
-    row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
-    row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
-    row("feel motor vs dial tube", min(p.distance_to(_dial(parts, "lower")) for p in feels), D["feel"]["clear"])
-    row("feel motor vs Hall arm (±travel)", min_dist(list(ARM.values()), feels), T["hall_vs_pinions"])
+    if D["feel_on"]:   # Q27 [Ed 6 Nov 19:33]: the feel motor's rows only with it
+        feel_names = [n for n in parts if n.startswith("feel motor")]
+        feels = [parts[n] for n in feel_names]
+        clip = parts["feel motor saddle seat [A]"].fuse(parts["feel motor saddle strap [A]"])
+        can = [parts[n] for n in feel_names if "shaft" not in n and "saddle" not in n and "pinion" not in n][0]
+        pin = [parts[n] for n in feel_names if "pinion" in n][0]
+        row("feel saddle vs knob skirt", clip.distance_to(knob), D["feel"]["clear"],
+            f"can {can.distance_to(knob):.2f} inside the skirt; {D['fg_pinion']['part']} at {D['fm_ang']:.1f}°, overall {D['fm_ratio']:.2f}:1, knob Ø{D['knob_od']:.2f}")
+        row("feel can/saddle vs bottom ring", min(can.distance_to(ring), clip.distance_to(ring)), D["feel"]["clear"])
+        row("feel pinion vs encoder pinion", pin.distance_to(parts["encoder pinion"]), D["feel"]["clear"])
+        row("feel motor vs dial tube", min(p.distance_to(_dial(parts, "lower")) for p in feels), D["feel"]["clear"])
+        row("feel motor vs Hall arm (±travel)", min_dist(list(ARM.values()), feels), T["hall_vs_pinions"])
     # v0.17 swept motion: springs follow the lever pin, track balls roll at half the dial angle
     from ..base_drive.parts.mech import springs_at, track_balls_at
     if D.get("es_on"):   # v0.31 [Ed 4 Nov 16:35]: the lifted springs, from the Hall arm column's pin to the posts' pins
@@ -203,16 +204,32 @@ def cross(D, parts):
         row("track balls stay in the groove across ±travel (deg of groove left)", roll_left,
             math.degrees((D["bt_ball"] / 2) / min(D["bt_rs"])),
             "ball rolls at θ/2 between the plate groove and the ear; end detents at ±%.2f°, hard stop ±%.2f°" % (D["det_deg"], D["travel_deg"]))
-    gear = parts[f"feel compound gear {D['fg_z_gear']}T"]
-    tb_d = min(b.distance_to(gear) for th in TR for b in track_balls_at(D, th))
-    row("track balls vs compound gear across ±travel", tb_d, D["feel"]["clear"],
-        "balls posed at θ/2 for each sample")
-    row("printed spur stays on the feel side of the centre tube", D["enc_cd"] - D["fg_tip"] - 2.5, D["feel"]["clear"],
-        f"{D['fg_z_gear']}T tip r {D['fg_tip']:.2f} at the idler r {D['enc_cd']:.2f}; tube Ø5")
+    if D["feel_on"]:
+        gear = parts[f"feel compound gear {D['fg_z_gear']}T"]
+        tb_d = min(b.distance_to(gear) for th in TR for b in track_balls_at(D, th))
+        row("track balls vs compound gear across ±travel", tb_d, D["feel"]["clear"],
+            "balls posed at θ/2 for each sample")
+        row("printed spur stays on the feel side of the centre tube", D["enc_cd"] - D["fg_tip"] - 2.5, D["feel"]["clear"],
+            f"{D['fg_z_gear']}T tip r {D['fg_tip']:.2f} at the idler r {D['enc_cd']:.2f}; tube Ø5")
     row("printed spur tooth tip vs MJF short-feature floor", D["spur_tip_th"], D["spur_tooth_min"],
-        f"thinnest nylon spur (hub, motor pinion, {D['fg_z_gear']}T, feel pinion); preferred {D['hb_tooth_min']:.2f}")
-    row("compound gear vs encoder rim (axial)", D["fg_z_bot"] - D["rim_top"], D["fg_clear"],
-        f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
+        (f"thinnest nylon spur (hub, motor pinion, {D['fg_z_gear']}T, feel pinion)" if D["feel_on"] else "thinnest nylon spur (hub, motor pinion)")
+        + f"; preferred {D['hb_tooth_min']:.2f}")
+    if D["feel_on"]:
+        row("compound gear vs encoder rim (axial)", D["fg_z_bot"] - D["rim_top"], D["fg_clear"],
+            f"gear z {D['fg_z_bot']:.2f} to {D['fg_z_top']:.2f}; rim top {D['rim_top']:.2f}; sensor dropped {D['enc_drop']:.2f} onto the daughterboard")
+    else:   # Q27 [Ed 6 Nov 19:42]: the sensor back on the main board's back; the generic clash pass covers its neighbours
+        enc = [parts["encoder disc + slotted rim"], parts["encoder sensor EE-SX1321"]]
+        eb = [e.bounding_box() for e in enc]
+        lo = [min(b.min.X for b in eb) - 3, min(b.min.Y for b in eb) - 3, min(b.min.Z for b in eb) - 3]
+        hi = [max(b.max.X for b in eb) + 3, max(b.max.Y for b in eb) + 3, max(b.max.Z for b in eb) + 3]
+
+        def _near(q):
+            b = q.bounding_box()
+            return b.max.X > lo[0] and b.min.X < hi[0] and b.max.Y > lo[1] and b.min.Y < hi[1] and b.max.Z > lo[2] and b.min.Z < hi[2]
+        near = {n: q for n, q in parts.items() if n != "PCB" and not n.startswith("encoder ") and _near(q)}
+        dmin, who = min(((min(e.distance_to(q) for e in enc), n) for n, q in near.items()), default=(1e9, "none"))
+        row("encoder disc + sensor (on the main board's back) vs the parts under the board", dmin, D["fg_clear"],
+            f"no riser board (Q27); sensor open face z {D['z_sens_open']:.2f}; nearest: {who}")
     ot_bits = [parts[n] for n in parts if n.startswith("outer thrust") and "blank" not in n]
     caps = [n for n in parts if n.endswith(" cap")]
 

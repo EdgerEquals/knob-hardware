@@ -48,7 +48,7 @@ P = dict(
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
            "main_knob": ["hb_mid"]}
-EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot",   # -> electronics (J2 pads below the wheel)
+EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot", "enc_hold_dz",   # -> electronics (J2 pads below the wheel); case (Q27 rear_hold)
            "enc_tht_xy"]                             # -> electronics (v0.24: main-board holes for the riser's THT pins, mechanism frame)
 
 
@@ -63,15 +63,22 @@ def derive(D):
     rim0 = z_open0 + sn["slot_d"] - D["rim_in"]
     ix, iy = D["fg_xy"]; ex, ey = D["enc_xy"]
     dist = math.hypot(ix - ex, iy - ey)
-    overlap = dist < D["sens_r"] + D["rim_t"] / 2 + D["fg_tip"] + D["fg_clear"]
+    overlap_g = dist < D["sens_r"] + D["rim_t"] / 2 + D["fg_tip"] + D["fg_clear"]
+    overlap = D["feel_on"] and overlap_g   # Q27: no compound gear without it
     drop = max(0.0, rim0 - (D["fg_z_bot"] - D["fg_clear"])) if overlap else 0.0
-    # the riser is at least the daughterboard; a shorter drop still gets the board
-    D["enc_drop"] = max(drop, D["enc_db_t"])
+    drop_g = max(0.0, rim0 - (D["fg_z_bot"] - D["fg_clear"])) if overlap_g else 0.0
+    # the riser is at least the daughterboard; a shorter drop still gets the board.
+    # Q27 [Ed 6 Nov 19:42]: without the feel stage nothing is in the way, so the EE-SX1321 sits straight on the main board's back
+    # (as on main PCB v0.11): no riser board, no header.
+    D["enc_riser"] = bool(D["feel_on"])
+    D["enc_drop"] = max(drop, D["enc_db_t"]) if D["enc_riser"] else 0.0
+    # how far the encoder came up against the v0.48 riser (the case can hold its back depth until Ed decides: case rear_hold)
+    D["enc_hold_dz"] = max(drop_g, D["enc_db_t"]) - D["enc_drop"]
     D["z_sens_open"] = z_open0 - D["enc_drop"]
     D["z_slot_bot"] = D["z_sens_open"] + sn["slot_d"]
     D["z_axis"] = D["z_sens_open"] + sn["axis_from_open"]
     D["rim_top"] = D["z_slot_bot"] - D["rim_in"]
-    D["enc_standoff_h"] = D["enc_drop"] - D["enc_db_t"]
+    D["enc_standoff_h"] = max(0.0, D["enc_drop"] - D["enc_db_t"])
     D["h_big_top"] = D["z_sens_open"] - D["gear_sensor_gap"]; D["h_big_bot"] = D["h_big_top"] - D["big_face"]
     D["h_hub_bot"] = D["h_big_bot"] - D["big_hub"][1]
     D["win_z0"], D["win_z1"] = D["z_axis"] - sn["ap_h"] / 2 - 0.6, D["z_axis"] + sn["ap_h"] / 2 + 0.3
@@ -105,5 +112,5 @@ def derive(D):
         lx, ly = (k - (n - 1) / 2) * pitch, -D["sens_r"]
         pts.append((ex + c * lx - s_ * ly, ey + s_ * lx + c * ly))
     D["enc_pin_xy"] = pts
-    D["enc_tht_xy"] = [(x, y, D["enc_tht_drill"]) for k, (x, y) in enumerate(pts) if k in D["enc_header_tht"]]
+    D["enc_tht_xy"] = [(x, y, D["enc_tht_drill"]) for k, (x, y) in enumerate(pts) if k in D["enc_header_tht"]] if D["enc_riser"] else []
     return D

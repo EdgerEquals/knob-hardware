@@ -37,10 +37,12 @@ PINS = {
     "PWR_FLAG": [("1", "pwr", "power_out", "R")],
 }
 # J10 MCU-link placeholder pin-out [A]
+FEEL_ON = C.get("feel_on", True)   # Q27 [Ed 6 Nov 19:33]: False = no 716, no DRV8837; its four J10 pins are left unconnected
 J10_PINS = ["+3V3", "GND", "HALL1", "HALL2", "HALL4", "HALL5", "HALL_EN", "I2C_SCL", "I2C_SDA", "HALL3D_INT", "ENC_A", "ENC_B", "GND",
-           "FEEL_IN1", "FEEL_IN2", "FEEL_nSLEEP", "VM_FEEL", "GND", "MAIN_MOT_A", "MAIN_MOT_B", "VBUS_DATA",
+           *(("FEEL_IN1", "FEEL_IN2", "FEEL_nSLEEP", "VM_FEEL") if FEEL_ON else (None, None, None, None)),
+           "GND", "MAIN_MOT_A", "MAIN_MOT_B", "VBUS_DATA",
            "SW_UP", "SW_DOWN", "SW_LEFT", "SW_RIGHT", "SW_CENTER", "GND", "+3V3"]
-PINS["J10"] = [(str(i + 1), n, "passive", "L" if i < 14 else "R") for i, n in enumerate(J10_PINS)]
+PINS["J10"] = [(str(i + 1), n or "NC", "passive", "L" if i < 14 else "R") for i, n in enumerate(J10_PINS)]
 # joystick daughterboard socket: same pin-out as the daughterboard J1 (joystick-daughterboard/make_project.py J_PINS)
 J2_PINS = ["SW_UP", "SW_CENTER", "SW_RIGHT", "SW_LEFT", "GND", "SW_DOWN"]
 PINS["J2"] = [(str(i + 1), n, "passive", "L" if i % 2 == 0 else "R") for i, n in enumerate(J2_PINS)]
@@ -58,7 +60,7 @@ def comps():
     add("H1", "TubeRodClamp", "TubeRodClamp_M1.6_v016", "TubeRodClamp_Main_M1.6_v016", {"1": "GND", "2": "VBUS_DATA"}, (*B(0, 0), 0), bom=False)
     add("M1", "Motor", "1220 coreless planetary (hand-solder)", "Motor_1220_Tabs_Relief", {"1": "MAIN_MOT_A", "2": "MAIN_MOT_B"}, (*B(C["offset"], 0), 0), bom=False)
     # 716 lead pads: pads tangential at fm_pad_xy (orientation solved in make_board.py)
-    add("M2", "Motor", "716 coreless feel motor (hand-solder)", "FeelMotor_716_LeadPads", {"1": "FEEL_A", "2": "FEEL_B"}, (*B(*C["fm_xy"]), C["fm_ang"] + 90), bom=False, side="B")
+    if FEEL_ON: add("M2", "Motor", "716 coreless feel motor (hand-solder)", "FeelMotor_716_LeadPads", {"1": "FEEL_A", "2": "FEEL_B"}, (*B(*C["fm_xy"]), C["fm_ang"] + 90), bom=False, side="B")
     # ---- Hall row (F.Cu) + decouplers right behind (B.Cu), as in the CAD proxy ----
     mid = C["hall_mid_idx"]
     for i, s in enumerate(C["hall"]):
@@ -88,19 +90,20 @@ def comps():
     passive("R30", "R", "220R", "R_0402", "+3V3", "ENC_LED", (sx - 3.6, sy + 5.6, 90))
     passive("R31", "R", "10k", "R_0402", "ENC_A", "GND", (sx, sy + 5.6, 90))
     passive("R32", "R", "10k", "R_0402", "ENC_B", "GND", (sx + 3.6, sy + 5.6, 90))
-    # ---- 716 feel motor driver DRV8837 (B.Cu, next to the M2 lead pads) ----
-    fx, fy = B(*C["fm_xy"])
-    drv = C.get("drv")   # v0.19b: cad_constraints carries the cluster (off the emitter radius); older constraints fall back below
-    if drv:
-        DP = {k: (*B(v[0], v[1]), v[2]) for k, v in drv.items()}
-    else:
-        DP = {"U20": (fx - 7.5, fy, 0), "C20": (fx - 7.5, fy - 2.2, 0), "C21": (fx - 10.4, fy - 1.0, 90), "C22": (fx - 12.2, fy - 1.0, 90)}
-    add("U20", "DRV8837", "DRV8837DSGR", "WSON-8_2x2_DRV8837",
-        {"8": "+3V3", "1": "VM_FEEL", "6": "FEEL_IN1", "5": "FEEL_IN2", "7": "FEEL_nSLEEP", "2": "FEEL_A", "3": "FEEL_B", "4": "GND", "9": "GND"},
-        DP["U20"], {"MPN": "DRV8837DSGR", "Manufacturer": "TI", "LCSC": "C39159", "Datasheet": DS["DRV8837"]}, side="B")
-    passive("C20", "C", "100n", "C_0402", "+3V3", "GND", DP["C20"])
-    passive("C21", "C", "100n", "C_0402", "VM_FEEL", "GND", DP["C21"])
-    passive("C22", "C", "10u", "C_0603", "VM_FEEL", "GND", DP["C22"])
+    if FEEL_ON:   # Q27: the 716's driver only with the 716
+        # ---- 716 feel motor driver DRV8837 (B.Cu, next to the M2 lead pads) ----
+        fx, fy = B(*C["fm_xy"])
+        drv = C.get("drv")   # v0.19b: cad_constraints carries the cluster (off the emitter radius); older constraints fall back below
+        if drv:
+            DP = {k: (*B(v[0], v[1]), v[2]) for k, v in drv.items()}
+        else:
+            DP = {"U20": (fx - 7.5, fy, 0), "C20": (fx - 7.5, fy - 2.2, 0), "C21": (fx - 10.4, fy - 1.0, 90), "C22": (fx - 12.2, fy - 1.0, 90)}
+        add("U20", "DRV8837", "DRV8837DSGR", "WSON-8_2x2_DRV8837",
+            {"8": "+3V3", "1": "VM_FEEL", "6": "FEEL_IN1", "5": "FEEL_IN2", "7": "FEEL_nSLEEP", "2": "FEEL_A", "3": "FEEL_B", "4": "GND", "9": "GND"},
+            DP["U20"], {"MPN": "DRV8837DSGR", "Manufacturer": "TI", "LCSC": "C39159", "Datasheet": DS["DRV8837"]}, side="B")
+        passive("C20", "C", "100n", "C_0402", "+3V3", "GND", DP["C20"])
+        passive("C21", "C", "100n", "C_0402", "VM_FEEL", "GND", DP["C21"])
+        passive("C22", "C", "10u", "C_0603", "VM_FEEL", "GND", DP["C22"])
     # ---- connectors ----
     add("J10", "J10", "MCU link (placeholder)", "Pads_2x14_P2.00_SMD", {str(i + 1): n for i, n in enumerate(J10_PINS)}, (AX, 108.0, 0), bom=False, side="B",
         fields={"Note": "PLACEHOLDER until the MCU section is drawn; pin-out [A]"})
@@ -108,7 +111,7 @@ def comps():
         (JX + JS["socket"][0], JY - JS["socket"][1], 0), fields={"MPN": "FG-PM2.54-2-03P-H8.5", "Manufacturer": "FG (Shenzhen Fugang)", "LCSC": "C42391433",
         "Note": "joystick daughterboard riser; THT; 2x3 2.54, PA6T body 8.5 +-0.2 tall, 3.0 tails, Ø1.02 holes per datasheet; alt SHOU HAN PM2.54-2x3PZZ-H8.5 (C54876739)"})
     # ---- power flags (schematic only) ----
-    for i, n in enumerate(("+3V3", "GND", "VM_FEEL")):
+    for i, n in enumerate(("+3V3", "GND", "VM_FEEL") if FEEL_ON else ("+3V3", "GND")):
         out.append(dict(ref=f"#FLG0{i + 1}", sym="PWR_FLAG", pins=PINS["PWR_FLAG"], value="PWR_FLAG", footprint="", nets={"1": n}, fields={}, bom=False, place=None, side=None))
     return out
 

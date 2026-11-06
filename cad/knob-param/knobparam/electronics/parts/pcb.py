@@ -29,11 +29,12 @@ def build(D):
     mc = []
     ex, ey = D["enc_xy"]; mc.append(cyl(D["brg"]["D"] / 2, -t - 1, t + 2, ex, ey))     # H2 press bore
     F = D["feel"]; pw, pl = F["pad"]   # (radial, tangential) copper around each lead hole
-    for px, py in D["fm_pad_xy"]:
-        mc.append(cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py))                     # M2 lead holes
-    # v0.17: 716 shaft and the compound-idler pin pass the board. Holes are in the proxy; KiCad NPTHs are still to add.
-    mc.append(cyl(D["fm_shaft_hole"] / 2, -t - 1, t + 2, *D["fm_xy"]))
-    mc.append(cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"]))
+    if D["feel_on"]:   # Q27 [Ed 6 Nov 19:33]: no 716, so no lead holes, shaft hole or compound-idler pin hole
+        for px, py in D["fm_pad_xy"]:
+            mc.append(cyl(F["pad_hole"] / 2, -t - 1, t + 2, px, py))                     # M2 lead holes
+        # v0.17: 716 shaft and the compound-idler pin pass the board. Holes are in the proxy; KiCad NPTHs are still to add.
+        mc.append(cyl(D["fm_shaft_hole"] / 2, -t - 1, t + 2, *D["fm_xy"]))
+        mc.append(cyl(D["fg_hole"] / 2, -t - 1, t + 2, *D["fg_xy"]))
     mc += _em_cutters(D, t, 1.0)
     if D.get("sp_access_d"):   # v0.22b [Ed 15:50]: key hole for the detent-pedestal grub (mechanism frame)
         mc.append(cyl(D["sp_access_d"] / 2, -t - 1, t + 2, *D["sp_grub_xy"]))
@@ -82,12 +83,12 @@ def build(D):
         if p["ref"] in D["pcb_win_displaced"]: continue   # stale KiCad position inside a window: moves on regeneration
         box = Pos(p["x"], p["y"], -t - p["h"]) * Box(p["w"], p["l"], p["h"], align=A)
         (comps.append(_mr(D) * box) if _is_mech(D, p["x"], p["y"]) else comps.append(box))
-    for px, py in D["fm_pad_xy"]:   # B.Cu pads [A] under the lead holes; wires drop from the 716's rear via the cradle pocket
+    for px, py in (D["fm_pad_xy"] if D["feel_on"] else []):   # B.Cu pads [A] under the lead holes; wires drop from the 716's rear
         pad = Pos(px, py, -t - F["pad_t"]) * Rot(0, 0, D["fm_ang"] + 90) * Box(pl, pw, F["pad_t"], align=A)
         mcomps.append(pad - cyl(F["pad_hole"] / 2, -t - F["pad_t"] - 0.1, F["pad_t"] + 0.2, px, py))
     comps += [_mr(D) * c for c in mcomps]
     pad = cyl(D["rod_pad_r"], -t - D["rod_pad_t"], D["rod_pad_t"]) - cyl(D["h1_hole"] / 2, -t - 1, 2)
-    out = {"PCB": b, "PCB back parts (Hall decouplers, J10, DRV8837, passives)": Compound(children=comps),
+    out = {"PCB": b, "PCB back parts (Hall decouplers, J10, passives)": Compound(children=comps),
            f"PCB rod pad VBUS Ø{2 * D['rod_pad_r']:.1f} (B.Cu)": pad}
     out.update({k: _mr(D) * v for k, v in emitters(D).items()})
     w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]
@@ -170,9 +171,9 @@ def pcb_full(D):
     # same NPTHs the proxy drills; the KiCad board does not have them yet (see design notes).
     # v0.18 moved H2 with the herringbone centre distance, so the committed STEP hole is drilled out at the new axis too.
     t = D["pcb_t"]
-    mc = [cyl(D["fm_shaft_hole"] / 2, -t - 2, t + 4, *D["fm_xy"]),
-          cyl(D["fg_hole"] / 2, -t - 2, t + 4, *D["fg_xy"]),
-          cyl(D["brg"]["D"] / 2, -t - 2, t + 4, *D["enc_xy"])] + _em_cutters(D, t, 2.0)
+    mc = ([cyl(D["fm_shaft_hole"] / 2, -t - 2, t + 4, *D["fm_xy"]),
+           cyl(D["fg_hole"] / 2, -t - 2, t + 4, *D["fg_xy"])] if D["feel_on"] else []) + \
+         [cyl(D["brg"]["D"] / 2, -t - 2, t + 4, *D["enc_xy"])] + _em_cutters(D, t, 2.0)
     s -= _mr(D) * Compound(children=mc)
     return s
 
@@ -201,11 +202,15 @@ def emitters(D):
 
 def drv_boxes(D):
     """716 driver cluster (U20 + C20–C22) on B.Cu: (x, y, w, l, h, angle) in the mechanism frame."""
+    if not D["feel_on"]:   # Q27: no 716, no driver
+        return []
     X, Y = D["drv_xy"]; a = math.radians(D["drv_rot"]); c, s = math.cos(a), math.sin(a)
     return [(X + c * dx - s * dy, Y + s * dx + c * dy, w, l, h, D["drv_rot"]) for _r, _fp, dx, dy, _rot, w, l, h in D["drv_cluster"]]
 
 def drv_place(D):
     """Same cluster for the KiCad generator: ref -> (x, y, rot) in the mechanism frame (footprint rot + cluster turn)."""
+    if not D["feel_on"]:
+        return {}
     X, Y = D["drv_xy"]; a = math.radians(D["drv_rot"]); c, s = math.cos(a), math.sin(a)
     return {ref: (round(X + c * dx - s * dy, 3), round(Y + s * dx + c * dy, 3), (rot + D["drv_rot"]) % 360)
             for ref, _fp, dx, dy, rot, _w, _l, _h in D["drv_cluster"]}

@@ -143,6 +143,10 @@ P = dict(
     # ---- idler 1 (v0.16: the 716 is no longer on this shaft) [A] ----
     idler1_ang=60.0,   # [A] v0.19: idlers sit 120 deg either side of the encoder (60 / 300); the feel compound goes on idler 1 (60). v0.18: 54.
     # (v0.18 note on idler 1: it stayed at the v0.13 angle 54 because 45.5 overlapped the Ø48 wheel)
+    # ---- Q27 [Ed 6 Nov 19:33] = A: no feel motor. The 1220 coreless has so little backlash that the encoder sees the hand's
+    # direction inside it and the 1220 takes over; the 716 and its second stage are left out. True brings them back (the N30, with
+    # more backlash, would need it). The feel placement below is still derived so the ring stage and the detent columns stay as v0.48.
+    feel_on=False,
     # ---- feel motor on the PCB top, inside the cradle [A] ----
     # Axial 716, its own pinion meshing the bottom internal ring. Angle and tooth count are derived
     # (the bisector of the idler gap that clears the 1220, the Hall arm and the skirt by the most).

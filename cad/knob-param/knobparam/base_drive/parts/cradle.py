@@ -76,15 +76,16 @@ def build(D):
     for x, y in D["idler_xy"]:
         c -= cyl(D["enc_pocket_d"] / 2, D["idler_floor"], D["idler_pocket_top"] - D["idler_floor"], x, y)
         c -= cyl(D["pin_d"] / 2, 0, D["idler_floor"], x, y)
-    # feel motor: rib the clip foot lands on, pocket for its pinion, holes for the two leads
+    # feel motor: rib the clip foot lands on, pocket for its pinion, holes for the two leads (Q27: none without it)
     ang = math.radians(D["fm_ang"]); r0, r1 = D["fm_rib_r0"], D["fm_rib_r1"]
-    if r1 > r0:
+    if D["feel_on"] and r1 > r0:
         mid, L = (r0 + r1) / 2, r1 - r0
         c += Pos(mid * math.cos(ang), mid * math.sin(ang), 0) * Rot(0, 0, D["fm_ang"]) * Box(L, D["fm_rib_w"], D["fm_z_rib1"], align=A)
     fx, fy = D["fm_xy"]
-    c -= cyl(D["fm_shaft_hole"] / 2, -0.1, pt + 0.2, fx, fy)   # 716 shaft down to the pinion under the PCB
-    for px, py in D["fm_pad_xy"]:
-        c -= cyl(D["fm_lead_r"], -0.1, D["plate_t"] + 0.2, px, py)
+    if D["feel_on"]:
+        c -= cyl(D["fm_shaft_hole"] / 2, -0.1, pt + 0.2, fx, fy)   # 716 shaft down to the pinion under the PCB
+        for px, py in D["fm_pad_xy"]:
+            c -= cyl(D["fm_lead_r"], -0.1, D["plate_t"] + 0.2, px, py)
     h = D["motor_collar_top"] - pt
     c -= cyl(D["dial_clear_d"] / 2, pt, h)
     c -= Pos(0, 0, pt) * Box(mx - D["motor_bore_d"] / 2 + 1.0, D["dial_clear_d"], h, align=(Align.MIN, Align.CENTER, Align.MIN))
@@ -101,7 +102,7 @@ def build(D):
     for (x, y) in D["idler_xy"]:
         rel = _breakout_relief(D, x, y, D["enc_pocket_d"] / 2)
         if rel is not None: c -= rel
-    rel = _breakout_relief(D, fx, fy, D["fm_shaft_hole"] / 2)
+    rel = _breakout_relief(D, fx, fy, D["fm_shaft_hole"] / 2) if D["feel_on"] else None
     if rel is not None: c -= rel
     fl = _thrust_track(D)
     if fl is not None: c += fl

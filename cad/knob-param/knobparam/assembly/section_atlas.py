@@ -93,9 +93,10 @@ def _label_for(z, named):
 def _z_levels(D, JD, step):
     """A slice every 'step' mm from the back cover to the knob screen, with the key feature levels swapped in."""
     feats = [(D["amo_upper_z"][0] + D["amo_t"] / 2, "rear AMOLED"), (D["amo_lower_z"][0] + D["amo_t"] / 2, "front AMOLED"),
-             ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear"), (D["z_pcb_back"] - 0.6, "PCB back: emitters"),
+             ((D["fg_z_top"] + D["fg_z_bot"]) / 2, "feel compound gear" if D["feel_on"] else "under the PCB: encoder sensor"),
+             (D["z_pcb_back"] - 0.6, "PCB back: emitters"),
              (D["z_pcb_back"] / 2, "main PCB (windows)"), (0.5, "PCB front: Hall sensors, clear OLED, H7B0, vertical-board headers"),
-             (D["hb_mid"], "herringbone ring band"), (5.0, "Hall arm, detent, lever"), (12.0, "1220 and 716 cans"),
+             (D["hb_mid"], "herringbone ring band"), (5.0, "Hall arm, detent, lever"), (12.0, "1220 and 716 cans" if D["feel_on"] else "1220 can"),
              (20.0, "jack bodies, knob shell"), ((JD["z_db0"] + JD["z_db1"]) / 2, "joystick top board on the vertical boards' end tabs"),
              (15.0, "vertical boards (no standoff since v0.24)"), (D["vb_ze"] - 1.0, "vertical boards' male 1.27 headers"),
              ((JD["z_sock0"] + JD["z_db0"]) / 2, "1.27 pins in the top board's sockets, the end tabs (posts)"),

@@ -326,7 +326,9 @@ def compose(D, parts, rawA, rawI, insets, out, preview, clash_lines, gap_lines, 
             put([0.162, y0, 0.20, hh], insets[1], f"C-C  Hall bar, radial at {D['ha_ang0']:g}° (~5x)", f"Arm down through the cradle slot; {D['hv_n']} × Ø{D['hv_mag'][0]:g}×{D['hv_mag'][1]:g} N52 " + "/".join("N" if p > 0 else "S" for p in D['hv_pol']) + f"\nover 4 × TMAG5253 X2SON + TMAG5273 (H3, 3D), magnets z {D['hv_z_mag0']:.2f}\n(element {D['hv_elem_gap']:.2f}); pitch {D['hv_pitch']:g}, r {D['hv_r'][0]:.1f}-{D['hv_r'][-1]:.1f}.", frame=True, fs=8)
             put([0.372, y0, 0.15, hh], insets[2], "D  45° cone race + seat (~17x)", f"{D['kb_n']} × Ø{D['kb_ball_d']:g}, PCD Ø{D['kb_pcd']:.2f}; red = 45° line.\nSeat groove R{D['kb_seat_r']:g} (blue) × {D['kb_seat_depth']:g} deep in the\nDIAL cone, ±{D['kb_seat_w']:.2f} wide, centre on the 45° line.\nASSEMBLY: dial lip-down, grease the groove,\ndrop the {D['kb_n']} balls in (they sit + stay),\nlower the knob on axially, flip, fit.", frame=True, fs=7.5)
             put([0.53, y0, 0.25, hh], insets[4], "H  Hall vernier: plan at ±travel + field", f"Magnet arc +{D['hv_g']:.3f}°/mm, sensor arc -{D['hv_g']:.3f}°/mm (cross at r{D['hv_r_mid']:.1f}, θ=0);\ncrossing moves {1 / (2 * D['hv_g']):.2f} mm/deg -> end pair at ±{D['hv_cross_travel']:g}°.", frame=True, fs=8)
-            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)", f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['fg_pinion']['part']}\n× {D['fg_z_gear']}T compound, overall {D['fm_ratio']:.2f}:1.", frame=True, fs=8)
+            put([0.79, y0, 0.12, hh], insets[3], "E  feel motor (~3x)" if D["feel_on"] else f"E  radial plane at {D['fm_ang']:.0f}° (~3x)",
+                (f"{D['feel']['part']} Ø{D['feel']['can_d']:g}×{D['feel']['can_len']:g} [A]\naxial at {D['fm_ang']:.0f}°, {D['fg_pinion']['part']}\n× {D['fg_z_gear']}T compound, overall {D['fm_ratio']:.2f}:1."
+                 if D["feel_on"] else "Where the 716 was.\nNo feel motor (Q27 [Ed 6 Nov]):\nthe 1220 alone."), frame=True, fs=8)
         else:
             put([0.005, y0, 0.20, hh], insets[0], "B-B  encoder (~8x)", f"EE-SX1321, {D['rim_t']:.1f} rim in its {D['sens']['slot_w']:.1f} slot;\ntrimmed wheel, top {D['h_big_top']:.2f} ({D['z_sens_open'] - D['h_big_top']:.2f} under).", frame=True)
             put([0.215, y0, 0.25, hh], insets[1], "C-C  Hall array (~6x)", f"{D['ha_n']} × Ø{D['ha_mag'][0]:g}×{D['ha_mag'][1]:g} N52 alternating over\n2 × DRV5055A3, gap {D['ha_gap']:.1f}.", frame=True)
@@ -348,7 +350,7 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
     FW, FH = 22.5, 16.0
     fig = plt.figure(figsize=(FW, FH), dpi=150)
     feel_line = ""
-    if "z_feel" in D:
+    if "z_feel" in D and D["feel_on"]:
         feel_line = (f" Feel motor: {D['feel']['part']} axial at {D['fm_ang']:.0f}°, "
                      f"{D['fg_pinion']['part']} × {D['fg_z_gear']}T compound, overall {D['fm_ratio']:.2f}:1.")
     fig.text(0.012, 0.985, title, fontsize=26, weight="bold", va="top")
@@ -361,7 +363,8 @@ def compose_clean(D, parts, rawA, rawI, out, title, hidden=(), note=None, opposi
     if (ra + ri) * h * k + gap + 2 * mx > 1: h = (1 - gap - 2 * mx) / ((ra + ri) * k)
     wa, wi = ra * h * k, ri * h * k; x0 = (1 - wa - wi - gap) / 2
     for (x, w), img, ttl in [((x0, wa), A, "SECTION A-A, straight on" + (" from -Y" if opposite else "") + "\n(dial + motor axes; motor on the " + ("right)" if opposite else "left)")),
-                             ((x0 + wa + gap, wi), I, "ISOMETRIC QUARTER CUT-AWAY\n(A-A + the plane through the feel-motor axis)")]:
+                             ((x0 + wa + gap, wi), I, "ISOMETRIC QUARTER CUT-AWAY\n(A-A + the plane through the feel-motor axis)" if D["feel_on"]
+                              else f"ISOMETRIC QUARTER CUT-AWAY\n(A-A + the radial plane at {D['fm_ang']:.0f}°)")]:
         ax = fig.add_axes([x, y1 - h, w, h]); ax.imshow(img, interpolation="lanczos"); ax.set_xticks([]); ax.set_yticks([])
         for sp in ax.spines.values(): sp.set_visible(False)
         fig.text(x, y1 + 0.006, ttl, fontsize=17, weight="bold", va="bottom")

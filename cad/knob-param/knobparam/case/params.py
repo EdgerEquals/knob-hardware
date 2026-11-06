@@ -170,6 +170,7 @@ P = dict(
     tip_hole=0.5,          # [A] clearance hole runs this far past the screw tip
     insert_engage_min=1.5, # [A] steel M3 in a brass insert: 1.5 x d (the printed-resin rule was 2 x d)
     insert_wall=1.5,       # [A] resin round the insert; boss radius = insert_od/2 + this (was Ø9 printed-thread boss)
+    rear_hold=True,   # [A] Q27 (6 Nov): the encoder came back up without the feel stage; keep the v0.48 back depth until Ed decides
     back_screens="amoled2",   # [Ed] two 2.4" AMOLEDs facing forward on the cover floor, overlapped behind the knob (v0.2: 2.0" TFT on the back)
     amo_w=38.72,           # [S] 2.4" 450x600 RM690B0 panel outline (TOH240XVT-01 / Gesight B024JMV-N50-6DP0)
     amo_h=51.56,           # [S]
@@ -367,7 +368,7 @@ P = dict(
 )
 
 IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below", "clear_oled", "clear_oled_xy"],
-           "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot"]}
+           "under_pcb": ["d_big_tip", "z_rear_min", "h_big_bot", "enc_hold_dz"]}
 EXPORTS = ["panel_w", "panel_h", "hp", "place_y", "knob_hole_r",
            "joy_hole", "z_fp0", "z_fp1", "z_foot", "fp_to_pcb",
            "z_joy_cut0", "joy_tb_pass",   # 4 Nov: the restored top wall's top and the top-ledge gap (assembly rows)
@@ -534,11 +535,14 @@ def derive(D):
     if D["back_screens"] == "amoled2":
         # [Ed] 2 Nov: worked backwards. Deepest part behind the PCB, then screen_air, then the two-screen stack.
         em_h = 1.0   # [A] emitter bodies on the PCB back (VCSEL 0.8, RGB 0.9) + gap
-        D["z_rear_parts"] = min(D["z_rear_min"], D["fg_z_bot"], D["z_pcb_back"] - em_h)
+        # Q27 [Ed 6 Nov]: without the feel stage the encoder came up enc_hold_dz and the cover could follow it; rear_hold keeps the
+        # v0.48 depth until Ed decides (fg_z_bot stays in for the same reason)
+        hold = D["enc_hold_dz"] if D["rear_hold"] else 0.0
+        D["z_rear_parts"] = min(D["z_rear_min"] - hold, D["fg_z_bot"], D["z_pcb_back"] - em_h)
         D["amo_stack"] = D["amo_pad"] + D["amo_t"]
         # Per screen: the encoder hub/shaft (deepest) sits over the upper screen only (encoder at the top); over the lower
         # screen the deepest parts are the disc face, the compound gear and the emitters. The 3D check confirms it.
-        z_lower = min(D["h_big_bot"], D["fg_z_bot"], D["z_pcb_back"] - em_h)
+        z_lower = min(D["h_big_bot"] - hold, D["fg_z_bot"], D["z_pcb_back"] - em_h)
         D["z_cover_in"] = min(D["z_rear_parts"] - D["screen_air"] - D["amo_t"], z_lower - D["screen_air"] - D["amo_stack"])
         D["cover_depth"] = D["z_pcb_back"] - D["z_cover_in"]
     else:

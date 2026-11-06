@@ -320,10 +320,11 @@ def build(D):
     tongue = _sub(tongue, _box(-D["pcb_x1"] + ovt, D["pcb_x1"] - ovt, D["pcb_y0"] + ovt, D["pcb_y1"] - ovt,
                                D["z_flange_out"] - sl, D["z_rim_seat"] + sl))
     cover = _add(cover, tongue)
-    # v0.19: the feel compound gear under the PCB reaches 0.3 past the board edge; relieve the tongue round it
-    a = math.radians(D["mech_rot"]); fx, fy = D["fg_xy"]
-    gx, gy = math.cos(a) * fx - math.sin(a) * fy, math.sin(a) * fx + math.cos(a) * fy
-    cover = _sub(cover, _cyl_z(D["fg_tip"] + 0.3, D["z_cover_in"] + 0.5, D["z_rim_seat"] + sl, gx, gy))
+    # v0.19: the feel compound gear under the PCB reaches 0.3 past the board edge; relieve the tongue round it (Q27: only with it)
+    if D["feel_on"]:
+        a = math.radians(D["mech_rot"]); fx, fy = D["fg_xy"]
+        gx, gy = math.cos(a) * fx - math.sin(a) * fy, math.sin(a) * fx + math.cos(a) * fy
+        cover = _sub(cover, _cyl_z(D["fg_tip"] + 0.3, D["z_cover_in"] + 0.5, D["z_rim_seat"] + sl, gx, gy))
     if tubes and D["cover_screw"] == "back":
         # v0.19b: slim solid column (clearance hole only) through the screen layer, 45° flare to the ring that bears on the board
         # round its notch; the screw head sits in a counterbore in the floor, right under the column

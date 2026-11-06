@@ -153,6 +153,8 @@ def strength_rows(D, row):
     row("hub mesh: fatigue allowable at the knob, SF 1.5 (mNm), not below v0.24", S["hub_T_fat_knob"], S["hub_v024_fat_knob"],
         f"at the 1220 output {S['hub_T_fat_out']:.1f}; v0.24 m0.6 14/22 x 3.0 by the same method {S['hub_v024_fat_knob']:.0f} "
         f"(static {S['hub_v024_static_knob']:.0f})")
+    if not D["feel_on"]:   # Q27 [Ed 6 Nov 19:33]: no feel train, so the ring stage carries only the encoder and the idlers
+        return
     row("ring stage: fatigue allowable at the knob through one pinion, SF 1.5 (mNm) vs the feel burst", S["ring_T_fat_knob"],
         D["feel_burst_knob"],
         f"{D['z_enc_pinion']}T m{D['hb_mn']:g} face {D['pin_face']:g} into {D['z_ring']}T; feel burst {D['feel_burst_knob']:g} mNm at the "
@@ -181,9 +183,8 @@ def rows(D, row):
          D["hb_backlash"], ha_h, hf_h, at, 0.0, 0.0),
         ("encoder pinion / internal ring", D["z_enc_pinion"], D["z_ring"], mt, D["enc_cd"], True,
          D["hb_backlash"], ha_h, hf_h, at, 0.0, 0.0),
-        ("feel pinion / compound gear", D["fg_z_pin"], D["fg_z_gear"], D["fg_mod"], D["fg_cd"], False,
-         D["brass_backlash"], D["spur_addendum"], D["spur_dedendum"], D["pressure"], 0.0, 0.0),
-    ]
+    ] + ([("feel pinion / compound gear", D["fg_z_pin"], D["fg_z_gear"], D["fg_mod"], D["fg_cd"], False,
+           D["brass_backlash"], D["spur_addendum"], D["spur_dedendum"], D["pressure"], 0.0, 0.0)] if D["feel_on"] else [])
     for name, z1, z2, mm, cd, internal, bl, ha, hf, alpha, x1, x2 in pairs:
         g = mesh(z1, z2, mm, alpha, cd, internal, bl, ha, hf, x1, x2)
         im = g["intf_pinion"] if g["intf_wheel"] is None else min(g["intf_pinion"], g["intf_wheel"])

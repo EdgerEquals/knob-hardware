@@ -92,14 +92,15 @@ def build():
         fab_texts(fp)
         placed[c["ref"]] = fp
     # M2: pick the orientation whose pad centres hit the CAD lead holes (flip mirrors the footprint)
-    m2 = placed["M2"]; want = [design.B(*p) for p in design.C["fm_pad_xy"]]
-    best = None
-    for rot in [design.C["fm_ang"] + 90 + d for d in (0, 180)] + [-(design.C["fm_ang"] + 90) + d for d in (0, 180)]:
-        m2.SetOrientationDegrees(rot)
-        got = sorted((pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]) for p in m2.Pads() if p.GetNumber())
-        err = sum(math.dist(g, w) for g, w in zip(got, sorted(want)))
-        if best is None or err < best[0]: best = (err, rot)
-    m2.SetOrientationDegrees(best[1]); assert best[0] < 0.01, f"M2 pads off the CAD lead holes by {best[0]:.3f}"
+    if "M2" in placed:   # Q27: no M2 without the 716
+        m2 = placed["M2"]; want = [design.B(*p) for p in design.C["fm_pad_xy"]]
+        best = None
+        for rot in [design.C["fm_ang"] + 90 + d for d in (0, 180)] + [-(design.C["fm_ang"] + 90) + d for d in (0, 180)]:
+            m2.SetOrientationDegrees(rot)
+            got = sorted((pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]) for p in m2.Pads() if p.GetNumber())
+            err = sum(math.dist(g, w) for g, w in zip(got, sorted(want)))
+            if best is None or err < best[0]: best = (err, rot)
+        m2.SetOrientationDegrees(best[1]); assert best[0] < 0.01, f"M2 pads off the CAD lead holes by {best[0]:.3f}"
     for ref, fpn, (bx, by, rot), side in design.MECH:
         fp = load(fpn); fp.SetReference(ref); fp.SetPosition(P(bx, by)); board.Add(fp); fp.SetOrientationDegrees(rot)
         fp.SetBoardOnly(True); fp.SetExcludedFromBOM(True); fp.SetExcludedFromPosFiles(True); fab_texts(fp); placed[ref] = fp
@@ -209,6 +210,6 @@ if __name__ == "__main__":
     if "--route" in sys.argv: route(pcb_path); write_project()
     step = os.path.join(HERE, "..", NAME + ".step")
     subprocess.run(["kicad-cli", "pcb", "export", "step", "--grid-origin", "--force", "--no-dnp", "-o", step, pcb_path], check=True)
-    for ref in ("H1", "M1", "M2", "U13", "U2", "J2", "J10", "MH1"):
+    for ref in [r for r in ("H1", "M1", "M2", "U13", "U2", "J2", "J10", "MH1") if r in placed]:
         f = placed[ref]; print(ref, round(pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], 3), round(pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1], 3),
                                f.GetOrientationDegrees(), "B" if f.IsFlipped() else "F")
