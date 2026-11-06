@@ -223,12 +223,84 @@ def header_nets(parts, fixed):
 
 
 # ------------------------------------------------------------------ placement
+# floorplan [A, 6 Nov]: which part of the board each circuit may use (panel x ranges, full height, both faces). Upper: the jack-1
+# switching and the +12.5 V LDO at the left end (by H1/H3: J1's lines, BOOST up, the rails down); the jack-2/3 switching, the expander,
+# the PD chip, the eFuse and the MIDI buffer between the stacks; the -12 V LDO and the 3.3 V buck at the right end. Lower: the boost
+# and charge pump at the left (away from the DAC), the DAC and op-amps from the middle, the audio parts by H6 (J4).
+ZONES = {"upper": {"L": (-21.5, -7.8), "M": (-7.8, 7.8), "R": (7.8, 21.5), "LM": (-21.5, 7.8), "MR": (-7.8, 21.5)},
+         "lower": {"L": (-21.5, -3.0), "M": (-9.0, 9.0), "R": (3.0, 21.5), "MR": (-9.0, 21.5), "ALL": (-21.5, 21.5)}}
+
+
+def zone_of(p, which, owner=None):
+    """owner: the zone of the chip this part follows in design.py (each chip's parts come right after it)."""
+    n = set(v for v in p["pins"].values() if v)
+    v = p["value"]
+    if which == "upper" and p["block"] == "jack1":
+        return "L"
+    if p["ref"][0] in "RCLD" and owner and not (n - {"GND", "3V3", "P12V5", "N12V", "VSYS", "VBUS", "BOOST"}) and p["block"] != "jack1":
+        return owner                       # a supply capacitor or pull-up/down: with its chip
+    if which == "upper":
+        if n & {"J1_TIP", "J1_RING", "SW1_CV", "MT1", "MR1", "MY1", "RS1", "CV1_S"} - {"MY1"} and not v.startswith("TCA"):
+            return "L"
+        if n & {"P_FB", "P_NR"} or v.startswith("TPS7A49") or n == {"P12_EN", "GND"}:
+            return "L"
+        if n & {"N_FB", "N_NR"} or v.startswith("TPS7A30") or n == {"N12_EN", "GND"} or (n == {"VNEG_RAW", "GND"}):
+            return "R"
+        if n & {"SW_3", "BST_3", "SS_3", "FB_3"} or v.startswith("TPS62933"):
+            return "R"
+        return "M"
+    if n & {"SW_B", "CP_R", "CP_A", "B_SS", "B_COMP", "B_CZ", "B_FB", "B_FREQ"} or v.startswith(("TPS55340", "BAT54S", "PMEG")) or \
+            n == {"VNEG_RAW", "GND"} or n == {"BOOST", "GND"} or (n == {"VSYS", "GND"}):
+        return "L"
+    if n & {"AO_C", "AO_N", "AO_O", "AI_C", "AI_N", "ABIAS", "AIN", "AOUT"} and not v.startswith(("OPA", "TLV")):
+        return "R"
+    return "ALL"
+
+
+def tca_pin_swap(parts, placement, log=print):
+    """The expander's 16 port pins are interchangeable: give each function the free port pin nearest its far end (a TMUX select pin,
+    a ring-sense node, an LDO's or the boost's enable, the eFuse's fault), by optimal assignment. Returns {function net: port}."""
+    import numpy as np
+    from scipy.optimize import linear_sum_assignment
+    tca = next((p for p in parts if p["value"].startswith("TCA9535")), None)
+    if tca is None or tca["ref"] not in placement:
+        return {}
+    port_pins = {k: v for k, v in tca["names"].items() if v.startswith("P")}       # pin number -> P00..P17
+    funcs = [tca["pins"][k] for k in port_pins]                                       # nets now on the ports
+    def pad_xy(ref, num):
+        p = next(q for q in parts if q["ref"] == ref)
+        x, y, s, r = placement[ref]
+        g = geometry(p["fp"], s, r)[4]
+        dx, dy = g.get(num, (0.0, 0.0))
+        return x + dx, y + dy
+    targets = {}
+    for f in funcs:
+        pts = [pad_xy(q["ref"], k) for q in parts if q["ref"] != tca["ref"] and q["ref"] in placement for k, v in q["pins"].items() if v == f]
+        targets[f] = pts
+    pins = list(port_pins)
+    cost = np.zeros((len(funcs), len(pins)))
+    for i, f in enumerate(funcs):
+        for j, pn in enumerate(pins):
+            px, py = pad_xy(tca["ref"], pn)
+            cost[i, j] = min((math.hypot(px - x, py - y) for x, y in targets[f]), default=0.0)
+    r, c = linear_sum_assignment(cost)
+    before = sum(cost[i, pins.index(k)] for i, k in enumerate(port_pins))
+    new = {pins[c[k]]: funcs[i] for k, i in enumerate(r)}
+    for pn, f in new.items():
+        tca["pins"][pn] = f
+    log(f"  expander ports reassigned: {before:.1f} -> {cost[r, c].sum():.1f} mm of straight-line length")
+    return {f: port_pins[pn] for pn, f in new.items()}
+
+
 def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     rx0, rx1 = ROW_X; ky_top = kc(0, ROW_Y[1])[1]; ky_bot = kc(0, ROW_Y[0])[1]
     region = [(rx0 + 0.15, ky_top + 0.15, rx1 - 0.15, ky_bot - 0.15)]   # courtyards 0.15 inside the edge: every pad >= 0.25 from it
     items, nets = [], {}
+    owner = None
     for p in parts:
         r = p["ref"]
+        if r[0] == "U":
+            owner = zone_of(p, which)
         pins = hdr.get(r, p["pins"])
         for num, n in pins.items():
             if n:
@@ -241,7 +313,9 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
             for s in ("F", "B"):
                 for rot in (0, 90, 180, 270):
                     g[(s, rot)] = geometry(p["fp"], s, rot)
-            items.append(dict(ref=r, geoms=g))
+            zx0, zx1 = ZONES[which][zone_of(p, which, owner)]
+            zr = [(max(rx0 + 0.15, zx0), ky_top + 0.15, min(rx1 - 0.15, zx1), ky_bot - 0.15)]
+            items.append(dict(ref=r, geoms=g, regions={"F": zr, "B": zr}))
     # room to escape: no parts within ESCAPE of the stacks' pad rows (either face: their vias go through) or in front of the flex
     # connectors' pads; ICs keep IC_MARGIN, passives the default
     for r, (x, y, s, rot) in fixed.items():
@@ -289,6 +363,8 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
         ok = pl.repair(rounds=40, tries=200, log=log)
     if not ok:
         ok = pl.relocate(g=0.25, log=log)
+    if not ok:
+        ok = pl.nudge(maxd=2.0, log=log)
     wl, ov, out = pl.total()
     log(f"{which}: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}")
     res = {k: v for k, v in pl.result().items() if not k.startswith("KEEP_")}
@@ -506,7 +582,17 @@ def main():
                     best = ((ov + out, wl), res)
             json.dump(best[1], open(pin_file, "w"), indent=1)
         placement = json.load(open(pin_file))
+        swap = placement.pop("_tca_ports", None)
         placement.update(fixed)
+        if which == "upper":
+            if swap is None or "--place" in sys.argv:
+                swap = tca_pin_swap(parts, placement)
+                saved = json.load(open(pin_file)); saved["_tca_ports"] = swap; json.dump(saved, open(pin_file, "w"), indent=1)
+            else:
+                tca = next(p for p in parts if p["value"].startswith("TCA9535"))
+                port_num = {v: k for k, v in tca["names"].items()}
+                for f, port in swap.items():
+                    tca["pins"][port_num[port]] = f
         pcb = os.path.join(d, cfg["name"] + ".kicad_pcb")
         libs = [(LIB, "${KIPRJMOD}/../../" + LIB + ".pretty")]
         write_project(d, cfg["name"], RULES, libs, CLASSES)

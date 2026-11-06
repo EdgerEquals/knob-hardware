@@ -22,6 +22,7 @@ class Placer:
         self.rng = random.Random(seed)
         self.idx = {it["ref"]: i for i, it in enumerate(items)}
         self.regions = regions
+        self.reg = [it.get("regions") or regions for it in items]   # per-part allowed areas (a floorplan), else the board
         self.opts = [sorted(it["geoms"]) for it in items]
         self.fixed = [it.get("fixed") is not None for it in items]
         self.x = np.zeros(self.n); self.y = np.zeros(self.n); self.o = [None] * self.n   # o = (side, rot)
@@ -67,7 +68,7 @@ class Placer:
         x0, y0, x1, y1 = self.rect(i)
         a = (x1 - x0) * (y1 - y0)
         best = 0.0
-        for rx0, ry0, rx1, ry1 in self.regions[self.o[i][0]]:
+        for rx0, ry0, rx1, ry1 in self.reg[i][self.o[i][0]]:
             ix = max(0.0, min(x1, rx1) - max(x0, rx0)); iy = max(0.0, min(y1, ry1) - max(y0, ry0))
             best = max(best, ix * iy)
         # outside area plus a distance term so a part far out is pulled back
@@ -105,7 +106,7 @@ class Placer:
             if self.fixed[i]:
                 continue
             o = self.rng.choice(self.opts[i]); self.o[i] = o
-            r = self.rng.choice(self.regions[o[0]])
+            r = self.rng.choice(self.reg[i][o[0]])
             self.x[i] = self.rng.uniform(r[0], r[2]); self.y[i] = self.rng.uniform(r[1], r[3])
 
     def _local(self, ids):
@@ -133,7 +134,7 @@ class Placer:
                 ids = [i]; old = [(self.x[i], self.y[i], self.o[i])]
                 c0 = self._local(ids)
                 if self.rng.random() < 0.05:
-                    rg = self.rng.choice(self.regions[self.o[i][0]])
+                    rg = self.rng.choice(self.reg[i][self.o[i][0]])
                     self.x[i] = self.rng.uniform(rg[0], rg[2]); self.y[i] = self.rng.uniform(rg[1], rg[3])
                 else:
                     self.x[i] += self.rng.gauss(0, step); self.y[i] += self.rng.gauss(0, step)
@@ -170,7 +171,7 @@ class Placer:
                 x0, y0, x1, y1 = self.rect(i)
                 # into the region that holds most of it
                 best, br = -1, None
-                for r in self.regions[self.o[i][0]]:
+                for r in self.reg[i][self.o[i][0]]:
                     ix = max(0.0, min(x1, r[2]) - max(x0, r[0])); iy = max(0.0, min(y1, r[3]) - max(y0, r[1]))
                     if ix * iy > best:
                         best, br = ix * iy, r
@@ -238,7 +239,7 @@ class Placer:
             x0, y0, o0 = self.x[i], self.y[i], self.o[i]
             for o in self.opts[i]:
                 self.o[i] = o
-                for rg in self.regions[o[0]]:
+                for rg in self.reg[i][o[0]]:
                     x = rg[0]
                     while x <= rg[2]:
                         y = rg[1]
@@ -259,6 +260,38 @@ class Placer:
                 if log:
                     log(f"  no free spot for {self.items[i]['ref']}")
         return not [i for i in mov if self.overlap(i) > 1e-6 or self.out_area(i) > 1e-6]
+
+    def nudge(self, maxd=2.0, g=0.05, log=None):
+        """Last step: a part still overlapping moves to the nearest spot (any face, any turn, anywhere on the board within maxd)
+        where its courtyard is free; the pair's smaller part moves first."""
+        mov = [i for i in range(self.n) if not self.fixed[i]]
+        bad = sorted([i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9],
+                     key=lambda i: (lambda r: (r[2] - r[0]) * (r[3] - r[1]))(self.rect(i)))
+        for i in bad:
+            if self.overlap(i) < 1e-9 and self.out_area(i) < 1e-9:
+                continue
+            x0, y0, o0 = self.x[i], self.y[i], self.o[i]
+            keep = self.reg[i]; self.reg[i] = self.regions          # anywhere on the board for this last step
+            found = None
+            steps = int(maxd / g)
+            for ring in range(1, steps + 1):
+                for o in [o0] + [q for q in self.opts[i] if q != o0]:
+                    self.o[i] = o
+                    for k in range(-ring, ring + 1):
+                        for dx, dy in ((k, -ring), (k, ring), (-ring, k), (ring, k)):
+                            self.x[i], self.y[i] = x0 + dx * g, y0 + dy * g
+                            if self.out_area(i) < 1e-9 and self.overlap(i) < 1e-9:
+                                found = (self.x[i], self.y[i], o); break
+                        if found: break
+                    if found: break
+                if found: break
+            if found:
+                self.x[i], self.y[i], self.o[i] = found
+                if log:
+                    log(f"  nudged {self.items[i]['ref']} by {math.hypot(found[0] - x0, found[1] - y0):.2f}")
+            else:
+                self.x[i], self.y[i], self.o[i] = x0, y0, o0; self.reg[i] = keep
+        return not [i for i in mov if self.overlap(i) > 1e-9 or self.out_area(i) > 1e-9]
 
     def snap(self, g=0.05):
         for i in range(self.n):
