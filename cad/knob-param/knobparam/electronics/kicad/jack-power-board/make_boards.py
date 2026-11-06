@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 KI = os.path.normpath(os.path.join(HERE, ".."))
 sys.path.insert(0, KI); sys.path.insert(0, HERE)
 import sch_gen, design, placer
-from kicad7_tools import FP, V, mm, save_fp, write_project, drc
+from kicad7_tools import FP, V, mm, save_fp, write_project, drc, save_board
 
 PCB_VERSION = "v0.1"
 CAD_VERSION = "v0.48"
@@ -38,6 +38,11 @@ ZIF_OLED = (0.0, ROW_Y[0] + 0.75)                      # x centre, front edge (p
 ZIF_LINK = (14.1, ROW_Y[0] + 0.75)                     # the link flex connector (model zif_link)
 BOARDS = {"upper": dict(name="jack-power-board", dir="upper", title="Jack power board"),
           "lower": dict(name="jack-lower-board", dir="lower", title="Jack lower board")}
+# net classes for routing (name, clearance, width, nets): VBUS/VSYS carry about 1.2 A at 5 V in (6 W peak [A]); 0.5 wide as on the
+# jack board, 0.1 clear so they still reach the 0.5-pitch pins of the PD chip, the boost and the buck
+CLASSES = [("GND", 0.1, 0.25, ["GND"]),          # not routed: every ground pad has its via to the In1 plane (fanout_gnd) or the pours
+           ("Power", 0.1, 0.5, ["VBUS", "VSYS"]),
+           ("Supply", 0.1, 0.3, ["SW_B", "BOOST", "SW_3", "3V3", "P12V5", "N12V", "VNEG_RAW", "OLED_VCC", "CP_R", "CP_A"])]
 POWER = {"3V3": 0.2, "P12V5": 0.2, "N12V": 0.2, "GND": 0.0, "VBUS": 1.0, "VSYS": 1.0, "SW_B": 3.0, "CP_R": 2.0, "CP_A": 2.0,
          "BOOST": 1.0, "VNEG_RAW": 0.5, "SW_3": 3.0, "BST_3": 2.0, "OLED_VCC": 0.5}
 
@@ -218,7 +223,7 @@ def header_nets(parts, fixed):
 # ------------------------------------------------------------------ placement
 def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     rx0, rx1 = ROW_X; ky_top = kc(0, ROW_Y[1])[1]; ky_bot = kc(0, ROW_Y[0])[1]
-    region = [(rx0 + 0.05, ky_top + 0.05, rx1 - 0.05, ky_bot - 0.05)]
+    region = [(rx0 + 0.15, ky_top + 0.15, rx1 - 0.15, ky_bot - 0.15)]   # courtyards 0.15 inside the edge: every pad >= 0.25 from it
     items, nets = [], {}
     for p in parts:
         r = p["ref"]
@@ -252,9 +257,18 @@ def run_placer(which, parts, fixed, hdr, iters, seed=1, log=print):
     pl.init_random()
     pl.run(iters=iters, log=log)
     pl.snap(0.05)
-    ok = pl.repair(log=log)
+    ok = pl.repair(rounds=120, tries=200, log=log)
     pl.snap(0.05)
-    ok = pl.repair(rounds=20, log=log) and ok
+    ok = pl.repair(rounds=60, tries=200, log=log)
+    if not ok:   # the margin is for routing room; a DRC-legal placement needs only the courtyards apart
+        pl.margin = 0.0
+        ok = pl.repair(rounds=60, tries=200, log=log)
+    if not ok:   # shove the last few apart, then tidy what that disturbed
+        pl.legalise(rounds=300)
+        pl.snap(0.05)
+        ok = pl.repair(rounds=40, tries=200, log=log)
+    if not ok:
+        ok = pl.relocate(g=0.25, log=log)
     wl, ov, out = pl.total()
     log(f"{which}: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}")
     return pl.result(), (wl, ov, out)
@@ -289,6 +303,8 @@ def build(which, placement, parts, hdr):
         f.Reference().SetTextSize(V(0.4, 0.4)); f.Reference().SetTextThickness(mm(0.06))
         f.SetPath(pcbnew.KIID_PATH(sch_gen.fp_path(cfg["name"], p["ref"])))
         f.SetProperty("Sheetname", "Root"); f.SetProperty("Sheetfile", cfg["name"] + ".kicad_sch")
+        if p["ref"].startswith("MP"):   # the posts' pins: hand-soldered at assembly, not parts
+            f.SetAttributes(f.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
         for k, v in (("MPN", p["mpn"]), ("LCSC", p["lcsc"]), ("Note", p["note"])):
             if v:
                 f.SetProperty(k, v)
@@ -303,20 +319,114 @@ def build(which, placement, parts, hdr):
     return board
 
 
-def add_planes(pcb_path, which):
+def _pad_rects(board):
+    """Every pad as (layers, x0, y0, x1, y1, net) in board-local mm (bounding box; enough for clearance checks here)."""
+    out = []
+    for f in board.GetFootprints():
+        for p in f.Pads():
+            bb = p.GetBoundingBox()
+            lay = {"F"} if p.IsOnLayer(pcbnew.F_Cu) and not p.IsOnLayer(pcbnew.B_Cu) else {"B"} if p.IsOnLayer(pcbnew.B_Cu) and not p.IsOnLayer(pcbnew.F_Cu) else {"F", "B", "I"}
+            out.append((lay, pcbnew.ToMM(bb.GetLeft()) - ORIGIN[0], pcbnew.ToMM(bb.GetTop()) - ORIGIN[1], pcbnew.ToMM(bb.GetRight()) - ORIGIN[0],
+                        pcbnew.ToMM(bb.GetBottom()) - ORIGIN[1], p.GetNetname(), p))
+    return out
+
+
+def _rect_dist(px, py, r):
+    dx = max(r[1] - px, 0.0, px - r[3]); dy = max(r[2] - py, 0.0, py - r[4])
+    return math.hypot(dx, dy)
+
+
+def fanout_gnd(board, which, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
+    """A via to the In1 ground plane next to every ground SMD pad (one in the middle of each grounded exposed pad), with a short
+    track on the pad's face, so the router never has to reach the plane: candidates round the pad, away from its part's centre
+    first, clear of every pad on both faces, the other vias and the board edge."""
+    rects = _pad_rects(board)
+    gnd = board.FindNet("GND")
+    ol = [kc(x, y) for x, y in outline(which)]
+    xs = [p[0] for p in ol]; ys = [p[1] for p in ol]
+    ex0, ex1, ey0, ey1 = min(xs), max(xs), min(ys), max(ys)       # the jack row's box (vias stay in it)
+    ey1 = kc(0, ROW_Y[0])[1]
+    vias = []; n_ok = n_fail = 0
+    done = set()
+    for f in board.GetFootprints():
+        cx, cy = pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1]
+        for p in f.Pads():
+            if p.GetNetname() != "GND" or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD:
+                continue
+            key = (f.GetReference(), p.GetNumber())
+            if key in done:
+                continue
+            done.add(key)
+            side = "B" if p.IsOnLayer(pcbnew.B_Cu) else "F"
+            px, py = pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]
+            w, h = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
+            cands = []
+            if w >= 1.4 and h >= 1.4 and abs(px - cx) < 0.3 and abs(py - cy) < 0.3:   # an exposed pad: via in its middle
+                cands = [(px, py)]
+            else:
+                ang0 = math.atan2(py - cy, px - cx) if math.hypot(px - cx, py - cy) > 0.05 else 0.0
+                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5):
+                    for k in range(16):
+                        a_ = ang0 + (k // 2 + 1) * (math.pi / 8) * (1 if k % 2 else -1) if k else ang0
+                        cands.append((px + (w / 2 + dist) * math.cos(a_) if abs(math.cos(a_)) > 0.7 else px + dist * math.cos(a_),
+                                      py + (h / 2 + dist) * math.sin(a_) if abs(math.sin(a_)) > 0.7 else py + dist * math.sin(a_)))
+            placed = False
+            for vx, vy in cands:
+                if not (ex0 + via_d / 2 + 0.3 <= vx <= ex1 - via_d / 2 - 0.3 and ey0 + via_d / 2 + 0.3 <= vy <= ey1 - via_d / 2 - 0.3):
+                    continue
+                ok = True
+                for lay, x0, y0, x1, y1, n, pp in rects:
+                    if pp is p or (n == "GND" and (vx, vy) == (px, py)):
+                        continue
+                    if n == "GND" and _rect_dist(vx, vy, (None, x0, y0, x1, y1)) >= 0:
+                        if _rect_dist(vx, vy, (None, x0, y0, x1, y1)) < via_d / 2 + 0.02 and pp is not p:
+                            ok = False; break
+                        continue
+                    if _rect_dist(vx, vy, (None, x0, y0, x1, y1)) < via_d / 2 + clr:
+                        ok = False; break
+                    # the track from the pad to the via, on the pad's face
+                    if side in lay and (vx, vy) != (px, py):
+                        for s in range(1, 11):
+                            tx, ty = px + (vx - px) * s / 10, py + (vy - py) * s / 10
+                            if _rect_dist(tx, ty, (None, x0, y0, x1, y1)) < width / 2 + clr:
+                                ok = False; break
+                        if not ok:
+                            break
+                if ok:
+                    for qx, qy in vias:
+                        if math.hypot(qx - vx, qy - vy) < via_d + 0.15:
+                            ok = False; break
+                if ok:
+                    v = pcbnew.PCB_VIA(board); v.SetPosition(P(vx, vy)); v.SetWidth(mm(via_d)); v.SetDrill(mm(via_drill))
+                    v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu); v.SetNet(gnd); v.SetLocked(True); board.Add(v)
+                    if (vx, vy) != (px, py):
+                        tr = pcbnew.PCB_TRACK(board); tr.SetStart(P(px, py)); tr.SetEnd(P(vx, vy)); tr.SetWidth(mm(width))
+                        tr.SetLayer(pcbnew.B_Cu if side == "B" else pcbnew.F_Cu); tr.SetNet(gnd); tr.SetLocked(True); board.Add(tr)
+                    vias.append((vx, vy)); placed = True; n_ok += 1
+                    break
+            if not placed:
+                n_fail += 1
+    return n_ok, n_fail
+
+
+def add_planes(pcb_path, which, inner_only=False):
+    """Ground: a plane on In1 (before routing, so Freerouting sees it as the plane), and pours on F and B (after routing)."""
     b = pcbnew.LoadBoard(pcb_path)
     gnd = b.FindNet("GND")
     pts = [kc(x, y) for x, y in outline(which)]
-    for layer, pri in ((pcbnew.In1_Cu, 0), (pcbnew.F_Cu, 0), (pcbnew.B_Cu, 0)):
+    have = {z.GetLayer() for z in b.Zones() if z.GetNetname() == "GND"}
+    want = [pcbnew.In1_Cu] if inner_only else [pcbnew.In1_Cu, pcbnew.F_Cu, pcbnew.B_Cu]
+    for layer, pri in ((L, 0) for L in want if L not in have):
         z = pcbnew.ZONE(b); z.SetLayer(layer); z.SetNet(gnd); z.SetAssignedPriority(pri)
         z.SetLocalClearance(mm(0.2)); z.SetMinThickness(mm(0.15)); z.SetThermalReliefGap(mm(0.2)); z.SetThermalReliefSpokeWidth(mm(0.3))
-        z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL if layer == pcbnew.In1_Cu else pcbnew.ZONE_CONNECTION_THERMAL)
+        z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL if layer == pcbnew.In1_Cu else pcbnew.ZONE_CONNECTION_THT_THERMAL)
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
         ol = z.Outline(); ol.NewOutline()
         for x, y in pts:
             ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] + y))
         b.Add(z)
     pcbnew.ZONE_FILLER(b).Fill(b.Zones())
-    pcbnew.SaveBoard(pcb_path, b)
+    save_board(pcb_path, b)
 
 
 def schematic(which, parts, hdr, path):
@@ -378,14 +488,18 @@ def main():
         placement.update(fixed)
         pcb = os.path.join(d, cfg["name"] + ".kicad_pcb")
         libs = [(LIB, "${KIPRJMOD}/../../" + LIB + ".pretty")]
-        write_project(d, cfg["name"], RULES, libs, [("Power", 0.15, 0.4, ["VBUS", "VSYS", "SW_B", "BOOST", "SW_3"])])
+        write_project(d, cfg["name"], RULES, libs, CLASSES)
         board = build(which, placement, parts, hdr)
-        pcbnew.SaveBoard(pcb, board)
+        print(which, "ground vias (placed, no room):", fanout_gnd(board, which))
+        save_board(pcb, board)
         schematic(which, parts, hdr, os.path.join(d, cfg["name"] + ".kicad_sch"))
-        write_project(d, cfg["name"], RULES, libs, [("Power", 0.15, 0.4, ["VBUS", "VSYS", "SW_B", "BOOST", "SW_3"])])
+        write_project(d, cfg["name"], RULES, libs, CLASSES)
         if "--route" in sys.argv:
             import kicad7_tools as kt
-            print(which, "routed:", kt.route(pcb, FREEROUTING, passes=100, attempts=3, edge_inset=RULES["edge"] - 0.15 + 0.005))
+            # ground is left to the planes: Freerouting skips the GND class (-inc) and sees no plane, so other nets' vias pass In1
+            print(which, "routed:", kt.route(pcb, FREEROUTING, passes=int(os.environ.get("ROUTE_PASSES", "100")),
+                                             attempts=int(os.environ.get("ROUTE_ATTEMPTS", "3")), edge_inset=RULES["edge"] - 0.15 + 0.005,
+                                             extra=("-inc", "GND"), timeout=int(os.environ.get("ROUTE_TIMEOUT", "2400"))))
         add_planes(pcb, which)
         nv, nu, rep = drc(pcb, os.path.join(d, "drc.rpt"))
         print(which, "DRC violations", nv, "unconnected", nu)

@@ -115,7 +115,7 @@ class Placer:
             pass
         return wl + pc
 
-    def run(self, iters=200000, t0=None, t1=0.01, step0=4.0, step1=0.1, lam0=0.5, lam1=2000.0, log=None):
+    def run(self, iters=200000, t0=None, t1=0.01, step0=4.0, step1=0.1, lam0=0.5, lam1=6000.0, log=None):
         mov = [i for i in range(self.n) if not self.fixed[i]]
         if t0 is None:
             t0 = 2.0
@@ -223,6 +223,38 @@ class Placer:
                 self.x[i], self.y[i], self.o[i] = best[1], best[2], best[3]
             if log and rd % 10 == 0:
                 log(f"  repair {rd}: {len(bad)} parts overlapping or outside")
+        return not [i for i in mov if self.overlap(i) > 1e-6 or self.out_area(i) > 1e-6]
+
+    def relocate(self, g=0.25, log=None):
+        """Last resort for parts still overlapping: try every grid point on both faces, every turn; keep the free spot with the
+        least wirelength."""
+        mov = [i for i in range(self.n) if not self.fixed[i]]
+        bad = [i for i in mov if self.overlap(i) > 1e-6 or self.out_area(i) > 1e-6]
+        for i in bad:
+            ks = self.part_nets[i]; best = None
+            x0, y0, o0 = self.x[i], self.y[i], self.o[i]
+            for o in self.opts[i]:
+                self.o[i] = o
+                for rg in self.regions[o[0]]:
+                    x = rg[0]
+                    while x <= rg[2]:
+                        y = rg[1]
+                        while y <= rg[3]:
+                            self.x[i], self.y[i] = x, y
+                            if self.out_area(i) < 1e-9 and self.overlap(i) < 1e-9:
+                                s = sum(self.net_cost(k) for k in ks)
+                                if best is None or s < best[0]:
+                                    best = (s, x, y, o)
+                            y += g
+                        x += g
+            if best:
+                self.x[i], self.y[i], self.o[i] = best[1], best[2], best[3]
+                if log:
+                    log(f"  relocated {self.items[i]['ref']} to ({best[1]:.2f}, {best[2]:.2f}) {best[3]}")
+            else:
+                self.x[i], self.y[i], self.o[i] = x0, y0, o0
+                if log:
+                    log(f"  no free spot for {self.items[i]['ref']}")
         return not [i for i in mov if self.overlap(i) > 1e-6 or self.out_area(i) > 1e-6]
 
     def snap(self, g=0.05):

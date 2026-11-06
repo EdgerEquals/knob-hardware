@@ -222,7 +222,17 @@ def _inset_dsn_boundary(dsn, inset_mm):
     open(dsn, "w").write(txt)
 
 
-def route(pcb_path, jar, passes=60, attempts=4, edge_inset=0.0):
+def save_board(pcb_path, board):
+    """SaveBoard, keeping the project file: a board saved from a process whose settings manager holds a stale project (KiCad 7)
+    rewrites the .kicad_pro with KiCad's defaults (clearance 0.2, via 0.6), which DRC and the DSN export then read."""
+    pro = pcb_path.replace(".kicad_pcb", ".kicad_pro")
+    keep = open(pro).read() if os.path.exists(pro) else None
+    pcbnew.SaveBoard(pcb_path, board)
+    if keep is not None:
+        open(pro, "w").write(keep)
+
+
+def route(pcb_path, jar, passes=60, attempts=4, edge_inset=0.0, extra=(), timeout=900):
     dsn = pcb_path.replace(".kicad_pcb", ".dsn"); ses = pcb_path.replace(".kicad_pcb", ".ses")
     _fresh("dsn", pcb_path, dsn)
     if edge_inset > 0:
@@ -230,11 +240,11 @@ def route(pcb_path, jar, passes=60, attempts=4, edge_inset=0.0):
     unrouted = open(pcb_path).read(); best = None
     for attempt in range(attempts):
         subprocess.run(["java", "-Djava.awt.headless=true", "-jar", jar, "-de", dsn, "-do", ses, "-mp", str(passes),
-                        "--router.max_passes=" + str(passes), "-dct", "0", "--gui.enabled=false"], check=True, timeout=900,
+                        "--router.max_passes=" + str(passes), "-dct", "0", "--gui.enabled=false", *extra], check=True, timeout=timeout,
                        capture_output=True)
         open(pcb_path, "w").write(unrouted); b = pcbnew.LoadBoard(pcb_path)
         print("imported", import_ses(b, ses))
-        pcbnew.SaveBoard(pcb_path, b)
+        save_board(pcb_path, b)
         nv, nu, _ = drc(pcb_path)
         print("route attempt", attempt + 1, "violations", nv, "unconnected", nu)
         if best is None or (nu, nv) < best[0]:

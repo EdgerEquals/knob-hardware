@@ -10,7 +10,10 @@ KiCad 7 (the cloud workspace has 7.0.11): kicad-cli 7 has no BOM, ERC or DRC com
 footprint fields and DRC runs through pcbnew (kicad7_tools.drc, no schematic parity); ERC is reported as not run."""
 import os, sys, csv, glob, re, json, shutil, subprocess, tempfile, zipfile, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
-BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad"}
+BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad",
+          "jack-power-board": "jack-power-board/upper/kicad", "jack-lower-board": "jack-power-board/lower/kicad"}
+FAB = {"jack-power-board": "jack-power-board/upper/fab", "jack-lower-board": "jack-power-board/lower/fab"}   # else <board>/fab
+INNER = {"jack-power-board": ",In1.Cu,In2.Cu", "jack-lower-board": ",In1.Cu,In2.Cu"}                          # 4-layer boards
 NOTES = {"knob-main-pcb": "Board: 2 layers, FR-4, 1.6 mm; HASL or ENIG; green mask, white silk [A].\n"
                           "Hand-fit parts (excluded from BOM/CPL): H1 rod pad, M1 1220 motor, M2 716 motor leads, J10 MCU-link pads.\n",
          "screen-adapter": "Board: 2 layers, FR-4, 1.0 mm; HASL or ENIG; green mask, white silk [A].\n"
@@ -23,7 +26,14 @@ NOTES = {"knob-main-pcb": "Board: 2 layers, FR-4, 1.6 mm; HASL or ENIG; green ma
                        "(it shows through the clear OLED above the jacks), white silk on the back only. Plated oval slots for the jack pins.\n"
                        "Top: J1-J4 Thonk PJ366ST (through-hole, hand / selective solder) and P1-P8 Harwin P70-5100045 spring contacts (SMD).\n"
                        "Bottom: H1, H2 XFCN 2x6 1.27 mm SMD headers. Two-sided SMT. Inside corners of the outline: router radius per PCBWay [C].\n"
-                       "Thonk PJ366ST is not an LCSC part: supplied separately (Thonk) or sourced by PCBWay [C].\n"}
+                       "Thonk PJ366ST is not an LCSC part: supplied separately (Thonk) or sourced by PCBWay [C].\n",
+         "jack-power-board": "Board: 4 layers (F.Cu, In1.Cu ground plane, In2.Cu, B.Cu), FR-4, 1.6 mm, the jack row 43.0 x 10.5 with two ears; ENIG;\n"
+                             "BLACK mask [A] (behind the jacks; matches the jack board), no silk. Two-sided SMT. Min track 0.127, gap 0.1, vias 0.45 / 0.2.\n"
+                             "MP1, MP2: plated Ø1.15 holes for the Ø1.0 pins of the two brass posts (hand-soldered at assembly, not parts).\n"
+                             "U1 TPS259470ARPWR land pattern is a PLACEHOLDER until TI's RPW0010A drawing [C]. TMUX7212RUMR / TCA9535RGER [Ed Q25].\n",
+         "jack-lower-board": "Board: 4 layers (F.Cu, In1.Cu ground plane, In2.Cu, B.Cu), FR-4, 1.6 mm, 43.0 x 10.5; ENIG; BLACK mask [A], no silk.\n"
+                             "Two-sided SMT: the two flex connectors (J5 XUNPU FPC-05F-24PH20, J6 Hirose FH26W-25S) on the bottom, opening to the\n"
+                             "board's bottom edge. Min track 0.127, gap 0.1, vias 0.45 / 0.2.\n"}
 LAYERS = "F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,F.Mask,B.Mask,Edge.Cuts"
 
 def run(*a): return subprocess.run(["kicad-cli", *a], capture_output=True, text=True)
@@ -55,14 +65,14 @@ def rev_of(pcb):
 
 def export(name):
     kdir = os.path.join(HERE, BOARDS[name]); pcb = os.path.join(kdir, name + ".kicad_pcb"); sch = os.path.join(kdir, name + ".kicad_sch")
-    fab = os.path.join(HERE, name, "fab"); rep = os.path.join(fab, "reports")
+    fab = os.path.join(HERE, FAB.get(name, os.path.join(name, "fab"))); rep = os.path.join(fab, "reports")
     if os.path.isdir(fab): shutil.rmtree(fab)
     os.makedirs(rep)
     rev = rev_of(pcb) if rev_of(pcb) != "rev" else rev_of(sch)
     base = f"{name}-{rev}"
     with tempfile.TemporaryDirectory() as t:
         g = os.path.join(t, "gerbers"); os.makedirs(g)
-        r = run("pcb", "export", "gerbers", "-l", LAYERS, "--subtract-soldermask", "-o", g + "/", pcb); assert r.returncode == 0, r.stderr
+        r = run("pcb", "export", "gerbers", "-l", LAYERS + INNER.get(name, ""), "--subtract-soldermask", "-o", g + "/", pcb); assert r.returncode == 0, r.stderr
         r = run("pcb", "export", "drill", "--format", "excellon", "--excellon-separate-th", "--generate-map", "--map-format", "gerberx2", "-o", g + "/", pcb)
         assert r.returncode == 0, r.stderr
         with zipfile.ZipFile(os.path.join(fab, base + "-gerbers.zip"), "w", zipfile.ZIP_DEFLATED) as z:
