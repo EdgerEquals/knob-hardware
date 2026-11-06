@@ -1,4 +1,4 @@
-jack-power-board v0.1 PCBWay pack, generated 2026-11-06 18:32 AWST by fab_export.py
+jack-power-board v0.1 PCBWay pack, generated 2026-11-06 19:36 AWST by fab_export.py
 NOT READY TO ORDER (see below)
 
 {
@@ -8,16 +8,16 @@ NOT READY TO ORDER (see below)
   "erc_errors": 0,
   "erc_warnings": 0,
   "drc_violations": 0,
-  "drc_unconnected": 39,
+  "drc_unconnected": 30,
   "drc_parity": 0,
   "bom_rows": 40,
   "cpl_parts": 77,
   "gerber_files": 16,
   "bom_rows_without_lcsc": [
     "C20,C25",
-    "C21,C26,C29",
     "C22,C24",
     "C10,C23,C27,C30",
+    "C21,C26,C29",
     "C31",
     "C32,C33",
     "C53,C60",
