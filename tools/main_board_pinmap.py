@@ -18,7 +18,7 @@ from ortools.sat.python import cp_model
 SPIS = ["SPI1", "SPI2", "SPI3", "SPI4", "SPI5", "SPI6"]
 UARTS = ["USART1", "USART2", "USART3", "USART6", "USART10", "UART4", "UART5", "UART7", "UART8", "UART9", "LPUART1"]
 # PC13-PC15 sit in the backup domain: 3 mA, 2 MHz, one output switching at a time (datasheet note). Only slow inputs go there.
-SLOW_PINS = {"PC13", "PC14-OSC32_IN", "PC15-OSC32_OUT"}
+SLOW_PINS = {"PC13", "PC14", "PC15"}   # matched as name prefixes ("PC14-OSC32_IN (OSC32_IN)" on the H743)
 SLOW_OK = {"BUS_PRESENT"}   # plus every interrupt / TE input (nets marked *)
 TIMS = ["TIM1", "TIM2", "TIM3", "TIM4", "TIM5", "TIM8", "TIM12", "TIM13", "TIM14", "TIM15", "TIM16", "TIM17", "TIM23", "TIM24"]
 
@@ -128,9 +128,9 @@ def solve(pins, groups, spare_min=0):
         for net, pats in nets:
             cands = []
             for p, (_pos, sigs) in pins.items():
-                if p in SLOW_PINS and not (net.endswith("*") or net in SLOW_OK):
+                if p.startswith(tuple(SLOW_PINS)) and not (net.endswith("*") or net in SLOW_OK):   # names differ by family
                     continue
-                if p.endswith("_C") and kind not in ("adc", "gpio"):   # the ADC-switch pads: analog or slow GPIO only [A]
+                if "_C" in p and kind != "adc":   # the ADC-switch pads (PA0_C, PC2_C ...): analog only [A]
                     continue
                 if kind == "gpio":
                     ok = [("GPIO", None)]
