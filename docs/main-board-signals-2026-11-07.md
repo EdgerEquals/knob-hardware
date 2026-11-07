@@ -1,5 +1,9 @@
 # Main board: signal plan and H7B0 pin map (7 Nov 2026, main-board pass step 1)
 
+**Outcome [Ed 19:34]: Q33 = A** (`docs/architecture-fresh-look-2026-11-07.md`): STM32H743VIT6, the joystick screen on its quad
+port, no flash, back screens later on their own board. 64 nets, 18 spare (`.../pinmap/h743-lqfp100-simple.*`). The rounds below
+are the record of how it got there.
+
 Tags: [S] source read, [A] estimate or my choice, [C] open check, [Ed] Ed's decision. Replaces the budget in
 `docs/pcb-h7b0-plan-2026-11-02.md` (that file stays as the record of the 2 Nov plan).
 
@@ -35,7 +39,7 @@ Pictures: `docs/img/qspi-port-choice-q32.png` (first round), `docs/img/qspi-shar
 A: the screen (flash on 1-bit SPI, 6-10 MB/s); B: the flash (screen on 1-bit SPI, 24 frames / s). 77 nets, 5 spare.
 [Ed 7 Nov 19:11] not this compromise: find the workaround, more board room if needed.
 
-## Q32, second round: share the port (open, for Ed)
+## Q32, second round: share the port (superseded by Q33 = A, `docs/architecture-fresh-look-2026-11-07.md`)
 The screen and the flash share the port's clock and four data lines and take turns; only the chip selects are separate, so one
 listens at a time. Both get full quad speed. No board room needed.
 

@@ -33,11 +33,13 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
   a 74LVC1G19 selector, B swaps to an STM32U5A5 (picture `docs/img/qspi-shared-bus-q32.png`). [Ed 19:18] "a band-aid? zoom out":
   **fresh look** in `docs/architecture-fresh-look-2026-11-07.md`. **Q33 (open):** local drawing (each screen place has its own
   ESP32-S3, the main chip sends commands, like the dial through the rod) or central drawing with the shared port. [Ed 19:29]
-  "remove things": **Q33 restated (open):** A subtract (back screens to their own board later, STM32H743VIT6 in the same land,
+  "remove things": **Q33 restated** [Ed 19:34 "Okay"] **= A: subtract** (back screens to their own board later, STM32H743VIT6 in the same land,
   no flash; 64 nets, 18 spare) or B keep the back screens with local drawing.
 
 Expected next, one at a time as they come up:
-1. Layer count (after a first placement shows the density).
-2. The 1220 driver and its supply (15 V direct or a lower rail).
+1. The 1220 driver and its supply (15 V direct or a lower rail): needs Ed's bench numbers (the "Motor bench test sheet" doc is
+   still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
+2. The power tree on vertical board L (15 V to 5 V and 3.3 V) once the motor's share is known.
 3. The RGB emitter part; the VCSEL driver.
-4. The back AMOLEDs' power chip.
+4. Layer count (after a first placement shows the density).
+(The back AMOLEDs' power chip is gone with Q33 = A.)

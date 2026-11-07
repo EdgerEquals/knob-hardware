@@ -87,4 +87,6 @@ Said plainly:
 - This revises Q31 (back screens on the first board) back to the 3 Nov plan.
 - The H743's power, VCAP and BOOT pins differ from the H7B0's. No schematic is drawn yet, so that costs nothing now.
 
-**Q33, restated (open):** A, subtract (recommended); B, keep the back screens on the first build with local drawing.
+**Q33, restated:** A, subtract (recommended); B, keep the back screens on the first build with local drawing.
+**[Ed 7 Nov 19:34 "Okay, what's next?"] taken as Q33 = A: subtract.** Q32 falls away (the joystick screen has the H743's
+quad port to itself; no flash). Q31 is revised: the back screens go to their own cover board later, as on 3 Nov.
