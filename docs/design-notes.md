@@ -119,8 +119,7 @@ Ed's markup of the v0.16b plan (yellow) was the skinny cradle around the top gea
   not feel it because pushing the dial takes a little effort anyway. The cheaper N30 has much more and would need the feel motor.
   So the 716, its open saddle, its pinion and the 39T compound gear are left out; the model keeps them behind `feel_on` (False;
   True brings them back, e.g. with the N30). Idler 1 is a plain idler again. The EE-SX1321 is back on the main board's back as on
-  main PCB v0.11 [Ed 19:42], no riser board or header. The back depth is held at v0.48 (`rear_hold`) until Ed decides whether the
-  cover comes up with the encoder. The KiCad main board still has M2 / U20 / C20-C22 until the main-board pass regenerates it
+  main PCB v0.11 [Ed 19:42], no riser board or header. The back keeps its v0.48 depth (`rear_hold`, Q28 [Ed 7 Nov] = B). The KiCad main board still has M2 / U20 / C20-C22 until the main-board pass regenerates it
   (`design.py` already follows `feel_on`).
 - **Main motor:** a 1220 coreless planetary (N30 as a parameter swap), offset from the dial axis and soldered to
   the main PCB by its tabs. Its 19T pinion drives the 24T knob hub gear (m0.5, ratio 1.263).
