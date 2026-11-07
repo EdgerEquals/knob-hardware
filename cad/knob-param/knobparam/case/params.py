@@ -328,9 +328,26 @@ P = dict(
     jb_post_pin=(1.0, 1.15, 1.6, 0.5),   # v0.48 [Ed 6 Nov 11:35 Q24 = A]: each post steps down to a pin through the power board's ear
                            # (the ear reaches only 1.05 below the post's centre, so a Ø2 hole had no board under it): pin Ø, plated hole Ø,
                            # pad Ø (0.25 from the ear's edges), pin above the board for the fillet [A]; the board sits on the Ø2 shoulder
-    link_lane=(9.5, 18.5, -50.6),   # [Ed 22:52 / A] the link flex's lane: x from, x to, and its pads' lowest y in the strip (clear of the
+    link_lane=(9.5, 18.5, -50.35),  # [Ed 22:52 / A] the link flex's lane: x from, x to, and its pads' lowest y in the strip (Q29: -50.35; clear of the
                            # board's corner notch); ~16 lines at 0.5 mm, signals only
-    flex_t=0.15,           # [A] flex thickness (drawn as a straight riser from the strip to its ZIF)
+    flex_t=0.15,           # [A] the clear OLED's flex thickness (drawn as a straight riser from the strip to its ZIF)
+    # [Ed 7 Nov 18:15, Q29 = A] the link flex on a J path: from its solder fingers in the strip it heads out towards the case, rises
+    # 0.3 off the bottom ledge and turns over into the FH26W under the lower board. The FH26W is bottom-contact [S DigiKey] and hangs
+    # upside down, so the flex's contacts face up there; on the J they face down onto the pads at the other end too: one copper layer.
+    link_flex=dict(
+        t=0.12,            # [A] single-sided polyimide: 25 µm PI + 18 µm Cu + 25 µm coverlay + adhesive
+        t_end=0.20,        # [S Hirose FH26 catalogue] FPC 0.2 ± 0.03 at the contacts: a PI stiffener on the back makes it up
+        w=7.8,             # [S Hirose] FPC width F for 25 positions (contacts span C 7.2; B 6.6 at the lock notches)
+        n=25, pitch=0.3,
+        x1=10.5,           # [S jack lower board J6] pin 1's x (panel); pin k at x1 + 0.3 (k - 1), so the flex is centred on 14.1
+        pad_y=(-50.35, -49.25),   # [A] solder fingers on the main board's strip: from the bend to the flex's end (0.45 below the OLED)
+        clear=0.3,         # [A] the riser off the bottom ledge's inner face
+        r_top=1.6,         # [A] inner radius of the top bend
+        face=0.25,         # [A] the contact face sits this far under the lower board's underside inside the FH26W (1.0 tall)
+        mate=3.2,          # [S Hirose] mated depth: the flex's end is this far in from the connector's mouth
+        stiff=4.0,         # [S Hirose: 3.5 min] stiffener length from the end
+        bend_k=6.0,        # [A IPC-2223 rule of thumb] single-sided, bent once to install: inner radius ≥ 6 x thickness
+    ),
     jb_tab=(1.3, -51.5),   # [A] power board ears down over the posts: half width round each post, bottom edge y (0.3 above the bottom
                            # ledge); the bottom lip's glow coat is left off 1.6 either side of each post (the shell's lip passes the ears)
     oled_flex_len=36.0,    # [S] the clear OLED's flex, from the panel edge (36.0 ± 0.5)
@@ -432,6 +449,26 @@ def _bside_clear(parts, pcb_w, above, below):
         if d < best:
             best, hit = d, p.get("ref", "")
     return best, hit
+
+
+def _link_flex(D):
+    """Q29 [Ed 7 Nov] = A: the link flex's J path in the y-z plane (panel y, z above the main board's front), derived."""
+    L = D["link_flex"]; t = L["t"]
+    y0, y1 = L["pad_y"]
+    D["lf_z0"] = 0.02                                          # the flex's underside on its solder fingers
+    D["lf_y_out"] = D["pcb_y0"] + D["ledge_w"] + L["clear"]   # riser's outer (-y) face, 0.3 off the ledge
+    D["lf_y_in"] = D["lf_y_out"] + t                           # riser's inner (+y) face
+    D["lf_rb"] = y0 - D["lf_y_in"]                              # bottom bend, inner radius (inner face = the flex's top face)
+    D["lf_zbc"] = D["lf_z0"] + t + D["lf_rb"]                   # bottom bend centre z (at y y0)
+    D["lf_zcf"] = D["jb3_z0"] - L["face"]                      # contact face (up) inside the FH26W
+    D["lf_rt"] = L["r_top"]
+    D["lf_ztc"] = D["lf_zcf"] - t - D["lf_rt"]                 # top bend centre z (at y lf_y_in + r_top)
+    D["lf_mouth"] = D["jack_bot_y"] + D["zif_y_off"]
+    D["lf_y_end"] = D["lf_mouth"] + L["mate"]
+    D["lf_x"] = (L["x1"] + (L["n"] - 1) * L["pitch"] / 2 - L["w"] / 2, L["x1"] + (L["n"] - 1) * L["pitch"] / 2 + L["w"] / 2)
+    D["lf_flat"] = ((y1 - y0) + math.pi / 2 * (D["lf_rb"] + t / 2) + (D["lf_ztc"] - D["lf_zbc"])
+                    + math.pi / 2 * (D["lf_rt"] + t / 2) + (D["lf_y_end"] - (D["lf_y_in"] + D["lf_rt"])))
+    D["lf_straight_top"] = (D["lf_y_end"] - L["stiff"]) - (D["lf_y_in"] + D["lf_rt"])   # flat run between the bend and the stiffener
 
 
 def derive(D):
@@ -807,6 +844,7 @@ def derive(D):
         D["jb2_under_z0"] = D["jb2_z0"] - D["jb2_under"]; D["jb3_parts_z1"] = D["jb3_z1"] + D["jb3_parts"]
         D["jb3_env_air"] = D["jb2_under_z0"] - D["jb3_parts_z1"]               # between the power board's underside and the lower board's top
         D["zif_z0"] = D["jb3_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
+        _link_flex(D)
     else:
         D["zif_z0"] = D["jb2_z0"] - max(D["zif_oled"][2], D["zif_link"][2])
     # [Ed 4 Nov 20:15] USB-C: channel through the bottom wall from the back edge to the board's front face, a ledge in front, a key behind

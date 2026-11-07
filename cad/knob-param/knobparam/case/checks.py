@@ -349,6 +349,34 @@ def checks(D, parts):
                     cx, cy = D["corners"][1]
                     row("link flex pads: clear of the main board's corner notch", math.hypot(lx1 - cx, ly - cy) - D["notch_r"], 0.3,
                         f"pads down to y {ly:g} at x {lx1:g}; notch r {D['notch_r']:.2f} at ({cx:g}, {cy:.2f})")
+                    if "lf_rb" in D:   # Q29 [Ed 7 Nov] = A: the link flex on its J path
+                        L = D["link_flex"]; fl = [s for n, s in parts.items() if n.startswith("link flex (")]
+                        if fl:
+                            fl = fl[0]
+                            row("link flex: inner bend radius vs 6 x its thickness", min(D["lf_rb"], D["lf_rt"]), L["bend_k"] * L["t"],
+                                f"bends r {D['lf_rb']:.2f} (bottom) and r {D['lf_rt']:.2f} (top), t {L['t']:g} single-sided PI [A IPC-2223 rule "
+                                f"of thumb, bent once to install]; flat length {D['lf_flat']:.2f}")
+                            row("link flex: clear of the case (bottom ledge, corner post)", fl.distance_to(case), 0.2,
+                                f"riser's outer face y {D['lf_y_out']:.2f}, 0.3 off the ledge's inner face [A]")
+                            oled = [s for n, s in parts.items() if n.startswith("clear OLED flex")]
+                            if oled:
+                                row("link flex: to the clear OLED's flex", min(fl.distance_to(o) for o in oled), 0.3,
+                                    "side by side in the strip; the OLED itself is in the assembly rows (its end on the strip at y "
+                                    f"{L['pad_y'][1]:g}, the OLED's edge at y {D['clear_oled_xy'][1] - D['clear_oled'][1] / 2:.2f})")
+                            gl = parts.get("glow coat (inside walls)")
+                            if gl is not None:
+                                row("link flex: to the glow coat", fl.distance_to(gl), 0.2, "the coat is left off along the lane [A]")
+                            posts = [s for n, s in parts.items() if n.startswith("jack unit post")]
+                            if posts:
+                                row("link flex: to the jack unit posts", min(fl.distance_to(q) for q in posts), 0.3,
+                                    f"flex x {D['lf_x'][0]:.2f}..{D['lf_x'][1]:.2f} (pin 1 at x {L['x1']:g}, as J6 on the lower board)")
+                            lb = [s for n, s in parts.items() if n.startswith("jack lower board (")]
+                            if lb:
+                                row("link flex: under the lower board, short of the connector", fl.distance_to(lb[0]), 0.15,
+                                    f"contact face {L['face']:g} under the board's underside inside the FH26W [A]")
+                            row("link flex: flat run between the top bend and the stiffener", D["lf_straight_top"], 0.5,
+                                f"stiffener {L['stiff']:g} from the end (Hirose: 3.5 min; if less, M ≥ 0.5) [S]; "
+                                f"end {L['mate']:g} in from the mouth at y {D['lf_mouth']:.2f}")
                     row("jack holes: float for the bushings", (D["jack_hole"] - D["jack_bush_d"]) / 2, 0.25,
                         f"Ø{D['jack_hole']:g} holes for Ø{D['jack_bush_d']:g} bushings [Ed 22:52]: the stack sets the jack unit within this")
                     row("jack nuts still cover the holes", (D["jack_nut_d"] - D["jack_hole"]) / 2, 0.5, f"Ø{D['jack_nut_d']:g} nuts")

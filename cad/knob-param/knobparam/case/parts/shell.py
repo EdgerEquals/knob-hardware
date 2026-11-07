@@ -44,6 +44,30 @@ def _round_box(w, h, r, z0, z1, x, y):
     return Pos(x, y, z0) * extrude(RectangleRounded(w, h, rr), z1 - z0)
 
 
+def _arc(cy, cz, r, a0, a1, n=16):
+    return [(cy + r * math.cos(math.radians(a0 + (a1 - a0) * k / n)), cz + r * math.sin(math.radians(a0 + (a1 - a0) * k / n)))
+            for k in range(n + 1)]
+
+
+def _link_flex(D):
+    """Q29 [Ed 7 Nov] = A: the link flex on its J path (params._link_flex) and its stiffener, as solids. The y-z outline is the
+    centreline offset to both faces, the bends as 16-segment arcs; extruded over the flex's width in x."""
+    L = D["link_flex"]; t = L["t"]
+    y0, y1 = L["pad_y"]; z0 = D["lf_z0"]; rb, rt = D["lf_rb"], D["lf_rt"]; yi = D["lf_y_in"]
+    zbc, ztc, ye = D["lf_zbc"], D["lf_ztc"], D["lf_y_end"]
+    inner = ([(y1, z0 + t), (y0, z0 + t)] + _arc(y0, zbc, rb, 270, 180)[1:] + [(yi, ztc)]
+             + _arc(yi + rt, ztc, rt, 180, 90)[1:] + [(ye, ztc + rt)])
+    outer = ([(y1, z0), (y0, z0)] + _arc(y0, zbc, rb + t, 270, 180)[1:] + [(yi - t, ztc)]
+             + _arc(yi + rt, ztc, rt + t, 180, 90)[1:] + [(ye, ztc + rt + t)])
+    pts = inner + outer[::-1]
+    x0, x1 = D["lf_x"]
+    face = Polygon(*[(y, z) for y, z in pts], align=None)
+    fl = Pos(x0, 0, 0) * extrude(Plane.YZ * face, amount=x1 - x0)
+    zt = ztc + rt   # the flex's underside on the top run; the stiffener goes under it
+    st = _box(x0, x1, ye - L["stiff"], ye, zt - (L["t_end"] - t), zt)
+    return fl, st
+
+
 def _cyl_z(r, z0, z1, x, y):
     if z1 <= z0 or r <= 0:
         return None
@@ -301,6 +325,8 @@ def build(D):
     if D.get("jb_on") and D.get("jb_post_xy"):   # v0.34 [Ed 22:21] the bottom lip's coat stays off where the jack unit's posts and ears pass
         for x, _y in D["jb_post_xy"]:
             glow = _sub(glow, _box(x - 1.6, x + 1.6, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
+    if "lf_x" in D:   # Q29 [A]: and along the link flex's lane, where its bottom bend comes out towards the ledge (the coat stood 0.35 in)
+        glow = _sub(glow, _box(D["lf_x"][0] - 0.5, D["lf_x"][1] + 0.5, D["pcb_y0"] - 1.0, D["jack_bot_y"], D["z_rim"] - sl, D["z_fp1"]))
     if D.get("jack_lip_notch") is not None:   # [Ed 4 Nov 20:12] no side coat along the jacks' path (it stood 0.15 into jacks 1 and 4)
         ny0, ny1 = D["jack_notch_y"]
         glow = _sub(glow, _box(D["x_in0"] - sl, D["x_in0"] + g0 + gt + sl, ny0, ny1, D["z_rim"] - sl, D["z_fp1"]))
@@ -513,8 +539,13 @@ def build(D):
             if D.get("link_lane"):   # v0.36 [Ed 22:52]: the two flexes, drawn as straight risers from the strip up to their ZIFs
                 oy0 = D["clear_oled_xy"][1] - D["clear_oled"][1] / 2; ft = D["flex_t"]; zt = D["zif_z0"] - 0.02
                 jacks["clear OLED flex (36.0 [S], plugged on the bench)"] = _box(-6.25, 6.25, oy0 - 0.05 - ft, oy0 - 0.05, D["clear_oled"][2] / 2, zt)
-                lx0, lx1, _ly = D["link_lane"]
-                jacks["link flex (main board to the jack power board) [A]"] = _box(lx0, lx1, oy0 - 0.45 - ft, oy0 - 0.45, 0.02, zt)
+                if "lf_rb" in D:   # Q29 [Ed 7 Nov] = A: the J path, contacts up into the FH26W and down onto the strip's pads
+                    fl, st = _link_flex(D)
+                    jacks["link flex (main board to the jack lower board, single-sided PI, 25 at 0.3) [A]"] = fl
+                    jacks["link flex stiffener (PI, to 0.20 at the contacts) [A]"] = st
+                else:
+                    lx0, lx1, _ly = D["link_lane"]
+                    jacks["link flex (main board to the jack power board) [A]"] = _box(lx0, lx1, oy0 - 0.45 - ft, oy0 - 0.45, 0.02, zt)
         lower = bool(D.get("jb3_on"))
         jacks["jack power board (FR-4, 4 layers: PD sink, eFuse, ±12 V LDOs, jack switching, I/O expander) [A]" if lower else
               "jack power board (FR-4: ZIFs, PD sink, ±12 V, the OLED's 12.5 V) [A]"] = pb
@@ -541,6 +572,10 @@ def build(D):
         for nm, (w, dd, hh, xc) in ((f"{brd} ZIF, 24-pin 0.5 (clear OLED flex)", D["zif_oled"]),
                                     (f"{brd} FPC connector, 25-pin 0.3 (link flex)", D["zif_link"])):
             jacks[nm] = _box(xc - w / 2, xc + w / 2, by0 + D["zif_y_off"], by0 + D["zif_y_off"] + dd, zb - hh, zb - 0.02)
+            if "link flex" in nm and "lf_rb" in D:   # Q29: the FPC slot (7.83 wide [S Hirose D], 0.2 ± 0.03 FPC) so the flex can sit in it
+                L = D["link_flex"]; zc = D["lf_zcf"] - L["t_end"] / 2; sw = 7.83
+                jacks[nm] = _sub(jacks[nm], _box(xc - sw / 2, xc + sw / 2, D["lf_mouth"] - 0.1, D["lf_y_end"] + 0.05,
+                                                 zc - L["t_end"] / 2 - 0.03, zc + L["t_end"] / 2 + 0.03))
     bw, bh, bt = D["usb_board"]
     jacks["USB-C receptacle [S]"] = _box(ux - uw / 2, ux + uw / 2, uy - uh / 2, uy + uh / 2, D["z_fp1"] - ud, D["z_fp1"] - 0.02)
     jacks["USB-C board (socket, TVS, ESD)"] = _box(ux - bw / 2, ux + bw / 2, uy - bh / 2, uy + bh / 2, D["z_fp1"] - ud - bt, D["z_fp1"] - ud)
