@@ -24,10 +24,12 @@ for d in b.GetDrawings():
 for t in b.GetTracks():
     n = t.GetNetname(); col = NC.get(n.split("_p")[0], "#ef6c00")
     a.plot([mm(t.GetStart().x), mm(t.GetEnd().x)], [-mm(t.GetStart().y), -mm(t.GetEnd().y)], color=col, lw=0.9, zorder=3)
+from matplotlib.patches import Polygon as _Poly
 for f in b.GetFootprints():
     for p in f.Pads():
-        x, y = mm(p.GetPosition().x), -mm(p.GetPosition().y); w, h = mm(p.GetSize().x), mm(p.GetSize().y)
-        a.add_patch(Rectangle((x - w / 2, y - h / 2), w, h, fc="#ffd54f", ec="#b8860b", lw=0.3, zorder=4))
+        ps = pcbnew.SHAPE_POLY_SET(); p.TransformShapeToPolygon(ps, pcbnew.F_Cu, 0, pcbnew.FromMM(0.002)); o = ps.Outline(0)
+        pts = [(mm(o.CPoint(i).x), -mm(o.CPoint(i).y)) for i in range(o.PointCount())]
+        a.add_patch(_Poly(pts, closed=True, fc="#ffd54f", ec="#b8860b", lw=0.3, zorder=4))
 xs = [106.0, 126.0]
 a.set_xlim(*xs); a.set_aspect("equal"); a.grid(alpha=0.12)
 L, W = G["flat_len"], G["w"]

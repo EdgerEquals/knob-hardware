@@ -26,24 +26,53 @@ MAIN_LIB = os.path.join(os.path.dirname(HERE), "footprints.pretty")
 O = 100.0
 W, L, P, N, X1 = G["w"], G["flat_len"], G["pitch"], G["n"], G["x1"]
 XC = X1 + (N - 1) * P / 2
-TRACK = 0.15            # [A] conductor 0.15 / gap 0.15 at the 0.3 pitch (Hirose's drawing gives (0.15) as a reference) [C]
-ZIF_EXP = (0.10, 2.50)  # [C] exposed contacts from the FH26W end: 0.1 back from the edge to 2.5 (the catalogue's 2.5 ± 0.3)
+TRACK = 0.15            # [A] conductor 0.15 / gap 0.15 under the coverlay
+# [S] Hirose FH26 catalogue p. 8, "Recommended FPC Dimensions" (read from the PDF Ed sent, 7 Nov): staggered contacts. Odd pins
+# (1, 3 .. 25, C 7.2 span): 0.3 wide from 0.3 to 1.0 from the end, a 0.1 neck from 1.1 to 2.1. Even pins (2 .. 24, B 6.6 span): a
+# point at 1.0, 0.3 wide from 1.1 to 2.1. Both taper to 0.2 at 2.25 (0.1 gaps). Coverlay edge 2.5 ± 0.3 from the end; stiffener 3.5
+# min; 0.2 ± 0.03 thick; width F 7.8 ± 0.05; corners R0.2 max; stiffener (0.07) inside the edges.
+ZIF_EXP = (0.30, 2.50)  # first copper / coverlay edge, from the FH26W end
+ZIF_W = 0.2             # [S] conductor width from 2.25 until it narrows to TRACK under the coverlay (at 2.8 [A])
 SOLDER_EXP = (0.10, 0.90)   # [A] exposed solder fingers from the main-board end; coverlay from 0.9, the bend starts at 1.1
 MAIN_PAD = (0.15, 1.20)     # [A] main board pads: 0.15 wide, 1.2 long (0.3 past the flex's end for the hot-bar fillet / inspection)
-RULES = dict(clearance=0.12, track=TRACK, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.1)   # edge: the contacts stop 0.1
-                                                                                                # short of the ends; the sides keep 0.225
+RULES = dict(clearance=0.1, track=TRACK, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.1)   # clearance: Hirose's 0.1 gaps in the
+                                                                                               # contact zone; edge: the solder fingers stop 0.1 short of their end
 
 
 def xk(k):   # panel x of contact k (1-based)
     return X1 + P * (k - 1)
 
 
+def zif_contact(fp, k, x):
+    """One FH26W contact as a custom pad (outline per Hirose's drawing), anchored at y 2.4 (the 0.2 part) so tracks join there."""
+    # the tapers are staggered a little inside Hirose's tolerances (1.0/1.1 ± 0.1, 2.1/2.25 ± 0.1) so every gap stays 0.1:
+    # odd necks down 1.0 -> 1.05, even widens to full by 1.15; even narrows 2.1 -> 2.2, then odd widens 2.2 -> 2.3
+    if k % 2:   # odd: wide at the tip, neck in the second row
+        pts = [(-0.15, 0.3), (0.15, 0.3), (0.15, 1.0), (0.05, 1.05), (0.05, 2.2), (0.1, 2.3), (0.1, 2.8), (-0.1, 2.8), (-0.1, 2.3),
+               (-0.05, 2.2), (-0.05, 1.05), (-0.15, 1.0)]
+    else:       # even: starts at a point at 1.0, wide in the second row
+        pts = [(0.0, 1.0), (0.15, 1.15), (0.15, 2.1), (0.1, 2.2), (0.1, 2.8), (-0.1, 2.8), (-0.1, 2.2), (-0.15, 2.1), (-0.15, 1.15)]
+    ay = 2.4
+    p = pcbnew.PAD(fp.fp); p.SetNumber(str(k)); p.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+    p.SetShape(pcbnew.PAD_SHAPE_CUSTOM); p.SetAnchorPadShape(pcbnew.PAD_SHAPE_RECT); p.SetSize(V(0.1, 0.1))
+    FP._at(p, x, ay)
+    p.AddPrimitivePoly([V(px, py - ay) for px, py in pts], 0, True)
+    ls = pcbnew.LSET(); ls.AddLayer(pcbnew.F_Cu); ls.AddLayer(pcbnew.F_Mask); p.SetLayerSet(ls)
+    p.SetCustomShapeInZoneOpt(pcbnew.CUST_PAD_SHAPE_IN_ZONE_OUTLINE)
+    fp.fp.Add(p)
+    return p
+
+
 def footprints(board):
     """Three footprints: the FH26W end's contacts and the main-board end's fingers (on the flex), and the main board's pads."""
-    zif = FP(board, "jlf", "LinkFlex_FH26W_End_25", "Link flex: 25 exposed contacts at 0.3 for the Hirose FH26W (bottom contact), copper side")
+    zif = FP(board, "jlf", "LinkFlex_FH26W_End_25", "Link flex: 25 staggered contacts at 0.3 for the Hirose FH26W (bottom contact), "
+             "copper side, per the FH26 catalogue's recommended FPC [S]")
     for k in range(1, N + 1):
-        p = zif.smd(str(k), xk(k) - XC, (ZIF_EXP[0] + ZIF_EXP[1]) / 2, TRACK, ZIF_EXP[1] - ZIF_EXP[0], paste=False)
+        zif_contact(zif, k, xk(k) - XC)
+    m = pcbnew.FP_SHAPE(zif.fp, pcbnew.SHAPE_T_RECT); m.SetStart(V(-W / 2, 0)); m.SetEnd(V(W / 2, ZIF_EXP[1])); m.SetLayer(pcbnew.F_Mask)
+    m.SetWidth(0); m.SetFilled(True); m.SetLocalCoord(); zif.fp.Add(m)                      # coverlay opening, the whole end to 2.5
     zif.rect(-W / 2, 0, W / 2, 4.0, pcbnew.F_Fab)
+    zif.fp.SetAttributes(zif.fp.GetAttributes() | pcbnew.FP_ALLOW_SOLDERMASK_BRIDGES)   # one coverlay window over all 25 contacts
     sol = FP(board, "jlf", "LinkFlex_SolderEnd_25", "Link flex: 25 solder fingers at 0.3 (hot-bar onto the main board's strip), copper side")
     for k in range(1, N + 1):
         sol.smd(str(k), xk(k) - XC, -(SOLDER_EXP[0] + SOLDER_EXP[1]) / 2, TRACK, SOLDER_EXP[1] - SOLDER_EXP[0], paste=False)
@@ -82,8 +111,13 @@ def main():
         ni = pcbnew.NETINFO_ITEM(board, n); board.Add(ni); nets[n] = ni
     x0, x1 = O + XC - W / 2, O + XC + W / 2
     y0, y1 = O, O + L
-    for a, b in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))):
+    rc = 0.15   # [S R0.2 max] corner radius at the FH26W end
+    for a, b in (((x0 + rc, y0), (x1 - rc, y0)), ((x1, y0 + rc), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0 + rc))):
         s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_SEGMENT); s.SetStart(V(*a)); s.SetEnd(V(*b))
+        s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05)); board.Add(s)
+    for cx, sx in ((x0 + rc, x0), (x1 - rc, x1)):   # the two rounded corners: centre, start on the side, 90 degrees
+        s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_ARC); s.SetCenter(V(cx, y0 + rc)); s.SetStart(V(sx, y0 + rc))
+        s.SetArcAngleAndEnd(pcbnew.EDA_ANGLE(90 if sx == x0 else -90, pcbnew.DEGREES_T), True)
         s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05)); board.Add(s)
     for f, (x, y), ref in ((zif, (O + XC, y0), "J1"), (sol, (O + XC, y1), "J2")):
         f = f.Duplicate().Cast(); f.SetReference(ref); f.SetPosition(V(x, y)); board.Add(f)
@@ -91,10 +125,10 @@ def main():
             p.SetNet(nets[names[int(p.GetNumber()) - 1]])
     # conductors: straight, contact k to finger k
     for k in range(1, N + 1):
-        t = pcbnew.PCB_TRACK(board); t.SetStart(V(O + xk(k), y0 + sum(ZIF_EXP) / 2)); t.SetEnd(V(O + xk(k), y1 - sum(SOLDER_EXP) / 2))
+        t = pcbnew.PCB_TRACK(board); t.SetStart(V(O + xk(k), y0 + 2.7)); t.SetEnd(V(O + xk(k), y1 - sum(SOLDER_EXP) / 2))
         t.SetWidth(pcbnew.FromMM(TRACK)); t.SetLayer(pcbnew.F_Cu); t.SetNet(nets[names[k - 1]]); board.Add(t)
     # stiffener on the back of the FH26W end, the bends' positions and notes
-    st = pcbnew.PCB_SHAPE(board); st.SetShape(pcbnew.SHAPE_T_RECT); st.SetStart(V(x0, y0)); st.SetEnd(V(x1, y0 + G["stiff"]))
+    st = pcbnew.PCB_SHAPE(board); st.SetShape(pcbnew.SHAPE_T_RECT); st.SetStart(V(x0 + 0.07, y0)); st.SetEnd(V(x1 - 0.07, y0 + G["stiff"]))
     st.SetLayer(pcbnew.User_1); st.SetWidth(pcbnew.FromMM(0.1)); st.SetFilled(True); board.Add(st)
     s_top0 = (G["end_y"] - (G["riser_y"][1] + G["r_top"]))                       # flat from the end to the top bend
     s_top1 = s_top0 + 3.14159265 / 2 * (G["r_top"] + G["t"] / 2)
@@ -151,18 +185,18 @@ def fab(pcb, nv, nu):
     ready = nv == 0 and nu == 0
     open(os.path.join(FAB, "README.txt"), "w").write(
         f"{NAME} v0.1 for PCBWay's flex line ({'DRC clean' if ready else 'NOT READY: DRC ' + str(nv) + ' / unconnected ' + str(nu)}).\n"
-        "STATUS: NOT READY to order until the [C] items below are checked against Hirose's FH26 catalogue drawing.\n\n"
-        f"Outline {W:g} x {L:.2f} mm (Edge.Cuts). Single-sided flex: polyimide 25 um base, 1/2 oz (18 um) rolled-annealed copper, polyimide\n"
-        "coverlay 25 um + adhesive on the copper side with openings at both ends (F.Mask); ENIG on the openings [A]. No holes, no vias.\n"
-        f"Stiffener (User.1 'Stiffener'): polyimide on the BACK (non-copper side) of the FH26W end, {G['stiff']:g} mm from the end, thick enough\n"
-        "for 0.20 +/- 0.03 mm total over the contacts [S Hirose: FPC 0.2 +/- 0.03, stiffener 3.5 min].\n"
-        "Conductors 0.15 / gaps 0.15 at 0.3 pitch, 25 positions; contact span 7.2 (C), even contacts 6.6 (B), width 7.8 (F) [S Hirose table].\n"
-        "Bottom end: 25 solder fingers, exposed 0.10-0.90 from the end, bonded face down onto the main board's pads (footprint\n"
-        "LinkFlex_MainBoard_Pads_25x0.3): hot-bar at PCBWay if they offer it (pre-quote question), else by hand.\n"
-        f"Installed bent twice (once): r {G['r_top']:g} and r {G['r_bottom']:.2f} inner radius (bend lines on User.2).\n\n"
-        "[C] to check before ordering: Hirose's recommended-FPC drawing (FH26 catalogue p. 8) - conductor width at the contacts,\n"
-        "exposed length (2.5 here), contact start from the end (0.1 here), corner radius (R0.2 max, square here), and whether the FPC\n"
-        "needs side ears or notches for the flip lock (none drawn). The catalogue's numbers came through without their labels.\n")
+        "STATUS: geometry per Hirose's recommended FPC; NOT READY to order until the main-board end's joining is settled (Q30).\n\n"
+        f"Outline {W:g} x {L:.2f} mm (Edge.Cuts), corners R0.15 at the FH26W end (R0.2 max [S]). Single-sided flex: polyimide 25 um base,\n"
+        "1/2 oz (18 um) rolled-annealed copper, polyimide coverlay 25 um + adhesive on the copper side with openings at both ends (F.Mask);\n"
+        "ENIG on the openings [A]. No holes, no vias. Min copper gap 0.1 (in the FH26W contact zone, Hirose's pattern), 0.15 elsewhere.\n"
+        f"Stiffener (User.1): polyimide on the BACK (non-copper side) of the FH26W end, {G['stiff']:g} mm from the end, 0.07 inside each edge,\n"
+        "thick enough for 0.20 +/- 0.03 mm total over the contacts [S Hirose: 0.2 +/- 0.03, stiffener 3.5 min].\n"
+        "FH26W end [S Hirose FH26 catalogue p. 8]: staggered contacts. Odd pins 0.3 wide from 0.3 to 1.0 from the end, 0.1 neck to 2.1;\n"
+        "even pins from a point at 1.0, 0.3 wide 1.1 to 2.1; both 0.2 from 2.25; coverlay opening to 2.5 (+/- 0.3). Width 7.8, span C 7.2, B 6.6.\n"
+        "(The tapers are staggered within Hirose's tolerances, odd 1.0-1.05 / even to 1.15 and even 2.1-2.2 / odd 2.2-2.3, so no gap is under 0.1.)\n"
+        "Bottom end: 25 solder fingers 0.15 wide, exposed 0.10-0.90 from the end, bonded face down onto the main board's pads (footprint\n"
+        "LinkFlex_MainBoard_Pads_25x0.3).\n"
+        f"Installed bent twice (once): r {G['r_top']:g} and r {G['r_bottom']:.2f} inner radius (bend lines on User.2).\n")
     print("fab ->", FAB)
 
 

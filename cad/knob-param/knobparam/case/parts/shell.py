@@ -64,7 +64,7 @@ def _link_flex(D):
     face = Polygon(*[(y, z) for y, z in pts], align=None)
     fl = Pos(x0, 0, 0) * extrude(Plane.YZ * face, amount=x1 - x0)
     zt = ztc + rt   # the flex's underside on the top run; the stiffener goes under it
-    st = _box(x0, x1, ye - L["stiff"], ye, zt - (L["t_end"] - t), zt)
+    st = _box(x0 + 0.07, x1 - 0.07, ye - L["stiff"], ye, zt - (L["t_end"] - t), zt)   # [S Hirose] (0.07) inside each edge
     return fl, st
 
 

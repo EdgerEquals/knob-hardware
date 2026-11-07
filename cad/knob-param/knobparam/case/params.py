@@ -345,7 +345,7 @@ P = dict(
         r_top=1.6,         # [A] inner radius of the top bend
         face=0.25,         # [A] the contact face sits this far under the lower board's underside inside the FH26W (1.0 tall)
         mate=3.2,          # [S Hirose] mated depth: the flex's end is this far in from the connector's mouth
-        stiff=4.0,         # [S Hirose: 3.5 min] stiffener length from the end
+        stiff=4.0,         # [S Hirose FH26 catalogue p. 8: 3.5 min] stiffener length from the end, 0.07 inside each edge
         bend_k=6.0,        # [A IPC-2223 rule of thumb] single-sided, bent once to install: inner radius ≥ 6 x thickness
     ),
     jb_tab=(1.3, -51.5),   # [A] power board ears down over the posts: half width round each post, bottom edge y (0.3 above the bottom
