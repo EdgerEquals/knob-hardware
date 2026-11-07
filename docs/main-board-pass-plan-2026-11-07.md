@@ -32,7 +32,9 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
   port) [Ed 19:11]: not this compromise. **Q32 second round (open):** the two share the port and take turns; A keeps the H7B0 with
   a 74LVC1G19 selector, B swaps to an STM32U5A5 (picture `docs/img/qspi-shared-bus-q32.png`). [Ed 19:18] "a band-aid? zoom out":
   **fresh look** in `docs/architecture-fresh-look-2026-11-07.md`. **Q33 (open):** local drawing (each screen place has its own
-  ESP32-S3, the main chip sends commands, like the dial through the rod) or central drawing with the shared port.
+  ESP32-S3, the main chip sends commands, like the dial through the rod) or central drawing with the shared port. [Ed 19:29]
+  "remove things": **Q33 restated (open):** A subtract (back screens to their own board later, STM32H743VIT6 in the same land,
+  no flash; 64 nets, 18 spare) or B keep the back screens with local drawing.
 
 Expected next, one at a time as they come up:
 1. Layer count (after a first placement shows the density).

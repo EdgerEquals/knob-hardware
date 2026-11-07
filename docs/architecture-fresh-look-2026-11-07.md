@@ -56,3 +56,35 @@ The geometry, the H7B0 and its place, the link flex, the jack unit, the rod link
 ## Decision
 **Q33 (open):** A, local drawing (recommended); B, central drawing with the shared port (Q32 second round A).
 If A: Q32 falls away (no quad port in use on the main chip).
+
+## Second look: take things out instead (7 Nov, after [Ed 19:29])
+[Ed 19:29] "It's still a compromise. We keep adding things. Maybe there's a way we can remove things and get it done."
+Picture: `docs/img/subtraction-q33.png`.
+
+Every round so far added parts (a selector, then two screen chips). What forces the additions is one item: **the two back
+screens**. They are the second and third colour screens on the main chip, they need their own power chips and two connectors, the
+lower one's lines run through the tightest channel on the board (the 2.3 mm strips beside D), and their flex pin-out is still
+unknown (DisplayModule silent since 2 Nov). On 3 Nov they were "aesthetics, can come later" [Ed 11:37], on their own cover board.
+
+**Subtract:**
+- **Back screens off the first build**, back to the 3 Nov plan: a cover board with its own chip, later. The model keeps them as
+  "later" parts; no geometry changes. The main board keeps 3 pins (a UART and an enable) and pads for that board's link.
+  Out with them: their power chips, both connectors, 12 main-chip pins, their lines past window D.
+- **The animation flash, the selector and the loader**: the **STM32H743VIT6** fits the same LQFP100 land and has **2 MB program
+  flash, 1 MB RAM, 480 MHz** (US$7.86, 5,931 in stock at LCSC (C114409), 7 Nov [S]; the H7B0 is US$5.38). Its one quad port
+  (QUADSPI) takes the joystick screen, the program and the joystick screen's pictures live in the chip.
+  (The STM32H723VGT6, 1 MB, also fits but LCSC has none in stock and it costs US$13.87-17.16 [S].)
+- **No extra screen chips** beyond the dial's (decided 3 Nov, fed through the rod).
+
+Pin map (ST's pin data, `.../pinmap/h743-lqfp100-simple.*`): **64 nets of 82, 18 spare**. The same list also fits the H7B0 and
+the H723 with 18 spare.
+
+Said plainly:
+- The joystick screen's quad lines still pass board R, the pins and sockets and the jumper. Ground pins sit between them in the
+  sockets [A]. If the signals are marginal the clock comes down rather than the screen failing: 50 MHz is about 98 full frames a
+  second, 25 MHz about 49.
+- The 2 MB holds the program and drawn pictures (gauges, text, icons), not long full-screen video clips [A].
+- This revises Q31 (back screens on the first board) back to the 3 Nov plan.
+- The H743's power, VCAP and BOOT pins differ from the H7B0's. No schematic is drawn yet, so that costs nothing now.
+
+**Q33, restated (open):** A, subtract (recommended); B, keep the back screens on the first build with local drawing.

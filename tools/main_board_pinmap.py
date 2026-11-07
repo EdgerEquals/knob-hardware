@@ -26,10 +26,10 @@ TIMS = ["TIM1", "TIM2", "TIM3", "TIM4", "TIM5", "TIM8", "TIM12", "TIM13", "TIM14
 def signal_list(profile):
     """[(group, kind, instances, [(net, [signal patterns with {i}])], exclusive_kind)].  kind 'gpio' nets take any free pin."""
     G = []
-    q1 = [("JOY_QSPI_CLK", ["OCTOSPIM_P1_CLK"]), ("JOY_QSPI_NCS", ["OCTOSPIM_P1_NCS"])] + \
-         [(f"JOY_QSPI_IO{k}", [f"OCTOSPIM_P1_IO{k}"]) for k in range(4)]
+    q1 = [("JOY_QSPI_CLK", ["OCTOSPIM_P1_CLK", "QUADSPI_CLK"]), ("JOY_QSPI_NCS", ["OCTOSPIM_P1_NCS", "QUADSPI_BK1_NCS"])] + \
+         [(f"JOY_QSPI_IO{k}", [f"OCTOSPIM_P1_IO{k}", f"QUADSPI_BK1_IO{k}"]) for k in range(4)]   # Octo-SPI (H7A/B, H72x) or QUADSPI (H74x)
     if profile == "lqfp100-flashquad":   # the other way round: flash on the quad port (memory-mapped), screen on 4-wire SPI
-        G.append(("NOR flash (quad, Octo-SPI port 1)", "fixed", [""], [(n.replace("JOY", "FLASH"), [sg]) for n, (sg,) in q1], None))
+        G.append(("NOR flash (quad, Octo-SPI port 1)", "fixed", [""], [(n.replace("JOY", "FLASH"), sgs) for n, sgs in q1], None))
         G.append(("joystick screen (CO5300, 4-wire SPI)", "inst", SPIS, [("JOY_SCK", ["{i}_SCK"]), ("JOY_MOSI", ["{i}_MOSI"])], "SPI"))
         G.append(("joystick screen CS, D/C", "gpio", [""], [("JOY_CS", []), ("JOY_DC", [])], None))
     else:
@@ -63,7 +63,7 @@ def signal_list(profile):
     G.append(("interrupts", "gpio", [""], [("IO_INT*", []), ("HALL3D_INT*", [])], None))
     G.append(("MIDI out (link)", "inst", UARTS, [("MIDI_TX", ["{i}_TX"])], "UART"))
     G.append(("dial link through the rod (half-duplex UART on VBUS) [A]", "inst", UARTS, [("DIAL_DATA", ["{i}_TX"])], "UART"))
-    G.append(("USB (link flex, FS on the internal PHY)", "fixed", [""], [("USB_DM", ["USB_OTG_HS_DM"]), ("USB_DP", ["USB_OTG_HS_DP"])], None))
+    G.append(("USB (link flex, FS on the internal PHY)", "fixed", [""], [("USB_DM", ["USB_OTG_HS_DM", "USB_OTG_FS_DM"]), ("USB_DP", ["USB_OTG_HS_DP", "USB_OTG_FS_DP"])], None))
     G.append(("CAN (vertical board R's transceiver)", "inst", ["FDCAN1", "FDCAN2"], [("CAN_TX", ["{i}_TX"]), ("CAN_RX", ["{i}_RX"])], "FDCAN"))
     G.append(("CAN standby", "gpio", [""], [("CAN_STBY", [])], None))
     analog = ["CV_IN1", "CV_IN2", "CV_IN3", "AUDIO_IN", "HALL1", "HALL2", "HALL4", "HALL5", "MOT_SENSE", "MOT_VOICE", "NTC", "JOY_LADDER"]
@@ -83,6 +83,13 @@ def signal_list(profile):
     G.append(("15 V present", "gpio", [""], [("BUS_PRESENT", [])], None))
     G.append(("crystal", "fixed", [""], [("HSE_IN", ["RCC_OSC_IN"]), ("HSE_OUT", ["RCC_OSC_OUT"])], None))
     G.append(("debug (SWD + SWO)", "fixed", [""], [("SWDIO", ["DEBUG_JTMS-SWDIO"]), ("SWCLK", ["DEBUG_JTCK-SWCLK"]), ("SWO", ["DEBUG_JTDO-SWO"])], None))
+    if profile.endswith("-simple"):   # subtraction: no back screens on the first build, no external flash (program and the joystick
+        # screen's pictures in the chip's own flash); a UART + enable kept for a later back-screen cover board with its own chip
+        drop = ("NOR flash", "flash", "back AMOLED")
+        G = [g for g in G if not g[0].startswith(drop)]
+        G.append(("later cover board for the back screens (UART, commands)", "inst", UARTS,
+                  [("COVER_TX", ["{i}_TX"]), ("COVER_RX", ["{i}_RX"])], "UART"))
+        G.append(("later cover board power enable", "gpio", [""], [("COVER_EN", [])], None))
     if profile.endswith("-local"):   # local rendering: the screens' own chips draw; the main MCU only sends them commands
         drop = ("joystick screen", "NOR flash", "flash", "back AMOLED")
         G = [g for g in G if not g[0].startswith(drop)]
