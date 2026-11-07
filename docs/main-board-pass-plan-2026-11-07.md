@@ -23,9 +23,12 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
    (router4 or Freerouting) to KiCad DRC 0 / 0; fab pack; CAD check against the model.
 4. **Model**: the board proxy from the new KiCad board, full build and assembly check.
 
-## Decisions expected, one at a time as they come up
-1. What goes on the first main board (now).
-2. Layer count (after a first placement shows the density).
-3. The 1220 driver and its supply (15 V direct or a lower rail).
-4. The RGB emitter part; the VCSEL driver.
-5. The back AMOLEDs' power chip (if they are on this board).
+## Decisions
+- **Q31 [Ed 7 Nov 18:58] = A: everything in the model goes on the first main board**: both back AMOLEDs with their power, the
+  joystick screen, the flash, the VCSEL and RGB rings, CAN to the vertical boards (not B, knob first; not C, screens drawn but unfitted).
+
+Expected next, one at a time as they come up:
+1. Layer count (after a first placement shows the density).
+2. The 1220 driver and its supply (15 V direct or a lower rail).
+3. The RGB emitter part; the VCSEL driver.
+4. The back AMOLEDs' power chip.
