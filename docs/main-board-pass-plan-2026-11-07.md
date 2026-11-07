@@ -28,8 +28,9 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
   joystick screen, the flash, the VCSEL and RGB rings, CAN to the vertical boards (not B, knob first; not C, screens drawn but unfitted).
 
 - **Step 1 done on paper** (`docs/main-board-signals-2026-11-07.md`): 77 nets on the LQFP100's 82 I/O, 5 spare. Finding: the
-  LQFP100 has one fast quad port (Octo-SPI port 1 only), and the LQFP144 does not fit. **Q32 (open):** the joystick screen or the
-  flash gets the quad port (picture `docs/img/qspi-port-choice-q32.png`).
+  LQFP100 has one fast quad port (Octo-SPI port 1 only), and the LQFP144 does not fit. Q32 first round (screen or flash on the
+  port) [Ed 19:11]: not this compromise. **Q32 second round (open):** the two share the port and take turns; A keeps the H7B0 with
+  a 74LVC1G19 selector, B swaps to an STM32U5A5 (picture `docs/img/qspi-shared-bus-q32.png`).
 
 Expected next, one at a time as they come up:
 1. Layer count (after a first placement shows the density).

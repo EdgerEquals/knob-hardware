@@ -3,7 +3,7 @@
 Tags: [S] source read, [A] estimate or my choice, [C] open check, [Ed] Ed's decision. Replaces the budget in
 `docs/pcb-h7b0-plan-2026-11-02.md` (that file stays as the record of the 2 Nov plan).
 
-Picture: `docs/img/qspi-port-choice-q32.png`.
+Pictures: `docs/img/qspi-port-choice-q32.png` (first round), `docs/img/qspi-shared-bus-q32.png` (second round).
 
 ## Sources and tools
 - ST's pin data: **STM32_open_pin_data** (github.com/STMicroelectronics/STM32_open_pin_data, BSD-3-Clause, (c) 2020
@@ -14,7 +14,8 @@ Picture: `docs/img/qspi-port-choice-q32.png`.
   sit on different EXTI lines. Two pin rules on top [A]: PC13-PC15 (backup domain, 3 mA, 2 MHz) take only slow inputs, and the
   ADC-switch pads (PC2_C, PC3_C) take only analog or slow GPIO.
   `python3 tools/main_board_pinmap.py <STM32_open_pin_data> [--profile lqfp100|lqfp100-flashquad|lqfp144 --part ...]`
-- Outputs: `cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h7b0-lqfp100-q32A.{json,txt}` and `...-q32B.*`.
+- Outputs: `cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h7b0-lqfp100-shared.{json,txt}` (Q32 second round A)
+  and `u5a5-lqfp100-mux.*` (B). The first-round maps (screen or flash on the port) are in git history (de1e376).
   Not placement-aware yet: re-solved with pin preferences once the chip's neighbours are placed (step 3).
 
 ## Findings
@@ -26,21 +27,41 @@ Picture: `docs/img/qspi-port-choice-q32.png`.
    cut-out by **0.5 mm** (tight; its 1 mm courtyard touches the joystick holes, so the fan-out on those sides is checked in step 3).
 3. Not offered: the BGA versions (UFBGA169, 7 x 7, 0.5 mm pitch; UFBGA176, 10 x 10, 0.65 mm). They fit and have both ports,
    but need finer board rules (microvias at 0.5 mm) and X-ray inspection at assembly.
-4. **Both ways round fit on the LQFP100: 77 nets on 82 I/O pins, 5 spare.** Tight. Relief valve if more pins are needed later:
-   a 16-bit I2C expander on the existing bus for the slow enables and resets (about 10 pins back).
+4. **Both ways round fit on the LQFP100: 77 nets on 82 I/O pins, 5 spare.** Tight. With the shared port (second round): 74 nets,
+   8 spare. Relief valve if more pins are needed later: a 16-bit I2C expander on the existing bus for the slow enables and resets
+   (about 10 pins back).
 
-## Q32: who gets the quad port (open, for Ed)
+## Q32, first round: who gets the quad port
+A: the screen (flash on 1-bit SPI, 6-10 MB/s); B: the flash (screen on 1-bit SPI, 24 frames / s). 77 nets, 5 spare.
+[Ed 7 Nov 19:11] not this compromise: find the workaround, more board room if needed.
+
+## Q32, second round: share the port (open, for Ed)
+The screen and the flash share the port's clock and four data lines and take turns; only the chip selects are separate, so one
+listens at a time. Both get full quad speed. No board room needed.
+
 | | A (recommended) | B |
 |---|---|---|
-| Quad port | joystick screen | flash |
-| Joystick screen | QSPI as its jumper is drawn now; full 456 x 280 frame about **98 / s** at 50 MHz [S: CO5300 write clock >= 20 ns] | 1-bit SPI: about **24 / s**; the jumper changes (mode straps to 4-wire SPI, a D/C line) |
-| Flash | 1-bit SPI on SPI1-3: about 6-10 MB/s at 50-80 MHz [A], a screen-sized frame (255 KB) 24-39 times a second | memory-mapped quad: about 4x that |
-| Program | a small loader in the H7B0's own 128 KB flash copies the main program from the flash into RAM at power-up (about 0.05 s for 0.5 MB) [A] | runs straight from the flash, no 128 KB limit |
-| Pins | 77 used, 5 spare | 77 used, 5 spare |
+| Chip | STM32H7B0VBT6 as now (LCSC C730227, US$5.38, 916 in stock, 7 Nov [S]) | STM32U5A5VJT6, same LQFP100 footprint; price, stock [C] |
+| How the port is shared | one Octo-SPI controller; its chip select through a **74LVC1G19** (1-of-2 selector, 6 pins, 1.8 ns [S Nexperia]), a spare pin picks screen or flash | two controllers in ST's **multiplexed mode**: CLK / IO shared, port 1 NCS to the screen, port 2 NCS to the flash (needs both NCS pins [S ST forum]; LQFP100 bonds out port 2 NCS [S pin data]) |
+| Program | small loader in the 128 KB copies it from the flash into RAM at power-up (about 0.01 s at quad speed) [A] | 4 MB flash on the chip, runs in place; 2.5 MB RAM |
+| Core | Cortex-M7, 280 MHz | Cortex-M33, 160 MHz |
+| SPI ports | 6 (3 used after this) | 3 (3 used: exactly enough) |
+| Pins | 74 nets, **8 spare** | 74 nets, **8 spare** |
 
-Numbers: 456 x 280 x 16 bit = 2.04 Mbit a frame; quad at 50 MHz = 200 Mbit/s; 1-bit at 50 MHz = 50 Mbit/s.
+Speed (same either way): a full 456 x 280 frame (255 KB) from the flash to the joystick screen = read 6.4 ms (quad, 80 MHz [A])
++ write 10.2 ms (quad, 50 MHz) = 16.6 ms, **about 60 full frames / s** (first round: 24-39). Redraws from RAM: about 98 / s.
 
-## Signal list (77 nets, map A)
+Said plainly for A: the shared lines branch to the flash and to the joystick jumper. The flash sits right by the MCU, series
+resistors at the MCU, the flash run at 50-80 MHz to start (it can go to about 133) [A]. The screen and flash both release their
+data lines when not selected [A, check both datasheets in step 2 [C]].
+
+Considered and dropped: the LQFP144 (no room, first round); the STM32H7A3VIT6 (pin-identical to the H7B0 by ST's pin data, 2 MB
+flash, but US$25.62 with 4 in stock at LCSC (C730222), 7 Nov [S]); a BGA (not needed now).
+
+Later, if DisplayModule's tail pin list shows the back AMOLEDs' QSPI pins: the same trick with a 1-of-4 selector could put them on
+the shared lines too (up to about 46 full frames / s each when the bus is theirs, against about 12 on their own SPI) [A][C].
+
+## Signal list (first round, 77 nets; second round: the flash's SPI and CS become one select pin, 74 nets)
 | Group | Nets | Pins | Notes |
 |---|---|---|---|
 | Joystick screen (CO5300) | QSPI CLK, NCS, IO0-3 (port 1); RST, TE, PWR_EN | 9 | [S] screens doc; jumper 13 lines |
@@ -68,7 +89,7 @@ Changes from 2 Nov: no FMC 8080 bus (the back AMOLEDs on SPI, the clear OLED on 
 (finding 1).
 
 ## Tight, said plainly
-- 5 spare pins of 82.
+- 5 spare pins of 82 in the first round; 8 with the shared port.
 - The back AMOLEDs on 1-bit SPI at 50 MHz: 450 x 600 x 16 bit = 4.32 Mbit, so about **12 full frames / s** each. Fine for a UI
   that redraws what changes; not for full-screen video. Nothing faster is free on the LQFP100 (the FMC bus needs 16 pins) [A].
 - The LQFP100's land is 0.5 mm from the joystick's holes (finding 2).

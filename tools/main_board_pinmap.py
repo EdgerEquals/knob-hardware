@@ -36,6 +36,12 @@ def signal_list(profile):
         G.append(("joystick screen (CO5300, QSPI on Octo-SPI port 1)", "fixed", [""], q1, None))
     if profile == "lqfp100-flashquad":
         pass
+    elif profile == "lqfp100-shared":   # Q32 workaround on the H7B0: the screen and the flash share port 1; a 74LVC1G19 (1-of-2)
+        # steers the port's one NCS to the screen or the flash, picked by FLASH_SEL
+        G.append(("flash on the shared quad port: chip-select steering (74LVC1G19)", "gpio", [""], [("FLASH_SEL", [])], None))
+    elif profile == "u5-mux":            # Q32 on an STM32U5 (LQFP100 bonds out port 2's NCS): Octo-SPI multiplexed mode, the
+        # second controller on the same CLK / IO lines with its own chip select
+        G.append(("flash on the shared quad port (multiplexed mode, port 2 NCS)", "fixed", [""], [("FLASH_NCS", ["OCTOSPIM_P2_NCS"])], None))
     elif profile == "lqfp144":   # port 2 exists on the bigger package: the flash gets its own quad port
         q2 = [("FLASH_QSPI_CLK", ["OCTOSPIM_P2_CLK"]), ("FLASH_QSPI_NCS", ["OCTOSPIM_P2_NCS"])] + \
              [(f"FLASH_QSPI_IO{k}", [f"OCTOSPIM_P2_IO{k}"]) for k in range(4)]
@@ -115,7 +121,7 @@ def solve(pins, groups, spare_min=0):
                 if kind == "gpio":
                     ok = [("GPIO", None)]
                 elif kind == "adc":
-                    ok = [(s, None) for s in sigs if re.match(r"ADC\d*_INP", s)][:1]
+                    ok = [(s, None) for s in sigs if re.match(r"ADC[12]_INP?\d+$", s)][:1]
                 elif kind == "fixed":
                     ok = [(s, None) for s in sigs if s in pats]
                 else:
