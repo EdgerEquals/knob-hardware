@@ -139,9 +139,9 @@ STEPS = [
          note="board on the 55.1 ledge, lobe in the land cut; strap soldered on the board, its free end to the rod-link board [A]"),
     # ------------------------------------------------------------------ front shell (built off to the side)
     # v0.34 [Ed 4 Nov 22:21] step 2, decision 4, option 1A: the jack unit rides in with the board stack (both flexes plugged on the bench)
-    dict(id="jack-unit", name="Jack unit (jacks, jack board, power board on its headers) onto its two posts on the main board's bottom strip; "
-         "the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
-         parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack unit post",
+    dict(id="jack-unit", name="Jack unit (jacks, jack board, power board and lower board on their headers) onto its two posts on the main "
+         "board's bottom strip; the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
+         parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack lower board", r"^jack unit post",
                 r"^USB spring contact", r"^clear OLED flex", r"^link flex"],
          note="on the bench, everything in reach; the posts (15 V, GND) soldered at both ends; the Ø6.6 jack holes give the bushings ±0.3 "
               "(L4 step 2, Ed 4 Nov 22:21, 22:52)"),
