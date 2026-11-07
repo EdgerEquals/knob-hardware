@@ -31,8 +31,8 @@ STEPS = [
     # ------------------------------------------------------------------ main PCB, bench, front face up
     dict(id="pcb", name="Main PCB with its soldered parts (H7B0 on the front)", base=True, dir="+z", travel=10,
          parts=[r"^PCB$", r"^PCB back parts", r"^PCB rod pad", r"^emitter ", r"^MCU ", r"^hall sensor ", r"^encoder sensor"],
-         note="PCBWay PCBA: emitters, Hall row, H7B0 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back "
-              "(BOM 'board'; L4 step 1)"),
+         note="PCBWay PCBA: emitters, Hall row, H7B0 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back; "
+              "(Q30) the link flex hot-bar bonded onto the strip, shown with the jack unit (BOM 'board'; L4 step 1)"),
     dict(id="vboards", name="Vertical boards L and R onto the main board (hybrid headers, male pins on top)", dir="-z",
          travel="auto", parts=[r"^vertical board [LR]"],
          note="PCBA: THT legs through the main board, SMT legs over the encoder riser; no standoff (L4 Ed 13:31-13:39)"),
@@ -143,8 +143,9 @@ STEPS = [
          "board's bottom strip; the clear OLED's flex and the link flex plugged into its ZIFs", dir="-z", travel="auto",
          parts=[r"^jack \d PJ366ST", r"^jack \d bushing", r"^jack board", r"^jack power board", r"^jack lower board", r"^jack unit post",
                 r"^USB spring contact", r"^clear OLED flex", r"^link flex"],
-         note="on the bench, everything in reach; the posts (15 V, GND) soldered at both ends; the Ø6.6 jack holes give the bushings ±0.3 "
-              "(L4 step 2, Ed 4 Nov 22:21, 22:52)"),
+         note="on the bench, everything in reach; the link flex (bonded to the main board, Q30) plugged into the unit's FH26W with the "
+              "unit tilted at the board's edge, then the unit swung down; the posts (15 V, GND) soldered at both ends; the Ø6.6 jack holes "
+              "give the bushings ±0.3 (L4 step 2, Ed 4 Nov 22:21, 22:52; 7 Nov Q30)"),
     dict(id="shell", sub="shell", base=True, name="Front shell (clear UTR-8100) with its glow coat",
          parts=[r"^case$", r"^glow coat"], note="SLA, front face polished; Shimicoat brushed inside (CD)"),
     dict(id="shell-ins", sub="shell", name="Corner brass inserts into the shell's corner posts", dir="+z", travel=8,

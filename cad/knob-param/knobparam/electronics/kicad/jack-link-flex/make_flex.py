@@ -185,7 +185,8 @@ def fab(pcb, nv, nu):
     ready = nv == 0 and nu == 0
     open(os.path.join(FAB, "README.txt"), "w").write(
         f"{NAME} v0.1 for PCBWay's flex line ({'DRC clean' if ready else 'NOT READY: DRC ' + str(nv) + ' / unconnected ' + str(nu)}).\n"
-        "STATUS: geometry per Hirose's recommended FPC; NOT READY to order until the main-board end's joining is settled (Q30).\n\n"
+        "STATUS: geometry per Hirose's recommended FPC; for the PCBWay pre-quote [Ed 7 Nov Q30 = A]: PCBWay hot-bar bonds the\n"
+        "main-board end onto the main board during the PCBA (to confirm); fallback: shipped loose, hand-soldered on the bench.\n\n"
         f"Outline {W:g} x {L:.2f} mm (Edge.Cuts), corners R0.15 at the FH26W end (R0.2 max [S]). Single-sided flex: polyimide 25 um base,\n"
         "1/2 oz (18 um) rolled-annealed copper, polyimide coverlay 25 um + adhesive on the copper side with openings at both ends (F.Mask);\n"
         "ENIG on the openings [A]. No holes, no vias. Min copper gap 0.1 (in the FH26W contact zone, Hirose's pattern), 0.15 elsewhere.\n"
