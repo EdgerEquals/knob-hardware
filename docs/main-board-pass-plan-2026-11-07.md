@@ -30,7 +30,9 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
 - **Step 1 done on paper** (`docs/main-board-signals-2026-11-07.md`): 77 nets on the LQFP100's 82 I/O, 5 spare. Finding: the
   LQFP100 has one fast quad port (Octo-SPI port 1 only), and the LQFP144 does not fit. Q32 first round (screen or flash on the
   port) [Ed 19:11]: not this compromise. **Q32 second round (open):** the two share the port and take turns; A keeps the H7B0 with
-  a 74LVC1G19 selector, B swaps to an STM32U5A5 (picture `docs/img/qspi-shared-bus-q32.png`).
+  a 74LVC1G19 selector, B swaps to an STM32U5A5 (picture `docs/img/qspi-shared-bus-q32.png`). [Ed 19:18] "a band-aid? zoom out":
+  **fresh look** in `docs/architecture-fresh-look-2026-11-07.md`. **Q33 (open):** local drawing (each screen place has its own
+  ESP32-S3, the main chip sends commands, like the dial through the rod) or central drawing with the shared port.
 
 Expected next, one at a time as they come up:
 1. Layer count (after a first placement shows the density).

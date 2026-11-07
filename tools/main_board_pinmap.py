@@ -83,6 +83,13 @@ def signal_list(profile):
     G.append(("15 V present", "gpio", [""], [("BUS_PRESENT", [])], None))
     G.append(("crystal", "fixed", [""], [("HSE_IN", ["RCC_OSC_IN"]), ("HSE_OUT", ["RCC_OSC_OUT"])], None))
     G.append(("debug (SWD + SWO)", "fixed", [""], [("SWDIO", ["DEBUG_JTMS-SWDIO"]), ("SWCLK", ["DEBUG_JTCK-SWCLK"]), ("SWO", ["DEBUG_JTDO-SWO"])], None))
+    if profile.endswith("-local"):   # local rendering: the screens' own chips draw; the main MCU only sends them commands
+        drop = ("joystick screen", "NOR flash", "flash", "back AMOLED")
+        G = [g for g in G if not g[0].startswith(drop)]
+        G.append(("joystick screen node (UART, commands)", "inst", UARTS, [("JOYN_TX", ["{i}_TX"]), ("JOYN_RX", ["{i}_RX"])], "UART"))
+        G.append(("back screens node (UART, commands)", "inst", UARTS, [("BACKN_TX", ["{i}_TX"]), ("BACKN_RX", ["{i}_RX"])], "UART"))
+        G.append(("screen nodes reset and boot (so the main MCU can load their firmware over the UART)", "gpio", [""],
+                  [("JOYN_EN", []), ("JOYN_BOOT", []), ("BACKN_EN", []), ("BACKN_BOOT", [])], None))
     return G
 
 

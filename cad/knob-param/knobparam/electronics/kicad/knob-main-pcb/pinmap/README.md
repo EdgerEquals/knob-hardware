@@ -8,5 +8,8 @@ names here are derived from that data [S]; ST's files themselves are not in this
   chip select (FLASH_SEL). Recommended. 74 nets, 8 spare.
 - `u5a5-lqfp100-mux.*`: Q32 second round B. STM32U5A5VJT6, Octo-SPI multiplexed mode (port 2 NCS for the flash). 74 nets, 8 spare.
 
+- `h7b0-lqfp100-local.*`: Q33 A, local drawing: no screens on the main chip, UART + reset + boot to the joystick and back
+  screen chips. 60 nets, 22 spare.
+
 The first-round maps (screen or flash alone on the port) are in git history (de1e376). Q32 picks one
 (`docs/main-board-signals-2026-11-07.md`). Not placement-aware yet.
