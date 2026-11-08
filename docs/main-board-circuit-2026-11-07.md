@@ -9,9 +9,10 @@ designed with the dial board), then the layer count after a first placement.
 
 ## Pin map
 `tools/main_board_pinmap.py` on ST's pin data (STM32_open_pin_data, BSD-3-Clause, (c) 2020 STMicroelectronics, commit 7d1f151):
-`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **62 nets on 82 I/O, 20 spare**
-(17 general; PC2_C and PC3_C analog only; PC15 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
-[Q41], PWR_LIGHT in place of the VCSEL decoder [Q36]. Rules: PC13-PC15 take slow inputs only (backup domain), the
+`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **61 nets on 82 I/O, 21 spare**
+(18 general; PC2_C and PC3_C analog only; PC15 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
+[Q41], PWR_LIGHT in place of the VCSEL decoder [Q36]; 5V_EN for board L's 5 V buck [Q38]; MOT_nSLEEP gone (the
+DRV8213 has no sleep pin, it sleeps itself) and VIOLET_EN gone (no violet emitters). Rules: PC13-PC15 take slow inputs only (backup domain), the
 ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves one job, the interrupt inputs on different EXTI lines
 (IO_INT 14, HALL3D_INT 13, JOY_TE 6). The map is re-solved with pin preferences once the neighbours are placed (step 3).
 
@@ -27,9 +28,10 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 | ADC2, ground sense [Q41] | AGND_SENSE PC0 (ADC2_INP10): sampled by ADC2 at the same instant as ADC1's CV in / audio in (dual simultaneous mode), subtracted in firmware [A] |
 | DAC1 | AUDIO_OUT PA4 |
 | Encoder (TIM3) | ENC_A PB4, ENC_B PB5 |
-| 1220 (TIM2), Halls | MOT_IN1 PB10, MOT_IN2 PB11, MOT_nSLEEP PE14; HALL_EN PE13 |
+| 1220 (TIM2), Halls | MOT_IN1 PB10, MOT_IN2 PB11 (100 kHz PWM [Q39]); HALL_EN PE13 |
 | Power light [Q36] | PWR_LIGHT PB9 (TIM17_CH1, PWM into one transistor); the ring's VCSEL decoder is gone |
-| RGB, violet | RGB_DIN PB8 (TIM16 + DMA), RGB_EN PE8, VIOLET_EN PE7 |
+| RGB ring | RGB_DIN PB8 (TIM16 + DMA), RGB_EN PE8 (the ring's 5 V switch) |
+| Board L | 5V_EN PE7 (the 5 V buck's enable; 3.3 V is always on) [Q38] |
 | Risley (reserved) | PB14, PB15 (TIM12) |
 | Cover board (later) | COVER_TX PC6, COVER_RX PC7 (USART6), COVER_EN PE3 |
 | System | BUS_PRESENT PE4; HSE PH0 / PH1; SWDIO PA13, SWCLK PA14, SWO PB3 |

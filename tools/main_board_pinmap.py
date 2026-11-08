@@ -78,15 +78,18 @@ def signal_list(profile):
     G.append(("encoder (timer in encoder mode)", "inst", ["TIM1", "TIM2", "TIM3", "TIM4", "TIM5", "TIM8", "TIM23", "TIM24"],
               [("ENC_A", ["{i}_CH1"]), ("ENC_B", ["{i}_CH2"])], "TIM"))
     G.append(("1220 driver PWM (IN1, IN2)", "inst", TIMS, [("MOT_IN1", ["{i}_CH1", "{i}_CH3"]), ("MOT_IN2", ["{i}_CH2", "{i}_CH4"])], "TIM"))
-    G.append(("1220 driver sleep, Hall enable", "gpio", [""], [("MOT_nSLEEP", []), ("HALL_EN", [])], None))
+    # [S TI DRV8213 DSG] the DSG package has no nSLEEP pin (it sleeps itself when IN1 = IN2 = 0) and VREF is fixed inside
+    G.append(("Hall enable", "gpio", [""], [("HALL_EN", [])], None))
     # [Ed 8 Nov Q35 / Q36 = B] the ring's VCSELs and their decoder are gone; one red VCSEL is the power light, one transistor, PWM
     G.append(("power light VCSEL (PWM, one transistor)", "inst", TIMS, [("PWR_LIGHT", ["{i}_CH1", "{i}_CH2", "{i}_CH3", "{i}_CH4"])], "TIM"))
     G.append(("RGB ring data (timer + DMA)", "inst", TIMS, [("RGB_DIN", ["{i}_CH1", "{i}_CH2", "{i}_CH3", "{i}_CH4"])], "TIM"))
-    G.append(("RGB enable, violet enable", "gpio", [""], [("RGB_EN", []), ("VIOLET_EN", [])], None))
+    # the violet source is on the dial board, run by the dial's own chip over the rod link: no main-chip pin
+    G.append(("RGB ring power switch", "gpio", [""], [("RGB_EN", [])], None))
     G.append(("Risley motors (PWM, later) [A reserved]", "inst", TIMS,
               [("RISLEY1", ["{i}_CH1", "{i}_CH3"]), ("RISLEY2", ["{i}_CH2", "{i}_CH4"])], "TIM"))
     G.append(("joystick screen reset, TE, power", "gpio", [""], [("JOY_RST", []), ("JOY_TE*", []), ("JOY_PWR_EN", [])], None))
     G.append(("15 V present", "gpio", [""], [("BUS_PRESENT", [])], None))
+    G.append(("5 V on (board L's 5 V buck enable) [Ed Q38 = A]", "gpio", [""], [("5V_EN", [])], None))
     G.append(("crystal", "fixed", [""], [("HSE_IN", ["RCC_OSC_IN"]), ("HSE_OUT", ["RCC_OSC_OUT"])], None))
     G.append(("debug (SWD + SWO)", "fixed", [""], [("SWDIO", ["DEBUG_JTMS-SWDIO"]), ("SWCLK", ["DEBUG_JTCK-SWCLK"]), ("SWO", ["DEBUG_JTDO-SWO"])], None))
     if profile.endswith("-simple"):   # subtraction: no back screens on the first build, no external flash (program and the joystick

@@ -212,11 +212,6 @@
    "signal": "TIM2_CH4",
    "position": 47
   },
-  "MOT_nSLEEP": {
-   "pin": "PE14",
-   "signal": "GPIO",
-   "position": 44
-  },
   "HALL_EN": {
    "pin": "PE13",
    "signal": "GPIO",
@@ -236,11 +231,6 @@
    "pin": "PE8",
    "signal": "GPIO",
    "position": 38
-  },
-  "VIOLET_EN": {
-   "pin": "PE7",
-   "signal": "GPIO",
-   "position": 37
   },
   "RISLEY1": {
    "pin": "PB14",
@@ -271,6 +261,11 @@
    "pin": "PE4",
    "signal": "GPIO",
    "position": 3
+  },
+  "5V_EN": {
+   "pin": "PE7",
+   "signal": "GPIO",
+   "position": 37
   },
   "HSE_IN": {
    "pin": "PH0-OSC_IN (PH0)",
@@ -319,6 +314,7 @@
   "PC3_C",
   "PE10",
   "PE12",
+  "PE14",
   "PD10",
   "PC8",
   "PA9",
