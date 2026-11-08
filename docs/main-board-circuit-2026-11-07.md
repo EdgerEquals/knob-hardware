@@ -191,3 +191,6 @@ under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). 
   So the dot needs a target: a small frosted (matte) disc printed on the case's inside face over it [A, case print feature], and a
   low current (just over the 4 mA threshold, PWM) for a power light. Drive: one GPIO and one transistor; the decoder and LASER_EN
   go (5 pins → 1).
+- **[Ed 13:54] all 24 ring sites get the reverse-mount RGB** (SK6812MINI-E), "we won't power them all at once": brightness is capped in
+  firmware. Full white would be about 0.86 A at 5 V for 24 [S 12 mA per colour]; the 5 V converter is sized for the firmware cap,
+  not that. Checked: no reverse-mount RGBW (with a white chip) turned up (only RGB: SK6812MINI-E, MINI-EA) [S search, 8 Nov].
