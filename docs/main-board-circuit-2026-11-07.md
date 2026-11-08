@@ -120,3 +120,21 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 - Tag-Connect TC2030-CTX sheet: https://www.tag-connect.com/wp-content/uploads/bsk-pdf-manager/TC2030-CTX_1.pdf
 - Our own: `docs/step2-power-board-circuit-2026-11-06.md` (flex pins, jack-board pull-ups, audio out), `docs/step2-parts-2026-11-05.md`
   (USB ESD), main PCB v0.11 `design.py` (Halls, encoder).
+
+## Ring lights: a hole found, Q35 (8 Nov)
+Picture: `docs/img/ring-lights-q35.png`. The model has 24 emitters on the main board's back on the thrust pitch (r 19.84, every 15°),
+12 red VCSELs and 12 RGB alternating, firing forward through Ø0.62 holes into the clear race ("reverse-mounted", design notes 2 Nov).
+- **The RGB part exists for that:** **SK6812MINI-E** (OPSCO, LCSC C5149201, US$0.045, 104,360 in stock [S]): body 3.2 x 2.8 x 1.78,
+  flat leads halfway up the side, made to sit recessed in a board cut-out and shine through it (Adafruit sells it as "reverse mount",
+  used in keyboards; Hackaday: "designed to be mounted recessed within a PCB hole" [S]). 5 V (3.7-5.5), 12 mA per colour, 800 kbit/s,
+  pins VDD, DOUT, GND, DIN [S datasheet]. In a 1.6 mm board its front face sits about 0.7 mm below the front [A], so the race still
+  sits flat. Each RGB site becomes a cut-out of about 3.4 x 3.0 [A, to set from the footprint drawing], leaving about 1.8 mm of board
+  between neighbours.
+- **The red VCSEL (JNJOPTO JNJ-V-2835CW-665003-S-D1) is not a reverse-mount part.** JNJ's VCSEL sheet (the 5730 sibling) has the lens
+  on the package top and the heat path through the pads [S]; the 2835 is the same kind of package [A]. Soldered on the back, it shines
+  backward and the hole above it stays dark. Reverse-mount parts turn up only as ordinary LEDs (Broadcom HSMH-C265, Dialight 599, Würth
+  WL-SMRW, the SK6812MINI-E) [S search]; no red VCSEL.
+- **Q35 (open):** A drop the 12 red VCSELs (the violet module and the Risley prisms stay as the laser), the RGB ring on SK6812MINI-E
+  in cut-outs; B keep the red VCSELs on the board's front in pockets under the race, with the race redrawn thicker (its floor under a
+  ball is 1.0 mm, and the land was already flagged thin, design notes 2 Nov).
+- With A: the decoder, the shared current limit, the 12 VCSEL switches and 5 pins (VCSEL_A0-A3, LASER_EN) go; 23 pins spare.

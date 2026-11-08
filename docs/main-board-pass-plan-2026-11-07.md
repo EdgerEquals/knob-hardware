@@ -43,6 +43,8 @@ Expected next, one at a time as they come up:
    Then the driver needs Ed's bench numbers (the "Motor bench test sheet" doc is
    still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
 2. The power tree on vertical board L (15 V to 5 V and 3.3 V) once the motor's share is known.
-3. The RGB emitter part; the VCSEL driver.
+3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
+   board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
+   under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).
 4. Layer count (after a first placement shows the density).
 (The back AMOLEDs' power chip is gone with Q33 = A.)
