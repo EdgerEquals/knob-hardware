@@ -80,8 +80,10 @@ isolator chip; there is no room for that in the jack unit [A]. An external USB i
   and footprint as the TPS62933 [S]. LCSC C5219272, US$0.62, 3,748 in stock [S, read 8 Nov]. Cost: +US$0.37 each and about
   0.1 W more each at idle [A], so about 0.3 W more heat with the module idle. Frequencies then set apart so no two converters
   (or their harmonics) meet [A, values with step 3].
-- **B: TPS62933O** ("out-of-audio"): still skips at light load but keeps its switching above the audio band [S TI datasheet];
-  kinder at idle. But it has spread spectrum (the TPS62933F does not [S]), which wobbles the switching frequency, and the rate of
+- **B: TPS62933O** ("out-of-audio"): still skips at light load, but "the minimum switching frequency is clamped above 30 kHz"
+  [S TI datasheet, OOA mode; TI takes audio as 20 Hz-20 kHz]; kinder at idle. 30 kHz is only 1.5 x the top of the audio band:
+  the jack board's first-order low-passes (CV in 12 kHz, audio in 22 kHz) pass it at about -9 and -5 dB, against about -40 and
+  -35 dB at 1.2 MHz [A arithmetic], and a tone that close to the band can beat with another or fold back in the ADC's sampling. But it has spread spectrum (the TPS62933F does not [S]), which wobbles the switching frequency, and the rate of
   that wobble is not on TI's summary page [C]. Availability at LCSC [C].
 - Keeping the TPS62933 (PFM) is not offered: its bursts are the thing we are removing.
 
