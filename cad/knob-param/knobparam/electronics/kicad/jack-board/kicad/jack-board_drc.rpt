@@ -1,29 +1,32 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-board/kicad/jack-board.kicad_pcb **
-** Created on 2026-11-08 16:45:38 **
+** Created on 2026-11-08 16:54:58 **
 
-** Found 0 DRC violations **
+** Found 1 DRC violations **
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(107.5088 mm, 102.6612 mm): Via [VBUS] on F.Cu - B.Cu
 
 ** Found 5 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(95.6176 mm, 96.7821 mm): Track [VBUS] on F.Cu, length 7.3290 mm
-    @(109.2000 mm, 101.1550 mm): Track [VBUS] on B.Cu, length 1.2700 mm
+    @(99.2000 mm, 107.0000 mm): Pad 1 [VBUS] of P1 on F.Cu
+    @(100.8000 mm, 107.0000 mm): Pad 1 [VBUS] of P2 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(100.8000 mm, 107.0000 mm): Pad 1 [VBUS] of P2 on F.Cu
+    @(107.5481 mm, 102.6219 mm): Track [VBUS] on B.Cu, length 0.0556 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(99.2000 mm, 107.0000 mm): Pad 1 [VBUS] of P1 on F.Cu
+    @(90.8000 mm, 102.4250 mm): Track [VBUS] on B.Cu, length 1.6519 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(113.1000 mm, 99.8850 mm): Pad 6 [GND] of H2 on B.Cu
     @(113.1000 mm, 97.3450 mm): Pad 10 [GND] of H2 on B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(99.1382 mm, 95.6295 mm): Track [GND] on F.Cu, length 4.3521 mm
     @(113.1000 mm, 99.8850 mm): Pad 6 [GND] of H2 on B.Cu
-    @(98.1321 mm, 100.2974 mm): Track [GND] on F.Cu, length 3.9787 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(90.8000 mm, 99.8850 mm): Pad 6 [CC1] of H1 on B.Cu
-    @(95.0000 mm, 108.6000 mm): Pad 1 [CC1] of P7 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(105.0000 mm, 108.6000 mm): Pad 1 [CC2] of P8 on F.Cu
-    @(109.2000 mm, 99.8850 mm): Pad 5 [CC2] of H2 on B.Cu
 
 ** Found 0 Footprint errors **
 
