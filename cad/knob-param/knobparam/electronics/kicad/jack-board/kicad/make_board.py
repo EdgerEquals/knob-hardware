@@ -294,7 +294,7 @@ if __name__ == "__main__":
     pcbnew.SaveBoard(pcb_path, board)
     write_project(HERE, NAME, rc, libs, ROUTE_CLASSES)
     if "--route" in sys.argv:   # Freerouting (this board is roomy enough), the outline moved in 0.105 for it so tracks keep the 0.25 edge
-        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=6, edge_inset=RULES["edge"] - 0.15 + 0.005,
+        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=int(os.environ.get("ROUTE_ATTEMPTS", "6")), edge_inset=RULES["edge"] - 0.15 + 0.005,
                                extra=("-inc", "QGND")))   # [Q42] the quiet ground is carried by the two pours, not tracks
         add_gnd_zones(pcb_path)
     elif "--grid" in sys.argv:
