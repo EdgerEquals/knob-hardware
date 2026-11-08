@@ -50,5 +50,6 @@ for f in free:
 KEYS = ("version", "pcb_windows", "mcu", "vb", "pwr_vcsel_xy", "clear_oled", "clear_oled_xy", "z_pcb_back", "pcb_t",
         # v0.53: what the main board generator places from the model (step 3)
         "mech_rot", "em_holes", "em_cut", "em_rgb", "ot_r", "hv_r", "hv_phi_s", "hv_mid", "hv_parts", "sens_xy", "sens_dir",
-        "enc_xy", "jb_post_xy", "jb_post_pin", "link_flex", "vb_legs", "vb_hdr", "motor_offset", "rod_pad_r")
+        "enc_xy", "jb_post_xy", "jb_post_pin", "link_flex", "vb_legs", "vb_hdr", "motor_offset", "rod_pad_r",
+        "pcb_kicad", "js_pcb_holes", "pcb_hole_displaced")
 pickle.dump(dict(board=board, occ=occ, free=free, D={k: D[k] for k in KEYS if k in D}), open(sys.argv[1], "wb"))

@@ -70,6 +70,10 @@ for _n in ("encoder header", "encoder daughterboard", "encoder standoff"):
     if _n in _ps:
         _s = Rot(0, 0, D["mech_rot"]) * _ps[_n]
         HARD.append((_n, MultiPoint([(v.X, v.Y) for v in _s.vertices()]).convex_hull))
+if not D.get("enc_riser", True):   # v0.53: the EE-SX1321 sits straight on the back (Q27): its body and its six pads, which reach 1.0
+    _sx, _sy = to_panel(*D["sens_xy"])   # past the body across the slot (2.0 x 1.0 at +-2.55, +-1.4 [S Omron pattern]); arms radial
+    HARD.append(("encoder sensor EE-SX1321 and its pads",
+                 affinity.translate(affinity.rotate(box(-3.55, -2.0, 3.55, 2.0), D["sens_dir"] + D["mech_rot"], origin=(0, 0)), _sx, _sy)))
 # joystick: [Ed 3 Nov] v4: its holes in the main PCB (live from the joystick derive) and the vertical boards' feet (electronics)
 from knobparam.assembly import joystick as _js
 sys.path.insert(0, _js._jsdir())

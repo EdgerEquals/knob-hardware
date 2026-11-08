@@ -37,7 +37,7 @@ Z = {
     "mcu": {"F": [(-13.0, 23.0, 13.0, 49.0)]},
     "link": {"F": [(-13.0, 23.0, 16.0, 49.0)]},
     "screen": {"F": [(4.0, 24.0, 16.5, 47.0)]},
-    "debug": {"F": [(-16.5, 24.0, -6.0, 47.0)]},
+    "debug": {"F": [(-16.5, 24.0, -6.0, 47.0)], "B": [(-16.5, 24.0, -6.0, 47.0)]},   # B: only for the Tag-Connect's holes
     "light": {"F": [(-4.0, 21.0, 5.0, 30.0)], "B": [(-5.0, 19.5, 6.0, 31.0)]},
     "adc": {"B": [(-15.0, 21.0, 15.0, 48.5)]},
     "halls": {"B": [(-16.0, 0.0, 0.0, 16.0)]},
@@ -133,6 +133,18 @@ OWN = {"mb:Post_Pin_1.0": fp_post, "mb:VBoard_L_Header_2x11_P1.27_THT": fp_hdr_l
        "mb:Pads_1x6_P1.27_SMD": fp_pads6, "mb:LED_SK6812MINI-E_Reverse": fp_led}
 
 
+def _k7_copy(fn):
+    """The repo's footprints.pretty files are KiCad 8+ (version 20241229: (property "Reference" ...), (fill yes/no)); KiCad 7's
+    reader needs fp_text reference / value and fill solid / none. Same geometry, older spelling."""
+    import re
+    t = open(os.path.join(REPO_LIB, fn + ".kicad_mod")).read()
+    t = re.sub(r"\(version \d+\)", "(version 20221018)", t, count=1)
+    t = t.replace('(property "Reference" ', "(fp_text reference ").replace('(property "Value" ', "(fp_text value ")
+    t = t.replace("(fill yes)", "(fill solid)").replace("(fill no)", "(fill none)")
+    os.makedirs(LIB_DIR, exist_ok=True)
+    open(os.path.join(LIB_DIR, fn + ".kicad_mod"), "w").write(t)
+
+
 def load_fp(board, name):
     if name not in _FP_CACHE:
         _FP_CACHE[name] = _load_fp(board, name)
@@ -144,8 +156,11 @@ def _load_fp(board, name):
         f = OWN[name](board)
     else:
         lib, fn = name.split(":")
-        path = REPO_LIB if lib == "footprints" else os.path.join(KLIB, lib + ".pretty")
+        path = os.path.join(KLIB, lib + ".pretty")
+        if lib == "footprints":   # the repo's own, written in KiCad 8+ syntax: a KiCad 7 copy in this board's library
+            path = LIB_DIR; _k7_copy(fn)
         f = pcbnew.FootprintLoad(path, fn)
+        assert f is not None, f"footprint {name} did not load"
         f.SetFPID(pcbnew.LIB_ID(LIB, fn))
     for g in list(f.GraphicalItems()):
         if g.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS):
@@ -184,6 +199,51 @@ def geometry(name, side, rot, cache={}):
             ys += [pcbnew.ToMM(bb.GetTop()) - 0.25, pcbnew.ToMM(bb.GetBottom()) + 0.25]
     cache[key] = (min(xs), min(ys), max(xs), max(ys), pads)
     return cache[key]
+
+
+def far_pads(name, side, rot, cache={}):
+    """Boxes (KiCad local, about the part's origin) of what a part puts on its OTHER face: through-hole pads, NPTH holes, and
+    pads on the far copper (the rod clamp's back pad). Parts there must keep off them."""
+    key = (name, side, rot)
+    if key in cache:
+        return cache[key]
+    b = _SCRATCH[0]; f = load_fp(b, name); b.Add(f); _KEEP.append(f)
+    f.SetPosition(V(0, 0)); f.SetOrientationDegrees(rot)
+    if side == "B":
+        f.Flip(f.GetPosition(), False)
+    far = pcbnew.F_Cu if side == "B" else pcbnew.B_Cu
+    out = []
+    for p in f.Pads():
+        if p.GetAttribute() in (pcbnew.PAD_ATTRIB_PTH, pcbnew.PAD_ATTRIB_NPTH) or p.IsOnLayer(far):
+            bb = p.GetBoundingBox()
+            out.append((pcbnew.ToMM(bb.GetLeft()), pcbnew.ToMM(bb.GetTop()), pcbnew.ToMM(bb.GetRight()), pcbnew.ToMM(bb.GetBottom())))
+    cache[key] = out
+    return out
+
+
+def turned_courtyard(name, side, rot, row=0.5):
+    """A part turned off the 90° grid, as horizontal strips (KiCad local, about its origin) covering its real courtyard: the
+    placer's boxes are axis-aligned, and the bounding box of a ring LED at 30° is more than twice its courtyard."""
+    x0, y0, x1, y1, _ = geometry(name, "F", 0)
+    t = math.radians(rot if side == "F" else -rot)   # Flip(False) mirrors about the horizontal axis: rot -> -rot
+    c, s_ = math.cos(t), math.sin(t)
+    pts = [(x * c + y * s_, -x * s_ + y * c) for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]   # CCW on screen, y down
+    bx = geometry(name, side, rot)
+    assert abs(min(p[0] for p in pts) - bx[0]) < 0.05 and abs(min(p[1] for p in pts) - bx[1]) < 0.05, (name, rot, pts, bx[:4])
+    ys = [p[1] for p in pts]; out = []
+    yy = min(ys)
+    while yy < max(ys) - 1e-9:
+        ya, yb = yy, min(yy + row, max(ys))
+        xs = []
+        for (ax, ay), (cx, cy) in zip(pts, pts[1:] + pts[:1]):   # the polygon's x extent over this row (edges and corners)
+            for yv in (ya, yb):
+                if (ay - yv) * (cy - yv) <= 0 and ay != cy:
+                    xs.append(ax + (yv - ay) * (cx - ax) / (cy - ay))
+            if ya <= ay <= yb:
+                xs.append(ax)
+        out.append((min(xs), ya, max(xs), yb))
+        yy = yb
+    return out
 
 
 # ------------------------------------------------------------------ the model's fixed parts
@@ -265,13 +325,20 @@ class Room:
             self.sat[k] = s
         return k
 
-    def allowed(self, k, x0, y0, x1, y1):
+    def count(self, k, x0, y0, x1, y1):
+        """(cells of this rectangle the zone allows, cells of the rectangle): cells off the raster count as not allowed."""
         s = self.sat[k]
-        i0 = min(max(int(round((x0 - self.x0) / GRID)), 0), self.nx); i1 = min(max(int(round((x1 - self.x0) / GRID)), 0), self.nx)
-        j0 = min(max(int(round((y0 - self.y0) / GRID)), 0), self.ny); j1 = min(max(int(round((y1 - self.y0) / GRID)), 0), self.ny)
+        i0 = int(round((x0 - self.x0) / GRID)); i1 = int(round((x1 - self.x0) / GRID))
+        j0 = int(round((y0 - self.y0) / GRID)); j1 = int(round((y1 - self.y0) / GRID))
+        tot = max(i1 - i0, 0) * max(j1 - j0, 0)
+        i0, i1 = min(max(i0, 0), self.nx), min(max(i1, 0), self.nx); j0, j1 = min(max(j0, 0), self.ny), min(max(j1, 0), self.ny)
         if i1 <= i0 or j1 <= j0:
-            return 0.0
-        return float(s[j1, i1] - s[j0, i1] - s[j1, i0] + s[j0, i0]) * GRID * GRID
+            return 0, tot
+        return int(s[j1, i1] - s[j0, i1] - s[j1, i0] + s[j0, i0]), tot
+
+    def fits(self, k, x0, y0, x1, y1):
+        ok, tot = self.count(k, x0, y0, x1, y1)
+        return ok >= tot
 
 
 class MaskPlacer(placer.Placer):
@@ -288,8 +355,8 @@ class MaskPlacer(placer.Placer):
         a = (x1 - x0) * (y1 - y0)
         if k is None:
             return a * 4.0 + 50.0
-        bad = a - self.room.allowed(k, x0, y0, x1, y1)
-        return max(bad, 0.0) * 4.0 if bad > 0.5 * GRID * GRID else 0.0
+        ok, tot = self.room.count(k, x0, y0, x1, y1)
+        return (tot - ok) * GRID * GRID * 4.0
 
 
 # ------------------------------------------------------------------ placing
@@ -302,7 +369,16 @@ def run_placer(parts, fixed, room, iters, seed, log=print):
                 nets.setdefault(n, []).append((r, num))
         if r in fixed:
             x, y, s, rot = fixed[r]
-            items.append(dict(ref=r, geoms={(s, rot): geometry(p["fp"], s, rot)}, fixed=(x, y, s, rot)))
+            g = geometry(p["fp"], s, rot)
+            if abs(rot / 90.0 - round(rot / 90.0)) > 1e-6:   # turned off the grid: its true courtyard as strips, not its bounding box
+                strips = turned_courtyard(p["fp"], s, rot)
+                g = (-0.01, -0.01, 0.01, 0.01, g[4])
+                for k, (a0, b0, a1, b1) in enumerate(strips):
+                    items.append(dict(ref=f"KEEP_{r}_cy{k}", geoms={(s, 0): (a0, b0, a1, b1, {})}, fixed=(x, y, s, 0)))
+            items.append(dict(ref=r, geoms={(s, rot): g}, fixed=(x, y, s, rot)))
+            for k, (a0, b0, a1, b1) in enumerate(far_pads(p["fp"], s, rot)):   # its holes and back pads on the other face
+                o = "B" if s == "F" else "F"
+                items.append(dict(ref=f"KEEP_{r}_{k}", geoms={(o, 0): (a0 - 0.3, b0 - 0.3, a1 + 0.3, b1 + 0.3, {})}, fixed=(x, y, o, 0)))
             continue
         zone = p["block"]
         faces = [p["face"]] if p["face"] in Z[zone] else list(Z[zone])   # the netlist's face where the zone has it
@@ -323,16 +399,18 @@ def run_placer(parts, fixed, room, iters, seed, log=print):
         items.append(dict(ref=r, geoms=g, regions=reg, mask={s: room.key(zone, s) for s in faces},
                           margin=0.12 if r[0] in "UJQ" else 0.08))
     netlist = [(POWER_W.get(n, 1.0), pins) for n, pins in nets.items()]
-    # decoupling: each capacitor to the same supply's pin on the part with three or more pins just before it
-    last = None
+    # decoupling: each capacitor to a pin of the same supply on the part with three or more pins just before it, taking that part's
+    # pins of the supply in turn (the H743's five 100 nF go one to each VDD pin, its two 2.2 uF one to each VCAP)
+    last = None; turn = {}
     for p in parts:
         if len([v for v in p["pins"].values() if v]) >= 3:
             last = p
         if p["ref"][0] == "C" and "GND" in p["pins"].values() and last is not None:
             sup = [n for n in p["pins"].values() if n != "GND"][0]
-            ic = [k for k, v in last["pins"].items() if v == sup]
+            ic = sorted([k for k, v in last["pins"].items() if v == sup], key=lambda k: int(k) if k.isdigit() else 0)
             if ic:
-                netlist.append((2.5, [(p["ref"], [k for k, v in p["pins"].items() if v == sup][0]), (last["ref"], ic[0])]))
+                k = turn.get((last["ref"], sup), 0); turn[(last["ref"], sup)] = k + 1
+                netlist.append((2.5, [(p["ref"], [q for q, v in p["pins"].items() if v == sup][0]), (last["ref"], ic[k % len(ic)])]))
     b = R["board"].bounds
     whole = [(L(b[0], b[3])[0], L(b[0], b[3])[1], L(b[2], b[1])[0], L(b[2], b[1])[1])]
     pl = MaskPlacer(items, {"F": whole, "B": whole}, netlist, room, margin=0.08, seed=seed)
@@ -351,7 +429,30 @@ def run_placer(parts, fixed, room, iters, seed, log=print):
     wl, ov, out = pl.total()
     bad = [pl.items[i]["ref"] for i in range(pl.n) if not pl.fixed[i] and (pl.overlap(i) > 1e-6 or pl.out_area(i) > 1e-6)]
     log(f"placed: wirelength {wl:.1f}, overlap {ov:.3f} mm², outside {out:.3f}, legal {ok}; not legal: {bad}")
-    return pl.result(), (wl, ov, out, bad)
+    return {k: v for k, v in pl.result().items() if not k.startswith("KEEP_")}, (wl, ov, out, bad)
+
+
+def place_debug(parts, room, fixed):
+    """The Tag-Connect pads (J4) have NPTH locating holes through the board: a spot where its courtyard fits the front's free room
+    and its holes (+0.3) the back's, nearest the plan's (-11.9, 32) [A]."""
+    p = next(q for q in parts if q["ref"] == "J4")
+    kf, kb = room.key("debug", "F"), room.key("debug", "B")
+    tx, ty = L(-11.9, 32.0); best = None
+    for rot in (0, 90, 180, 270):
+        x0, y0, x1, y1, _ = geometry(p["fp"], "F", rot); holes = far_pads(p["fp"], "F", rot)
+        for i in range(-60, 61):
+            for j in range(-90, 91):
+                x, y = tx + i * 0.1, ty + j * 0.1
+                if not room.fits(kf, x + x0, y + y0, x + x1, y + y1):
+                    continue
+                if not all(room.fits(kb, x + h0 - 0.3, y + h1 - 0.3, x + h2 + 0.3, y + h3 + 0.3) for h0, h1, h2, h3 in holes):
+                    continue
+                d = math.hypot(x - tx, y - ty)
+                if best is None or d < best[0]:
+                    best = (d, x, y, rot)
+    assert best, "no room for the Tag-Connect pads in the debug zone"
+    fixed["J4"] = (round(best[1], 2), round(best[2], 2), "F", best[3])
+    return best
 
 
 # ------------------------------------------------------------------ the board
@@ -446,9 +547,123 @@ def checks(pcb_path, fixed):
     return out
 
 
+# ------------------------------------------------------------------ routing trial (the layer-count question)
+FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-1.9.0.jar")
+CLASSES = [("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
+           ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
+
+
+def _pad_rects(board):
+    out = []
+    for f in board.GetFootprints():
+        for p in f.Pads():
+            bb = p.GetBoundingBox()
+            lay = ({"F"} if p.IsOnLayer(pcbnew.F_Cu) and not p.IsOnLayer(pcbnew.B_Cu) else
+                   {"B"} if p.IsOnLayer(pcbnew.B_Cu) and not p.IsOnLayer(pcbnew.F_Cu) else {"F", "B", "I"})
+            out.append((lay, pcbnew.ToMM(bb.GetLeft()) - ORIGIN[0], pcbnew.ToMM(bb.GetTop()) - ORIGIN[1],
+                        pcbnew.ToMM(bb.GetRight()) - ORIGIN[0], pcbnew.ToMM(bb.GetBottom()) - ORIGIN[1], p.GetNetname(), p))
+    return out
+
+
+def _rect_dist(px, py, x0, y0, x1, y1):
+    return math.hypot(max(x0 - px, 0.0, px - x1), max(y0 - py, 0.0, py - y1))
+
+
+def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
+    """A via to the In1 ground plane beside every ground SMD pad (in the middle of an exposed pad), with a short track on the pad's
+    face, clear of every pad, the other vias, the edge and the holes (as the jack power board's fanout_gnd)."""
+    from shapely.geometry import Point
+    inside = R["board"].buffer(-(via_d / 2 + RULES["edge"] + 0.02))
+    rects = _pad_rects(board); gnd = board.FindNet("GND"); vias = []; n_ok = n_fail = 0
+    for f in board.GetFootprints():
+        cx, cy = pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1]
+        for p in f.Pads():
+            if p.GetNetname() != "GND" or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD:
+                continue
+            side = "B" if p.IsOnLayer(pcbnew.B_Cu) else "F"
+            px, py = pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]
+            w, h = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
+            if w >= 1.4 and h >= 1.4 and math.hypot(px - cx, py - cy) < 0.3:
+                cands = [(px, py)]
+            else:
+                ang0 = math.atan2(py - cy, px - cx) if math.hypot(px - cx, py - cy) > 0.05 else 0.0
+                cands = []
+                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5):
+                    for k in range(16):
+                        a_ = ang0 + (k // 2 + 1) * (math.pi / 8) * (1 if k % 2 else -1) if k else ang0
+                        cands.append((px + (w / 2 + dist) * math.cos(a_) if abs(math.cos(a_)) > 0.7 else px + dist * math.cos(a_),
+                                      py + (h / 2 + dist) * math.sin(a_) if abs(math.sin(a_)) > 0.7 else py + dist * math.sin(a_)))
+            placed = False
+            for vx, vy in cands:
+                if not inside.contains(Point(vx, -vy)):
+                    continue
+                ok = True
+                for lay, x0, y0, x1, y1, n, pp in rects:
+                    if pp is p:
+                        continue
+                    d = _rect_dist(vx, vy, x0, y0, x1, y1)
+                    if n == "GND":
+                        if d < via_d / 2 + 0.02:
+                            ok = False; break
+                        continue
+                    if d < via_d / 2 + clr:
+                        ok = False; break
+                    if side in lay and (vx, vy) != (px, py):
+                        if any(_rect_dist(px + (vx - px) * t / 10, py + (vy - py) * t / 10, x0, y0, x1, y1) < width / 2 + clr for t in range(1, 11)):
+                            ok = False; break
+                if ok and any(math.hypot(qx - vx, qy - vy) < via_d + 0.15 for qx, qy in vias):
+                    ok = False
+                if ok:
+                    v = pcbnew.PCB_VIA(board); v.SetPosition(P(vx, vy)); v.SetWidth(mm(via_d)); v.SetDrill(mm(via_drill))
+                    v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu); v.SetNet(gnd); v.SetLocked(True); board.Add(v)
+                    if (vx, vy) != (px, py):
+                        tr = pcbnew.PCB_TRACK(board); tr.SetStart(P(px, py)); tr.SetEnd(P(vx, vy)); tr.SetWidth(mm(width))
+                        tr.SetLayer(pcbnew.B_Cu if side == "B" else pcbnew.F_Cu); tr.SetNet(gnd); tr.SetLocked(True); board.Add(tr)
+                    vias.append((vx, vy)); placed = True; n_ok += 1
+                    break
+            n_fail += not placed
+    return n_ok, n_fail
+
+
+def route_trial(pcb, layers, timeout):
+    """Copy of the placed board with this many copper layers (In1 = the ground plane), ground fanned out to it, the rest by
+    Freerouting 1.9.0 (ground left to the plane): how much is left unrouted answers the layer count."""
+    import shutil, kicad7_tools as kt
+    d = os.path.join(OUT, f"trial{layers}"); os.makedirs(d, exist_ok=True)
+    tp = os.path.join(d, NAME + ".kicad_pcb")
+    write_project(d, NAME, RULES, [(LIB, "${KIPRJMOD}/../../" + LIB + ".pretty")], CLASSES)
+    b = pcbnew.LoadBoard(pcb)
+    b.GetDesignSettings().SetCopperLayerCount(layers); b.SetLayerType(pcbnew.In1_Cu, pcbnew.LT_POWER)
+    print(f"{layers} layers: ground vias (placed, no room):", fanout_gnd(b))
+    save_board(tp, b)
+    res = kt.route(tp, FREEROUTING, passes=100, attempts=1, edge_inset=RULES["edge"] - 0.15 + 0.005, extra=("-inc", "GND"), timeout=timeout)
+    b = pcbnew.LoadBoard(tp)
+    nv = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
+    ln = sum(pcbnew.ToMM(t.GetLength()) for t in b.GetTracks() if t.GetClass() != "PCB_VIA")
+    print(f"{layers} layers: unconnected {res[0][0] if isinstance(res[0], tuple) else res[0]}, result {res}, vias {nv}, track {ln:.0f} mm")
+    return res
+
+
 BLOCK_COL = {"mcu": "#9ecae1", "link": "#c6dbef", "screen": "#6baed6", "debug": "#d9d9d9", "light": "#fdae6b", "adc": "#a1d99b",
              "halls": "#74c476", "encoder": "#c7e9c0", "motor": "#fc9272", "ring": "#fdd0a2", "rod": "#de2d26", "power": "#fee391",
              "cover": "#bdbdbd", "headers": "#969696"}
+
+
+def clean_board():
+    """The model's board less the stale v0.11 KiCad holes: the model still reads the old board's joystick-stack holes (MH1, Ø3.4 at
+    x ±10.8, y 25.2 and 38.4) back from pcb_proxy.json, but nothing in v0.53 passes through them (room map: both faces empty at
+    25.2; at 38.4 only the new spring bores, which are cut on their own). They are filled in; the windows and the joystick's
+    present holes stay [A]. The model reads the new board's holes after this board's proxy export (step 4)."""
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import unary_union
+    D = R["D"]; b = R["board"]
+    stale = [Point(h["x"], h["y"]).buffer(h["d"] / 2 + 0.02, 64) for h in D.get("pcb_kicad", {}).get("holes", []) if h["ref"] == "MH1"]
+    if not stale:
+        return b, 0
+    real = [Polygon(p) for p in D["pcb_windows"].values()] + [Point(h["x"], h["y"]).buffer(h["d"] / 2, 64) for h in D.get("js_pcb_holes", [])]
+    fill = unary_union(stale).difference(unary_union(real).buffer(1e-3))
+    nb = b.union(fill).buffer(0)
+    return nb, round(nb.area - b.area, 1)
 
 
 def picture(parts, placement, path, stats):
@@ -474,8 +689,14 @@ def picture(parts, placement, path, stats):
             if s != face:
                 continue
             x0, y0, x1, y1, pads = geometry(p["fp"], s, rot)
-            ax.add_patch(plt.Rectangle((x + x0, -(y + y1)), x1 - x0, y1 - y0, fc=BLOCK_COL.get(p["block"], "#eee"),
-                                       ec="#333", lw=0.4, alpha=0.95))
+            if abs(rot / 90.0 - round(rot / 90.0)) > 1e-6:   # turned: draw its real courtyard
+                u0, v0, u1, v1, _ = geometry(p["fp"], "F", 0); t = math.radians(rot if s == "F" else -rot)
+                c, s_ = math.cos(t), math.sin(t)
+                pts = [(x + u * c + v * s_, -(y - u * s_ + v * c)) for u, v in ((u0, v0), (u1, v0), (u1, v1), (u0, v1))]
+                ax.add_patch(plt.Polygon(pts, fc=BLOCK_COL.get(p["block"], "#eee"), ec="#333", lw=0.4, alpha=0.95))
+            else:
+                ax.add_patch(plt.Rectangle((x + x0, -(y + y1)), x1 - x0, y1 - y0, fc=BLOCK_COL.get(p["block"], "#eee"),
+                                           ec="#333", lw=0.4, alpha=0.95))
             for (px, py) in pads.values():
                 ax.plot(x + px, -(y + py), ".", ms=1.2, color="#5d4037")
             if (x1 - x0) * (y1 - y0) > 3.0 or p["ref"][0] in "UJQY":
@@ -497,8 +718,15 @@ def main():
     global R
     ap = argparse.ArgumentParser(); ap.add_argument("room"); ap.add_argument("--iters", type=int, default=300000)
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--trial", type=int, default=0, help="route a copy of the placed board on this many layers (4 or 6) and stop")
+    ap.add_argument("--timeout", type=int, default=3600)
     a = ap.parse_args()
     R = pickle.load(open(a.room, "rb"))
+    R["board"], n_filled = clean_board()
+    if a.trial:
+        route_trial(os.path.join(OUT, NAME + ".kicad_pcb"), a.trial, a.timeout)
+        return
+    print(f"stale v0.11 holes filled in: {n_filled} mm²; board {R['board'].area:.0f} mm²")
     from shapely.ops import unary_union
     os.makedirs(OUT, exist_ok=True); os.makedirs(LIB_DIR, exist_ok=True)
     parts = design.build()
@@ -510,12 +738,16 @@ def main():
         mech = unary_union([g for n, g in R["occ"][key].items() if not n.startswith(ELECTRICAL)])
         free[face] = R["board"].difference(mech).buffer(-EDGE_KEEP)
     room = Room(free)
+    d = place_debug(parts, room, fixed)
+    print(f"Tag-Connect pads at panel ({d[1]:.2f}, {-d[2]:.2f}), turned {d[3]}, {d[0]:.2f} from the plan's spot")
     placement, stats = run_placer(parts, fixed, room, a.iters, a.seed)
     placement.update(fixed)
     pcb = os.path.join(OUT, NAME + ".kicad_pcb")
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], ())
     board, dropped = build(parts, placement)
     save_board(pcb, board)
+    for nm in {p["fp"] for p in parts}:   # every footprint the board uses, as placed (no silkscreen), in its own library
+        save_fp(LIB_DIR, _FP_CACHE[nm])
     json.dump({r: list(v) for r, v in placement.items()}, open(os.path.join(HERE, "placement.json"), "w"), indent=0)
     picture(parts, placement, os.path.join(HERE, "placement.png"), stats)
     v, u, _txt = drc(pcb, os.path.join(OUT, "drc.rpt"))

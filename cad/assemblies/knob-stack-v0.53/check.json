@@ -1035,7 +1035,7 @@
    "value": 6.209,
    "target": ">= 1.5",
    "ok": true,
-   "note": "12 cut-outs 3.0 x 3.4 on r 19.84; 2-3 tracks cross the ring through each web [A]",
+   "note": "12 cut-outs 3.0 x 3.4 on r 19.84; the inner layers take about 28 tracks a web at 0.1 / 0.1, 0.3 off each cut-out; the back has the LEDs' pads (v0.53: 1.76 webs, 5 tracks, with 24) [A]",
    "owner": "base_drive",
    "slack": 4.709
   },
@@ -1098,7 +1098,7 @@
    "value": 45.056,
    "target": ">= 10",
    "ok": true,
-   "note": "A 128, B 107, C 45, D 917, E 45; KiCad back parts to move off the windows / MCU site: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
+   "note": "A 128, B 114, C 45, D 917, E 45; KiCad back parts to move off the windows / MCU site: R20, R21, R22, R30, R31, R32 (left out of the proxy)",
    "owner": "electronics",
    "slack": 35.056
   },

@@ -1,0 +1,28 @@
+(footprint "TubeRodClamp_Main_M1.6" (version 20221018) (generator pcbnew)
+  (layer "F.Cu")
+  (descr "Brass tube 5x3 solder ring (F, GND) + M1.6 rod clamp ring (B, VBUS_DATA), NPTH 1.8")
+  (attr smd)
+  (fp_text reference "REF**" (at 0 -4.25) (layer "F.SilkS") hide
+      (effects (font (size 0.5 0.5) (thickness 0.08)))
+    (tstamp 0a15b98f-72df-447f-9f9d-fbbc4359b6e9)
+  )
+  (fp_text value "TubeRodClamp_Main_M1.6" (at 0 4.25) (layer "F.Fab") hide
+      (effects (font (size 0.5 0.5) (thickness 0.08)))
+    (tstamp 5d4cb162-3250-40e2-a200-c62fddee85c9)
+  )
+  (fp_circle (center 0 0) (end 2.45 0)
+    (stroke (width 0.05) (type solid)) (fill none) (layer "B.CrtYd") (tstamp 6e652c2a-f42d-4042-ba20-47033614e24f))
+  (fp_circle (center 0 0) (end 3.45 0)
+    (stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd") (tstamp 770c71c2-c80a-45d2-b057-8adb8e758f1a))
+  (pad "" np_thru_hole circle (at 0 0) (size 1.8 1.8) (drill 1.8) (layers "*.Cu" "*.Mask") (tstamp 170be094-ff70-464e-bb46-a89e875f335f))
+  (pad "1" smd custom (at 2.45 0) (size 1.5 1.5) (layers "F.Cu" "F.Paste" "F.Mask")
+    (options (clearance outline) (anchor circle))
+    (primitives
+      (gr_circle (center -2.45 0) (end 0 0) (width 1.5) (fill none))
+    ) (tstamp cf13a585-ed06-4d60-adfd-4a7f6c8dc15f))
+  (pad "2" smd custom (at 1.7 0) (size 1 1) (layers "B.Cu" "B.Mask")
+    (options (clearance outline) (anchor circle))
+    (primitives
+      (gr_circle (center -1.7 0) (end 0 0) (width 1) (fill none))
+    ) (tstamp 4738e881-b600-4908-9213-a4fef0b6d615))
+)
