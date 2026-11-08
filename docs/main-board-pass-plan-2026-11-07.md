@@ -95,3 +95,14 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   **Q44 = A [Ed 19:37 "12"]:** 12 LEDs every 30°, turned along the ring. Model v0.53: `em_n` 6, `em_phase` 15 (the panel's 3 and
   9 o'clock, where the side tracks pass window D, fall in the middle of a web), cut-outs 3.0 radial x 3.4 tangential, the pegs
   follow. Netlist: 12 LEDs (156 parts, 119 nets). Full white is now 0.43 A on the ring's 5 V [S 12 mA a colour].
+- **First placement** (8 Nov evening; `knob-main-pcb/v2/make_board.py`, picture `knob-main-pcb/v2/placement.png`): the model's
+  fixed parts where the model has them (the H743's centre, the five Halls, the 12 ring LEDs with their pads along the ring, the
+  EE-SX1321 with its slot on the rim's tangent, the power-light VCSEL, the posts, the link flex pads, board L and R headers, the
+  rod clamp, the 1220's tabs); the rest by the annealing placer, each part in its block's zone on the free room of its face.
+  Wirelength 3,881 mm; KiCad DRC 0 (unrouted). Two things found and fixed on the way [A]:
+  - **Window B** (model v0.53): it still had the notch of the old encoder riser (gone since Q27), and the EE-SX1321's pads sat
+    0.08 mm off its edge. Regenerated with the sensor and its pads + 0.5 as the obstacle: B 107.3 → 114.3 mm², A, C, D, E
+    unchanged; checks 335 / 335.
+  - **Stale holes:** the model still reads the old v0.11 board's joystick holes (Ø3.4 at x ±10.8, y 25.2 and 38.4) back from
+    its proxy; nothing passes through them now, so the new board fills them in (16.9 mm² of board back).
+  The Tag-Connect pads went where both faces are free (its locating holes go through): (-11.0, 31.2), turned 90°.
