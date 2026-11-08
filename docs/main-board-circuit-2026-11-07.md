@@ -169,3 +169,17 @@ the proposal). Studies: `tools/studies/race_section_sketch.py`, `race_envelope.p
 
 **[Ed 13:26 "Yes"] done in the model as v0.51**: Ø1.5 balls (40 + 4 ruby), 1.21 glass, clear race foot r 17.5-21.2 with its top 0.3
 under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). Q35 (the red VCSELs) is still open.
+
+## Ring lights decided, and a home for one red VCSEL (8 Nov)
+- **[Ed 13:35] Q35:** the RGB LEDs stay **upside down on the board's back and shine up through holes in the board** (SK6812MINI-E
+  recessed in cut-outs); **no gaps in the bearing race**: its floor is solid clear resin, the light goes through it. The red VCSELs
+  come out of the race; "put at least one somewhere else".
+- **Where one red VCSEL could go** (`tools/studies/vcsel_spot_study.py` slices every part every 0.5 mm and follows a straight-up beam
+  from each free spot on the board front; clear parts let it through; picture `docs/img/vcsel-spots.png`):
+  - Inside the knob on the main board: only just fits, and the control dial's underside is 4.3 mm above it. Not offered.
+  - **B:** main board front between the knob and the joystick, about (1.3, 26.5): the beam goes straight up through the clear case;
+    it needs a frosted spot on the faceplate's inside to end on (a red glowing dot in the panel). The main chip drives it.
+  - **A:** the dial board's underside, shining down into the knob: [Ed 3 Nov 11:50] kept room there "for LEDs shining down into the
+    knob and the violet source"; the grey PA-12 dial under it needs a window or a clear section (optics round). The dial's own chip
+    drives it.
+- **Q36 (open):** A or B. Open after that: whether the 12 old VCSEL sites become RGB (24 in the ring) or close.
