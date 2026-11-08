@@ -115,6 +115,23 @@ Q41's sense line does not see it (it measures the lower board against the main b
 - **B: firmware only.** Δ estimated from the known loads (MOT_SENSE, the LED and screen settings) times one resistance measured on
   the bench; CV outs and readings pre-corrected. No hardware; leaves maybe a fifth, and misses fast changes [A].
 
+**Q42 restated [Ed 16:21: "it feels like a bit of a band-aid ... can we just remove or rearrange things so that we don't have the
+problem?"]** (`docs/img/quiet-ground-q42.png`): rearrange instead of correcting. Two ground nets in the jack unit:
+- **Quiet ground (QGND):** the four sleeves, the DAC, the CV-out and CV-in op-amps, VMID, the audio stages and their bypass caps.
+  It runs on its own stack pins: in the first stacks the four grounds between each jack's tip and ring (H1 inner 2, H1 outer 2,
+  H2 inner 2, H2 outer 2); in the second stacks right outer 3 (beside J4_RING). A quiet track through the upper board.
+- **Power ground (GND):** the USB-C contacts, the PD chip, the eFuse, the LDOs, the 3.3 V buck, the switches, MIDI, the expander, the
+  posts, the boost and charge pump, the clear OLED and the link flex. First stacks H1 outer 4-6 and H2 outer 4 (beside the four
+  VBUS pins; 4 pins at 1 A [S JLCPCB] for up to 3 A from a computer port: 75 %, said plainly); second stacks left inner 6 and
+  right outer 6.
+- **One join, under the DAC** (where the SPI arrives): the 0R that Q41 put at the TLV9064 becomes the join; flex pin 24 then
+  carries QGND itself. QGND is a tree hanging off that one point, so no supply current can flow in it; only the CV outputs' own
+  load currents (about 0.1 mA into 100k) [A]: microvolts. A ground-loop current from a computer would cross it between the join and
+  the sleeves: about a milliamp of hum in some tens of mΩ, tens of µV [A].
+- Parts: none added. The sense line and resistor networks (old A) and the firmware fix (old B) are not needed. Q41 stays.
+- Cost: the three jack boards re-laid out (two ground nets on the 2-layer jack board, a quiet track through the upper board, the
+  lower board's ground layer split along the analog / power line).
+
 ## Q39: the bucks' light-load mode (the first decision)
 - **A (recommended): TPS62933F** on all three bucks (board L's 5 V and 3.3 V, and the jack board's 3.3 V). Fixed frequency at
   every load [S], so the only switching tone is at the set frequency (MHz), far above audio, at every load. Same package, pins
