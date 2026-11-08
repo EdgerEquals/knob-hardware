@@ -40,6 +40,9 @@ Expected next, one at a time as they come up:
 1. The 1220 driver and its supply (15 V direct or a lower rail). **[Ed 8 Nov 12:38] the 1220 is the 6 V version** (his AliExpress
    listing: "Mini 12mm 1220 Coreless Planetary Gearbox Gear Motor DC 3V-12V 6V"). **Q34 [Ed 12:39 "5v"] = A: from the 5 V rail.** (A from the 5 V rail (it can never
    see more than 5 V; less PWM ripple in a coreless motor [S maxon]) or B from 15 V with PWM capped at 40 %, `docs/img/motor-supply-q34.png`.)
+   **[Ed 8 Nov 15:28-15:29] bench: stall at 1 V = 1.44 A** → about 0.7 Ω with the leads and meter in it, so a full stall at 5 V
+   would try for about 7 A if it scales [A]: the driver must regulate current (a chopping limit well under that), and the limit
+   sets the most torque. Next from the bench: the same stall at 2 V (resistance and brush drop) and the lever force (torque per amp).
    Then the driver needs Ed's bench numbers (the "Motor bench test sheet" doc is
    still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
 2. The power tree on vertical board L (15 V to 5 V and 3.3 V) once the motor's share is known.
