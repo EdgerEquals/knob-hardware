@@ -626,6 +626,40 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
     return n_ok, n_fail
 
 
+def _dsn_inset(dsn, d):
+    """Move the .dsn's board boundary in by d (Freerouting keeps only its own clearance to it), with shapely: kicad7_tools' corner
+    intersection inset folds over on this outline's short arc segments (Freerouting then reported a winding error and hung)."""
+    import re
+    from shapely.geometry import Polygon
+    txt = open(dsn).read()
+    m = re.search(r"\(boundary\s*\(path pcb 0\s+([-\d\s.]+)\)", txt)
+    nums = [float(v) for v in m.group(1).split()]
+    k = 1000.0 if re.search(r"\(unit um\)", txt) else 1.0
+    g = Polygon(list(zip(nums[0::2], nums[1::2]))).buffer(-d * k, join_style=2)
+    if g.geom_type != "Polygon":
+        g = max(g.geoms, key=lambda q: q.area)
+    body = "  ".join(f"{x:.1f} {y:.1f}" for x, y in g.exterior.coords)
+    open(dsn, "w").write(txt[:m.start(1)] + body + txt[m.end(1):])
+
+
+def _route(tp, passes, timeout):
+    """Freerouting 1.9.0 on a copy (ground left to the plane); returns (unconnected, violations) from KiCad's DRC."""
+    import subprocess, kicad7_tools as kt
+    dsn = tp.replace(".kicad_pcb", ".dsn"); ses = tp.replace(".kicad_pcb", ".ses")
+    kt._fresh("dsn", tp, dsn)
+    _dsn_inset(dsn, RULES["edge"] - 0.15 + 0.005)
+    log = open(tp.replace(".kicad_pcb", "_freerouting.txt"), "w")
+    try:
+        subprocess.run(["xvfb-run", "-a", "java", "-jar", FREEROUTING, "-de", dsn, "-do", ses, "-mp", str(passes), "-inc", "GND"],
+                       check=True, timeout=timeout, stdout=log, stderr=subprocess.STDOUT, cwd=os.path.dirname(tp))
+    except subprocess.TimeoutExpired:
+        print("router timed out with no session saved"); return None
+    unrouted = open(tp).read(); b = pcbnew.LoadBoard(tp)
+    print("imported", kt.import_ses(b, ses)); save_board(tp, b)
+    nv, nu, _ = kt.drc(tp)
+    return nu, nv
+
+
 def route_trial(pcb, layers, timeout):
     """Copy of the placed board with this many copper layers (In1 = the ground plane), ground fanned out to it, the rest by
     Freerouting 1.9.0 (ground left to the plane): how much is left unrouted answers the layer count."""
@@ -637,7 +671,7 @@ def route_trial(pcb, layers, timeout):
     b.GetDesignSettings().SetCopperLayerCount(layers); b.SetLayerType(pcbnew.In1_Cu, pcbnew.LT_POWER)
     print(f"{layers} layers: ground vias (placed, no room):", fanout_gnd(b))
     save_board(tp, b)
-    res = kt.route(tp, FREEROUTING, passes=100, attempts=1, edge_inset=RULES["edge"] - 0.15 + 0.005, extra=("-inc", "GND"), timeout=timeout)
+    res = _route(tp, passes=int(os.environ.get("ROUTE_PASSES", "30")), timeout=timeout)
     b = pcbnew.LoadBoard(tp)
     nv = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
     ln = sum(pcbnew.ToMM(t.GetLength()) for t in b.GetTracks() if t.GetClass() != "PCB_VIA")
