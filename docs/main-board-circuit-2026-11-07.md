@@ -138,3 +138,18 @@ Picture: `docs/img/ring-lights-q35.png`. The model has 24 emitters on the main b
   in cut-outs; B keep the red VCSELs on the board's front in pockets under the race, with the race redrawn thicker (its floor under a
   ball is 1.0 mm, and the land was already flagged thin, design notes 2 Nov).
 - With A: the decoder, the shared current limit, the 12 VCSEL switches and 5 pins (VCSEL_A0-A3, LASER_EN) go; 23 pins spare.
+
+## The clear race, a closer look (8 Nov, after [Ed 13:00, 13:06])
+[Ed 13:06] "let's do the change, but make it wider where it can be ... have a little look before you run it." Pictures:
+`docs/img/race-section-v050.png` (the race now, cut through a ball), `docs/img/race-widen-proposal.png` (free space all round and
+the proposal). Studies: `tools/studies/race_section_sketch.py`, `race_envelope.py` (every part cut every 4° round the axis),
+`race_widen_sketch.py`.
+- **Now:** the clear race (the bottom track, part of the printed cradle) is a ring about 2.2 mm wide (r 18.75-20.93), floor 1.0 under
+  the groove, its tops at the groove edge about 0.05 thick and up to 0.06 under the knob. The knob's own track beside the ball is
+  0.10 / 0.11 a side (ring-gear teeth inside, the cap edge = glass OD outside).
+- **Taller, tried:** `build.py --set ot_land_min=2.0` (floor 2.0): 332 / 334 pass. The knob rises 1 mm, the idler pinions with it,
+  and their caps meet the control dial's detent arm (0.328 → 0, needs 0.3) and Hall arm (0.547 → 0). The detent arm has 0.028 mm
+  spare today, so the knob cannot rise unless the control dial rises with it (which lifts its Hall magnets off the TMAG5253s).
+- **Wider, proposed [A]:** foot r 17.5 → 21.2 (3.7 wide), top 0.3 under the knob (z 1.75), same groove and floor. Lips 1.33 inside,
+  0.36 outside. Measured clearances: encoder bearing 0.50, knob parts 0.32, case 0.32, clear OLED 0.42, the rest ≥ 0.52. Nothing else
+  moves. With the RGB recessed in the board, the floor can be solid (no hole over each light).
