@@ -550,7 +550,8 @@ def checks(pcb_path, fixed):
 
 # ------------------------------------------------------------------ routing trial (the layer-count question)
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-1.9.0.jar")
-CLASSES = [("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
+CLASSES = [("GND", 0.1, 0.25, ["GND"]),   # its own class so the router's -inc GND leaves ground to the planes and fanout vias
+           ("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
            ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
 
 
@@ -660,15 +661,42 @@ def _route(tp, passes, timeout):
     return nu, nv
 
 
+def trial_planes(tp, planes, log=print):
+    """Fill the trial's ground planes (In1, and In4 on the two-plane stack) over the whole board and count what is left, so ground
+    pads joined only through their vias read as joined."""
+    import re, kicad7_tools as kt
+    from collections import Counter
+    b = pcbnew.LoadBoard(tp); gnd = b.FindNet("GND")
+    for k in planes:
+        z = pcbnew.ZONE(b); z.SetLayer({1: pcbnew.In1_Cu, 2: pcbnew.In2_Cu, 3: pcbnew.In3_Cu, 4: pcbnew.In4_Cu}[k]); z.SetNet(gnd)
+        z.SetLocalClearance(mm(0.2)); z.SetMinThickness(mm(0.15)); z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+        ol = z.Outline(); ol.NewOutline()
+        for x, y in R["board"].exterior.coords:
+            ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
+        b.Add(z)
+    pcbnew.ZONE_FILLER(b).Fill(b.Zones()); save_board(tp, b)
+    nv, nu, txt = kt.drc(tp)
+    left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))
+    kinds = Counter(re.findall(r"^\[(\w+)\]", txt, re.M))
+    vias = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
+    log(f"with the planes: unconnected {nu}, violations {nv}, vias {vias}; {dict(kinds)}")
+    log("left: " + ", ".join(f"{n} {c}" for n, c in left.most_common()))
+    return nu, nv, vias, left
+
+
 def route_trial(pcb, layers, timeout):
     """Copy of the placed board with this many copper layers (In1 = the ground plane), ground fanned out to it, the rest by
     Freerouting 1.9.0 (ground left to the plane): how much is left unrouted answers the layer count."""
     import shutil, kicad7_tools as kt
-    d = os.path.join(OUT, f"trial{layers}"); os.makedirs(d, exist_ok=True)
+    planes = [int(v) for v in os.environ.get("PLANES", "1").split(",")]   # inner layers kept as ground planes (In1, In4 ...)
+    d = os.path.join(OUT, f"trial{layers}" + ("" if planes == [1] else "p" + "".join(map(str, planes)))); os.makedirs(d, exist_ok=True)
     tp = os.path.join(d, NAME + ".kicad_pcb")
     write_project(d, NAME, RULES, [(LIB, "${KIPRJMOD}/../../" + LIB + ".pretty")], CLASSES)
     b = pcbnew.LoadBoard(pcb)
-    b.GetDesignSettings().SetCopperLayerCount(layers); b.SetLayerType(pcbnew.In1_Cu, pcbnew.LT_POWER)
+    b.GetDesignSettings().SetCopperLayerCount(layers)
+    for k in planes:
+        b.SetLayerType({1: pcbnew.In1_Cu, 2: pcbnew.In2_Cu, 3: pcbnew.In3_Cu, 4: pcbnew.In4_Cu}[k], pcbnew.LT_POWER)
     print(f"{layers} layers: ground vias (placed, no room):", fanout_gnd(b))
     save_board(tp, b)
     res = _route(tp, passes=int(os.environ.get("ROUTE_PASSES", "30")), timeout=timeout)
@@ -676,6 +704,8 @@ def route_trial(pcb, layers, timeout):
     nv = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
     ln = sum(pcbnew.ToMM(t.GetLength()) for t in b.GetTracks() if t.GetClass() != "PCB_VIA")
     print(f"{layers} layers: unconnected {res[0][0] if isinstance(res[0], tuple) else res[0]}, result {res}, vias {nv}, track {ln:.0f} mm")
+    if res is not None:
+        trial_planes(tp, planes)
     return res
 
 
@@ -801,6 +831,10 @@ def main():
     R["board"], n_filled = clean_board()
     if a.targets:
         print("pin targets for", pin_targets(os.path.join(OUT, NAME + ".kicad_pcb"), design.build(), a.targets), "nets")
+        return
+    if os.environ.get("TRIAL_PLANES_ONLY"):   # fill the planes of a finished trial and count (TRIAL_PLANES_ONLY=<trial dir name>)
+        trial_planes(os.path.join(OUT, os.environ["TRIAL_PLANES_ONLY"], NAME + ".kicad_pcb"),
+                     [int(v) for v in os.environ.get("PLANES", "1").split(",")])
         return
     if a.trial:
         route_trial(os.path.join(OUT, NAME + ".kicad_pcb"), a.trial, a.timeout)

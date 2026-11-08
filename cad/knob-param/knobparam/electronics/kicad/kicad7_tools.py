@@ -161,7 +161,8 @@ def import_ses(board, ses_path):
     routes = next(_find(root, "routes"))
     res = float(next(_find(routes, "resolution"))[2])           # units per um
     k = 1.0 / res / 1000.0                                        # session units -> mm
-    layers = {"F.Cu": pcbnew.F_Cu, "B.Cu": pcbnew.B_Cu, "In1.Cu": pcbnew.In1_Cu, "In2.Cu": pcbnew.In2_Cu}   # 4-layer boards too
+    layers = {"F.Cu": pcbnew.F_Cu, "B.Cu": pcbnew.B_Cu, "In1.Cu": pcbnew.In1_Cu, "In2.Cu": pcbnew.In2_Cu,   # 4 and 6 layers
+              "In3.Cu": pcbnew.In3_Cu, "In4.Cu": pcbnew.In4_Cu}
     n_seg = n_via = 0
     for net in _find(next(_find(routes, "network_out")), "net"):
         ni = board.FindNet(net[1])
