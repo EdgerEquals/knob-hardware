@@ -12,6 +12,9 @@ every crossing between boards (link flex, 2x6 stacks, posts, rod), and the outsi
 frequencies set about 1-2 MHz and apart from each other and the boost's harmonics (values in step 3); the 1220's PWM at 100 kHz,
 the DRV8213's top [S]. The jack board's U6 is now TPS62933FDRLR (LCSC C5219272) in design.py and its generated files.
 **Q38 = A [Ed 16:04]:** two TPS62933F bucks on board L, both from 15 V. Next: Q40, then Q41.
+**Q40 = A [Ed 16:07]:** TI REF3430 (3.0 V) on VREF+. Jack lower board re-set in design.py: CV-in feedback 11.3k (was
+13.3k), audio-out gain 33.2k (was 30.1k), audio in x -0.28 (28.0k, 270 pF) round VMID, so the 10k/10k/1 µF bias divider is gone.
+Its generated schematic, board and BOM are regenerated after Q41 (which changes a flex pin). Next: Q41.
 
 ## Where we are, in one line
 Nothing is broken, but five things would show on a scope at the jacks: the switching regulators' light-load bursts, the ADC's
@@ -83,6 +86,12 @@ input ripple stays on board L and does not travel down the posts into the jack b
 3. **Q41** the ground-sense line: one of the flex's grounds (23, 24 or 25) becomes the jack board's analog ground, carried to an
    ADC pin and read alongside each CV in (the firmware subtracts it, or the ADC reads differentially where the pins allow) [A].
    Plus the stacks' sense ground from step 2.
+   **Q41 as asked (8 Nov, `docs/img/ground-sense-q41.png`):** A = flex pin 24 (between grounds 23 and 25) becomes AGND_SENSE,
+   taken at the CV-in op-amps' ground on the lower board, into a spare ADC2 pin on the main board (100 Ω + 1 nF, 1 MΩ to ground);
+   the H743 samples each CV in (ADC1) and the sense line (ADC2) together and subtracts; grounds 8 to 7 [A]. After Q40 1 mV between
+   the grounds is about 11 cents; likely 1-3 mV with the motor and ring busy [A: a few mΩ in the GND post, about 10 mΩ in the
+   flex's grounds]. B = leave it and measure on the first boards (a later fix needs a new flex pin-out). The stacks' sense ground
+   for the CV outs is checked next, with the stack pin list.
 Not proposed: isolating USB inside the module. With power on the same USB-C it needs an isolated 12 W converter as well as a USB
 isolator chip; there is no room for that in the jack unit [A]. An external USB isolator does the same job when a computer is used.
 

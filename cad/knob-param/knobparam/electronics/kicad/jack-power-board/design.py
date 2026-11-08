@@ -179,25 +179,28 @@ def build():
         R("120k 0.1%", f"CV{k}_S", f"CV{k}_N", f"jack{k}")
         C("47pF C0G", f"CV{k}_O", f"CV{k}_N", f"jack{k}")
         R("1.00k", f"CV{k}_O", f"CV{k}_S", f"jack{k}")
-    # audio out (OPA4197 D): the H7B0's DAC (0-3.3 V) AC-coupled, x -3.01 -> about ±5 V, 1k out [Q8, Q9]
-    C("1uF", "AOUT", "AO_C", "audio"); R("10.0k", "AO_C", "AO_N", "audio"); R("30.1k", "AO_O", "AO_N", "audio")
-    C("220pF C0G", "AO_O", "AO_N", "audio", note="24 kHz"); R("1.00k", "AO_O", "J4_TIP", "audio")
+    # audio out (OPA4197 D): the H743's DAC (0-3.0 V since Q40 = A, VREF+ = REF3430) AC-coupled, x -3.32 -> about ±5 V, 1k out
+    #   [Q8, Q9; Ed 8 Nov Q40 = A: 30.1k became 33.2k to keep 10 Vp-p]
+    C("1uF", "AOUT", "AO_C", "audio"); R("10.0k", "AO_C", "AO_N", "audio"); R("33.2k", "AO_O", "AO_N", "audio")
+    C("220pF C0G", "AO_O", "AO_N", "audio", note="22 kHz"); R("1.00k", "AO_O", "J4_TIP", "audio")
     part("U", "OPA4197IDR", "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm",
          {1: "CV1_O", 2: "CV1_N", 3: "VMID", 4: "P12V5", 5: "VMID", 6: "CV2_N", 7: "CV2_O", 8: "CV3_O", 9: "CV3_N", 10: "VMID",
           11: "N12V", 12: "GND", 13: "AO_N", 14: "AO_O"}, "jack circuits", lcsc="C2058532", mpn="OPA4197IDR", note="CV outs A-C, audio out D")
     C("100nF 25V", "P12V5", "GND", "jack circuits"); C("100nF 25V", "N12V", "GND", "jack circuits")
-    # CV inputs (TLV9064 A/B/C on 3.3 V): 100k in, x -0.133 + 1.619 V: ±12 V -> 3.21..0.02 V [parts doc: 100k, Rf about 13.7k]; 12 kHz
+    # CV inputs (TLV9064 A/B/C on 3.3 V): 100k in, x -0.113 + 1.590 V: ±12 V -> 2.95..0.23 V, inside the H743's 3.0 V reference
+    #   [Ed 8 Nov Q40 = A: 13.3k became 11.3k; 1 cent at the jack = 94 uV at the ADC]; 1 nF: 14 kHz
     for k in (1, 2, 3):
         R("100k", f"J{k}_TIP", f"CI{k}_N", f"jack{k}")
-        R("13.3k", f"CV_IN{k}", f"CI{k}_N", f"jack{k}")
+        R("11.3k", f"CV_IN{k}", f"CI{k}_N", f"jack{k}")
         C("1nF C0G", f"CV_IN{k}", f"CI{k}_N", f"jack{k}")
-    # audio in (TLV9064 D): ring, AC-coupled, x -0.33 about 1.65 V: ±5 V -> 3.3..0 V [Q8, Q9]; 22 kHz
+    # audio in (TLV9064 D): ring, AC-coupled, x -0.28 about VMID (1.4286 V): ±5 V -> 2.83..0.03 V, inside the 3.0 V reference
+    #   [Q8, Q9; Ed 8 Nov Q40 = A: 33.0k became 28.0k, and the bias is VMID (quiet, from the DAC's reference) instead of a 3.3 V
+    #   divider, so the 10k/10k/1uF bias parts are gone]; 270 pF: 21 kHz
     C("1uF 50V", "J4_RING", "AI_C", "audio", size="0603"); R("100k", "AI_C", "AI_N", "audio")
-    R("33.0k", "AIN", "AI_N", "audio"); C("220pF C0G", "AIN", "AI_N", "audio")
-    R("10.0k", "3V3", "ABIAS", "audio"); R("10.0k", "ABIAS", "GND", "audio"); C("1uF", "ABIAS", "GND", "audio")
+    R("28.0k", "AIN", "AI_N", "audio"); C("270pF C0G", "AIN", "AI_N", "audio")
     part("U", "TLV9064IPWR", "Package_SO:TSSOP-14_4.4x5mm_P0.65mm",
          {1: "CV_IN1", 2: "CI1_N", 3: "VMID", 4: "3V3", 5: "VMID", 6: "CI2_N", 7: "CV_IN2", 8: "CV_IN3", 9: "CI3_N", 10: "VMID",
-          11: "GND", 12: "ABIAS", 13: "AI_N", 14: "AIN"}, "jack circuits", lcsc="C779410", mpn="TLV9064IPWR", note="CV ins A-C, audio in D")
+          11: "GND", 12: "VMID", 13: "AI_N", 14: "AIN"}, "jack circuits", lcsc="C779410", mpn="TLV9064IPWR", note="CV ins A-C, audio in D")
     C("100nF", "3V3", "GND", "jack circuits")
     _B[0] = "upper"
     # MIDI out [Q2, Q7]: one UART TX into the three open-drain buffers; tip = pin 5 (sink, 10 R), ring = pin 4 (33 R to 3.3 V) [S CA-033]

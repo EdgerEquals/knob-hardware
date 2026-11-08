@@ -71,7 +71,8 @@ If A, the split I'd use [A, the best of every split of the netlist's blocks that
 - **CV out** (OPA4197 A-C on +12.5/-12 V): inverting, **Vout = 7 x VMID - 6 x Vdac: 0..2.5 V -> +10..-5 V** (20.0k in, 120k back,
   0.1 %) [A]; 1 kΩ inside the loop (feedback after it), 47 pF from the op-amp output to -in (split feedback for the switch + cable) [A].
   1 LSB = 0.23 mV ≈ 0.3 cent.
-- **CV in** (TLV9064 A-C on 3.3 V): 100k in, 13.3k + 1 nF back (12 kHz), +in at VMID: **±12 V -> 3.21..0.02 V** [A]; survives about
+- **CV in** (TLV9064 A-C on 3.3 V): 100k in, **11.3k** + 1 nF back (14 kHz), +in at VMID: **±12 V -> 2.95..0.23 V** [A; Ed 8 Nov
+  Q40 = A: inside the H743's 3.0 V reference; was 13.3k, 3.21..0.02 V]; survives about
   ±25 V (0.25 mA into the clamps). Always on the tip, so it reads back the output.
 - **Switches**: one **TMUX7212PWR** per switchable jack: SW1 CV drive -> tip, SW2 MIDI sink -> tip, SW3 MIDI source -> ring, SW4 spare
   (to ground). SEL high = closed, 4 MΩ pull-downs: all open at power-up [S].
@@ -79,8 +80,9 @@ If A, the split I'd use [A, the best of every split of the netlist's blocks that
   (pin 4) 33 Ω 0.5 W (1206) to 3.3 V.
 - **Ring sense**: 100k from the ring, 470k pull-up, BAV99 clamp to ground and 3.3 V (pin 1 A1, 2 K2, 3 common [S Nexperia]): open ring
   reads high, a mono plug reads 0.58 V (low). The expander's pins are not 12 V tolerant.
-- **Audio jack** [Q8, Q9]: out = the H7B0's DAC, 1 µF in, x -3.01 (10.0k/30.1k, 220 pF: 24 kHz), 1 kΩ out (OPA4197 D, +in to ground);
-  in = ring, 1 µF 50 V, 100k, x -0.33 (33k, 220 pF: 22 kHz) about 1.65 V (TLV9064 D).
+- **Audio jack** [Q8, Q9]: out = the H743's DAC (0-3.0 V since Q40), 1 µF in, x -3.32 (10.0k/33.2k, 220 pF: 22 kHz), 1 kΩ out
+  (OPA4197 D, +in to ground); in = ring, 1 µF 50 V, 100k, x -0.28 (28.0k, 270 pF: 21 kHz) about VMID (TLV9064 D): ±5 V ->
+  2.83..0.03 V [Ed 8 Nov Q40 = A; was x -3.01 out, x -0.33 in round a 3.3 V divider, now gone].
 - **Expander TCA9535PWR** at 0x20 [A]: P00-P10 the 9 switches, P11-P13 ring sense, P14 boost EN, P15 +12.5 EN, P16 -12 EN, P17 eFuse
   FLT. INT to the flex. I2C pull-ups 4.7k, INT 10k [A] (the HUSB238 needs them: none on its side [S]).
 

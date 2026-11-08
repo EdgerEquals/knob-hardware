@@ -52,7 +52,10 @@ catalogue number is assigned here. The main PCB was not edited.
   values with step 3. The 1220's PWM at 100 kHz.
 - **Q38 = A [Ed 16:04]:** board L makes 5 V and 3.3 V with two TPS62933F bucks, both straight from 15 V; the 3.3 V always on,
   the 5 V switched by the H743 (5V_EN). The motor's and the LEDs' noise on 5 V never rides into the 3.3 V.
-- Still to decide, one at a time: Q40 the ADC's reference, Q41 a ground-sense line on the flex.
+- **Q40 = A [Ed 16:07]:** the H743 measures against a **TI REF3430 3.0 V reference** on VREF+ (LCSC C2156866), not the
+  3.3 V supply. CV in reads ±12 V as 0.23-2.95 V (11.3k feedback); audio out x -3.32 (still ±5 V); audio in x -0.28 round VMID.
+  The firmware reads the 3.3 V through the VBAT channel to correct the Halls, ladder and NTC (they stay on the 3.3 V).
+- Still to decide: Q41 a ground-sense line on the flex.
 
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 

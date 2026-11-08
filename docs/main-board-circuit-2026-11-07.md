@@ -41,8 +41,10 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
   (the default on LQFP100).
 - **VDDA:** from 3.3 V through a ferrite bead (TAI-TECH **FCM1608KF-601T03**, the part AN4938 table 9 names; LCSC C141723; 600 Ω at
   100 MHz, 350 mA, 0.5 Ω [S]), then 1 µF + 100 nF [S AN4938 2.2].
-- **VREF+:** from VDDA through 47 Ω, with 1 µF + 100 nF [S AN4938 2.2]. [C] Whether the CV inputs want a precision reference
-  here instead (1 V/oct pitch CV): with the CV in circuit on the jack board, later.
+- **VREF+:** **TI REF3430IDBVR, 3.0 V** (LCSC C2156866; ±0.05 %, 6 ppm/°C, dropout 0.1 V max at no load [S TI]) from the 3.3 V,
+  with 1 µF + 100 nF at the pin [Ed 8 Nov Q40 = A, noise sweep; was VDDA through 47 Ω]. [C] the REF34's output-capacitor range.
+  The ADC and the DAC now span 0-3.0 V; the jack board's scaling is re-set to fit. The Halls, the switch ladder and the NTC stay
+  on the 3.3 V: the firmware reads the 3.3 V on the VBAT channel (VBAT tied to VDD) and corrects them [A].
 - **VBAT:** to VDD with 100 nF (no battery) [S AN4938 2.2, table 9].
 - **NRST:** 100 nF to ground (AN4938 figure 18 shows 100 nF in the reset circuit [S]); to the debug pads.
 - **BOOT0:** 10 kΩ to ground [S AN4938 table 9, "typical example"]; a test pad to pull it high for the ROM bootloader [A].
@@ -106,6 +108,7 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 | MCU | STM32H743VIT6 | C114409 | 1 |
 | Crystal | YXC X322525MOB4SI, 25 MHz 12 pF | C9006 | 1 |
 | Ferrite | TAI-TECH FCM1608KF-601T03 | C141723 | 1 |
+| Reference, 3.0 V | TI REF3430IDBVR (Q40 = A) | C2156866 | 1 |
 | Hall, linear | TI TMAG5253BA3IQDMRR | C22401868 | 4 |
 | Hall, 3D | TI TMAG5273A2QDBVR | C3715882 | 1 |
 | Encoder sensor | Omron EE-SX1321 | C469128 | 1 |
