@@ -12,15 +12,19 @@ Run with the system python that has pcbnew (KiCad 7.0.11):  /usr/bin/python3 mak
   J1-J4  Thonk PJ366ST at x -16.5, -5.8, +5.8, +16.5 [Q15, Q17]; J1-J3 switchable [Q1, Q2], J4 the audio jack: tip = audio out,
          ring = audio in [Q9, Q10]. Slots [S-lib: KiCad's PJ398SM footprint, which Thonk says the stereo shares; 4ms, GuavTek,
          westlicht, clacktronics, requencer]: T +4.92..+5.21 from the axis (1.43 wide), R -3.35..-3.38 (1.42), S -5.715..-6.48 (1.22);
-         0.35 ring. Sleeve = GND.
+         0.35 ring. Sleeve = QGND [Ed 8 Nov Q42 = A: the quiet ground, see below].
   P1-P8  Harwin P70-5100045 (LCSC C21675240; element14 2664891), SMD pad Ø1.2 [S-dist], at the USB-C board's landing pads.
   H1, H2 XFCN PZ127VS-12-12-H16-4.5-R (LCSC C2840009), 2x6 1.27 mm SMD male, pins along y at x ∓11.15 [v0.42, v0.46 A]; land
          pattern KiCad's PinHeader_2x06_P1.27mm_Vertical_SMD (KiCad library, CC-BY-SA 4.0 with the design exception) [C: check it
          against XFCN's drawing at the pre-quote]. 1 A a pin [S: JLCPCB listing; LCSC says 2 A]: VBUS on 4 pins, GND on 8.
 Header pinout [A] (panel view from the front; pins along y [v0.46]; each column top = nearer the jack tops); the power board's sockets
 mirror it:
-  H1 (x -11.15) inner column (x -9.2): J2_TIP GND J2_RING CC1 VBUS VBUS     outer (x -13.1): J1_TIP GND J1_RING GND GND GND
-  H2 (x +11.15) inner column (x +9.2): J3_TIP GND J3_RING CC2 VBUS VBUS     outer (x +13.1): J4_TIP GND J4_RING GND DP DN"""
+  H1 (x -11.15) inner column (x -9.2): J2_TIP QGND J2_RING CC1 VBUS VBUS    outer (x -13.1): J1_TIP GND J1_RING GND GND GND
+  H2 (x +11.15) inner column (x +9.2): J3_TIP QGND J3_RING CC2 VBUS VBUS    outer (x +13.1): J4_TIP GND J4_RING GND DP DN
+Two grounds [Ed 8 Nov Q42 = A, docs/noise-sweep-2026-11-08.md]: QGND (quiet) = the four sleeves and both copper pours, down two
+stack pins to the jack lower board's DAC and CV op-amps, where it meets GND at one point (a 0R there); GND (power) = the two USB-C
+GND contacts, routed 0.5 wide to six stack pins (the supply current's return; 0.75 A a pin at 3 A from a computer port, as VBUS).
+No supply current flows on this board's pours, so the sleeves sit at the CV circuits' ground."""
 import os, sys, subprocess, json
 import pcbnew
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,9 +41,9 @@ LIB = "jackb"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BT = 1.6
 RULES = dict(clearance=0.1, track=0.2, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.25)   # PCBWay standard 4/4 mil, 0.2 drill
-ROUTE_CLASSES = [("Power", 0.2, 0.5, ["VBUS"])]   # VBUS routed 0.5 wide, 0.2 clear; the rest (GND too: its sleeve pads leave the tongues past the ring pads, about 0.6 between pad and edge) at 0.2 wide, 0.15 clear
+ROUTE_CLASSES = [("Power", 0.2, 0.5, ["VBUS", "GND"])]   # VBUS routed 0.5 wide, 0.2 clear; the rest (GND too: its sleeve pads leave the tongues past the ring pads, about 0.6 between pad and edge) at 0.2 wide, 0.15 clear
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-2.1.0.jar")
-WIDTHS = {"default": 0.2, "VBUS": 0.5, "GND": 0.4}   # grid router: signals 0.2, VBUS 0.5 (1.5 A a side), GND 0.4 (plus the pours)
+WIDTHS = {"default": 0.2, "VBUS": 0.5, "GND": 0.5, "QGND": 0.4}   # grid router: signals 0.2, VBUS 0.5 (1.5 A a side), GND 0.4 (plus the pours)
 ROUTE_CLEARANCE = 0.15
 
 # ---- numbers from the model (case/params.py, v0.43); check_cad.py compares them with the model ----
@@ -58,8 +62,8 @@ TAB = (5.85, -53.90)                         # [Q16]
 CONTACTS = [("15V_1", "VBUS", -0.8, -51.4), ("15V_2", "VBUS", 0.8, -51.4), ("GND_1", "GND", -0.8, -53.0), ("GND_2", "GND", 0.8, -53.0),
             ("DP", "DP", -4.0, -51.4), ("DN", "DN", 4.0, -51.4), ("CC1", "CC1", -5.0, -53.0), ("CC2", "CC2", 5.0, -53.0)]
 HDR_X, HDR_Y = 11.15, (JY + BODY_Y[0] + JY + BODY_Y[1]) / 2
-HDR_NETS = {"H1": (["J2_TIP", "GND", "J2_RING", "CC1", "VBUS", "VBUS"], ["J1_TIP", "GND", "J1_RING", "GND", "GND", "GND"]),
-            "H2": (["J3_TIP", "GND", "J3_RING", "CC2", "VBUS", "VBUS"], ["J4_TIP", "GND", "J4_RING", "GND", "DP", "DN"])}
+HDR_NETS = {"H1": (["J2_TIP", "QGND", "J2_RING", "CC1", "VBUS", "VBUS"], ["J1_TIP", "GND", "J1_RING", "GND", "GND", "GND"]),
+            "H2": (["J3_TIP", "QGND", "J3_RING", "CC2", "VBUS", "VBUS"], ["J4_TIP", "GND", "J4_RING", "GND", "DP", "DN"])}
 # (inner column = nearer x 0, outer column; each top (jack tops) to bottom (the tab))
 
 
@@ -123,7 +127,7 @@ def comps(hdr_nets):
         role = "audio: tip out, ring in" if i == 4 else "switchable"
         out.append(dict(ref=f"J{i}", sym="PJ366ST", value="PJ366ST", fp="PJ366ST_Slots", pos=kc(jx, JY), rot=0, side="F",
                         pins=[("T", "TIP", "passive", "L"), ("R", "RING", "passive", "L"), ("S", "SLEEVE", "passive", "R")],
-                        nets={"T": f"J{i}_TIP", "R": f"J{i}_RING", "S": "GND"},
+                        nets={"T": f"J{i}_TIP", "R": f"J{i}_RING", "S": "QGND"},
                         fields={"MPN": "PJ366ST", "Manufacturer": "Thonk", "Note": role}))
     for i, (nm, net, px, py) in enumerate(CONTACTS, 1):
         out.append(dict(ref=f"P{i}", sym="SpringContact", value="P70-5100045", fp="Harwin_P70-5100045", pos=kc(px, py), rot=0, side="F",
@@ -237,7 +241,7 @@ def build():
 
 def add_gnd_zones(pcb_path):
     b = pcbnew.LoadBoard(pcb_path)
-    gnd = b.FindNet("GND")
+    gnd = b.FindNet("QGND")   # [Q42 = A] the pours are the quiet ground (the sleeves); GND is routed
     pts = [kc(x, y) for x, y in outline()]
     for layer in (pcbnew.F_Cu, pcbnew.B_Cu):
         z = pcbnew.ZONE(b); z.SetLayer(layer); z.SetNet(gnd)

@@ -94,8 +94,8 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 1 SCK, 2 GND, 3 MOSI, 4 CS_DAC, 5 CS_OLED, 6 OLED_DC, 7 OLED_RES, 8 SCL, 9 SDA, 10 IO_INT, 11 MIDI_TX, 12 GND, 13 D+, 14 D-, 15 GND,
 16-18 CV_IN1-3, 19 GND, 20 AOUT, 21 GND, 22 AIN, 23 GND, **24 AGND_SENSE**, 25 GND [S jack board circuit, 6 Nov; pin 24 Ed 8 Nov
 Q41 = A].
-- **AGND_SENSE** (pin 24): the jack lower board's analog ground, tied there at one point (a 0R at its TLV9064) and carrying no
-  current. At the H743: 100 Ω + 1 nF C0G to ground like the other ADC pins, and 1 MΩ to ground so it reads 0 with the flex out [A].
+- **AGND_SENSE** (pin 24): the jack unit's quiet ground QGND (the sleeves and the CV circuits' ground, Q42 = A), joined to its power
+  ground at one 0R on the jack lower board and carrying no current. At the H743: 100 Ω + 1 nF C0G to ground like the other ADC pins, and 1 MΩ to ground so it reads 0 with the flex out [A].
   Firmware: ADC1 (CV in / audio in) and ADC2 (AGND_SENSE) in dual simultaneous mode, difference taken per sample [A].
 - SCK and MOSI: 33 Ω in series at the H743 [A]. CS, D/C, RES straight.
 - I2C: the 4.7 kΩ pull-ups and IO_INT's 10 kΩ are on the jack board already [S]; the main board keeps pull-up pads **not fitted**

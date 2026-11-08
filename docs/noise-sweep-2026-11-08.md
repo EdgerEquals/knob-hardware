@@ -99,6 +99,19 @@ input ripple stays on board L and does not travel down the posts into the jack b
 Not proposed: isolating USB inside the module. With power on the same USB-C it needs an isolated 12 W converter as well as a USB
 isolator chip; there is no room for that in the jack unit [A]. An external USB isolator does the same job when a computer is used.
 
+## Q42 = A [Ed 16:35]: two grounds in the jack unit (the rearrangement below)
+As built into the netlists (8 Nov):
+- **QGND (quiet):** the four sleeves and both copper pours of the jack board; first stacks H1 inner 2 and H2 inner 2 (2 pins: no
+  current, two so one bad contact never leaves the sleeves floating); a track through the upper board; second stacks left inner 6
+  and right outer 3; on the lower board the DAC (GND, LDAC, pad), its REF and supply caps, VMID's 100k and 1 µF, the audio
+  output's + input; link flex pin 24 (read as AGND_SENSE on the main board).
+- **GND (power):** the USB-C GND contacts routed 0.5 wide to six first-stack pins (H1 outer 2, 4, 5, 6; H2 outer 2, 4; 0.75 A a pin
+  at 3 A, as VBUS), second stacks right outer 6, the rest of the lower board, the posts, the flex's other six grounds.
+- **One join:** the 0R (R41) from QGND to GND on the lower board. [A] its exact place is not critical: only the DAC's own steady
+  supply current (about a milliamp) flows between it and the DAC.
+- Refined from the picture as first shown (4 quiet + 4 power, 1 quiet + 2 power) [A]: the quiet ground carries no current, so it
+  needs few pins, and the power side gets the rest (more margin).
+
 ## Q42: the sleeves' ground and the lower board's ground (found while doing Q41)
 Picture: `docs/img/sleeve-sense-q42.png`. A CV is tip minus sleeve. The sleeves (and the USB-C power contacts) are on the jack
 board; the DAC and the CV op-amps are on the jack lower board, two stacks down. The first stacks carry the whole module's current on

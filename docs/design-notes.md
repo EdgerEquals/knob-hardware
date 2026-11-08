@@ -57,6 +57,10 @@ catalogue number is assigned here. The main PCB was not edited.
   The firmware reads the 3.3 V through the VBAT channel to correct the Halls, ladder and NTC (they stay on the 3.3 V).
 - **Q41 = A [Ed 16:11]:** link flex pin 24 is **AGND_SENSE**, the jack lower board's analog ground (one 0R tie at its TLV9064),
   read by the H743's ADC2 at the same instant as ADC1 reads a CV in or the audio in, and subtracted. Flex grounds 8 → 7.
+- **Q42 = A [Ed 16:35, "remove or rearrange things so that we don't have the problem"]:** the jack unit has two grounds.
+  **QGND** (the sleeves, the DAC, its reference and VMID, the audio output's reference) runs on its own stack pins (2 in the
+  first stacks, 2 in the second) and meets **GND** (USB-C, eFuse, posts, boost, OLED, flex) at one 0R on the lower board, so no
+  supply current flows between the sleeves and the CV circuits. Flex pin 24 carries QGND (Q41's sense line). No parts added.
 
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 

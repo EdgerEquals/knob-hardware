@@ -50,10 +50,11 @@ def build():
     _B[0] = "lower"
     # link flex: Hirose FH26W-25S-0.3SHW(60), 25 positions at 0.3 [Q11: 17 signals + 7 grounds; the 25th a ground] [A order: SCK at the
     # far edge, grounds either side of the USB pair, the CV inputs and the audio]
-    # pin 24 = AGND_SENSE [Ed 8 Nov Q41 = A]: this board's analog ground, tied to GND at one point (R 0R at the TLV9064) and carrying
-    # no current, so the H743 reads the ground the CV ins are made on and subtracts it (docs/noise-sweep-2026-11-08.md)
+    # pin 24 = QGND [Ed 8 Nov Q41 = A, Q42 = A]: the quiet ground (the sleeves, the DAC, the CV references), which meets GND at one
+    # point (the 0R at the DAC) and carries no current up the flex, so the H743 reads it as AGND_SENSE and subtracts it from the CV ins
+    # and the audio in (docs/noise-sweep-2026-11-08.md)
     LINK = ["SCK", "GND", "MOSI", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES", "SCL", "SDA", "IO_INT", "MIDI_TX", "GND", "DP", "DN", "GND",
-            "CV_IN1", "CV_IN2", "CV_IN3", "GND", "AOUT", "GND", "AIN", "GND", "AGND_SENSE", "GND"]
+            "CV_IN1", "CV_IN2", "CV_IN3", "GND", "AOUT", "GND", "AIN", "GND", "QGND", "GND"]
     part("J", "FH26W-25S-0.3SHW(60)", "jpb:Hirose_FH26W-25S-0.3SHW", {i + 1: n for i, n in enumerate(LINK)}, "connectors",
          lcsc="C2904698", mpn="FH26W-25S-0.3SHW(60)", note="link flex to the main board [Q11]", ref="J6")
     _B[0] = "upper"
@@ -164,16 +165,18 @@ def build():
     # DAC80504 (RTE): 3 CV channels + 1 spare; 0-2.5 V: internal 2.5 V reference divided by 2 (REFDIV high, required below VDD 3.3 V)
     # and gain 2 (GAIN high) [S]; resets to midscale (RSTSEL high: the outputs read +2.5 V, the switches are open anyway); LDAC low
     # (each write updates at once); SDO not used.
+    # [Ed 8 Nov Q42 = A] the DAC, its reference and decoupling, VMID and the audio output's reference sit on QGND, the quiet ground
+    # shared with the jack sleeves; QGND meets GND only at the 0R beside the DAC (below), so no supply current flows in it
     part("U", "DAC80504RTET", "Package_DFN_QFN:QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm",
-         {1: "VREF", 2: "DAC1", 3: "DAC2", 4: "DAC3", 5: None, 6: "GND", 7: "3V3", 8: "3V3", 9: "3V3", 10: "3V3", 11: "GND",
-          12: "CS_DAC", 13: "SCK", 14: "MOSI", 15: None, 16: "3V3", 17: "GND"}, "dac", lcsc="C2862796", mpn="DAC80504RTET",
+         {1: "VREF", 2: "DAC1", 3: "DAC2", 4: "DAC3", 5: None, 6: "QGND", 7: "3V3", 8: "3V3", 9: "3V3", 10: "3V3", 11: "QGND",
+          12: "CS_DAC", 13: "SCK", 14: "MOSI", 15: None, 16: "3V3", 17: "QGND"}, "dac", lcsc="C2862796", mpn="DAC80504RTET",
          note="1 REF, 2-5 OUT0-3, 6 GND, 7 VDD, 8 GAIN, 9 RSTSEL, 10 REFDIV, 11 LDAC, 12 CS, 13 SCLK, 14 SDI, 15 SDO, 16 VIO, pad GND [S]",
          names={1: "REF", 2: "OUT0", 3: "OUT1", 4: "OUT2", 5: "OUT3", 6: "GND", 7: "VDD", 8: "GAIN", 9: "RSTSEL", 10: "REFDIV",
                 11: "LDAC", 12: "CS", 13: "SCLK", 14: "SDI", 15: "SDO", 16: "VIO", 17: "EP"})
-    C("220nF", "VREF", "GND", "dac", note="REF: 150 nF minimum [S]"); C("1uF", "3V3", "GND", "dac"); C("100nF", "3V3", "GND", "dac")
-    C("100nF", "3V3", "GND", "dac", note="VIO")
+    C("220nF", "VREF", "QGND", "dac", note="REF: 150 nF minimum [S]"); C("1uF", "3V3", "QGND", "dac"); C("100nF", "3V3", "QGND", "dac")
+    C("100nF", "3V3", "QGND", "dac", note="VIO")
     # VMID = VREF x 100/175 = 1.4286 V: the bias for the three CV output stages and the three CV input stages [A]; 14 uA from REF
-    R("75.0k 0.1%", "VREF", "VMID", "dac"); R("100k 0.1%", "VMID", "GND", "dac"); C("1uF", "VMID", "GND", "dac")
+    R("75.0k 0.1%", "VREF", "VMID", "dac"); R("100k 0.1%", "VMID", "QGND", "dac"); C("1uF", "VMID", "QGND", "dac")
     # CV outputs (OPA4197 A/B/C): inverting, Vout = 7 x VMID - 6 x Vdac: DAC 0..2.5 V -> +10..-5 V [A]; 1k inside the loop
     # (feedback taken after it) with Cf from the op-amp output to -in [parts doc: split feedback]; switch after it, outside the loop
     for k in (1, 2, 3):
@@ -187,7 +190,7 @@ def build():
     C("220pF C0G", "AO_O", "AO_N", "audio", note="22 kHz"); R("1.00k", "AO_O", "J4_TIP", "audio")
     part("U", "OPA4197IDR", "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm",
          {1: "CV1_O", 2: "CV1_N", 3: "VMID", 4: "P12V5", 5: "VMID", 6: "CV2_N", 7: "CV2_O", 8: "CV3_O", 9: "CV3_N", 10: "VMID",
-          11: "N12V", 12: "GND", 13: "AO_N", 14: "AO_O"}, "jack circuits", lcsc="C2058532", mpn="OPA4197IDR", note="CV outs A-C, audio out D")
+          11: "N12V", 12: "QGND", 13: "AO_N", 14: "AO_O"}, "jack circuits", lcsc="C2058532", mpn="OPA4197IDR", note="CV outs A-C, audio out D")
     C("100nF 25V", "P12V5", "GND", "jack circuits"); C("100nF 25V", "N12V", "GND", "jack circuits")
     # CV inputs (TLV9064 A/B/C on 3.3 V): 100k in, x -0.113 + 1.590 V: ±12 V -> 2.95..0.23 V, inside the H743's 3.0 V reference
     #   [Ed 8 Nov Q40 = A: 13.3k became 11.3k; 1 cent at the jack = 94 uV at the ADC]; 1 nF: 14 kHz
@@ -200,9 +203,10 @@ def build():
     #   divider, so the 10k/10k/1uF bias parts are gone]; 270 pF: 21 kHz
     C("1uF 50V", "J4_RING", "AI_C", "audio", size="0603"); R("100k", "AI_C", "AI_N", "audio")
     R("28.0k", "AIN", "AI_N", "audio"); C("270pF C0G", "AIN", "AI_N", "audio")
-    # the ground-sense tie [Q41 = A]: 0R from AGND_SENSE (flex pin 24) to GND, in the first old bias resistor's place (same ref, so the
-    # saved placement holds); the other two old refs are skipped so every later ref, and its saved place, stays as it was
-    R("0R", "AGND_SENSE", "GND", "audio", note="single-point tie of the ground-sense line, at the CV-in op-amp [Q41]")
+    # the one join of the two grounds [Q42 = A; was Q41's ground-sense tie]: 0R from QGND to GND, in the first old bias resistor's ref
+    # (the other two old refs are skipped so every later ref stays as it was), where the saved placement has it [A: its exact place is
+    # not critical; only the DAC's own steady supply current (about a milliamp) flows between it and the DAC: microvolts, calibrated out]
+    R("0R", "QGND", "GND", "dac", note="the only join of QGND and GND [Q42]")
     _ref("R"); _ref("C")
     part("U", "TLV9064IPWR", "Package_SO:TSSOP-14_4.4x5mm_P0.65mm",
          {1: "CV_IN1", 2: "CI1_N", 3: "VMID", 4: "3V3", 5: "VMID", 6: "CI2_N", 7: "CV_IN2", 8: "CV_IN3", 9: "CI3_N", 10: "VMID",
@@ -269,8 +273,10 @@ def build():
 
 # the second stacks' pinout [A]: (inner column, outer column), each top to bottom. Power and the left jacks on the left; the I2C, MIDI,
 # USB data and the right jacks on the right (the link flex connector is at x +14.1 on the lower board).
-STACK2 = {"left": (["CV2_S", "J2_TIP", "3V3", "P12V5", "N12V", "GND"], ["CV1_S", "J1_TIP", "BOOST_EN", "BOOST", "VNEG_RAW", "VSYS"]),
-          "right": (["CV3_S", "J3_TIP", "MIDI_TX", "IO_INT", "SCL", "SDA"], ["J4_TIP", "J4_RING", "GND", "DP", "DN", "GND"])}
+# [Ed 8 Nov Q42 = A] two of the three grounds carry QGND (the quiet ground: no current, two pins so one bad contact never leaves the
+# sleeves floating); GND keeps one here and the link flex's seven in parallel through the main board.
+STACK2 = {"left": (["CV2_S", "J2_TIP", "3V3", "P12V5", "N12V", "QGND"], ["CV1_S", "J1_TIP", "BOOST_EN", "BOOST", "VNEG_RAW", "VSYS"]),
+          "right": (["CV3_S", "J3_TIP", "MIDI_TX", "IO_INT", "SCL", "SDA"], ["J4_TIP", "J4_RING", "QGND", "DP", "DN", "GND"])}
 
 
 if __name__ == "__main__":

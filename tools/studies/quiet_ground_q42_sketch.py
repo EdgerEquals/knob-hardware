@@ -31,14 +31,14 @@ board(2, 38, 66, 16, "JACK POWER BOARD (upper)", [(2, 2, 26, 7, "switches, MIDI,
 board(2, 6, 66, 18, "JACK LOWER BOARD", [(2, 2, 28, 9, "DAC, CV-out + CV-in op-amps,\naudio stages", "#c8e6c9"),
                                           (36, 2, 26, 9, "boost, charge pump,\nclear OLED, link flex", "#ffcdd2")])
 # stacks: quiet pins (green) on the left of each pair, power pins (red) on the right
-for x, col, lab in ((14, QUIET, "4 quiet"), (50, PWR, "4 power")):
+for x, col, lab in ((14, QUIET, "2 quiet"), (50, PWR, "6 power")):
     ax.plot([x, x], [55, 65.5], color=col, lw=6, solid_capstyle="butt")
     ax.text(x + 1.5, 60, lab, fontsize=8.4, color=col, weight="bold", va="center")
-for x, col, lab in ((14, QUIET, "1 quiet"), (50, PWR, "2 power")):
+for x, col, lab in ((14, QUIET, "2 quiet"), (50, PWR, "1 power\n(+ the flex's 7\nvia the main board)")):
     ax.plot([x, x], [25, 37.5], color=col, lw=6, solid_capstyle="butt")
     ax.text(x + 1.5, 31, lab, fontsize=8.4, color=col, weight="bold", va="center")
-ax.text(70.5, 60, "first stacks: 8 grounds today\n→ 4 quiet + 4 power (the power 4 sit\nbeside the 4 VBUS pins; 1 A a pin)", fontsize=8.4, va="center")
-ax.text(70.5, 31, "second stacks: 3 grounds today\n→ 1 quiet + 2 power", fontsize=8.4, va="center")
+ax.text(70.5, 60, "first stacks: 8 grounds today\n→ 2 quiet + 6 power [Ed Q42 = A]\n(no current in the quiet: 2 for\nredundancy; 0.75 A a power pin at 3 A)", fontsize=8.4, va="center")
+ax.text(70.5, 31, "second stacks: 3 grounds today\n→ 2 quiet + 1 power", fontsize=8.4, va="center")
 ax.plot([32.6], [12.5], marker="*", ms=18, color="#f9a825", mec="#333")
 ax.text(33.2, 20.2, "the one join (Q41's 0R, moved here)", fontsize=8, ha="center", color="#6d4c41")
 ax.text(70.5, 72, "supply current: USB-C → the power pins\n→ eFuse → posts → main board", fontsize=8.4, color=PWR, va="center")
@@ -62,8 +62,8 @@ lines = [("Quiet ground: the sleeves, the DAC, the op-amps and their", None),
          ("", None),
          ("Cost: the three jack boards re-laid out (two ground nets on the", "#c62828"),
          ("jack board, a quiet track through the upper board, the lower", "#c62828"),
-         ("board's ground layer split in two). Margin on the power pins:", "#c62828"),
-         ("4 pins at 1 A each for up to 3 A from a computer port.", "#c62828")]
+         ("board's quiet parts on their own net). Margin on the power pins:", "#c62828"),
+         ("6 pins, 0.75 A a pin at 3 A from a computer port, as VBUS.", "#c62828")]
 for k, (t, c) in enumerate(lines):
     ax.text(x0, 78 - k * 3.75, t, fontsize=9, color=c or "#222")
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else "quiet-ground-q42.png")
