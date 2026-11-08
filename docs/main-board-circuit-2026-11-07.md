@@ -183,3 +183,11 @@ under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). 
     knob and the violet source"; the grey PA-12 dial under it needs a window or a clear section (optics round). The dial's own chip
     drives it.
 - **Q36 (open):** A or B. Open after that: whether the 12 old VCSEL sites become RGB (24 in the ring) or close.
+- **[Ed 13:51] Q36 = B, as the power light** ("we could have it as the power LED; we have a laser instead"). One red VCSEL
+  (JNJ-V-2835CW-665003-S-D1) on the main board front at about (1.3, 26.5) [A, set in placement]: 12 o'clock above the knob, about
+  5.5 mm outside the knob's edge, between the knob and the joystick. Straight up, nothing opaque meets the beam; the clear case is
+  solid over it from z 29.8 to 38.8 (the faceplate between the knob hole and the joystick opening) [model column check]. About 39 mm
+  from the VCSEL to the panel front; at the JNJ sheet's 20° divergence that is a spot about 12 mm across at the case's underside [A].
+  So the dot needs a target: a small frosted (matte) disc printed on the case's inside face over it [A, case print feature], and a
+  low current (just over the 4 mA threshold, PWM) for a power light. Drive: one GPIO and one transistor; the decoder and LASER_EN
+  go (5 pins → 1).
