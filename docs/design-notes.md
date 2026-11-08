@@ -41,6 +41,22 @@ mating pin (25.91 mm) enters the 11 mm H11 socket by 4.45 mm at a 35 mm riser, w
 window, and by 11.63 mm at 27.82 mm, which is not. The 35 mm body and the -20 pin are a pair. No replacement
 catalogue number is assigned here. The main PCB was not edited.
 
+## Thrust race v0.51 (Ed, 8 Nov 2026)
+
+Supersedes the Ø2 figures below. [Ed 13:18 / 13:26] smaller balls, since all three kinds are sold at the smaller size, and the clear
+race widened into the room it has (studies: `tools/studies/race_envelope.py`, `race_widen_sketch.py`; pictures
+`docs/img/race-section-v050.png` → `race-section-v051.png`, `race-widen-proposal.png`).
+- **Balls:** 40 load balls Ø1.5 316 stainless (123bearing BA-1.50-316-INOX [S]), 4 Grade 25 ruby Ø1.5 (Thermo Scientific via Fisher,
+  US$66.50 / 5 [S]), 44 glass spacers Cospheric precision soda-lime 1.21 ±0.02 (1 g ≈ 400, US$282.08 [S]). Precision glass now:
+  at this size sieved glass will not hold the window. 44 pairs on r 19.84.
+- **Knob's track** (the cap groove): 0.35 / 0.36 a side beside the groove (was 0.10 / 0.11).
+- **Clear race** (bottom track, in the cradle): floor under the groove **1.20** (was 1.00; the ball sits lower and the knob drops
+  0.05). Foot **r 17.5-21.2** (3.7 wide, was 2.2), flat top 0.3 under the knob instead of knife edges up to the ball equator.
+  Nearest: encoder bearing 0.50, knob parts and case 0.32, clear OLED 0.38.
+- Tried and not taken: a 2 mm floor with Ø2 balls. The knob would rise 1 mm and the idler caps meet the control dial's detent arm
+  (0.028 mm spare); it would need the control dial raised too.
+- Checks v0.51: 334 / 334, 0 unexpected clashes. Race web beside the two pin holes 0.24 → 0.99; detent arm slack 0.328 → 0.377.
+
 ## Bottom thrust land (Ed, 1 Nov 2026)
 
 The face under the Ø2 load balls is clear resin (UTR-8100), not an insert, so the laser still comes up through it.

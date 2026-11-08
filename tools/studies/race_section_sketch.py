@@ -12,7 +12,7 @@ from knobparam.assembly.build import build_all
 
 D = model.derive(model.default_params())
 parts, _, _, owner = build_all(D)
-balls = parts["outer thrust load balls 30 x Ø2"]
+balls = next(s for n, s in parts.items() if n.startswith("outer thrust load balls"))
 c = balls.solids()[0].center()
 th = math.atan2(c.Y, c.X)
 u = (math.cos(th), math.sin(th))

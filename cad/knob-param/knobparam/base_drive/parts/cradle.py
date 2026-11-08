@@ -38,10 +38,11 @@ def _breakout_relief(D, cx, cy, hole_r):
 
 def _thrust_track(D):
     """Bottom track only: clear resin (UTR-8100) annulus and groove, so the laser still comes up through ot_land_th.
-    It stops at the ball equator, so it does not cage the balls."""
-    r0 = D["ot_r"] - D["ot_rg"] - D["ot_seat_gap"]
-    r1 = D["ot_r"] + D["ot_rg"] + D["ot_seat_gap"]
-    z1 = D["ot_z"] - D["ot_seat_gap"]
+    v0.51 [Ed 8 Nov]: a wider foot (ot_foot_ri..ot_foot_ro, into the free space all round) and a flat top ot_axial_gap under the
+    knob's underside, instead of knife edges up to the ball equator. It does not cage the balls."""
+    r0 = min(D["ot_r"] - D["ot_rg"] - D["ot_seat_gap"], D["ot_foot_ri"])
+    r1 = max(D["ot_r"] + D["ot_rg"] + D["ot_seat_gap"], D["ot_foot_ro"])
+    z1 = min(D["ot_z"] - D["ot_seat_gap"], D.get("h_skirt0", D["ot_z"]) - D["ot_axial_gap"])
     if z1 <= 0.3 or r1 <= r0 + 0.2:
         return None
     fl = cyl(r1, 0, z1) - cyl(max(r0, 0.2), -0.05, z1 + 0.1)
@@ -107,7 +108,7 @@ def build(D):
     fl = _thrust_track(D)
     if fl is not None: c += fl
     blank = _thrust_blank(D)
-    c = c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"]), -0.01, D["z_top"])
+    c = c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"], D["ot_foot_ro"]), -0.01, D["z_top"])
     # Flat race: a light bore at every emitter, no pocket. Two bores grow a hollow pin down into the PCB hole.
     for h in D["em_holes"]:
         c -= cyl(D["em_ap"] / 2, -0.02, D["ot_land_th"] + 0.05, h["x"], h["y"])

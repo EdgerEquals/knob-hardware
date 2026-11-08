@@ -166,3 +166,6 @@ the proposal). Studies: `tools/studies/race_section_sketch.py`, `race_envelope.p
   The knob's side walls 0.10 → 0.35 a side; the clear floor 1.0 → 1.2 (the ball sits lower, the knob drops 0.05); the detent arm's
   slack 0.328 → 0.377. The one fail: "race web beside a pin hole" (-0.006, needs 0.05): the two Ø1.71 locating pins no longer fit in
   the narrower ring. The wider foot (r 17.5-21.2) fixes it.
+
+**[Ed 13:26 "Yes"] done in the model as v0.51**: Ø1.5 balls (40 + 4 ruby), 1.21 glass, clear race foot r 17.5-21.2 with its top 0.3
+under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). Q35 (the red VCSELs) is still open.

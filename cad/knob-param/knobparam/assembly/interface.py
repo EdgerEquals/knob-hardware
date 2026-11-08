@@ -243,19 +243,21 @@ P = dict(
     ha_rib_E=1700.0,   # [Ed] PA12 Young's modulus, N/mm² (1.7 GPa)
     ha_rib_defl=0.07,   # [Ed] mm, max in-plane deflection at ha_rib_rload
     # ---- outer thrust [Ed]: cageless, tracks only. Load balls Ø2 stainless; cheap glass spacers 1.5–1.6 ----
-    ot_ball_d=2.0,   # [Ed] load ball, 316 or 440C stainless
-    ot_spacer_min=1.5,   # [Ed] cheap loose glass, small end of the sieve (Cospheric P-BSGS 1.50 is the stock floor)
-    ot_spacer_max=1.6,   # [Ed] large end. 1.588 is the other stock size and still sits inside this window
-    ot_spacer_alt=1.588,   # [Ed] alternate stock glass, checked but not the modelled size
+    ot_ball_d=1.5,   # [Ed 8 Nov 13:26] load ball, 316 stainless (was Ø2): the knob-side walls 0.10 -> 0.35 a side, the clear floor 1.0 -> 1.2
+    ot_spacer_min=1.19,   # [Ed 8 Nov] precision glass, Cospheric soda-lime 1.21 ±0.02 [S] (the small balls need precision glass, not sieved)
+    ot_spacer_max=1.23,   # [Ed 8 Nov] large end of that tolerance
+    ot_spacer_alt=1.21,   # [S] the nominal size, checked but not the modelled size
     ot_play=0.03,   # [A] extra chord at the LARGE spacer so it cannot jam
     ot_play_max=0.12,   # [A] largest chord gap still called "touching" at the SMALL spacer
     ot_ruby_n=4,   # [Ed] synthetic ruby accents, same diameter as the load balls
-    ot_ruby_d=2.0,   # [Ed] ruby diameter (2.0 carries load; set equal to the spacer to accent a spacer)
+    ot_ruby_d=1.5,   # [Ed 8 Nov] Grade 25 ruby Ø1.5 (Thermo Scientific via Fisher [S]); equal to the load ball, so it carries load
     ot_seat_gap=0.05,   # [A] groove radius over the load-ball radius
     ot_land_min=1.0,   # [Ed] clear resin under the bottom track (groove bottom to the PCB front). The laser comes up through it; not a metal insert.
     ot_blank_clear=0.15,   # [A] keep-out blank stays this far off the ball, top and bottom
     ot_track_extra=0.4,   # [A] bottom track annulus past the groove, each side
     ot_axial_gap=0.30,   # [A] bottom track stays this far under the knob face if it would otherwise meet it
+    ot_foot_ri=17.5,   # [Ed 8 Nov 13:06 "wider where it can be"; A] clear race foot, inner radius: 0.5 off the encoder bearing, under the ring gear
+    ot_foot_ro=21.2,   # [A] clear race foot, outer radius: 0.3 off the case (its nearest fixed part out there, r 21.51)
     ot_keep_ang=None,   # [Ed 2 Nov] no keep-out: the 716 driver (U20, C20–C22) moved inboard, so the ball ring closes and the
                         # 24 emitters sit every 15°. v0.19: (124.0, 137.0) with a printed blank in the gap
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
@@ -813,8 +815,8 @@ def _place_emitters(D):
     D["em_holes"] = holes
     D["em_pkg_min"] = min(vx, vy, rx, ry)
     D["em_reverse"] = True
-    r0 = r - D["ot_rg"] - D["ot_seat_gap"]
-    r1 = r + D["ot_rg"] + D["ot_seat_gap"]
+    r0 = min(r - D["ot_rg"] - D["ot_seat_gap"], D["ot_foot_ri"])   # v0.51: the race's wider foot
+    r1 = max(r + D["ot_rg"] + D["ot_seat_gap"], D["ot_foot_ro"])
     D["em_web"] = (r1 - r0 - hole_pin) / 2.0          # race material each side of a pin hole
     # nearest ball centre, as a chord clearance outside the ball radius
     worst = 1e9
