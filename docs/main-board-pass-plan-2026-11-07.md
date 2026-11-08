@@ -42,9 +42,10 @@ Expected next, one at a time as they come up:
    see more than 5 V; less PWM ripple in a coreless motor [S maxon]) or B from 15 V with PWM capped at 40 %, `docs/img/motor-supply-q34.png`.)
    **[Ed 8 Nov 15:31] bench, stall: 0.144 A at 1 V, 0.299 A at 2 V** (corrects 15:28's "1.44 A"). Line through the two: **6.45 Ω**
    with the meter and leads, brushes 0.07 V, so held still at 5 V about **0.76 A** (3.8 W), at 6 V 0.92 A [arithmetic].
-   **Q37 (open):** A TI DRV8213 (1.65-11 V, 4 A peak, 0.24 Ω, current sense out (IPROPI → MOT_SENSE) and a current limit set by
-   one pin (VREF), PWM to 100 kHz, WSON-8 2 x 2, LCSC C22407186 US$0.68, 3,698 in stock [S]) or B the DRV8837 (no current sense)
-   (`docs/img/motor-driver-q37.png`). Torque per amp still to measure (lever force at the same stalls).
+   **Q37 [Ed 15:36] = A: TI DRV8213.** (A TI DRV8213 (1.65-11 V, 4 A peak, 0.24 Ω, current sense out (IPROPI → MOT_SENSE) and a current limit set by
+   one pin (VREF), PWM to 100 kHz, WSON-8 2 x 2, LCSC C22407186 US$0.68, 3,698 in stock [S]) or B the DRV8837 (no current sense),
+   `docs/img/motor-driver-q37.png`.) The motor can never draw more than about 0.76 A from 5 V, so the 5 V supply is sized
+   without waiting for torque per amp; that number only sets VREF (the limit, at or under 0.76 A). Torque per amp still to measure (lever force at the same stalls).
    Then the driver needs Ed's bench numbers (the "Motor bench test sheet" doc is
    still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
 2. The power tree on vertical board L (15 V to 5 V and 3.3 V) once the motor's share is known.
