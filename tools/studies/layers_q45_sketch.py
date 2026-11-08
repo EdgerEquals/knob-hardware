@@ -52,13 +52,18 @@ def draw(ax, path, title):
 
 fig = plt.figure(figsize=(15, 14), dpi=120)
 res = []
-for k, (path, title) in enumerate(((sys.argv[1], "A: 4 layers"), (sys.argv[2], "B: 6 layers"))):
-    ax = fig.add_axes([0.01 + k * 0.5, 0.06, 0.47, 0.84])
+for k, (path, title) in enumerate(((sys.argv[1], "A: 4 layers, one ground plane (In1)"), (sys.argv[2], "B: 6 layers, two ground planes (In1, In4)"))):
+    ax = fig.add_axes([0.01 + k * 0.5, 0.09, 0.47, 0.77])
     res.append(draw(ax, path, title))
 fig.text(0.01, 0.975, "Q45: how many layers for the main board", fontsize=15, weight="bold", va="top")
-fig.text(0.01, 0.95, "The placed board routed twice by Freerouting (In1 = an unbroken ground plane in both; ground goes to it by a via "
-         "at every pad). Track colour = layer; red = left unrouted.", fontsize=10, va="top")
+fig.text(0.01, 0.95, "The placed board routed twice by Freerouting, 12 passes each (ground left to the planes, a via at every ground pad). "
+         "Track colour = layer; red = left unrouted.", fontsize=10, va="top")
+fig.text(0.01, 0.93, "Rule errors: the router kept 0.15 mm from windows and holes, not 0.25 (fixable on either). 8 of the unrouted are ground "
+         "pads still without a via (placement, either).", fontsize=10, va="top")
+fig.text(0.01, 0.035, "What's left is mostly the link flex's lines (bottom right) going up to the chip: they all squeeze up the 2.5 mm "
+         "strip beside window D on the right. A: about 33 lines to finish by hand; B: about 19, and a second unbroken ground plane "
+         "(the analog lines get ground on both sides).", fontsize=10.2, wrap=True)
 hand = [plt.Line2D([0], [0], color=c, lw=2) for c in COL.values()]
-fig.legend(hand, list(NAME.values()), loc="lower center", ncol=6, fontsize=9.5, frameon=False)
+fig.legend(hand, list(NAME.values()), loc="lower center", ncol=6, fontsize=9.5, frameon=False, bbox_to_anchor=(0.5, 0.055))
 fig.savefig(sys.argv[3])
 print(res)

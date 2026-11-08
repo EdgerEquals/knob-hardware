@@ -106,3 +106,13 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   - **Stale holes:** the model still reads the old v0.11 board's joystick holes (Ø3.4 at x ±10.8, y 25.2 and 38.4) back from
     its proxy; nothing passes through them now, so the new board fills them in (16.9 mm² of board back).
   The Tag-Connect pads went where both faces are free (its locating holes go through): (-11.0, 31.2), turned 90°.
+- **Pin map re-solved** against the placement (each net to its nearest pin; chip turned 0°; straight-line 1,841 mm, was 2,143)
+  and placed again: wirelength 3,497 mm, DRC 0 unrouted.
+- **Q45 (open), the layer count** (`docs/img/layers-q45.png`, `tools/studies/layers_q45_sketch.py`; `make_board.py --trial`):
+  the placed board routed twice by Freerouting 1.9.0, 12 passes each, ground left to the planes with a via at every ground pad.
+  **A, 4 layers** (front, In1 ground plane, In2, back): 41 connections left (8 of them ground pads still without a via), 262 vias.
+  **B, 6 layers, two ground planes** (front, In1 ground, In2, In3, In4 ground, back): 27 left (8 ground), 280 vias. Both have
+  ~90 rule errors where the router kept 0.15 mm from windows and holes instead of 0.25 (fixable on either). What is left is mostly
+  the link flex's lines going up to the chip: they all squeeze up the 2.5 mm strip beside window D on the right. Neither finishes
+  on the router alone; B leaves about half as much to finish by hand and gives the analog lines ground on both sides.
+  [C] PCBWay to price both in the pre-quote. (A first pair of trials had the router routing ground too: 43 / 21 left.)
