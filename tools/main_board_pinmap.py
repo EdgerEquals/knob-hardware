@@ -62,7 +62,10 @@ def signal_list(profile):
               [("I2C_SCL", ["{i}_SCL"]), ("I2C_SDA", ["{i}_SDA"])], "I2C"))
     G.append(("interrupts", "gpio", [""], [("IO_INT*", []), ("HALL3D_INT*", [])], None))
     G.append(("MIDI out (link)", "inst", UARTS, [("MIDI_TX", ["{i}_TX"])], "UART"))
-    G.append(("dial link through the rod (half-duplex UART on VBUS) [A]", "inst", UARTS, [("DIAL_DATA", ["{i}_TX"])], "UART"))
+    # [Ed 8 Nov Q43 = A] the rod link is a bias tee with a Manchester code (about 2 Mbit/s): one timer sends (PWM / DMA) and
+    # times the received edges (input capture / DMA)
+    G.append(("dial link through the rod (Manchester on the rod's 5 V, one timer + DMA)", "inst", TIMS,
+              [("DIAL_TX", ["{i}_CH1", "{i}_CH3"]), ("DIAL_RX", ["{i}_CH2", "{i}_CH4"])], "TIM"))
     G.append(("USB (link flex, FS on the internal PHY)", "fixed", [""], [("USB_DM", ["USB_OTG_HS_DM", "USB_OTG_FS_DM"]), ("USB_DP", ["USB_OTG_HS_DP", "USB_OTG_FS_DP"])], None))
     G.append(("CAN (vertical board R's transceiver)", "inst", ["FDCAN1", "FDCAN2"], [("CAN_TX", ["{i}_TX"]), ("CAN_RX", ["{i}_RX"])], "FDCAN"))
     G.append(("CAN standby", "gpio", [""], [("CAN_STBY", [])], None))

@@ -62,6 +62,8 @@ Expected next, one at a time as they come up:
    re-set to fit. **Q41 = A [Ed 16:11]:** flex pin 24 becomes AGND_SENSE (`docs/img/ground-sense-q41.png`), read on PC0 (ADC2) with each CV
    in; pin map re-solved (61 nets, 21 spare). Then **Q42 = A [Ed 16:35]**: a quiet ground (QGND) for the sleeves and the CV circuits, on its own stack pins, joined to GND
    once on the lower board (`docs/img/quiet-ground-q42.png`). The three jack boards rebuilt and re-routed.
+   **Q43 = A [Ed 18:58 "A if it will fit"]:** the rod link is a bias tee at each end with a Manchester code; it fits on the
+   fixed rod-link board (measured in the model). Next: place the main board (step 3), then the layer count.
 3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
    board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).

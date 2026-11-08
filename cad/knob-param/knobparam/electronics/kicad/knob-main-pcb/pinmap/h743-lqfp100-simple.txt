@@ -1,12 +1,12 @@
-STM32H743VITx (lqfp100-simple): 82 I/O pins, 61 nets: OPTIMAL
-spare pins (21): PC15-OSC32_OUT (OSC32_OUT), PC2_C, PC3_C, PE10, PE11, PE12, PD10, PC8, PA9, PA10, PA15 (JTDI), PC11, PD0, PD1, PD2, PD3, PD4, PD6, PD7, PB7, PE0
+STM32H743VITx (lqfp100-simple): 82 I/O pins, 62 nets: OPTIMAL
+spare pins (20): PC15-OSC32_OUT (OSC32_OUT), PC2_C, PC3_C, PE10, PE12, PD10, PC8, PA9, PA15 (JTDI), PC11, PD0, PD1, PD2, PD3, PD4, PD5, PD6, PD7, PB7, PE0
   joystick screen (CO5300, QSPI on Octo-SPI port 1): JOY_QSPI_CLK PB2 (QUADSPI_CLK), JOY_QSPI_NCS PB6 (QUADSPI_BK1_NCS), JOY_QSPI_IO0 PD11 (QUADSPI_BK1_IO0), JOY_QSPI_IO1 PD12 (QUADSPI_BK1_IO1), JOY_QSPI_IO2 PE2 (QUADSPI_BK1_IO2), JOY_QSPI_IO3 PD13 (QUADSPI_BK1_IO3)
   link flex SPI (jack lower board: DAC80504, clear OLED): LINK_SCK PC10 (SPI3_SCK), LINK_MOSI PC12 (SPI3_MOSI)
   link flex chip selects and OLED lines: CS_DAC PD8, CS_OLED PD15, OLED_DC PD14, OLED_RES PD9
   I2C (TMAG5273, the jack unit's TCA9535 over the link; one bus [A]): I2C_SCL PA8 (I2C3_SCL), I2C_SDA PC9 (I2C3_SDA)
   interrupts: IO_INT PC14-OSC32_IN (OSC32_IN), HALL3D_INT PC13
   MIDI out (link): MIDI_TX PE1 (UART8_TX)
-  dial link through the rod (half-duplex UART on VBUS) [A]: DIAL_DATA PD5 (USART2_TX)
+  dial link through the rod (Manchester on the rod's 5 V, one timer + DMA): DIAL_TX PA10 (TIM1_CH3), DIAL_RX PE11 (TIM1_CH2)
   USB (link flex, FS on the internal PHY): USB_DM PA11 (USB_OTG_FS_DM), USB_DP PA12 (USB_OTG_FS_DP)
   CAN (vertical board R's transceiver): CAN_TX PB13 (FDCAN2_TX), CAN_RX PB12 (FDCAN2_RX)
   CAN standby: CAN_STBY PE15

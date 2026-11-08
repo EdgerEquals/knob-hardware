@@ -87,10 +87,15 @@
    "signal": "UART8_TX",
    "position": 98
   },
-  "DIAL_DATA": {
-   "pin": "PD5",
-   "signal": "USART2_TX",
-   "position": 86
+  "DIAL_TX": {
+   "pin": "PA10",
+   "signal": "TIM1_CH3",
+   "position": 69
+  },
+  "DIAL_RX": {
+   "pin": "PE11",
+   "signal": "TIM1_CH2",
+   "position": 41
   },
   "USB_DM": {
    "pin": "PA11",
@@ -313,12 +318,10 @@
   "PC2_C",
   "PC3_C",
   "PE10",
-  "PE11",
   "PE12",
   "PD10",
   "PC8",
   "PA9",
-  "PA10",
   "PA15 (JTDI)",
   "PC11",
   "PD0",
@@ -326,6 +329,7 @@
   "PD2",
   "PD3",
   "PD4",
+  "PD5",
   "PD6",
   "PD7",
   "PB7",

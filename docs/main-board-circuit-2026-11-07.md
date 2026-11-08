@@ -9,8 +9,8 @@ designed with the dial board), then the layer count after a first placement.
 
 ## Pin map
 `tools/main_board_pinmap.py` on ST's pin data (STM32_open_pin_data, BSD-3-Clause, (c) 2020 STMicroelectronics, commit 7d1f151):
-`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **61 nets on 82 I/O, 21 spare**
-(18 general; PC2_C and PC3_C analog only; PC15 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
+`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **62 nets on 82 I/O, 20 spare**
+(17 general; PC2_C and PC3_C analog only; PC15 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
 [Q41], PWR_LIGHT in place of the VCSEL decoder [Q36]. Rules: PC13-PC15 take slow inputs only (backup domain), the
 ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves one job, the interrupt inputs on different EXTI lines
 (IO_INT 14, HALL3D_INT 13, JOY_TE 6). The map is re-solved with pin preferences once the neighbours are placed (step 3).
@@ -20,7 +20,7 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 | Joystick screen, QUADSPI | CLK PB2, NCS PB6, IO0 PD11, IO1 PD12, IO2 PE2, IO3 PD13; RST PE9, TE PE6, PWR_EN PE5 |
 | Link flex SPI3 | SCK PC10, MOSI PC12; CS_DAC PD8, CS_OLED PD15, OLED_DC PD14, OLED_RES PD9 |
 | I2C3 | SCL PA8, SDA PC9; IO_INT PC14, HALL3D_INT PC13 |
-| MIDI, dial link | MIDI_TX PE1 (UART8), DIAL_DATA PD5 (USART2, half duplex) |
+| MIDI, dial link | MIDI_TX PE1 (UART8); rod link [Q43 = A] DIAL_TX PA10 (TIM1_CH3), DIAL_RX PE11 (TIM1_CH2), Manchester by timer + DMA |
 | USB FS | DM PA11, DP PA12 |
 | CAN (FDCAN2) | TX PB13, RX PB12, STBY PE15 |
 | ADC1 | CV_IN1 PC4, CV_IN2 PA0, CV_IN3 PA5, AUDIO_IN PA7, HALL1 PA6, HALL2 PB0, HALL4 PB1, HALL5 PC1, MOT_SENSE PC5, MOT_VOICE PA1, NTC PA3, JOY_LADDER PA2 |
@@ -204,7 +204,15 @@ under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). 
   firmware. Full white would be about 0.86 A at 5 V for 24 [S 12 mA per colour]; the 5 V converter is sized for the firmware cap,
   not that. Checked: no reverse-mount RGBW (with a white chip) turned up (only RGB: SK6812MINI-E, MINI-EA) [S search, 8 Nov].
 
-## The rod link, Q43 (8 Nov, open)
+## The rod link, Q43 (8 Nov): **A [Ed 18:58 "A if it will fit"]**
+**It fits** [model v0.52, measured]: the dial-end bias tee goes on the fixed rod-link board (Ø12, z 49.6-50.6, nut on top, does not
+turn). Above its top face, from r 2.5 to r 6.0 and up to the dial board's lowest part (z 54.1), the ring is empty but for the
+strap (1.8 of 325 mm³): about 70 mm² of board and 3.5 mm of height for a choke, a capacitor, a comparator and three or four
+0402s (about 15 mm²). So the choke can be a 3 x 3 mm part (more inductance and less drop than a 2 x 2) [A, C part]. The strap's
+four lines become 5 V, ground, data out, data in; the 'rod-link PHY' box on the dial board goes. Main end on the main board.
+Pin map re-solved (`--keep`): DIAL_DATA (PD5) gives way to DIAL_TX PA10 and DIAL_RX PE11 on TIM1. [C] the bit rate against the
+chokes: at 2 Mbit/s the code's energy reaches down to about 0.5 MHz, where 22 µH is only about 70 Ω, so either 47 µH or more
+at each end, or a faster code (4 Mbit/s); set with the parts [A].
 Picture: `docs/img/rod-link-q43.png`. The dial (ESP32-S3, its screen, LEDs, the mic) gets 5 V and the data both ways on the M1.6
 rod; the brass tube is the return; about 0.12 A, 0.6 W [A, layout v4].
 - **A (recommended):** a bias tee at each end: the DC through a small choke, the data through a small capacitor as a DC-free

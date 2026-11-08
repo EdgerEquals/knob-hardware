@@ -13,7 +13,7 @@ names here are derived from that data [S]; ST's files themselves are not in this
 - `h743-lqfp100-simple.*`: Q33 restated A, subtract: STM32H743VIT6, the joystick screen on QUADSPI, no flash, no back
   screens (a UART + enable kept for their later cover board). Re-solved 8 Nov with `--keep` (every other net stays on its pin):
   AGND_SENSE on an ADC2 input [Ed Q41 = A], the VCSEL decoder and LASER_EN replaced by one PWR_LIGHT PWM [Ed Q35 / Q36 = B].
-  61 nets, 21 spare.
+  Then the rod link on TIM1 [Ed Q43 = A]: DIAL_TX PA10, DIAL_RX PE11 (DIAL_DATA gone). 62 nets, 20 spare.
 
 The first-round maps (screen or flash alone on the port) are in git history (de1e376). Q32 picks one
 (`docs/main-board-signals-2026-11-07.md`). Not placement-aware yet.

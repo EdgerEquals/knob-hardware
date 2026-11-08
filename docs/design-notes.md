@@ -61,6 +61,9 @@ catalogue number is assigned here. The main PCB was not edited.
   **QGND** (the sleeves, the DAC, its reference and VMID, the audio output's reference) runs on its own stack pins (2 in the
   first stacks, 2 in the second) and meets **GND** (USB-C, eFuse, posts, boost, OLED, flex) at one 0R on the lower board, so no
   supply current flows between the sleeves and the CV circuits. Flex pin 24 carries QGND (Q41's sense line). No parts added.
+- **Q43 = A [Ed 18:58]:** the rod link (the dial's 5 V and data on the rod, the brass tube the return) is a bias tee at each end:
+  DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
+  nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 
