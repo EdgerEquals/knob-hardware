@@ -42,6 +42,15 @@ KNOB_R = 22.0 + 1.0            # [S model] the knob's drip O-ring is Ø44 just o
 JOY_LIP = 0.9 + 1.0            # [S case params] the joystick block's lip covers 0.9 of the face round its opening, + 1.0
 USB_M = 1.0
 OLED = box(-42.04 / 2, -35.19 - 27.22 / 2, 42.04 / 2, -35.19 + 27.22 / 2)   # [S electronics params] the clear OLED, seen through the panel
+# [Ed 8 Nov 17:01: "there's meant to be windows there so we can see through to the back screen"] the main board's see-through
+# windows to the back screens, A and B above the knob, C and E below it (electronics params pcb_windows, panel frame [S model]); D is
+# the clear OLED's window (OLED above). Nothing goes over them on the panel; 1.0 more so the view at an angle stays clear [A].
+_ns = {}
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "cad", "knob-param", "knobparam", "electronics",
+                       "params.py")).read().split("\ndef ")[0], _ns)
+WINDOWS = {k: Polygon(v) for k, v in _ns["P"]["pcb_windows"].items() if k != "D"}
+WIN_M = 1.0
+WIN = unary_union([w.buffer(WIN_M, join_style=1) for w in WINDOWS.values()])
 PWR = (0.6, 25.6); PWR_R = 3.0  # [S electronics params, Q36] the power light's frosted dot on the case's inside face, about Ø6 [A]
 ko = []
 for k, (cx, cy), h in OPEN:
@@ -51,7 +60,7 @@ for k, (cx, cy), h in OPEN:
     elif k == "joystick": ko.append(h.buffer(JOY_LIP, join_style=1))
     elif k == "usb": ko.append(h.buffer(USB_M, join_style=2))
 KO = unary_union(ko)
-usable = outer.buffer(-EDGE, join_style=2).difference(KO).difference(OLED)
+usable = outer.buffer(-EDGE, join_style=2).difference(KO).difference(OLED).difference(WIN)
 NECK = 1.5   # [A] drop necks and slivers narrower than 3 mm (no logo fits there; it also splits the face into separate zones)
 usable = usable.buffer(-NECK, join_style=2).buffer(NECK, join_style=2).intersection(usable)
 power_dot = Point(*PWR).buffer(PWR_R, 64)
@@ -99,8 +108,8 @@ def name(p):
 zones = []
 for p in sorted(pieces, key=lambda q: -q.centroid.y):
     r = biggest_rect(p)
-    if min(r[2] - r[0], r[3] - r[1]) < 2.5:
-        continue
+    if min(r[2] - r[0], r[3] - r[1]) < 3.5:   # [A] narrower than 3.5 mm holds no 2 mm text with its margins (the edge strips beside
+        continue                               # the knob, outside the back-screen windows, are 2.6-3.0 wide)
     zones.append(dict(name=name(p), area=round(p.area, 1), rect=[round(v, 2) for v in r], w=round(r[2] - r[0], 1), h=round(r[3] - r[1], 1),
                       poly=[(round(x, 3), round(y, 3)) for x, y in p.exterior.coords],
                       holes=[[(round(x, 3), round(y, 3)) for x, y in i.coords] for i in p.interiors]))
@@ -124,6 +133,7 @@ pl(list(outer.exterior.coords)[:-1], "PANEL_OUTLINE")
 for h in holes: pl(list(h.exterior.coords)[:-1], "OPENINGS")
 for g in getattr(KO, "geoms", [KO]): pl(list(g.exterior.coords)[:-1], "KEEPOUT")
 pl(list(OLED.exterior.coords)[:-1], "SEEN_THROUGH")
+for w in WINDOWS.values(): pl(list(w.exterior.coords)[:-1], "SEEN_THROUGH")
 pl(list(power_dot.exterior.coords)[:-1], "POWER_LIGHT")
 for z in zones:
     pl(z["poly"][:-1], "LOGO_ZONES")
@@ -148,6 +158,7 @@ svg += ['</g><g id="logo_rects" fill="none" stroke="#2e7d32" stroke-width="0.12"
 svg += [f'<rect x="{z["rect"][0] - X0:.3f}" y="{Y1 - z["rect"][3]:.3f}" width="{z["w"]}" height="{z["h"]}"/>' for z in zones]
 svg += ['</g><g id="seen_through" fill="none" stroke="#1565c0" stroke-width="0.12" stroke-dasharray="0.3,0.3">',
         f'<polygon points="{sp(OLED.exterior.coords)}"/>', f'<polygon points="{sp(power_dot.exterior.coords)}"/>',
+        *[f'<polygon points="{sp(w.exterior.coords)}"/>' for w in WINDOWS.values()],
         '</g><g id="keepouts" fill="none" stroke="#c62828" stroke-width="0.1" stroke-dasharray="0.5,0.3">']
 svg += [f'<polygon points="{sp(g.exterior.coords)}"/>' for g in getattr(KO, "geoms", [KO])]
 svg += ['</g><g id="openings" fill="#ffffff" stroke="#000000" stroke-width="0.15">']
@@ -162,6 +173,8 @@ def draw(ax, labels=True):
     for z in zones:
         ax.add_patch(plt.Polygon(np.array(z["poly"]), fc="#c8e6c9", ec="#2e7d32", lw=0.6))
     ax.add_patch(plt.Polygon(np.array(OLED.exterior.coords), fc="none", ec="#1565c0", lw=0.6, ls=":"))
+    for w in WINDOWS.values():
+        ax.add_patch(plt.Polygon(np.array(w.exterior.coords), fc="#e3f2fd", ec="#1565c0", lw=0.6, ls=":"))
     for g in getattr(KO, "geoms", [KO]):
         ax.add_patch(plt.Polygon(np.array(g.exterior.coords), fc="#ffebee", ec="#c62828", lw=0.5, ls="--"))
     for h in holes:
@@ -178,6 +191,9 @@ def draw(ax, labels=True):
         ax.text(0, 40.6, "joystick", ha="center", va="center", fontsize=7, color="#555")
         ax.text(0, -30.5, "clear screen behind\nthe panel (keep clear)", ha="center", va="center", fontsize=6.5, color="#1565c0")
         ax.text(PWR[0] + 3.6, PWR[1] + 0.2, "power light", fontsize=5.5, color="#6a1b9a", va="center")
+        for k_, w in WINDOWS.items():
+            c = w.centroid
+            ax.text(c.x, c.y, "window to\nthe back\nscreens", ha="center", va="center", fontsize=5.5, color="#1565c0")
     ax.set_xlim(X0 - 1, X1 + 1); ax.set_ylim(Y0 - 1, Y1 + 1); ax.set_aspect("equal"); ax.axis("off")
 
 
@@ -195,6 +211,7 @@ lines = [("Zones (biggest rectangle, w x h mm)", True)] + [(f"{k + 1}. {z['name'
     ("the jack nuts (8 across), + 0.75", False), ("the knob's O-ring (Ø44), + 1.0", False),
     ("the joystick block's lip (0.9 over the face), + 1.0", False), ("the USB-C opening, + 1.0", False),
     ("", False), ("Seen through the panel (blue dotted)", True),
+    ("the main board's four windows to the back screens,", False), ("beside the knob, + 1.0: no logo over them", False),
     ("the clear screen under the knob: no logo over it", False),
     ("the power light's frosted dot (purple): keep it clear,", False), ("or make it part of the logo", False),
     ("", False), ("Impression (SLA clear resin)", True),
@@ -208,6 +225,6 @@ with PdfPages(os.path.join(OUT, "panel-logo-template-1to1.pdf")) as pdf:   # A4 
     W, H = (X1 - X0 + 2) / 25.4 / 8.27, (Y1 - Y0 + 2) / 25.4 / 11.69
     a2 = f2.add_axes([0.5 - W / 2, 0.5 - H / 2, W, H]); draw(a2, labels=False)
     f2.text(0.5, 0.97, "Knob module faceplate, front, 1:1 (print at 100 %, no scaling). Panel 50.50 x 128.50 mm.", ha="center", fontsize=9)
-    f2.text(0.5, 0.02, "Green: logo zones. Red dashed: keep clear. Blue dotted: the clear screen behind. Purple: the power light's dot.",
+    f2.text(0.5, 0.02, "Green: logo zones. Red dashed: keep clear. Blue dotted: windows to the screens behind. Purple: the power light's dot.",
             ha="center", fontsize=8)
     pdf.savefig(f2)
