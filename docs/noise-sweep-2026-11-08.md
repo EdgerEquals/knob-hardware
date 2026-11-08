@@ -11,7 +11,7 @@ every crossing between boards (link flex, 2x6 stacks, posts, rod), and the outsi
 **Outcome: Q39 = A [Ed 8 Nov 15:59, "Yeah, that's perfect", after the 1-2 MHz answer]:** TPS62933F on all three bucks, their
 frequencies set about 1-2 MHz and apart from each other and the boost's harmonics (values in step 3); the 1220's PWM at 100 kHz,
 the DRV8213's top [S]. The jack board's U6 is now TPS62933FDRLR (LCSC C5219272) in design.py and its generated files.
-Next: Q38 (the power tree) again, then Q40, Q41.
+**Q38 = A [Ed 16:04]:** two TPS62933F bucks on board L, both from 15 V. Next: Q40, then Q41.
 
 ## Where we are, in one line
 Nothing is broken, but five things would show on a scope at the jacks: the switching regulators' light-load bursts, the ADC's
@@ -73,6 +73,13 @@ input ripple stays on board L and does not travel down the posts into the jack b
 2. **Q40** the ADC's reference: A a 3.0 V reference chip on VREF+ (the CV-in range re-set to about 0.2-2.95 V: 13.3k becomes
    11.3k, 3 places [A arithmetic]); B the H743's own reference buffer at 2.5 V (VREFBUF, no part; CV-in gain down to about 0.076,
    so fewer codes a cent; [C] ST's forum reports early H743 silicon, revision Y, shipped without its factory trim); C as now.
+   **Q40 as asked (8 Nov, `docs/img/adc-reference-q40.png`):** A = **TI REF3430** (3.0 V, ±0.05 %, 6 ppm/°C max, 3.8 µVp-p per
+   volt 0.1-10 Hz, dropout 0.1 V max at no load, 95 µA [S TI]; LCSC C2156866, US$1.51, 312 in stock [S]) from the 3.3 V onto VREF+
+   with 1 µF + 100 nF. Ranges re-set to fit 3.0 V [A]: CV-in feedback 13.3k becomes 11.3k (3 places), ±12 V reads 0.23-2.95 V,
+   2.1 codes a cent; audio-out gain 30.1k becomes 33.2k (still ±5 V); audio-in gain and bias re-set for 0-3.0 V. The Halls,
+   switch ladder and NTC stay on the 3.3 V; the firmware reads the 3.3 V through the H743's VBAT channel (VBAT tied to VDD) and
+   corrects them. Tight: about 0.2 V of headroom from 3.3 V; thin LCSC stock. [C] its output-capacitor range. B = VREFBUF 2.5 V
+   (no part; 1.7 codes a cent; revision-Y trim reports).
 3. **Q41** the ground-sense line: one of the flex's grounds (23, 24 or 25) becomes the jack board's analog ground, carried to an
    ADC pin and read alongside each CV in (the firmware subtracts it, or the ADC reads differentially where the pins allow) [A].
    Plus the stacks' sense ground from step 2.

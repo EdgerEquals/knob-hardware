@@ -50,7 +50,9 @@ catalogue number is assigned here. The main PCB was not edited.
 - Switching frequencies about 1-2 MHz, "well out of the audio band" (50-100 x 20 kHz), and set apart so no two
   converters or their harmonics meet within the audio band (the boost's 600 kHz x 2 = the jack 3.3 V's 1.2 MHz today);
   values with step 3. The 1220's PWM at 100 kHz.
-- Still to decide, one at a time: Q38 power tree, Q40 the ADC's reference, Q41 a ground-sense line on the flex.
+- **Q38 = A [Ed 16:04]:** board L makes 5 V and 3.3 V with two TPS62933F bucks, both straight from 15 V; the 3.3 V always on,
+  the 5 V switched by the H743 (5V_EN). The motor's and the LEDs' noise on 5 V never rides into the 3.3 V.
+- Still to decide, one at a time: Q40 the ADC's reference, Q41 a ground-sense line on the flex.
 
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 

@@ -48,7 +48,7 @@ Expected next, one at a time as they come up:
    without waiting for torque per amp; that number only sets VREF (the limit, at or under 0.76 A). Torque per amp still to measure (lever force at the same stalls).
    Then the driver needs Ed's bench numbers (the "Motor bench test sheet" doc is
    still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
-2. The power tree on vertical board L (15 V to 5 V and 3.3 V). **Q38 (open)** (`docs/img/power-tree-q38.png`): A two TPS62933 bucks
+2. The power tree on vertical board L (15 V to 5 V and 3.3 V). **Q38 = A [Ed 8 Nov 16:04]** (`docs/img/power-tree-q38.png`): A two TPS62933 bucks
    straight from 15 V (the jack power board's part; 5 V switched by the H743 per the Q6 rule, 3.3 V always on), or B one buck to 5 V
    and an LDO to 3.3 V (the 3 Nov plan; 0.4-0.85 W in the LDO). Loads [A except the bench]: 5 V 1.8 A worst (1220 0.76 held still,
    24 RGB 0.86 full white, dial 0.12, CAN 0.07), about 1.3 A with the LED cap; 3.3 V 0.5 A worst. Worst draw from 15 V about 12 W
@@ -58,7 +58,7 @@ Expected next, one at a time as they come up:
    three bucks, B TPS62933O (out-of-audio). Then Q38 again. Then Q40 (the ADC's reference) and Q41 (a ground-sense line on the
    flex), one at a time.
    **Q39 = A [Ed 15:59 "Yeah, that's perfect"]:** TPS62933F (LCSC C5219272) on all three bucks, about 1-2 MHz, set apart; the
-   1220's PWM at 100 kHz. The jack board's U6 swapped (same footprint). **Q38 asked again** with the F part.
+   1220's PWM at 100 kHz. The jack board's U6 swapped (same footprint). **Q38 asked again** with the F part: **A [Ed 16:04]**, two TPS62933F straight from 15 V. **Q40 (open)** next.
 3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
    board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).
