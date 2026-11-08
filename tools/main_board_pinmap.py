@@ -11,7 +11,7 @@ one instance each (an SPI's SCK and MOSI on the same SPI), different instances f
 The signal list is the step-2 architecture (link flex, vertical boards, back AMOLEDs on SPI) with [A] choices marked; see
 docs/main-board-signals-2026-11-07.md. Pins are not placement-aware yet: the map is re-solved with pin preferences once the chip's
 neighbours are placed."""
-import argparse, json, re, sys, xml.etree.ElementTree as ET
+import argparse, math, json, re, sys, xml.etree.ElementTree as ET
 
 from ortools.sat.python import cp_model
 
@@ -66,7 +66,9 @@ def signal_list(profile):
     # times the received edges (input capture / DMA)
     G.append(("dial link through the rod (Manchester on the rod's 5 V, one timer + DMA)", "inst", TIMS,
               [("DIAL_TX", ["{i}_CH1", "{i}_CH3"]), ("DIAL_RX", ["{i}_CH2", "{i}_CH4"])], "TIM"))
-    G.append(("USB (link flex, FS on the internal PHY)", "fixed", [""], [("USB_DM", ["USB_OTG_HS_DM", "USB_OTG_FS_DM"]), ("USB_DP", ["USB_OTG_HS_DP", "USB_OTG_FS_DP"])], None))
+    # [A] OTG_FS on PA11 / PA12 only (8 Nov, step 3): the H74x ROM bootloader's USB DFU uses those pins [C AN2606], and the
+    # field update path counts on it; the step-3 re-solve had moved USB to OTG_HS's PB14 / PB15
+    G.append(("USB (link flex, FS on the internal PHY)", "fixed", [""], [("USB_DM", ["USB_OTG_FS_DM"]), ("USB_DP", ["USB_OTG_FS_DP"])], None))
     G.append(("CAN (vertical board R's transceiver)", "inst", ["FDCAN1", "FDCAN2"], [("CAN_TX", ["{i}_TX"]), ("CAN_RX", ["{i}_RX"])], "FDCAN"))
     G.append(("CAN standby", "gpio", [""], [("CAN_STBY", [])], None))
     analog = ["CV_IN1", "CV_IN2", "CV_IN3", "AUDIO_IN", "HALL1", "HALL2", "HALL4", "HALL5", "MOT_SENSE", "MOT_VOICE", "NTC", "JOY_LADDER"]
@@ -123,7 +125,7 @@ def pin_number(name):
     return int(m.group(1)) if m else None
 
 
-def solve(pins, groups, spare_min=0, keep=None):
+def solve(pins, groups, spare_min=0, keep=None, near=None):
     m = cp_model.CpModel()
     x = {}; sig_use = {}; inst_vars = {}; kind_use = {}
     pin_load = {p: [] for p in pins}
@@ -177,7 +179,13 @@ def solve(pins, groups, spare_min=0, keep=None):
     used = sum(x.values())
     spare = len(pins) - used
     m.Add(spare >= spare_min)
-    if keep:   # [A] a re-solve keeps every net it can on its previous pin (so a small change stays a small change)
+    if near:   # [A] step 3: each net to the pin nearest where it goes on the placed board (tenths of a mm, straight line)
+        xy, tg = near
+        def dist(net, p):
+            t = tg.get(net.rstrip("*")); q = xy.get(str(pins[p][0]))
+            return 0 if t is None or q is None else int(round(10 * math.hypot(t[0] - q[0], t[1] - q[1])))
+        m.Minimize(sum(dist(net, p) * v for (net, p, sg), v in x.items()))
+    elif keep:   # [A] a re-solve keeps every net it can on its previous pin (so a small change stays a small change)
         m.Maximize(sum(v for (net, p, sg), v in x.items() if keep.get(net.rstrip("*")) == p))
     s = cp_model.CpSolver(); s.parameters.max_time_in_seconds = 60; s.parameters.num_workers = 1; s.parameters.random_seed = 1   # repeatable
     r = s.Solve(m)
@@ -194,13 +202,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data"); ap.add_argument("--part", default="STM32H7B0VBTx"); ap.add_argument("--profile", default="lqfp100")
     ap.add_argument("--out"); ap.add_argument("--keep", help="a previous --out json: keep nets on their pins where possible")
+    ap.add_argument("--near", help="pin targets from the placed board (make_board.py --targets): each net to its nearest pin, "
+                                   "trying the chip's four quarter turns")
     a = ap.parse_args()
     pins = load(a.data, a.part)
     groups = signal_list(a.profile)
     nets = sum(len(g[3]) for g in groups)
     keep = {n: v["pin"] for n, v in json.load(open(a.keep))["nets"].items()} if a.keep else None
-    res, status = solve(pins, groups, keep=keep)
-    print(f"{a.part} ({a.profile}): {len(pins)} I/O pins, {nets} nets: {status}")
+    rot = None
+    if a.near:
+        T = json.load(open(a.near)); best = None
+        for r_, xy in sorted(T["pin_xy"].items()):
+            res_, st_ = solve(pins, groups, near=(xy, T["targets"]))
+            if res_ is None:
+                continue
+            tot = sum(math.hypot(T["targets"][n][0] - xy[str(pins[p][0])][0], T["targets"][n][1] - xy[str(pins[p][0])][1])
+                      for n, (p, _s) in res_.items() if n in T["targets"])
+            print(f"  chip turned {r_}: straight-line total {tot:.0f} mm ({st_})")
+            if best is None or tot < best[0]:
+                best = (tot, r_, res_, st_)
+        _t, rot, res, status = best
+    else:
+        res, status = solve(pins, groups, keep=keep)
+    print(f"{a.part} ({a.profile}): {len(pins)} I/O pins, {nets} nets: {status}" + (f"; chip turned {rot}" if rot is not None else ""))
     if res is None:
         sys.exit(1)
     used = {p for p, _s in res.values()}
@@ -211,7 +235,7 @@ def main():
                                          + (f" ({res[n.rstrip('*')][1]})" if res[n.rstrip('*')][1] != "GPIO" else "") for n, _ in gnets))
     if a.out:
         json.dump(dict(part=a.part, profile=a.profile, nets={n: dict(pin=p, signal=s, position=pins[p][0]) for n, (p, s) in res.items()},
-                       spare=spare), open(a.out, "w"), indent=1)
+                       spare=spare, **({"mcu_rot": float(rot)} if rot is not None else {})), open(a.out, "w"), indent=1)
 
 
 if __name__ == "__main__":

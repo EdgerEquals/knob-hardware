@@ -382,10 +382,11 @@ def run_placer(parts, fixed, room, iters, seed, log=print):
             continue
         zone = p["block"]
         faces = [p["face"]] if p["face"] in Z[zone] else list(Z[zone])   # the netlist's face where the zone has it
-        if r == "U1":   # the H743: its centre is the model's, its quarter turn is free
+        if r == "U1":   # the H743: its centre is the model's (to 0.05), its quarter turn is free unless the pin map set it
             mx, my = L(*R["D"]["mcu"]["xy"])
-            g = {("F", rot): geometry(p["fp"], "F", rot) for rot in (0, 90, 180, 270)}
-            reg = {"F": [(mx - 9.2, my - 9.2, mx + 9.2, my + 9.2)]}
+            rots = [int(design.PINMAP["mcu_rot"]) % 360] if "mcu_rot" in design.PINMAP else [0, 90, 180, 270]
+            g = {("F", rot): geometry(p["fp"], "F", rot) for rot in rots}
+            reg = {"F": [(mx - 8.8, my - 8.8, mx + 8.8, my + 8.8)]}
             items.append(dict(ref=r, geoms=g, regions=reg, margin=0.3))
             continue
         g = {(s, rot): geometry(p["fp"], s, rot) for s in faces for rot in (0, 90, 180, 270)}
@@ -644,6 +645,46 @@ def route_trial(pcb, layers, timeout):
     return res
 
 
+def pin_targets(pcb, parts, out):
+    """For re-solving the pin map against the placement: where each H743 pad would sit at each quarter turn (panel), and for each
+    MCU net the centroid of what it goes to, followed once through a series part (a 2-pin R or bead whose other side is not a
+    supply), so the pin is drawn toward the far end, not toward its own filter resistor."""
+    b = pcbnew.LoadBoard(pcb)
+    to_panel = lambda v: (pcbnew.ToMM(v.x) - ORIGIN[0], -(pcbnew.ToMM(v.y) - ORIGIN[1]))
+    fps = {f.GetReference(): f for f in b.GetFootprints()}
+    u1 = fps["U1"]; cx, cy = to_panel(u1.GetPosition())
+    pads = {p.GetNumber(): to_panel(p.GetPosition()) for p in u1.Pads()}
+    rot0 = u1.GetOrientationDegrees()
+    pin_xy = {}
+    for q in (0, 90, 180, 270):   # turn the chip by q more about its centre (panel CCW)
+        c, s_ = math.cos(math.radians(q)), math.sin(math.radians(q))
+        pin_xy[str(int((rot0 + q) % 360))] = {n: (round(cx + (x - cx) * c - (y - cy) * s_, 3), round(cy + (x - cx) * s_ + (y - cy) * c, 3))
+                                              for n, (x, y) in pads.items()}
+    supplies = {"GND", "3V3", "5V", "VSYS", "VDDA", "VREFP", "VCAP", "VM", "RING_5V", "RING_IN"}
+    bynet = {}
+    for f in b.GetFootprints():
+        for p in f.Pads():
+            if p.GetNetname():
+                bynet.setdefault(p.GetNetname(), []).append((f.GetReference(), p.GetNumber(), to_panel(p.GetPosition())))
+    two = {p["ref"]: p for p in parts if len([v for v in p["pins"].values() if v]) == 2 and p["ref"][0] in "RF"}
+    targets = {}
+    for net in design.PINMAP["nets"]:
+        pts = []
+        for ref, num, xy in bynet.get(net, []):
+            if ref == "U1":
+                continue
+            if ref in two:
+                other = [v for k, v in two[ref]["pins"].items() if k != num and v][0]
+                if other not in supplies:
+                    pts += [q[2] for q in bynet.get(other, []) if q[0] != ref]
+                    continue
+            pts.append(xy)
+        if pts:
+            targets[net] = (round(sum(x for x, _ in pts) / len(pts), 3), round(sum(y for _, y in pts) / len(pts), 3))
+    json.dump(dict(centre=(cx, cy), rot=rot0, pin_xy=pin_xy, targets=targets), open(out, "w"), indent=0)
+    return len(targets)
+
+
 BLOCK_COL = {"mcu": "#9ecae1", "link": "#c6dbef", "screen": "#6baed6", "debug": "#d9d9d9", "light": "#fdae6b", "adc": "#a1d99b",
              "halls": "#74c476", "encoder": "#c7e9c0", "motor": "#fc9272", "ring": "#fdd0a2", "rod": "#de2d26", "power": "#fee391",
              "cover": "#bdbdbd", "headers": "#969696"}
@@ -720,9 +761,13 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--trial", type=int, default=0, help="route a copy of the placed board on this many layers (4 or 6) and stop")
     ap.add_argument("--timeout", type=int, default=3600)
+    ap.add_argument("--targets", help="write the pin-map targets of the placed board to this json and stop")
     a = ap.parse_args()
     R = pickle.load(open(a.room, "rb"))
     R["board"], n_filled = clean_board()
+    if a.targets:
+        print("pin targets for", pin_targets(os.path.join(OUT, NAME + ".kicad_pcb"), design.build(), a.targets), "nets")
+        return
     if a.trial:
         route_trial(os.path.join(OUT, NAME + ".kicad_pcb"), a.trial, a.timeout)
         return

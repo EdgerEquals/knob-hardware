@@ -8,9 +8,9 @@
    "position": 36
   },
   "JOY_QSPI_NCS": {
-   "pin": "PB6",
+   "pin": "PB10",
    "signal": "QUADSPI_BK1_NCS",
-   "position": 92
+   "position": 46
   },
   "JOY_QSPI_IO0": {
    "pin": "PD11",
@@ -33,34 +33,34 @@
    "position": 60
   },
   "LINK_SCK": {
-   "pin": "PC10",
-   "signal": "SPI3_SCK",
-   "position": 78
+   "pin": "PE12",
+   "signal": "SPI4_SCK",
+   "position": 42
   },
   "LINK_MOSI": {
-   "pin": "PC12",
-   "signal": "SPI3_MOSI",
-   "position": 80
+   "pin": "PE14",
+   "signal": "SPI4_MOSI",
+   "position": 44
   },
   "CS_DAC": {
-   "pin": "PD8",
+   "pin": "PE10",
    "signal": "GPIO",
-   "position": 55
+   "position": 40
   },
   "CS_OLED": {
-   "pin": "PD15",
+   "pin": "PE13",
    "signal": "GPIO",
-   "position": 62
+   "position": 43
   },
   "OLED_DC": {
-   "pin": "PD14",
-   "signal": "GPIO",
-   "position": 61
-  },
-  "OLED_RES": {
    "pin": "PD9",
    "signal": "GPIO",
    "position": 56
+  },
+  "OLED_RES": {
+   "pin": "PE15",
+   "signal": "GPIO",
+   "position": 45
   },
   "I2C_SCL": {
    "pin": "PA8",
@@ -73,29 +73,29 @@
    "position": 66
   },
   "IO_INT": {
-   "pin": "PC14-OSC32_IN (OSC32_IN)",
+   "pin": "PD10",
    "signal": "GPIO",
-   "position": 8
+   "position": 57
   },
   "HALL3D_INT": {
-   "pin": "PC13",
+   "pin": "PC15-OSC32_OUT (OSC32_OUT)",
    "signal": "GPIO",
-   "position": 7
+   "position": 9
   },
   "MIDI_TX": {
-   "pin": "PE1",
-   "signal": "UART8_TX",
-   "position": 98
+   "pin": "PD8",
+   "signal": "USART3_TX",
+   "position": 55
   },
   "DIAL_TX": {
-   "pin": "PA10",
-   "signal": "TIM1_CH3",
-   "position": 69
+   "pin": "PB14",
+   "signal": "TIM12_CH1",
+   "position": 53
   },
   "DIAL_RX": {
-   "pin": "PE11",
-   "signal": "TIM1_CH2",
-   "position": 41
+   "pin": "PB15",
+   "signal": "TIM12_CH2",
+   "position": 54
   },
   "USB_DM": {
    "pin": "PA11",
@@ -118,74 +118,74 @@
    "position": 51
   },
   "CAN_STBY": {
-   "pin": "PE15",
+   "pin": "PA10",
    "signal": "GPIO",
-   "position": 45
+   "position": 69
   },
   "CV_IN1": {
-   "pin": "PC4",
-   "signal": "ADC1_INP4",
-   "position": 32
-  },
-  "CV_IN2": {
-   "pin": "PA0",
-   "signal": "ADC1_INP16",
-   "position": 22
-  },
-  "CV_IN3": {
-   "pin": "PA5",
-   "signal": "ADC1_INP19",
-   "position": 29
-  },
-  "AUDIO_IN": {
-   "pin": "PA7",
-   "signal": "ADC1_INP7",
-   "position": 31
-  },
-  "HALL1": {
-   "pin": "PA6",
-   "signal": "ADC1_INP3",
-   "position": 30
-  },
-  "HALL2": {
-   "pin": "PB0",
-   "signal": "ADC1_INP9",
-   "position": 34
-  },
-  "HALL4": {
-   "pin": "PB1",
-   "signal": "ADC1_INP5",
-   "position": 35
-  },
-  "HALL5": {
-   "pin": "PC1",
-   "signal": "ADC1_INP11",
-   "position": 16
-  },
-  "MOT_SENSE": {
    "pin": "PC5",
    "signal": "ADC1_INP8",
    "position": 33
   },
-  "MOT_VOICE": {
+  "CV_IN2": {
+   "pin": "PA6",
+   "signal": "ADC1_INP3",
+   "position": 30
+  },
+  "CV_IN3": {
+   "pin": "PC4",
+   "signal": "ADC1_INP4",
+   "position": 32
+  },
+  "AUDIO_IN": {
+   "pin": "PB1",
+   "signal": "ADC1_INP5",
+   "position": 35
+  },
+  "HALL1": {
    "pin": "PA1",
    "signal": "ADC1_INP17",
    "position": 23
   },
-  "NTC": {
+  "HALL2": {
+   "pin": "PC1",
+   "signal": "ADC1_INP11",
+   "position": 16
+  },
+  "HALL4": {
    "pin": "PA3",
    "signal": "ADC1_INP15",
    "position": 25
   },
-  "JOY_LADDER": {
+  "HALL5": {
    "pin": "PA2",
    "signal": "ADC1_INP14",
    "position": 24
   },
-  "AGND_SENSE": {
+  "MOT_SENSE": {
+   "pin": "PA7",
+   "signal": "ADC1_INP7",
+   "position": 31
+  },
+  "MOT_VOICE": {
+   "pin": "PA5",
+   "signal": "ADC1_INP19",
+   "position": 29
+  },
+  "NTC": {
+   "pin": "PA0",
+   "signal": "ADC1_INP16",
+   "position": 22
+  },
+  "JOY_LADDER": {
    "pin": "PC0",
-   "signal": "ADC2_INP10",
+   "signal": "ADC1_INP10",
    "position": 15
+  },
+  "AGND_SENSE": {
+   "pin": "PB0",
+   "signal": "ADC2_INP9",
+   "position": 34
   },
   "AUDIO_OUT": {
    "pin": "PA4",
@@ -193,39 +193,39 @@
    "position": 28
   },
   "ENC_A": {
-   "pin": "PB4 (NJTRST)",
-   "signal": "TIM3_CH1",
-   "position": 90
+   "pin": "PC6",
+   "signal": "TIM8_CH1",
+   "position": 63
   },
   "ENC_B": {
-   "pin": "PB5",
-   "signal": "TIM3_CH2",
-   "position": 91
+   "pin": "PC7",
+   "signal": "TIM8_CH2",
+   "position": 64
   },
   "MOT_IN1": {
-   "pin": "PB10",
-   "signal": "TIM2_CH3",
-   "position": 46
+   "pin": "PE9",
+   "signal": "TIM1_CH1",
+   "position": 39
   },
   "MOT_IN2": {
+   "pin": "PE11",
+   "signal": "TIM1_CH2",
+   "position": 41
+  },
+  "HALL_EN": {
+   "pin": "PE7",
+   "signal": "GPIO",
+   "position": 37
+  },
+  "PWR_LIGHT": {
    "pin": "PB11",
    "signal": "TIM2_CH4",
    "position": 47
   },
-  "HALL_EN": {
-   "pin": "PE13",
-   "signal": "GPIO",
-   "position": 43
-  },
-  "PWR_LIGHT": {
-   "pin": "PB9",
-   "signal": "TIM17_CH1",
-   "position": 96
-  },
   "RGB_DIN": {
-   "pin": "PB8",
-   "signal": "TIM16_CH1",
-   "position": 95
+   "pin": "PD14",
+   "signal": "TIM4_CH3",
+   "position": 61
   },
   "RGB_EN": {
    "pin": "PE8",
@@ -233,39 +233,39 @@
    "position": 38
   },
   "RISLEY1": {
-   "pin": "PB14",
-   "signal": "TIM12_CH1",
-   "position": 53
+   "pin": "PB4 (NJTRST)",
+   "signal": "TIM3_CH1",
+   "position": 90
   },
   "RISLEY2": {
-   "pin": "PB15",
-   "signal": "TIM12_CH2",
-   "position": 54
+   "pin": "PB5",
+   "signal": "TIM3_CH2",
+   "position": 91
   },
   "JOY_RST": {
-   "pin": "PE9",
+   "pin": "PD15",
    "signal": "GPIO",
-   "position": 39
+   "position": 62
   },
   "JOY_TE": {
+   "pin": "PA9",
+   "signal": "GPIO",
+   "position": 68
+  },
+  "JOY_PWR_EN": {
+   "pin": "PC8",
+   "signal": "GPIO",
+   "position": 65
+  },
+  "BUS_PRESENT": {
+   "pin": "PC14-OSC32_IN (OSC32_IN)",
+   "signal": "GPIO",
+   "position": 8
+  },
+  "5V_EN": {
    "pin": "PE6",
    "signal": "GPIO",
    "position": 5
-  },
-  "JOY_PWR_EN": {
-   "pin": "PE5",
-   "signal": "GPIO",
-   "position": 4
-  },
-  "BUS_PRESENT": {
-   "pin": "PE4",
-   "signal": "GPIO",
-   "position": 3
-  },
-  "5V_EN": {
-   "pin": "PE7",
-   "signal": "GPIO",
-   "position": 37
   },
   "HSE_IN": {
    "pin": "PH0-OSC_IN (PH0)",
@@ -293,42 +293,43 @@
    "position": 89
   },
   "COVER_TX": {
-   "pin": "PC6",
-   "signal": "USART6_TX",
-   "position": 63
+   "pin": "PD5",
+   "signal": "USART2_TX",
+   "position": 86
   },
   "COVER_RX": {
-   "pin": "PC7",
-   "signal": "USART6_RX",
-   "position": 64
+   "pin": "PD6",
+   "signal": "USART2_RX",
+   "position": 87
   },
   "COVER_EN": {
-   "pin": "PE3",
+   "pin": "PD2",
    "signal": "GPIO",
-   "position": 2
+   "position": 83
   }
  },
  "spare": [
-  "PC15-OSC32_OUT (OSC32_OUT)",
+  "PE3",
+  "PE4",
+  "PE5",
+  "PC13",
   "PC2_C",
   "PC3_C",
-  "PE10",
-  "PE12",
-  "PE14",
-  "PD10",
-  "PC8",
-  "PA9",
   "PA15 (JTDI)",
+  "PC10",
   "PC11",
+  "PC12",
   "PD0",
   "PD1",
-  "PD2",
   "PD3",
   "PD4",
-  "PD5",
-  "PD6",
   "PD7",
+  "PB6",
   "PB7",
-  "PE0"
- ]
+  "PB8",
+  "PB9",
+  "PE0",
+  "PE1"
+ ],
+ "mcu_rot": 0.0
 }
