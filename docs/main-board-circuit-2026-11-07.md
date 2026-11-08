@@ -69,6 +69,9 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 - **Board R's 13 top pins carry only the screen's signals and grounds** [A]: 1 GND, 2 CLK, 3 GND, 4 CS, 5 IO0, 6 IO1, 7 GND, 8 IO2,
   9 IO3, 10 GND, 11 RESET, 12 TE, 13 PWR_EN. The clock has ground on both sides; every data pair sits next to a ground. The screen's
   3.3 V comes up board L's top pins (with the switch ladder and grounds), which frees R's pins for the four grounds.
+- **The switch ladder** (SW1 and the joystick's switches as one resistor ladder, on the top board [S floorplan 3 Nov]) comes down
+  board L as one line, JOY_LADDER into ADC1 (PA2) with 100 Ω + 1 nF at the pin [A]. Board L's 13 top pins then carry 3.3 V, the
+  ladder and grounds; the order is set with board L's power circuit.
 - Said plainly: these lines cross two joints (R's header pins in the top board's socket, and the jumper). If they turn out
   marginal, the clock comes down: 50 MHz is about 98 full frames a second, 25 MHz about 49 [A arithmetic].
 
