@@ -53,6 +53,10 @@ Expected next, one at a time as they come up:
    and an LDO to 3.3 V (the 3 Nov plan; 0.4-0.85 W in the LDO). Loads [A except the bench]: 5 V 1.8 A worst (1220 0.76 held still,
    24 RGB 0.86 full white, dial 0.12, CAN 0.07), about 1.3 A with the LED cap; 3.3 V 0.5 A worst. Worst draw from 15 V about 12 W
    (0.9 A), inside the eFuse's 3 A. No second input limit on board L (the jack power board's eFuse already limits VSYS) [A].
+   **Paused for the noise sweep [Ed 15:45]** (`docs/noise-sweep-2026-11-08.md`, `docs/img/noise-sweep.png`): both of board L's
+   bucks would sit in light-load mode (PFM) most of the time. **Q39 (open):** A TPS62933F (fixed frequency at every load) on all
+   three bucks, B TPS62933O (out-of-audio). Then Q38 again. Then Q40 (the ADC's reference) and Q41 (a ground-sense line on the
+   flex), one at a time.
 3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
    board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).
