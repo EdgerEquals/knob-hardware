@@ -55,7 +55,8 @@ If A, the split I'd use [A, the best of every split of the netlist's blocks that
   wants 12.0-13.5) [S]; CFF 10 nF, NR 10 nF, 4.7 µF 50 V in, 10 µF 25 V out [S: 2.2 µF min]; EN from the expander + 100 kΩ pull-down.
   Pin 7 is DNC (no net at all) [S].
 - **-12 V: TPS7A3001** (93.1k/10.0k = -12.13 V, TI's own table) [S]; same caps; EN high (3.3 V) enables [S]; + 100 kΩ pull-down.
-- **3.3 V: TPS62933DRLR**, RT to GND = 1.2 MHz, 2.2 µH, 2 x 22 µF [S table: ≥ 10 µF effective]; BST 100 nF; SS 10 nF (1.5 ms);
+- **3.3 V: TPS62933FDRLR** [Ed 8 Nov Q39 = A: the forced-continuous version, no light-load bursts; same pins; `docs/noise-sweep-2026-11-08.md`;
+  [C] its frequency moves off 1.2 MHz, the boost's 600 kHz x 2, in step 3], RT to GND = 1.2 MHz, 2.2 µH, 2 x 22 µF [S table: ≥ 10 µF effective]; BST 100 nF; SS 10 nF (1.5 ms);
   **30.9k/10.0k = 3.27 V** (the OLED's VDD maximum is 3.3 V). **EN left floating = on** (0.7 µA pull-up; 6 V absolute, so never to
   VSYS) [S]: the 3.3 V is up whenever VSYS is, so the expander holds every switch open and every rail off from the start.
 - Loads [A]: +12.5 V about 45 mA (OLED 27 mA typ all lit [S], op-amps, switches, outputs); -12 V about 15 mA; 3.3 V under 40 mA

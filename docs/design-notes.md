@@ -41,6 +41,17 @@ mating pin (25.91 mm) enters the 11 mm H11 socket by 4.45 mm at a 35 mm riser, w
 window, and by 11.63 mm at 27.82 mm, which is not. The 35 mm body and the -20 pin are a pair. No replacement
 catalogue number is assigned here. The main PCB was not edited.
 
+## Low noise: fixed-frequency supplies (Ed, 8 Nov 2026)
+
+[Ed 15:45 asked for a noise sweep; Q39 = A at 15:59]. Write-up and ranking: `docs/noise-sweep-2026-11-08.md`,
+`docs/img/noise-sweep.png`.
+- Every buck in the module is a **TPS62933F** (forced continuous: fixed frequency at every load, no light-load bursts),
+  LCSC C5219272: the jack board's 3.3 V (U6, swapped from the TPS62933DRLR, same footprint) and board L's 5 V and 3.3 V.
+- Switching frequencies about 1-2 MHz, "well out of the audio band" (50-100 x 20 kHz), and set apart so no two
+  converters or their harmonics meet within the audio band (the boost's 600 kHz x 2 = the jack 3.3 V's 1.2 MHz today);
+  values with step 3. The 1220's PWM at 100 kHz.
+- Still to decide, one at a time: Q38 power tree, Q40 the ADC's reference, Q41 a ground-sense line on the flex.
+
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 
 [Ed 13:35-14:02]. Picture: `docs/img/race-section-v052-led.png` (cut through an LED site).

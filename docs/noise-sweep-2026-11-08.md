@@ -8,6 +8,11 @@ What was swept: every rail and converter (jack power board, its lower board, boa
 the screens, the clear OLED, the dial), every analog input and output (CV in x3, CV out x3, audio in and out, the Halls, MOT_SENSE),
 every crossing between boards (link flex, 2x6 stacks, posts, rod), and the outside world (USB-C, patch cables).
 
+**Outcome: Q39 = A [Ed 8 Nov 15:59, "Yeah, that's perfect", after the 1-2 MHz answer]:** TPS62933F on all three bucks, their
+frequencies set about 1-2 MHz and apart from each other and the boost's harmonics (values in step 3); the 1220's PWM at 100 kHz,
+the DRV8213's top [S]. The jack board's U6 is now TPS62933FDRLR (LCSC C5219272) in design.py and its generated files.
+Next: Q38 (the power tree) again, then Q40, Q41.
+
 ## Where we are, in one line
 Nothing is broken, but five things would show on a scope at the jacks: the switching regulators' light-load bursts, the ADC's
 reference being the 3.3 V supply, the ground offset between the jack board and the main board, the RGB ring's 1.2 kHz dimming, and

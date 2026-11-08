@@ -143,12 +143,15 @@ def build():
     R("93.1k 0.5%", "N12V", "N_FB", "supply"); R("10.0k 0.5%", "N_FB", "GND", "supply"); C("10nF 25V", "N12V", "N_FB", "supply")
     C("10nF", "N_NR", "GND", "supply"); C("10uF 25V", "N12V", "GND", "supply", size="0805")
     _B[0] = "upper"
-    # 3.3 V: TPS62933DRLR: 1 RT, 2 EN, 3 VIN, 4 GND, 5 SW, 6 BST, 7 SS, 8 FB [S]; RT to GND = 1.2 MHz, 2.2 uH, >= 10 uF effective [S table];
+    # 3.3 V: TPS62933FDRLR [Ed 8 Nov Q39 = A: the forced-continuous version, fixed frequency at every load, no light-load bursts in
+    #   the audio band; same SOT-583 and pins as the TPS62933DRLR [S TI datasheet]]: 1 RT, 2 EN, 3 VIN, 4 GND, 5 SW, 6 BST, 7 SS, 8 FB [S];
+    #   RT to GND = 1.2 MHz, 2.2 uH, >= 10 uF effective [S table]. [C] the frequency moves off 1.2 MHz (the boost's 600 kHz x 2) with the
+    #   module's frequency plan in step 3 (docs/noise-sweep-2026-11-08.md).
     #   EN floating = on (0.7 uA pull-up; 6 V abs max, so never to VSYS) [S]: the board's 3.3 V is up whenever VSYS is, so the expander
     #   holds every switch open and every rail off from the start; VOUT = 0.8 x (1 + 30.9k/10.0k) = 3.27 V (the OLED's VDD max is 3.3) [S/A]
-    part("U", "TPS62933DRLR", "Package_TO_SOT_SMD:SOT-583-8",
-         {1: "GND", 2: None, 3: "VSYS", 4: "GND", 5: "SW_3", 6: "BST_3", 7: "SS_3", 8: "FB_3"}, "supply", lcsc="C3200405",
-         mpn="TPS62933DRLR", names={1: "RT", 2: "EN", 3: "VIN", 4: "GND", 5: "SW", 6: "BST", 7: "SS", 8: "FB"})
+    part("U", "TPS62933FDRLR", "Package_TO_SOT_SMD:SOT-583-8",
+         {1: "GND", 2: None, 3: "VSYS", 4: "GND", 5: "SW_3", 6: "BST_3", 7: "SS_3", 8: "FB_3"}, "supply", lcsc="C5219272",
+         mpn="TPS62933FDRLR", names={1: "RT", 2: "EN", 3: "VIN", 4: "GND", 5: "SW", 6: "BST", 7: "SS", 8: "FB"})
     part("L", "2.2uH 1A", "Inductor_SMD:L_Cenker_CKCS252012", {1: "SW_3", 2: "3V3"}, "supply", note="2.5 x 2.0 [A]")
     C("100nF 25V", "BST_3", "SW_3", "supply"); C("10nF", "SS_3", "GND", "supply", note="1.5 ms (6.8 nF minimum) [S]")
     R("30.9k", "3V3", "FB_3", "supply"); R("10.0k", "FB_3", "GND", "supply")

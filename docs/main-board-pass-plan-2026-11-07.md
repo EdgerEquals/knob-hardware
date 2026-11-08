@@ -57,6 +57,8 @@ Expected next, one at a time as they come up:
    bucks would sit in light-load mode (PFM) most of the time. **Q39 (open):** A TPS62933F (fixed frequency at every load) on all
    three bucks, B TPS62933O (out-of-audio). Then Q38 again. Then Q40 (the ADC's reference) and Q41 (a ground-sense line on the
    flex), one at a time.
+   **Q39 = A [Ed 15:59 "Yeah, that's perfect"]:** TPS62933F (LCSC C5219272) on all three bucks, about 1-2 MHz, set apart; the
+   1220's PWM at 100 kHz. The jack board's U6 swapped (same footprint). **Q38 asked again** with the F part.
 3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
    board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).

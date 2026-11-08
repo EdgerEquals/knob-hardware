@@ -3314,8 +3314,8 @@
     (at 118.8 95.9 180)
     (descr "https://www.ti.com/lit/ds/symlink/tps62933.pdf")
     (tags "SOT-583-8")
-    (property "LCSC" "C3200405")
-    (property "MPN" "TPS62933DRLR")
+    (property "LCSC" "C5219272")
+    (property "MPN" "TPS62933FDRLR")
     (property "Sheetfile" "jack-power-board.kicad_sch")
     (property "Sheetname" "Root")
     (path "/f98c9072-4bd2-5b56-8cb8-d22bb58b8279")
@@ -3324,7 +3324,7 @@
         (effects (font (size 0.4 0.4) (thickness 0.06)) (justify mirror))
       (tstamp 9cf1bd7e-c14b-4407-a9d0-a19da9a174c7)
     )
-    (fp_text value "TPS62933DRLR" (at 0 -2.8 unlocked) (layer "B.Fab") hide
+    (fp_text value "TPS62933FDRLR" (at 0 -2.8 unlocked) (layer "B.Fab") hide
         (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
       (tstamp 0d6a27eb-2fc0-402f-9644-6009f775b1b5)
     )
