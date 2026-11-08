@@ -153,3 +153,16 @@ the proposal). Studies: `tools/studies/race_section_sketch.py`, `race_envelope.p
 - **Wider, proposed [A]:** foot r 17.5 → 21.2 (3.7 wide), top 0.3 under the knob (z 1.75), same groove and floor. Lips 1.33 inside,
   0.36 outside. Measured clearances: encoder bearing 0.50, knob parts 0.32, case 0.32, clear OLED 0.42, the rest ≥ 0.52. Nothing else
   moves. With the RGB recessed in the board, the floor can be solid (no hole over each light).
+
+## Smaller balls? (8 Nov, [Ed 13:18] "if we can get them all in the smaller ball size, make it smaller; if not, keep it and widen")
+- **Ring with Ø1.5 load balls** (same solver as the model, band between the ring-gear root 18.69 and the cap edge 21.0): the glass
+  spacers must be ≤ 1.40 to clear the tracks, and the window must be narrow. Cospheric's precision soda-lime **1.21 mm (±0.02)** gives
+  **44 pairs** on r 19.84, gaps 0.051-0.071, track clearance 0.135 [A arithmetic]. (1.01 mm also fits: 48 pairs.) Cheap sieved glass
+  no longer works at this size; the spacers have to be precision balls.
+- **All three kinds are sold at the smaller size [S]:** 316 stainless Ø1.50 (123bearing BA-1.50-316-INOX); synthetic ruby Ø1.5
+  Grade 25 (Thermo / Alfa Aesar via Fisher, AA42077KJ; Edmund Optics 1.5 mm ruby ball lens); glass 1.21 mm (Cospheric soda-lime
+  precision, 1 g ≈ 400 spheres, US$282.08, in stock; 1.01 mm US$67.14 / 100).
+- **Trial build** (`--set ot_ball_d=1.5 ot_ruby_d=1.5 ot_spacer_min=1.19 ot_spacer_max=1.23 ot_spacer_alt=1.21`): 333 / 334 pass.
+  The knob's side walls 0.10 → 0.35 a side; the clear floor 1.0 → 1.2 (the ball sits lower, the knob drops 0.05); the detent arm's
+  slack 0.328 → 0.377. The one fail: "race web beside a pin hole" (-0.006, needs 0.05): the two Ø1.71 locating pins no longer fit in
+  the narrower ring. The wider foot (r 17.5-21.2) fixes it.
