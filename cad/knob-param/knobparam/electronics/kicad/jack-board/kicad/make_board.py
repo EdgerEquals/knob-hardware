@@ -23,7 +23,7 @@ mirror it:
   H2 (x +11.15) inner column (x +9.2): J3_TIP QGND J3_RING CC2 VBUS VBUS    outer (x +13.1): J4_TIP GND J4_RING GND DP DN
 Two grounds [Ed 8 Nov Q42 = A, docs/noise-sweep-2026-11-08.md]: QGND (quiet) = the four sleeves and both copper pours, down two
 stack pins to the jack lower board's DAC and CV op-amps, where it meets GND at one point (a 0R there); GND (power) = the two USB-C
-GND contacts, routed 0.5 wide to six stack pins (the supply current's return; 0.75 A a pin at 3 A from a computer port, as VBUS).
+GND contacts, routed 0.4 wide to six stack pins (the supply current's return; 0.75 A a pin at 3 A from a computer port, as VBUS).
 No supply current flows on this board's pours, so the sleeves sit at the CV circuits' ground."""
 import os, sys, subprocess, json
 import pcbnew
@@ -41,9 +41,9 @@ LIB = "jackb"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
 ORIGIN = (100.0, 100.0)
 BT = 1.6
 RULES = dict(clearance=0.1, track=0.2, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.25)   # PCBWay standard 4/4 mil, 0.2 drill
-ROUTE_CLASSES = [("Power", 0.2, 0.5, ["VBUS", "GND"])]   # VBUS routed 0.5 wide, 0.2 clear; the rest (GND too: its sleeve pads leave the tongues past the ring pads, about 0.6 between pad and edge) at 0.2 wide, 0.15 clear
+ROUTE_CLASSES = [("Power", 0.2, 0.5, ["VBUS"]), ("PowerGnd", 0.2, 0.4, ["GND"])]   # [Q42] GND (power) 0.4: 1.5 A a side at a 3 A computer port, about 16 °C rise (IPC-2221 outer, 1 oz) [A]; QGND is the pours only (not routed)   # VBUS routed 0.5 wide, 0.2 clear; the rest (GND too: its sleeve pads leave the tongues past the ring pads, about 0.6 between pad and edge) at 0.2 wide, 0.15 clear
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-2.1.0.jar")
-WIDTHS = {"default": 0.2, "VBUS": 0.5, "GND": 0.5, "QGND": 0.4}   # grid router: signals 0.2, VBUS 0.5 (1.5 A a side), GND 0.4 (plus the pours)
+WIDTHS = {"default": 0.2, "VBUS": 0.5, "GND": 0.4, "QGND": 0.4}   # grid router: signals 0.2, VBUS 0.5 (1.5 A a side), GND 0.4 (plus the pours)
 ROUTE_CLEARANCE = 0.15
 
 # ---- numbers from the model (case/params.py, v0.43); check_cad.py compares them with the model ----
@@ -294,7 +294,8 @@ if __name__ == "__main__":
     pcbnew.SaveBoard(pcb_path, board)
     write_project(HERE, NAME, rc, libs, ROUTE_CLASSES)
     if "--route" in sys.argv:   # Freerouting (this board is roomy enough), the outline moved in 0.105 for it so tracks keep the 0.25 edge
-        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=6, edge_inset=RULES["edge"] - 0.15 + 0.005))
+        print("routed:", route(pcb_path, FREEROUTING, passes=100, attempts=6, edge_inset=RULES["edge"] - 0.15 + 0.005,
+                               extra=("-inc", "QGND")))   # [Q42] the quiet ground is carried by the two pours, not tracks
         add_gnd_zones(pcb_path)
     elif "--grid" in sys.argv:
         print("grid router: vias", grid_route(pcb_path))
