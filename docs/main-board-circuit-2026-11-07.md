@@ -203,3 +203,16 @@ under the knob; checks 334 / 334 (`docs/design-notes.md`, "Thrust race v0.51"). 
 - **[Ed 13:54] all 24 ring sites get the reverse-mount RGB** (SK6812MINI-E), "we won't power them all at once": brightness is capped in
   firmware. Full white would be about 0.86 A at 5 V for 24 [S 12 mA per colour]; the 5 V converter is sized for the firmware cap,
   not that. Checked: no reverse-mount RGBW (with a white chip) turned up (only RGB: SK6812MINI-E, MINI-EA) [S search, 8 Nov].
+
+## The rod link, Q43 (8 Nov, open)
+Picture: `docs/img/rod-link-q43.png`. The dial (ESP32-S3, its screen, LEDs, the mic) gets 5 V and the data both ways on the M1.6
+rod; the brass tube is the return; about 0.12 A, 0.6 W [A, layout v4].
+- **A (recommended):** a bias tee at each end: the DC through a small choke, the data through a small capacitor as a DC-free
+  (Manchester) code at about 2 Mbit/s; a small comparator receives. The dial's draw stays steady, so nothing on the 5 V follows
+  the data, and the data's energy is at 1-4 MHz [A]. ESP32-S3: its RMT pulse peripheral; H743: a timer + DMA (two pins from the
+  spares, replacing DIAL_DATA). Enough for the commands, the mic's sound back (about 0.8 Mbit/s raw) and a firmware update in
+  about a minute [A]. [C] the dial-end choke: 0.2 A in about 2 x 2 mm.
+- **B:** the supply level is the data: the main end switches the rod 5.0 / 4.4 V (down), the dial switches a small load (up),
+  a plain UART to about 1 Mbit/s, no chokes. Noise: the dial's hold-up capacitor recharges in step with the data, so packet
+  bursts (60 a second) put 60 Hz and harmonics on the 5 V and ground unless the link sends filler all the time [A].
+- Not offered: a power+data chip of the MAX22088 class: 200 kbit/s, 4 x 4 mm at both ends [S Analog Devices].
