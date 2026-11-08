@@ -1,0 +1,5 @@
+kicad/trial*/
+logs/
+__pycache__/
+*.dsn
+*.ses
