@@ -84,7 +84,7 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   sides, so every track from the bottom (link flex, the 15 V post) to the top (the chip, boards L and R) threads between two
   cut-outs (1.76 mm webs, about 5 tracks a layer at 0.1 / 0.1 mm, 0.3 off each cut-out [A]) into the ring and out again.
   About 40 tracks plus three rails and ground: 4 layers at least; the count is settled after placing.
-- **Netlist done** (`knob-main-pcb/v2/design.py`, 180 parts, 131 nets; doc part 2 in `docs/main-board-circuit-2026-11-07.md`).
+- **Netlist done** (`knob-main-pcb/v2/design.py`, 180 parts, 131 nets with 24 ring LEDs; doc part 2 in `docs/main-board-circuit-2026-11-07.md`).
 - **Q44 (open), found while setting up the placement** (`docs/img/ring-pads-q44.png`, `tools/studies/ring_pads_q44_sketch.py`):
   the SK6812MINI-E's leads leave its two short ends, so its pads sit 2.0-3.4 mm out from its centre along the 3.2 mm body
   (Keebio-Parts and marbastlib agree [S]). The model points that axis along the radius, so the outer pads land in windows A, B,
@@ -92,3 +92,6 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   **A** 12 LEDs, 30° apart, 3.1 mm between neighbours, and the gaps between cut-outs open from 1.8 to about 7 mm (the ~40
   tracks crossing the ring get easier); **B** 16 LEDs, 22.5° apart, 0.6 mm between neighbours (tight), tracks cross on the inner
   layers only. Either way the model's cut-outs and the race's two locating pegs turn with the LEDs.
+  **Q44 = A [Ed 19:37 "12"]:** 12 LEDs every 30°, turned along the ring. Model v0.53: `em_n` 6, `em_phase` 15 (the panel's 3 and
+  9 o'clock, where the side tracks pass window D, fall in the middle of a web), cut-outs 3.0 radial x 3.4 tangential, the pegs
+  follow. Netlist: 12 LEDs (156 parts, 119 nets). Full white is now 0.43 A on the ring's 5 V [S 12 mA a colour].

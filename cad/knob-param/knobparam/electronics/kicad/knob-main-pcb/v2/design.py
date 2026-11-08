@@ -78,7 +78,7 @@ HDR_R = ["GND", "QSPI_CLK_R", "GND", "QSPI_NCS_R", "QSPI_IO0_R", "GND", "QSPI_IO
 # link flex, main-board end: pad k = the jack lower board's J6 pin k (the flex keeps each contact at the same panel x, make_flex.py)
 FLEX = ["SCK_L", "GND", "MOSI_L", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES", "I2C_SCL", "I2C_SDA", "IO_INT", "MIDI_TX", "GND",
         "USB_DP", "USB_DM", "GND", "CV_IN1_L", "CV_IN2_L", "CV_IN3_L", "GND", "AUDIO_OUT", "GND", "AUDIO_IN_L", "GND", "AGND_SENSE_L", "GND"]
-RING_N = 24   # SK6812MINI-E on the thrust pitch, every 15 deg [Ed 8 Nov 13:54]
+RING_N = 12   # SK6812MINI-E on the thrust pitch, every 30 deg, turned along the ring [Ed 8 Nov 19:37 Q44 = A; was 24 at 13:54]
 
 
 def build():
@@ -207,7 +207,8 @@ def build():
     C("1nF C0G", "NTC", "GND", "adc")
 
     # ------------------------------------------------------------------------------------------------------- the LED ring
-    # 24 x SK6812MINI-E reverse-mounted in cut-outs on the back, shining through the board into the clear race [Ed 13:35, 13:54].
+    # 12 x SK6812MINI-E reverse-mounted in cut-outs on the back, shining through the board into the clear race [Ed 13:35; Q44 = A
+    # 19:37: 12, turned along the ring so their end pads stay off the windows]. Full white 12 x 36 mA = 0.43 A [S 12 mA a colour].
     # Its own 5 V branch: a 2 A bead, the H743's switch (RGB_EN), 2 x 22 uF; data level-shifted to 5 V (VIH 0.7 x VDD) [S].
     part("FB", "BLM18KG121TZ1D", "Inductor_SMD:L_0603_1608Metric", {1: "5V", 2: "RING_IN"}, "ring", lcsc="C396652",
          mpn="BLM18KG121TZ1D", note="Murata, 120R at 100 MHz, 30 mohm, 3 A [S]")
@@ -217,7 +218,7 @@ def build():
          names={1: "VIN", 2: "GND", 3: "ON", 4: "CT", 5: "QOD", 6: "VOUT"})
     R("100k", "RGB_EN", "GND", "ring", note="off until the H743 says so (ON must not float) [S]")
     C("1nF", "RING_CT", "GND", "ring", note="2.5 ms rise at 5 V [S: SR = 0.55 x CT + 30 us/V]: about 90 mA into the 44 uF")
-    C("22uF 10V", "RING_5V", "GND", "ring", size="0805"); C("22uF 10V", "RING_5V", "GND", "ring", size="0805")
+    C("22uF 10V", "RING_5V", "GND", "ring", size="0805"); C("22uF 10V", "RING_5V", "GND", "ring", size="0805")   # [A] kept at 2 for 12
     part("U", "SN74AHCT1G125DBVR", "Package_TO_SOT_SMD:SOT-23-5", {1: "GND", 2: "RGB_DIN", 3: "GND", 4: "RING_DY", 5: "RING_5V"}, "ring",
          lcsc="C7484", mpn="SN74AHCT1G125DBVR", note="VIH 2.0 V at 5 V [S]; powered with the ring so it never drives a dead chain; "
          "its input takes 5.5 V with VCC off (no clamp to VCC) [S], so RGB_DIN can sit at either level [A]",

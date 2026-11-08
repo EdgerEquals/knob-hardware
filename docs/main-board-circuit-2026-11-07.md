@@ -229,7 +229,7 @@ rod; the brass tube is the return; about 0.12 A, 0.6 W [A, layout v4].
 
 ## Part 2: the netlist, v2 (8 Nov, step 3 [Ed 19:10 "Y"])
 `cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/design.py` (pure Python, the jack power board's shape; `python3
-design.py` prints the blocks and a self-check). **180 parts (177 fitted), 131 nets**; every net has two ends, every pin-map net is
+design.py` prints the blocks and a self-check). **156 parts (153 fitted), 119 nets** (180 / 131 with 24 ring LEDs, before Q44); every net has two ends, every pin-map net is
 used, every power pin of the H743 is wired. Pin names for the symbol: `v2/h743vit6_lqfp100_pins.json`, derived from ST's open
 pin data (BSD-3-Clause, (c) 2020 STMicroelectronics). Parts checked against the makers' sheets and LCSC on 8 Nov [S] unless marked.
 - **Encoder:** the EE-SX1321 sits straight on the back (no riser board since Q27; model v0.52 `enc_riser` False), with its 220 Ω
@@ -240,7 +240,7 @@ pin data (BSD-3-Clause, (c) 2020 STMicroelectronics). Parts checked against the 
   sets the final limit. VM: 100 nF + 22 µF (TI gives no bulk value) on its own branch, a 0R at board L's 5 V pins as the star
   point [A]. 100 nF across the motor tabs. Motor voice: OUT1 through 10 k / 15 k (5 V → 3.0 V) + 1 nF [A]. NTC: Murata
   NCP15XH103F03RC (C77131) under 10 kΩ 1 % from the 3.3 V [A].
-- **Ring, 24 SK6812MINI-E (C5149201):** a Murata BLM18KG121TZ1D bead (3 A, C396652), a TPS22918 switch on RGB_EN (C131941; 1 nF
+- **Ring, 12 SK6812MINI-E (C5149201)** [Q44 = A, Ed 19:37; was 24]: a Murata BLM18KG121TZ1D bead (3 A, C396652), a TPS22918 switch on RGB_EN (C131941; 1 nF
   on CT = 2.5 ms rise, about 90 mA into the 2 x 22 µF; QOD to VOUT), 100 nF at each LED, the data through an SN74AHCT1G125
   (C7484, VIH 2.0 V at 5 V) powered from the switched rail and 33 Ω [A]. Land pattern after two open footprints: Keebio-Parts
   (MIT) and marbastlib (CERN-OHL-P), pads 1.35-1.45 x 0.82 at x ±2.7, y ±0.75 [S]. **[C] the pin order against the datasheet
