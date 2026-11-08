@@ -177,6 +177,11 @@
    "signal": "ADC1_INP14",
    "position": 24
   },
+  "AGND_SENSE": {
+   "pin": "PC0",
+   "signal": "ADC2_INP10",
+   "position": 15
+  },
   "AUDIO_OUT": {
    "pin": "PA4",
    "signal": "DAC1_OUT1",
@@ -212,27 +217,7 @@
    "signal": "GPIO",
    "position": 43
   },
-  "VCSEL_A0": {
-   "pin": "PE12",
-   "signal": "GPIO",
-   "position": 42
-  },
-  "VCSEL_A1": {
-   "pin": "PE11",
-   "signal": "GPIO",
-   "position": 41
-  },
-  "VCSEL_A2": {
-   "pin": "PE10",
-   "signal": "GPIO",
-   "position": 40
-  },
-  "VCSEL_A3": {
-   "pin": "PE9",
-   "signal": "GPIO",
-   "position": 39
-  },
-  "LASER_EN": {
+  "PWR_LIGHT": {
    "pin": "PB9",
    "signal": "TIM17_CH1",
    "position": 96
@@ -263,9 +248,9 @@
    "position": 54
   },
   "JOY_RST": {
-   "pin": "PC0",
+   "pin": "PE9",
    "signal": "GPIO",
-   "position": 15
+   "position": 39
   },
   "JOY_TE": {
    "pin": "PE6",
@@ -327,6 +312,9 @@
   "PC15-OSC32_OUT (OSC32_OUT)",
   "PC2_C",
   "PC3_C",
+  "PE10",
+  "PE11",
+  "PE12",
   "PD10",
   "PC8",
   "PA9",

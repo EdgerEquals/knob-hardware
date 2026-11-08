@@ -9,24 +9,26 @@ designed with the dial board), then the layer count after a first placement.
 
 ## Pin map
 `tools/main_board_pinmap.py` on ST's pin data (STM32_open_pin_data, BSD-3-Clause, (c) 2020 STMicroelectronics, commit 7d1f151):
-`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **64 nets on 82 I/O, 18 spare**
-(15 general; PC2_C and PC3_C analog only; PC15 a slow input only). Rules: PC13-PC15 take slow inputs only (backup domain), the
+`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **61 nets on 82 I/O, 21 spare**
+(18 general; PC2_C and PC3_C analog only; PC15 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
+[Q41], PWR_LIGHT in place of the VCSEL decoder [Q36]. Rules: PC13-PC15 take slow inputs only (backup domain), the
 ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves one job, the interrupt inputs on different EXTI lines
 (IO_INT 14, HALL3D_INT 13, JOY_TE 6). The map is re-solved with pin preferences once the neighbours are placed (step 3).
 
 | Group | Nets (pin) |
 |---|---|
-| Joystick screen, QUADSPI | CLK PB2, NCS PB6, IO0 PD11, IO1 PD12, IO2 PE2, IO3 PD13; RST PC0, TE PE6, PWR_EN PE5 |
+| Joystick screen, QUADSPI | CLK PB2, NCS PB6, IO0 PD11, IO1 PD12, IO2 PE2, IO3 PD13; RST PE9, TE PE6, PWR_EN PE5 |
 | Link flex SPI3 | SCK PC10, MOSI PC12; CS_DAC PD8, CS_OLED PD15, OLED_DC PD14, OLED_RES PD9 |
 | I2C3 | SCL PA8, SDA PC9; IO_INT PC14, HALL3D_INT PC13 |
 | MIDI, dial link | MIDI_TX PE1 (UART8), DIAL_DATA PD5 (USART2, half duplex) |
 | USB FS | DM PA11, DP PA12 |
 | CAN (FDCAN2) | TX PB13, RX PB12, STBY PE15 |
 | ADC1 | CV_IN1 PC4, CV_IN2 PA0, CV_IN3 PA5, AUDIO_IN PA7, HALL1 PA6, HALL2 PB0, HALL4 PB1, HALL5 PC1, MOT_SENSE PC5, MOT_VOICE PA1, NTC PA3, JOY_LADDER PA2 |
+| ADC2, ground sense [Q41] | AGND_SENSE PC0 (ADC2_INP10): sampled by ADC2 at the same instant as ADC1's CV in / audio in (dual simultaneous mode), subtracted in firmware [A] |
 | DAC1 | AUDIO_OUT PA4 |
 | Encoder (TIM3) | ENC_A PB4, ENC_B PB5 |
 | 1220 (TIM2), Halls | MOT_IN1 PB10, MOT_IN2 PB11, MOT_nSLEEP PE14; HALL_EN PE13 |
-| VCSELs | A0-A3 PE12, PE11, PE10, PE9; LASER_EN PB9 (TIM17) |
+| Power light [Q36] | PWR_LIGHT PB9 (TIM17_CH1, PWM into one transistor); the ring's VCSEL decoder is gone |
 | RGB, violet | RGB_DIN PB8 (TIM16 + DMA), RGB_EN PE8, VIOLET_EN PE7 |
 | Risley (reserved) | PB14, PB15 (TIM12) |
 | Cover board (later) | COVER_TX PC6, COVER_RX PC7 (USART6), COVER_EN PE3 |
@@ -90,7 +92,11 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 
 ## Link flex, main-board end (Hirose FH26W pins as on the jack lower board's J6)
 1 SCK, 2 GND, 3 MOSI, 4 CS_DAC, 5 CS_OLED, 6 OLED_DC, 7 OLED_RES, 8 SCL, 9 SDA, 10 IO_INT, 11 MIDI_TX, 12 GND, 13 D+, 14 D-, 15 GND,
-16-18 CV_IN1-3, 19 GND, 20 AOUT, 21 GND, 22 AIN, 23-25 GND [S jack board circuit, 6 Nov].
+16-18 CV_IN1-3, 19 GND, 20 AOUT, 21 GND, 22 AIN, 23 GND, **24 AGND_SENSE**, 25 GND [S jack board circuit, 6 Nov; pin 24 Ed 8 Nov
+Q41 = A].
+- **AGND_SENSE** (pin 24): the jack lower board's analog ground, tied there at one point (a 0R at its TLV9064) and carrying no
+  current. At the H743: 100 Ω + 1 nF C0G to ground like the other ADC pins, and 1 MΩ to ground so it reads 0 with the flex out [A].
+  Firmware: ADC1 (CV in / audio in) and ADC2 (AGND_SENSE) in dual simultaneous mode, difference taken per sample [A].
 - SCK and MOSI: 33 Ω in series at the H743 [A]. CS, D/C, RES straight.
 - I2C: the 4.7 kΩ pull-ups and IO_INT's 10 kΩ are on the jack board already [S]; the main board keeps pull-up pads **not fitted**
   (v0.11's R20 / R21 become DNP) [A]. One bus: TMAG5273, TCA9535 (0x20), HUSB238 (0x08) [S].
@@ -112,8 +118,8 @@ ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves o
 | Hall, linear | TI TMAG5253BA3IQDMRR | C22401868 | 4 |
 | Hall, 3D | TI TMAG5273A2QDBVR | C3715882 | 1 |
 | Encoder sensor | Omron EE-SX1321 | C469128 | 1 |
-| Capacitors | 100 nF X7R 0402 (5 VDD, VDDA, VREF+, VBAT, NRST, 5 Halls); 2.2 µF X7R 0603 x2 (VCAP); 10 µF 0603; 1 µF 0402 x2; 15 pF C0G 0402 x2; 1 nF C0G 0402 x4 | generic | |
-| Resistors | 10 kΩ (BOOT0, HALL3D_INT, encoder x2); 220 Ω; 47 Ω; 22 Ω x6; 33 Ω x2; 100 Ω x4 (0402) | generic | |
+| Capacitors | 100 nF X7R 0402 (5 VDD, VDDA, VREF+, VBAT, NRST, 5 Halls); 2.2 µF X7R 0603 x2 (VCAP); 10 µF 0603; 1 µF 0402 x2; 15 pF C0G 0402 x2; 1 nF C0G 0402 x5 | generic | |
+| Resistors | 10 kΩ (BOOT0, HALL3D_INT, encoder x2); 220 Ω; 22 Ω x6; 33 Ω x2; 100 Ω x5; 1 MΩ (AGND_SENSE) (0402); the 47 Ω on VREF+ is gone (Q40) | generic | |
 
 ## Sources
 - AN4938, Getting started with STM32H74xI/G and STM32H75xI/G MCU hardware development (ST): sections 2.1.2, 2.2, 4.1.2, 7.4, table 9,

@@ -68,13 +68,16 @@ def signal_list(profile):
     G.append(("CAN standby", "gpio", [""], [("CAN_STBY", [])], None))
     analog = ["CV_IN1", "CV_IN2", "CV_IN3", "AUDIO_IN", "HALL1", "HALL2", "HALL4", "HALL5", "MOT_SENSE", "MOT_VOICE", "NTC", "JOY_LADDER"]
     G.append(("analog inputs (ADC1/2)", "adc", [""], [(n, []) for n in analog], None))
+    # [Ed 8 Nov Q41 = A] the jack lower board's analog ground, up flex pin 24: on an ADC2 input, so ADC2 samples it at the same instant
+    # as ADC1 samples a CV in or the audio in (dual simultaneous mode) and the firmware subtracts it
+    G.append(("ground sense for the CV ins and audio in (ADC2, sampled with ADC1)", "adc2", [""], [("AGND_SENSE", [])], None))
     G.append(("audio out (link)", "fixed", [""], [("AUDIO_OUT", ["DAC1_OUT1", "DAC1_OUT2"])], None))
     G.append(("encoder (timer in encoder mode)", "inst", ["TIM1", "TIM2", "TIM3", "TIM4", "TIM5", "TIM8", "TIM23", "TIM24"],
               [("ENC_A", ["{i}_CH1"]), ("ENC_B", ["{i}_CH2"])], "TIM"))
     G.append(("1220 driver PWM (IN1, IN2)", "inst", TIMS, [("MOT_IN1", ["{i}_CH1", "{i}_CH3"]), ("MOT_IN2", ["{i}_CH2", "{i}_CH4"])], "TIM"))
     G.append(("1220 driver sleep, Hall enable", "gpio", [""], [("MOT_nSLEEP", []), ("HALL_EN", [])], None))
-    G.append(("VCSEL one-hot decoder", "gpio", [""], [("VCSEL_A0", []), ("VCSEL_A1", []), ("VCSEL_A2", []), ("VCSEL_A3", [])], None))
-    G.append(("VCSEL enable (PWM)", "inst", TIMS, [("LASER_EN", ["{i}_CH1", "{i}_CH2", "{i}_CH3", "{i}_CH4"])], "TIM"))
+    # [Ed 8 Nov Q35 / Q36 = B] the ring's VCSELs and their decoder are gone; one red VCSEL is the power light, one transistor, PWM
+    G.append(("power light VCSEL (PWM, one transistor)", "inst", TIMS, [("PWR_LIGHT", ["{i}_CH1", "{i}_CH2", "{i}_CH3", "{i}_CH4"])], "TIM"))
     G.append(("RGB ring data (timer + DMA)", "inst", TIMS, [("RGB_DIN", ["{i}_CH1", "{i}_CH2", "{i}_CH3", "{i}_CH4"])], "TIM"))
     G.append(("RGB enable, violet enable", "gpio", [""], [("RGB_EN", []), ("VIOLET_EN", [])], None))
     G.append(("Risley motors (PWM, later) [A reserved]", "inst", TIMS,
@@ -114,7 +117,7 @@ def pin_number(name):
     return int(m.group(1)) if m else None
 
 
-def solve(pins, groups, spare_min=0):
+def solve(pins, groups, spare_min=0, keep=None):
     m = cp_model.CpModel()
     x = {}; sig_use = {}; inst_vars = {}; kind_use = {}
     pin_load = {p: [] for p in pins}
@@ -130,12 +133,14 @@ def solve(pins, groups, spare_min=0):
             for p, (_pos, sigs) in pins.items():
                 if p.startswith(tuple(SLOW_PINS)) and not (net.endswith("*") or net in SLOW_OK):   # names differ by family
                     continue
-                if "_C" in p and kind != "adc":   # the ADC-switch pads (PA0_C, PC2_C ...): analog only [A]
+                if "_C" in p and kind not in ("adc", "adc2"):   # the ADC-switch pads (PA0_C, PC2_C ...): analog only [A]
                     continue
                 if kind == "gpio":
                     ok = [("GPIO", None)]
                 elif kind == "adc":
                     ok = [(s, None) for s in sigs if re.match(r"ADC[12]_INP?\d+$", s)][:1]
+                elif kind == "adc2":
+                    ok = [(s, None) for s in sigs if re.match(r"ADC2_INP\d+$", s)][:1]
                 elif kind == "fixed":
                     ok = [(s, None) for s in sigs if s in pats]
                 else:
@@ -145,7 +150,7 @@ def solve(pins, groups, spare_min=0):
                     x[(net, p, s)] = v; cands.append(v); pin_load[p].append(v)
                     if kind == "inst":
                         m.AddImplication(v, inst_vars[gi][i])
-                    if s not in ("GPIO",) and kind != "adc":
+                    if s not in ("GPIO",) and kind not in ("adc", "adc2"):
                         sig_use.setdefault(s, []).append(v)
             if not cands:
                 return None, f"no pin can carry {net}"
@@ -166,6 +171,8 @@ def solve(pins, groups, spare_min=0):
     used = sum(x.values())
     spare = len(pins) - used
     m.Add(spare >= spare_min)
+    if keep:   # [A] a re-solve keeps every net it can on its previous pin (so a small change stays a small change)
+        m.Maximize(sum(v for (net, p, sg), v in x.items() if keep.get(net.rstrip("*")) == p))
     s = cp_model.CpSolver(); s.parameters.max_time_in_seconds = 60; s.parameters.num_workers = 1; s.parameters.random_seed = 1   # repeatable
     r = s.Solve(m)
     if r not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -180,12 +187,13 @@ def solve(pins, groups, spare_min=0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data"); ap.add_argument("--part", default="STM32H7B0VBTx"); ap.add_argument("--profile", default="lqfp100")
-    ap.add_argument("--out")
+    ap.add_argument("--out"); ap.add_argument("--keep", help="a previous --out json: keep nets on their pins where possible")
     a = ap.parse_args()
     pins = load(a.data, a.part)
     groups = signal_list(a.profile)
     nets = sum(len(g[3]) for g in groups)
-    res, status = solve(pins, groups)
+    keep = {n: v["pin"] for n, v in json.load(open(a.keep))["nets"].items()} if a.keep else None
+    res, status = solve(pins, groups, keep=keep)
     print(f"{a.part} ({a.profile}): {len(pins)} I/O pins, {nets} nets: {status}")
     if res is None:
         sys.exit(1)

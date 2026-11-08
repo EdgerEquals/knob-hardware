@@ -15,6 +15,10 @@ the DRV8213's top [S]. The jack board's U6 is now TPS62933FDRLR (LCSC C5219272) 
 **Q40 = A [Ed 16:07]:** TI REF3430 (3.0 V) on VREF+. Jack lower board re-set in design.py: CV-in feedback 11.3k (was
 13.3k), audio-out gain 33.2k (was 30.1k), audio in x -0.28 (28.0k, 270 pF) round VMID, so the 10k/10k/1 µF bias divider is gone.
 Its generated schematic, board and BOM are regenerated after Q41 (which changes a flex pin). Next: Q41.
+**Q41 = A [Ed 16:11]:** flex pin 24 is AGND_SENSE: a 0R at the lower board's TLV9064 ties it to GND (in the old bias resistor's
+place, same ref, so the saved placement holds); on the main board PC0 (ADC2_INP10), 100 Ω + 1 nF + 1 MΩ; ADC1 / ADC2 dual
+simultaneous, subtracted in firmware. Pin map re-solved keeping every other net (`--keep`): JOY_RST to PE9, PWR_LIGHT on PB9
+(the VCSEL decoder's 5 pins gone, Q36): 61 nets, 21 spare. The lower board rebuilt and re-routed from design.py.
 
 ## Where we are, in one line
 Nothing is broken, but five things would show on a scope at the jacks: the switching regulators' light-load bursts, the ADC's
@@ -94,6 +98,22 @@ input ripple stays on board L and does not travel down the posts into the jack b
    for the CV outs is checked next, with the stack pin list.
 Not proposed: isolating USB inside the module. With power on the same USB-C it needs an isolated 12 W converter as well as a USB
 isolator chip; there is no room for that in the jack unit [A]. An external USB isolator does the same job when a computer is used.
+
+## Q42: the sleeves' ground and the lower board's ground (found while doing Q41)
+Picture: `docs/img/sleeve-sense-q42.png`. A CV is tip minus sleeve. The sleeves (and the USB-C power contacts) are on the jack
+board; the DAC and the CV op-amps are on the jack lower board, two stacks down. The first stacks carry the whole module's current on
+7 ground pins [S: jack-board HDR_NETS], the second carry the lower board's own current and part of the main board's on 3 [S: STACK2].
+At about 10-20 mΩ a contact [A; C the PM127VS sheet], about 1 A from a charger: **likely 2-5 mV between the sleeves and the lower
+board's ground, so 2-6 cents on every CV out and CV in, moving with the motor and the LEDs** [A]. 1 mV = 1.2 cents at jack scale.
+Q41's sense line does not see it (it measures the lower board against the main board).
+- **A: a sleeve-sense line.** One ground pin in each pair of stacks becomes SLEEVE_SENSE (first stacks 7 → 6 grounds, second
+  3 → 2). On the lower board a resistor network from the DAC's reference, the lower ground and SLEEVE_SENSE sets each op-amp group's
+  + input [A, worked]: CV outs (Vout = 7 x V+ - 6 x Vdac) need V+ = VMID - Δ/7, so conductances VREF : SLEEVE : GND = 4 : 1 : 2
+  (e.g. 17.5k, 70k, 35k); CV ins (x 0.113) need V+ = VMID - 0.1015 Δ, so 0.5714 : 0.1015 : 0.3271. Δ = lower ground - sleeves.
+  About 6 resistors (0.1 %) and capacitors split in the same ratios so the division holds at audio frequencies [A]. The
+  three jack boards re-routed.
+- **B: firmware only.** Δ estimated from the known loads (MOT_SENSE, the LED and screen settings) times one resistance measured on
+  the bench; CV outs and readings pre-corrected. No hardware; leaves maybe a fifth, and misses fast changes [A].
 
 ## Q39: the bucks' light-load mode (the first decision)
 - **A (recommended): TPS62933F** on all three bucks (board L's 5 V and 3.3 V, and the jack board's 3.3 V). Fixed frequency at

@@ -50,8 +50,10 @@ def build():
     _B[0] = "lower"
     # link flex: Hirose FH26W-25S-0.3SHW(60), 25 positions at 0.3 [Q11: 17 signals + 7 grounds; the 25th a ground] [A order: SCK at the
     # far edge, grounds either side of the USB pair, the CV inputs and the audio]
+    # pin 24 = AGND_SENSE [Ed 8 Nov Q41 = A]: this board's analog ground, tied to GND at one point (R 0R at the TLV9064) and carrying
+    # no current, so the H743 reads the ground the CV ins are made on and subtracts it (docs/noise-sweep-2026-11-08.md)
     LINK = ["SCK", "GND", "MOSI", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES", "SCL", "SDA", "IO_INT", "MIDI_TX", "GND", "DP", "DN", "GND",
-            "CV_IN1", "CV_IN2", "CV_IN3", "GND", "AOUT", "GND", "AIN", "GND", "GND", "GND"]
+            "CV_IN1", "CV_IN2", "CV_IN3", "GND", "AOUT", "GND", "AIN", "GND", "AGND_SENSE", "GND"]
     part("J", "FH26W-25S-0.3SHW(60)", "jpb:Hirose_FH26W-25S-0.3SHW", {i + 1: n for i, n in enumerate(LINK)}, "connectors",
          lcsc="C2904698", mpn="FH26W-25S-0.3SHW(60)", note="link flex to the main board [Q11]", ref="J6")
     _B[0] = "upper"
@@ -198,6 +200,10 @@ def build():
     #   divider, so the 10k/10k/1uF bias parts are gone]; 270 pF: 21 kHz
     C("1uF 50V", "J4_RING", "AI_C", "audio", size="0603"); R("100k", "AI_C", "AI_N", "audio")
     R("28.0k", "AIN", "AI_N", "audio"); C("270pF C0G", "AIN", "AI_N", "audio")
+    # the ground-sense tie [Q41 = A]: 0R from AGND_SENSE (flex pin 24) to GND, in the first old bias resistor's place (same ref, so the
+    # saved placement holds); the other two old refs are skipped so every later ref, and its saved place, stays as it was
+    R("0R", "AGND_SENSE", "GND", "audio", note="single-point tie of the ground-sense line, at the CV-in op-amp [Q41]")
+    _ref("R"); _ref("C")
     part("U", "TLV9064IPWR", "Package_SO:TSSOP-14_4.4x5mm_P0.65mm",
          {1: "CV_IN1", 2: "CI1_N", 3: "VMID", 4: "3V3", 5: "VMID", 6: "CI2_N", 7: "CV_IN2", 8: "CV_IN3", 9: "CI3_N", 10: "VMID",
           11: "GND", 12: "VMID", 13: "AI_N", 14: "AIN"}, "jack circuits", lcsc="C779410", mpn="TLV9064IPWR", note="CV ins A-C, audio in D")

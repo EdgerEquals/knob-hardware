@@ -59,7 +59,8 @@ Expected next, one at a time as they come up:
    flex), one at a time.
    **Q39 = A [Ed 15:59 "Yeah, that's perfect"]:** TPS62933F (LCSC C5219272) on all three bucks, about 1-2 MHz, set apart; the
    1220's PWM at 100 kHz. The jack board's U6 swapped (same footprint). **Q38 asked again** with the F part: **A [Ed 16:04]**, two TPS62933F straight from 15 V. **Q40 = A [Ed 16:07]:** a TI REF3430 3.0 V reference on VREF+ (`docs/img/adc-reference-q40.png`); the jack board's ranges
-   re-set to fit. **Q41 (open)** next: a ground-sense line on the link flex.
+   re-set to fit. **Q41 = A [Ed 16:11]:** flex pin 24 becomes AGND_SENSE (`docs/img/ground-sense-q41.png`), read on PC0 (ADC2) with each CV
+   in; pin map re-solved (61 nets, 21 spare). The noise decisions are done; next the CV-out side's ground across the stacks (a check).
 3. The RGB emitter part; the VCSEL driver. **Hole found 8 Nov:** the red VCSEL is top-emitting, so it cannot fire through the
    board from the back. RGB: SK6812MINI-E recessed in cut-outs. **Q35 (open):** A drop the red VCSELs, B keep them on the front
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).

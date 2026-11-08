@@ -55,7 +55,8 @@ catalogue number is assigned here. The main PCB was not edited.
 - **Q40 = A [Ed 16:07]:** the H743 measures against a **TI REF3430 3.0 V reference** on VREF+ (LCSC C2156866), not the
   3.3 V supply. CV in reads ±12 V as 0.23-2.95 V (11.3k feedback); audio out x -3.32 (still ±5 V); audio in x -0.28 round VMID.
   The firmware reads the 3.3 V through the VBAT channel to correct the Halls, ladder and NTC (they stay on the 3.3 V).
-- Still to decide: Q41 a ground-sense line on the flex.
+- **Q41 = A [Ed 16:11]:** link flex pin 24 is **AGND_SENSE**, the jack lower board's analog ground (one 0R tie at its TLV9064),
+  read by the H743's ADC2 at the same instant as ADC1 reads a CV in or the audio in, and subtracted. Flex grounds 8 → 7.
 
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 

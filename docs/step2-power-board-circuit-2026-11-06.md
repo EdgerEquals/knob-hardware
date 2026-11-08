@@ -95,7 +95,9 @@ If A, the split I'd use [A, the best of every split of the netlist's blocks that
   ±7.44.
 - **Link flex, FH26W-25S** (KiCad's Hirose FH26-25S footprint; FH26W is the same mechanics [S]), pins [A order, Q11 content]:
   1 SCK, 2 GND, 3 MOSI, 4 CS_DAC, 5 CS_OLED, 6 OLED_DC, 7 OLED_RES, 8 SCL, 9 SDA, 10 IO_INT, 11 MIDI_TX, 12 GND, 13 D+, 14 D-, 15 GND,
-  16-18 CV_IN1-3, 19 GND, 20 AOUT, 21 GND, 22 AIN, 23-25 GND.
+  16-18 CV_IN1-3, 19 GND, 20 AOUT, 21 GND, 22 AIN, 23 GND, **24 AGND_SENSE**, 25 GND [Ed 8 Nov Q41 = A: pin 24 carries this
+  board's analog ground, tied to GND at one point by a 0R at the TLV9064 (in the old audio-bias resistor's place), to an ADC2 pin
+  on the H743, which subtracts it from the CV ins and the audio in].
 
 ## Tight or open
 
