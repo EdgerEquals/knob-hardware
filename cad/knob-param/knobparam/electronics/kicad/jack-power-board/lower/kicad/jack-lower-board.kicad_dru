@@ -1,0 +1,4 @@
+(version 1)
+(rule "post pins: one thermal spoke is enough on the outer pours (the In1 plane is a full connection)"
+  (condition "A.Pad_Type == 'Through-hole' && A.NetName == 'GND'")
+  (constraint min_resolved_spokes 1))
