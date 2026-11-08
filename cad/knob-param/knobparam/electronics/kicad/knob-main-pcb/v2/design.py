@@ -91,18 +91,13 @@ def build():
          face="F", note="vertical board L (power): 15 V up, 5 V and 3.3 V down, 5V_EN, the switch ladder [A order]", ref="J2")
     part("J", "board R header 2x11 1.27 hybrid", "mb:VBoard_R_Header_2x11_P1.27_Hybrid", {i + 1: n for i, n in enumerate(HDR_R)},
          "headers", face="F", note="vertical board R: the screen's quad port, CAN to its transceiver [A order]; 8 SMT legs over the "
-         "encoder riser, 14 THT [S layout v4]", ref="J3")
+         "encoder sensor, 14 THT [S model v0.52 vb_hdr]", ref="J3")
     part("J", "TC2030-IDC-NL", "Connector:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical",
          {1: "3V3", 2: "SWDIO", 3: "NRST", 4: "SWCLK", 5: "GND", 6: "SWO"}, "debug", face="F",
          note="pads only, nothing fitted; cable TC2030-CTX-NL [S Tag-Connect]", ref="J4",
          names={1: "VCC", 2: "SWDIO", 3: "nRESET", 4: "SWCLK", 5: "GND", 6: "SWO"})
-    # encoder riser (EE-SX1321 on its own 0.8 board, 3.8 off the back) [Ed 3 Nov 13:35]: 6-pin hybrid header, pins 4-5 THT, 0-3 SMT
-    # [S layout v4]; here numbered 1-6 = its 0-5. The sensor's resistors stay on this board by the header [plan].
-    part("J", "encoder riser header 1x6", "mb:EncoderRiser_Header_1x6_Hybrid",
-         {1: "ENC_LED", 2: "GND", 3: "3V3", 4: "ENC_A_L", 5: "ENC_B_L", 6: "GND"}, "encoder",
-         note="riser pins: 1 LED anode, 2 LED cathode, 3 collector, 4 E1, 5 E2, 6 ground [A order]", ref="J5")
     part("J", "cover board pads", "mb:Pads_1x6_P1.27_SMD", {1: "COVER_TX", 2: "COVER_RX", 3: "COVER_EN", 4: "3V3", 5: "5V", 6: "GND"},
-         "cover", note="the later back-screen board (Q33 = A): pads only [A]", ref="J6")
+         "cover", note="the later back-screen board (Q33 = A): pads only [A]", ref="J5")
     # the two brass posts from the jack unit, soldered at both ends [Ed 4 Nov 22:52]: GND (left ear) and VSYS = 15 V after the eFuse
     part("MP", "post GND", "mb:Post_Pin_1.0", {1: "GND"}, "power", note="Ø1.0 pin of the Ø2 post, plated Ø1.15, Ø1.6 pad [Q24, as the "
          "jack power board's end; C the main-board end]", ref="MP1")
@@ -136,9 +131,10 @@ def build():
     C("15pF C0G", "HSE_IN", "GND", "mcu", face="F"); C("15pF C0G", "HSE_OUT", "GND", "mcu", face="F")
     # VREF+ = TI REF3430 3.0 V [Ed 8 Nov Q40 = A]; the ADC and DAC span 0-3.0 V
     part("U", "REF3430IDBVR", "Package_TO_SOT_SMD:SOT-23-6", {1: "GND", 2: "GND", 3: "3V3", 4: "3V3", 5: "VREFP", 6: "VREFP"}, "adc",
-         lcsc="C2156866", mpn="REF3430IDBVR", note="EN tied to IN; [C] pin table and output-capacitor range",
+         lcsc="C2156866", mpn="REF3430IDBVR", note="EN tied to IN (on >= 1.6 V, never above IN); output stable 0.1-10 uF [S TI REF34]",
          names={1: "GND_F", 2: "GND_S", 3: "EN", 4: "IN", 5: "OUT_S", 6: "OUT_F"})
-    C("100nF", "3V3", "GND", "adc", note="REF3430 input"); C("1uF", "VREFP", "GND", "adc"); C("100nF", "VREFP", "GND", "adc")
+    C("1uF", "3V3", "GND", "adc", note="REF3430 input: 1-10 uF + 100 nF [S]"); C("100nF", "3V3", "GND", "adc")
+    C("1uF", "VREFP", "GND", "adc", note="1.1 uF in all, inside 0.1-10 uF [S]"); C("100nF", "VREFP", "GND", "adc")
 
     # ------------------------------------------------------------------------------------------------------- the link flex's lines
     R("33R", "LINK_SCK", "SCK_L", "link", face="F", note="[A] edges for the 25-way flex"); R("33R", "LINK_MOSI", "MOSI_L", "link", face="F")
@@ -171,44 +167,60 @@ def build():
     R("10k", "3V3", "HALL3D_INT", "halls")
 
     # ------------------------------------------------------------------------------------------------------- encoder (as v0.11)
+    # Q27 [Ed 6 Nov 19:42]: no feel stage, so the EE-SX1321 sits straight on the back (no riser board) [S model v0.52 enc_riser False]
+    # pins (datasheet p3): 1 anode, 2 + 3 cathode, 4 E2, 5 E1, 6 collector [S v0.11]
+    part("U", "EE-SX1321", "footprints:Omron_EE-SX1321", {1: "ENC_LED", 2: "GND", 3: "GND", 6: "3V3", 5: "ENC_A_L", 4: "ENC_B_L"},
+         "encoder", lcsc="C469128", mpn="EE-SX1321", note="slot tangent to the disc rim (model sens_xy); E1 = A, E2 = B",
+         names={1: "A", 2: "K", 3: "K", 4: "E2", 5: "E1", 6: "C"})
     R("220R", "3V3", "ENC_LED", "encoder", note="LED 9-10 mA [S v0.11]")
     R("10k", "ENC_A_L", "GND", "encoder"); R("10k", "ENC_B_L", "GND", "encoder")
     R("100R", "ENC_A_L", "ENC_A", "encoder", note="[A] edge damping at the timer pin"); R("100R", "ENC_B_L", "ENC_B", "encoder")
 
     # ------------------------------------------------------------------------------------------------------- the 1220 driver
     # TI DRV8213DSG [Ed 8 Nov Q37 = A], WSON-8 2 x 2: 1 VM, 2 OUT1, 3 OUT2, 4 GND, 5 IN2, 6 IN1, 7 GAINSEL, 8 IPROPI, pad GND [S].
+    # Current sense [S TI DRV8213]: I_IPROPI = A x I_motor, A = 205 uA/A (GAINSEL low, 0.35-2 A), 1050 (open, 60-350 mA), 4900
+    # (high, 10-60 mA), +-6 %; the driver limits the current when IPROPI reaches VREF = 0.47 / 0.51 / 0.55 V (min / typ / max);
+    # I_IPROPI <= 1 mA and VM - V_IPROPI >= 1.25 V. IN1 = IN2 = 0: coast, then asleep after about 1 ms (20 nA); 250 us to wake.
     # PWM at 100 kHz [Q39]. Its own 5 V branch [noise sweep]: a 0R at the 5 V pins makes the star, then VM's bulk here.
     R("0R", "5V", "VM", "motor", size="0805", note="the motor's own branch from the 5 V pins [A, noise sweep]")
     part("U", "DRV8213DSGR", "Package_SON:WSON-8-1EP_2x2mm_P0.5mm_EP0.9x1.6mm",
          {1: "VM", 2: "MOT_A", 3: "MOT_B", 4: "GND", 5: "MOT_IN2", 6: "MOT_IN1", 7: "GAINSEL", 8: "IPROPI", 9: "GND"}, "motor",
-         lcsc="C22407186", mpn="DRV8213DSGR", note="sleeps itself (no nSLEEP) [S]",
+         lcsc="C22407186", mpn="DRV8213DSGR", note="sleeps itself (no nSLEEP) [S]; US$0.68, 3,698 in stock (8 Nov)",
          names={1: "VM", 2: "OUT1", 3: "OUT2", 4: "GND", 5: "IN2", 6: "IN1", 7: "GAINSEL", 8: "IPROPI", 9: "PAD"})
-    C("100nF 16V", "VM", "GND", "motor"); C("22uF 10V", "VM", "GND", "motor", size="0805", note="bulk [A, C the datasheet's minimum]")
+    C("100nF 16V", "VM", "GND", "motor", note="low-ESR bypass at VM [S]")
+    C("22uF 10V", "VM", "GND", "motor", size="0805", note="bulk: TI gives no value ('system-level testing') [A]")
     C("100nF 16V", "MOT_A", "MOT_B", "motor", face="F", note="across the 1220's tabs, at the motor [noise sweep]")
-    # GAINSEL is three-level: both spots empty = open; fit one 0R for low or high [C: the gain table, then Danny's lever-force bench]
-    R("0R", "GAINSEL", "GND", "motor", dnp=True, note="fit for GAINSEL low [C]")
-    R("0R", "GAINSEL", "3V3", "motor", dnp=True, note="fit for GAINSEL high [C]")
-    R("R_IPROPI", "IPROPI", "GND", "motor", note="sets the current limit with the gain [C value: gain table + bench]")
+    # GAINSEL three-level: fitted to ground = low gain (205 uA/A), which covers the 1220's whole range (held still at 5 V it draws
+    # about 0.76 A [Ed bench 15:31]); with the 3.3 k below the limit sits at 0.51 / (3.3 k x 205 uA/A) = 0.75 A typ (0.65-0.87) [A].
+    # Danny's lever-force reading (torque per amp) may move the limit or the gain: the open spot gives 1050 uA/A for finer reading
+    # below 350 mA [C bench]. V_IPROPI 0.55 V max, I_IPROPI 0.16 mA: inside both limits [S].
+    R("0R", "GAINSEL", "GND", "motor", note="GAINSEL low [A; C bench]")
+    R("0R", "GAINSEL", "3V3", "motor", dnp=True, note="spot for GAINSEL high")
+    R("3.3k 1%", "IPROPI", "GND", "motor", note="current limit about 0.75 A [A; C bench]")
     adc_rc("IPROPI", "MOT_SENSE", "adc", note="the motor current")
     R("10k", "MOT_A", "MOT_VOICE", "motor", note="motor voice: 5 V -> 3.0 V [A]"); R("15k", "MOT_VOICE", "GND", "motor")
     C("1nF C0G", "MOT_VOICE", "GND", "adc")
     # NTC by the driver and the motor: 10k + 10k NTC from the 3.3 V (ratiometric with the Halls, corrected by VBAT) [A]
-    R("10k", "3V3", "NTC", "motor"); part("RT", "10k NTC B3380", "Resistor_SMD:R_0402_1005Metric", {1: "NTC", 2: "GND"}, "motor",
-                                         mpn="NCP15XH103F03RC", note="[C part]")
+    R("10k 1%", "3V3", "NTC", "motor")
+    part("RT", "10k NTC B3380", "Resistor_SMD:R_0402_1005Metric", {1: "NTC", 2: "GND"}, "motor", lcsc="C77131",
+         mpn="NCP15XH103F03RC", note="Murata, B25/50 3380 K +-1 % [S]")
     C("1nF C0G", "NTC", "GND", "adc")
 
     # ------------------------------------------------------------------------------------------------------- the LED ring
     # 24 x SK6812MINI-E reverse-mounted in cut-outs on the back, shining through the board into the clear race [Ed 13:35, 13:54].
     # Its own 5 V branch: a 2 A bead, the H743's switch (RGB_EN), 2 x 22 uF; data level-shifted to 5 V (VIH 0.7 x VDD) [S].
-    part("FB", "bead >= 2 A", "Inductor_SMD:L_0603_1608Metric", {1: "5V", 2: "RING_IN"}, "ring", note="[C part: >= 2 A, low DCR]")
+    part("FB", "BLM18KG121TZ1D", "Inductor_SMD:L_0603_1608Metric", {1: "5V", 2: "RING_IN"}, "ring", lcsc="C396652",
+         mpn="BLM18KG121TZ1D", note="Murata, 120R at 100 MHz, 30 mohm, 3 A [S]")
     C("1uF 10V", "RING_IN", "GND", "ring")
     part("U", "TPS22918DBVR", "Package_TO_SOT_SMD:SOT-23-6", {1: "RING_IN", 2: "GND", 3: "RGB_EN", 4: "RING_CT", 5: "RING_5V", 6: "RING_5V"},
-         "ring", mpn="TPS22918DBVR", note="2 A load switch, off by default [A; C pin table]",
+         "ring", lcsc="C131941", mpn="TPS22918DBVR", note="2 A, 52 mohm at 5 V; QOD to VOUT = 24 ohm discharge (load <= 200 uF) [S]",
          names={1: "VIN", 2: "GND", 3: "ON", 4: "CT", 5: "QOD", 6: "VOUT"})
-    R("100k", "RGB_EN", "GND", "ring", note="off until the H743 says so"); C("1nF", "RING_CT", "GND", "ring", note="slew [C]")
+    R("100k", "RGB_EN", "GND", "ring", note="off until the H743 says so (ON must not float) [S]")
+    C("1nF", "RING_CT", "GND", "ring", note="2.5 ms rise at 5 V [S: SR = 0.55 x CT + 30 us/V]: about 90 mA into the 44 uF")
     C("22uF 10V", "RING_5V", "GND", "ring", size="0805"); C("22uF 10V", "RING_5V", "GND", "ring", size="0805")
     part("U", "SN74AHCT1G125DBVR", "Package_TO_SOT_SMD:SOT-23-5", {1: "GND", 2: "RGB_DIN", 3: "GND", 4: "RING_DY", 5: "RING_5V"}, "ring",
-         mpn="SN74AHCT1G125DBVR", note="3.3 V in, 5 V out; powered with the ring so it never drives a dead chain [A; C pin table]",
+         lcsc="C7484", mpn="SN74AHCT1G125DBVR", note="VIH 2.0 V at 5 V [S]; powered with the ring so it never drives a dead chain; "
+         "its input takes 5.5 V with VCC off (no clamp to VCC) [S], so RGB_DIN can sit at either level [A]",
          names={1: "OE#", 2: "A", 3: "GND", 4: "Y", 5: "VCC"})
     C("100nF", "RING_5V", "GND", "ring")
     R("33R", "RING_DY", "RING_D0", "ring", note="[A]")
@@ -216,14 +228,15 @@ def build():
         part("D", "SK6812MINI-E", "mb:LED_SK6812MINI-E_Reverse",
              {1: "RING_5V", 2: f"RING_D{k + 1}" if k < RING_N - 1 else "RING_DOUT", 3: "GND", 4: f"RING_D{k}"}, "ring", lcsc="C5149201",
              mpn="SK6812MINI-E", note=f"ring site {k + 1}/{RING_N}; pads after Keebio-Parts (MIT) and marbastlib (CERN-OHL-P) [S]; "
-             "[C] pin order against the datasheet drawing", names={1: "VDD", 2: "DOUT", 3: "GND", 4: "DIN"})
+             "MSL 5a; [C] pin order against the datasheet drawing of the revision LCSC ships", names={1: "VDD", 2: "DOUT", 3: "GND", 4: "DIN"})
         C("100nF", "RING_5V", "GND", "ring")
 
     # ------------------------------------------------------------------------------------------------------- rod link, main end
     # Q43 = A [Ed 18:58]: a bias tee. DC: 5 V through the choke onto the rod. Data: a Manchester code at about 2 Mbit/s through the
     # coupling capacitor; DIAL_TX drives it (high-Z between frames), the comparator receives (sees our own frames too) [A].
-    part("L", "47uH 3x3 Isat >= 0.3 A", "Inductor_SMD:L_Sunlord_SWPA3015S", {1: "5V", 2: "ROD"}, "rod",
-         note="[C part: 47 uH (22 uH is only ~70R at 0.5 MHz), SRF above 4 MHz]")
+    part("L", "NR3015T470M", "Inductor_SMD:L_Taiyo-Yuden_NR-30xx", {1: "5V", 2: "ROD"}, "rod", lcsc="C87171", mpn="NR3015T470M",
+         note="Taiyo Yuden 47 uH, 3 x 3 x 1.5, DCR 1.34 ohm, Isat 0.32 A, SRF >= 17 MHz [S]; the dial's 0.12 A drops 0.16 V here [A]; "
+         "[C] LCSC stock (alt SXN SMNR3015-470MT C135243, DCR 1.63, no SRF listed)")
     C("1uF 10V", "5V", "GND", "rod", note="the choke's 5 V end")
     C("100nF 16V", "ROD", "DIAL_BUS", "rod", note="coupling")
     R("100R", "DIAL_TX", "DIAL_BUS", "rod", note="send")
@@ -231,8 +244,9 @@ def build():
     R("10k", "DIAL_BUS", "DIAL_MID", "rod", note="biases the bus at mid-supply")
     R("1k", "DIAL_BUS", "DIAL_CMN", "rod", note="limits the clamp current at power-up (5 V step through the coupling cap)")
     R("4.7k", "DIAL_MID", "DIAL_CMP", "rod"); R("47k", "DIAL_RX", "DIAL_CMP", "rod", note="hysteresis about 0.3 V [A]")
-    part("U", "TLV3601", "Package_TO_SOT_SMD:SOT-23-5", {1: "DIAL_RX", 2: "GND", 3: "DIAL_CMP", 4: "DIAL_CMN", 5: "3V3"}, "rod",
-         mpn="TLV3601", note="fast comparator, push-pull; inverting (firmware flips the code) [A; C part and pin table]",
+    part("U", "TLV3601DBVR", "Package_TO_SOT_SMD:SOT-23-5", {1: "DIAL_RX", 2: "GND", 3: "DIAL_CMP", 4: "DIAL_CMN", 5: "3V3"}, "rod",
+         lcsc="C5213958", mpn="TLV3601DBVR", note="2.5 ns, push-pull, inputs to the rails +-0.2 V [S]; wired inverting (firmware flips "
+         "the code) [A]. US$2.80 and 626 in stock (8 Nov): [C] a 40 ns part is enough at 2 Mbit/s if stock stays low",
          names={1: "OUT", 2: "V-", 3: "IN+", 4: "IN-", 5: "V+"})
     C("100nF", "3V3", "GND", "rod")
 
@@ -242,8 +256,8 @@ def build():
          mpn="JNJ-V-2835CW-665003-S-D1", note="665 nm VCSEL, threshold about 4 mA; [C] pads and polarity against JNJ's drawing; [C] "
          "optical power at the chosen current", names={1: "K", 2: "A"})
     R("220R", "3V3", "LIGHT_A", "light", face="F", note="about 6 mA at full PWM [A; C the forward voltage]")
-    part("Q", "2N7002", "Package_TO_SOT_SMD:SOT-23", {1: "LIGHT_G", 2: "GND", 3: "LIGHT_K"}, "light", mpn="2N7002",
-         note="[C LCSC]", names={1: "G", 2: "S", 3: "D"})
+    part("Q", "2N7002", "Package_TO_SOT_SMD:SOT-23", {1: "LIGHT_G", 2: "GND", 3: "LIGHT_K"}, "light", lcsc="C8545", mpn="2N7002",
+         note="JSCJ, JLC basic part", names={1: "G", 2: "S", 3: "D"})
     R("100R", "PWR_LIGHT", "LIGHT_G", "light"); R("100k", "LIGHT_G", "GND", "light")
 
     # ------------------------------------------------------------------------------------------------------- power

@@ -226,3 +226,36 @@ rod; the brass tube is the return; about 0.12 A, 0.6 W [A, layout v4].
   a plain UART to about 1 Mbit/s, no chokes. Noise: the dial's hold-up capacitor recharges in step with the data, so packet
   bursts (60 a second) put 60 Hz and harmonics on the 5 V and ground unless the link sends filler all the time [A].
 - Not offered: a power+data chip of the MAX22088 class: 200 kbit/s, 4 x 4 mm at both ends [S Analog Devices].
+
+## Part 2: the netlist, v2 (8 Nov, step 3 [Ed 19:10 "Y"])
+`cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/design.py` (pure Python, the jack power board's shape; `python3
+design.py` prints the blocks and a self-check). **180 parts (177 fitted), 131 nets**; every net has two ends, every pin-map net is
+used, every power pin of the H743 is wired. Pin names for the symbol: `v2/h743vit6_lqfp100_pins.json`, derived from ST's open
+pin data (BSD-3-Clause, (c) 2020 STMicroelectronics). Parts checked against the makers' sheets and LCSC on 8 Nov [S] unless marked.
+- **Encoder:** the EE-SX1321 sits straight on the back (no riser board since Q27; model v0.52 `enc_riser` False), with its 220 Ω
+  and 10 kΩ as v0.11, plus 100 Ω at the timer pins [A].
+- **1220 driver, DRV8213:** GAINSEL to ground = 205 µA/A (the range 0.35-2 A covers the 1220's 0.76 A held still); R_IPROPI
+  **3.3 kΩ** puts the limit at 0.51 / (3.3 k x 205 µA/A) = **0.75 A typ (0.65-0.87)** [A; S gain and VREF]. A second spot can
+  fit GAINSEL high; left open it is 1050 µA/A for finer reading under 350 mA. **[C] Danny's lever-force reading** (torque per amp)
+  sets the final limit. VM: 100 nF + 22 µF (TI gives no bulk value) on its own branch, a 0R at board L's 5 V pins as the star
+  point [A]. 100 nF across the motor tabs. Motor voice: OUT1 through 10 k / 15 k (5 V → 3.0 V) + 1 nF [A]. NTC: Murata
+  NCP15XH103F03RC (C77131) under 10 kΩ 1 % from the 3.3 V [A].
+- **Ring, 24 SK6812MINI-E (C5149201):** a Murata BLM18KG121TZ1D bead (3 A, C396652), a TPS22918 switch on RGB_EN (C131941; 1 nF
+  on CT = 2.5 ms rise, about 90 mA into the 2 x 22 µF; QOD to VOUT), 100 nF at each LED, the data through an SN74AHCT1G125
+  (C7484, VIH 2.0 V at 5 V) powered from the switched rail and 33 Ω [A]. Land pattern after two open footprints: Keebio-Parts
+  (MIT) and marbastlib (CERN-OHL-P), pads 1.35-1.45 x 0.82 at x ±2.7, y ±0.75 [S]. **[C] the pin order against the datasheet
+  drawing of the revision LCSC ships** (one source says the 2019 and 2025 sheets differ in pin numbering); MSL 5a.
+- **Rod link, main end [Q43]:** Taiyo Yuden NR3015T470M choke (47 µH, 3 x 3, DCR 1.34 Ω, Isat 0.32 A, SRF ≥ 17 MHz; C87171,
+  **[C] stock**) from the 5 V onto the rod; 100 nF couples the data. Send: DIAL_TX through 100 Ω (the pin goes high-impedance
+  between frames). Receive: TLV3601 (C5213958; 2.5 ns, push-pull), the bus biased at mid-supply through 10 kΩ, 1 kΩ in front of
+  the input (the 5 V step at power-up), about 0.3 V of hysteresis (4.7 k / 47 k) [A]. The dial's 0.12 A drops about 0.16 V in
+  each choke [A]. **[C] the TLV3601 is US$2.80 with 626 in stock**; a 40 ns comparator is enough at 2 Mbit/s.
+- **Power light:** the VCSEL from the 3.3 V through 220 Ω (about 6 mA at full PWM, [C] its forward voltage and optical power),
+  switched by a 2N7002 (C8545) from PWR_LIGHT through 100 Ω, 100 kΩ gate pull-down [A].
+- **REF3430:** 1 µF + 100 nF in (the sheet asks 1-10 µF + 0.1 µF) and 1 µF + 100 nF out (stable 0.1-10 µF) [S].
+- **Board L header (2 x 11) [A order]:** 3 x 15 V, 4 x 5 V, 3 x 3.3 V, 5V_EN, the switch ladder, 10 grounds (about 1 A a pin
+  [C the header's rating]). **Board R header [A order]:** the screen's six quad-port lines (after the 22 Ω) with grounds beside the
+  clock and the data, RST / TE / PWR_EN, CAN TX / RX / STBY, 5 V and 3.3 V for the transceiver, 8 grounds.
+- **15 V present (PE4):** 100 k / 27 k from the 15 V: 3.19 V, reads low under about 10.9 V, an early warning before the 3.3 V
+  goes [A]. 10 µF + 100 nF at the post, 22 µF at the 5 V pins, 10 µF on the 3.3 V [A].
+- **BOOT0:** a solder bridge to the 3.3 V beside the 10 kΩ, for the ROM bootloader [A]. The I2C pull-ups stay unfitted spots.
