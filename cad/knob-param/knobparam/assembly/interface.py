@@ -262,14 +262,14 @@ P = dict(
                         # 24 emitters sit every 15°. v0.19: (124.0, 137.0) with a printed blank in the gap
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
     em_phase=0.0,   # [A] angle of emitter 1 when the ring is even (mechanism frame)
-    em_n=12,   # [Ed] VCSELs, and the same count of RGB, alternating, reverse-mounted under the race
-    em_vcsel=(2.8, 3.5, 0.8),   # [S] JNJ 2835 body, mm. On the PCB back.
-    em_rgb=(2.0, 2.0, 0.9),   # [A] addressable 2020 body until a catalogue part is locked
-    em_ap_k=0.22,   # [A] clear aperture / smaller VCSEL side
-    em_fit_k=0.06,   # [A] pin-hole oversize / pin OD
-    em_slot_k=0.5,   # [A] extra radial slot length / pin-hole diameter (one locating hole)
-    em_pin_len_k=0.5,   # [A] hollow-pin engagement / board thickness. Stops short of the body on the back.
-    em_cover_k=0.05,   # [A] package past the hole, each side, / smaller package side
+    em_n=12,   # [Ed] half the ring sites (2 x em_n sites, every 15 deg under the race)
+    em_vcsel=(2.8, 3.5, 0.8),   # [S] JNJ 2835 body, mm: v0.52 the one red VCSEL is the power light on the board FRONT (pwr_vcsel_xy)
+    em_rgb=(3.2, 2.8, 1.78),   # [S] SK6812MINI-E body (radial x tangential x height) [Ed 8 Nov 13:54: all 24 sites RGB, upside down]
+    em_cut=(3.4, 3.0),   # [A] board cut-out per LED (radial x tangential): body + 0.1 a side; set from the maker's footprint drawing
+    em_lead_up=0.89,   # [A] lead plane above the body's bottom (leads halfway up the side [S Hackaday]); leads on the back pads
+    em_peg_depth=0.5,   # [Ed 8 Nov 13:58] clear peg from the race's underside into each cut-out [A depth]
+    em_peg_clear=0.2,   # [A] light pegs: clearance a side in the cut-out (never touch)
+    em_loc_clear=0.1,   # [A] the two locating pegs: tangential clearance a side (they stop the race turning; the encoder bearing centres it)
     # ---- v0.18 feel stage [Ed]: 12T into a printed spur on the compound idler. Both nylon, tooth form of the Tempero 0.5M-12T. ----
     fm_keepout=[(172.0, 210.0, 6.5, 9.0)],   # [A] v0.19: swept detent ear (one detent at about ha_ang0 - 49), kept clear of the 716 saddle
     fg_edge_x=22.45,   # [A] v0.19: panel |x| the compound gear tip may reach (cover side wall 22.75 - 0.3)
@@ -773,51 +773,47 @@ def _place_emitters(D):
             raise ValueError("not enough ball gaps for the emitter ring")
         step = len(mids) / (2 * n)
         chosen = sorted(mids[int(i * step)] for i in range(2 * n))
-    vx, vy, vh = D["em_vcsel"]
-    rx, ry, rh = D["em_rgb"]
-    ap = D["em_ap_k"] * min(vx, vy)
-    wall = PROCESS["sla"]["feature"]
-    pin_od = ap + 2.0 * wall
-    hole_pin = pin_od * (1.0 + D["em_fit_k"])
-    slot_l = hole_pin * (1.0 + D["em_slot_k"])
-    # two VCSEL holes (even index) nearest to opposite
-    vcsel_i = list(range(0, 2 * n, 2))
-    best = None
-    for i in vcsel_i:
-        for j in vcsel_i:
-            if j <= i:
-                continue
-            diff = abs(chosen[j] - chosen[i]) % 360.0
-            diff = min(diff, 360.0 - diff)
-            sep = abs(diff - 180.0)
-            if best is None or sep < best[0]:
-                best = (sep, i, j)
-    _sep, i0, i1 = best
-    holes = []
+    # v0.52 [Ed 8 Nov]: every site is an upside-down RGB (SK6812MINI-E) recessed in a board cut-out; the race floor is solid and a
+    # clear peg drops into every cut-out. Two opposite pegs locate the race (tangential fit); the rest only carry light.
+    bx, by, bh = D["em_rgb"]
+    cw_r, cw_t = D["em_cut"]
     r = D["ot_r"]
+    n2 = len(chosen)
+    i0 = 0
+    i1 = min(range(n2), key=lambda j: abs(((chosen[j] - chosen[0]) % 360.0) - 180.0))
+    holes = []
     for i, a in enumerate(chosen):
-        kind = "VCSEL" if i % 2 == 0 else "RGB"
-        pin = i in (i0, i1)
-        slot = i == i1
-        holes.append(dict(
-            i=i, kind=kind, ang=a, pin=pin, slot=slot,
-            x=r * math.cos(math.radians(a)), y=r * math.sin(math.radians(a)),
-            hole_d=hole_pin if pin else ap, slot_l=slot_l if slot else None,
-        ))
-    D["em_ap"] = ap
-    D["em_wall"] = wall
-    D["em_pin_od"] = pin_od
-    D["em_pin_id"] = ap
-    D["em_hole_d"] = hole_pin
-    D["em_slot_l"] = slot_l
-    D["em_pin_len"] = D["pcb_t"] * D["em_pin_len_k"]
-    D["em_pin_i"] = [i0, i1]
+        holes.append(dict(i=i, kind="RGB", ang=a, loc=i in (i0, i1),
+                          x=r * math.cos(math.radians(a)), y=r * math.sin(math.radians(a))))
     D["em_holes"] = holes
-    D["em_pkg_min"] = min(vx, vy, rx, ry)
+    D["em_loc_i"] = [i0, i1]
+    rc0, rc1 = r - cw_r / 2.0, r + cw_r / 2.0
+    D["em_cut_r"] = (rc0, rc1)
+    D["em_peg_r"] = (rc0 + D["em_peg_clear"], min(rc1 - D["em_peg_clear"], D["ot_foot_ro"]))
+    D["em_peg_w"] = cw_t - 2.0 * D["em_peg_clear"]
+    D["em_loc_w"] = cw_t - 2.0 * D["em_loc_clear"]
+    z0 = -D["pcb_t"] - D["em_lead_up"]
+    D["em_body_z"] = (z0, z0 + bh)                       # LED bottom (behind the board) and its lens face (inside the cut-out)
+    D["em_peg_gap"] = -D["em_peg_depth"] - (z0 + bh)     # air between a peg's end and the LED's face
+    D["em_cover"] = min(bx - (cw_r - 2 * 0.1), by - (cw_t - 2 * 0.1))   # (unused guard)
+
+    def _rect(cx_r, ang):
+        ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+        pts = []
+        for u in (-cw_r / 2, cw_r / 2):
+            for v in (-cw_t / 2, cw_t / 2):
+                pts.append(((cx_r + u) * ca - v * sa, (cx_r + u) * sa + v * ca))
+        return [pts[0], pts[1], pts[3], pts[2]]
+
+    def _seg_d(p, a, b):
+        ax, ay = a; bx_, by_ = b; px, py = p
+        dx, dy = bx_ - ax, by_ - ay
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+        return math.hypot(ax + t * dx - px, ay + t * dy - py)
+    A, B = _rect(r, chosen[0]), _rect(r, chosen[1])
+    D["em_web"] = min(min(_seg_d(p, B[k], B[(k + 1) % 4]) for p in A for k in range(4)),
+                      min(_seg_d(p, A[k], A[(k + 1) % 4]) for p in B for k in range(4)))   # board left between two cut-outs
     D["em_reverse"] = True
-    r0 = min(r - D["ot_rg"] - D["ot_seat_gap"], D["ot_foot_ri"])   # v0.51: the race's wider foot
-    r1 = max(r + D["ot_rg"] + D["ot_seat_gap"], D["ot_foot_ro"])
-    D["em_web"] = (r1 - r0 - hole_pin) / 2.0          # race material each side of a pin hole
     # nearest ball centre, as a chord clearance outside the ball radius
     worst = 1e9
     for h in holes:

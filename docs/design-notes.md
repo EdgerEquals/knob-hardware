@@ -41,6 +41,24 @@ mating pin (25.91 mm) enters the 11 mm H11 socket by 4.45 mm at a 35 mm riser, w
 window, and by 11.63 mm at 27.82 mm, which is not. The 35 mm body and the -20 pin are a pair. No replacement
 catalogue number is assigned here. The main PCB was not edited.
 
+## Ring lights v0.52 (Ed, 8 Nov 2026)
+
+[Ed 13:35-14:02]. Picture: `docs/img/race-section-v052-led.png` (cut through an LED site).
+- **24 SK6812MINI-E** (reverse-mount RGB, LCSC C5149201) every 15° on r 19.84, soldered on the main board's back with the body
+  recessed in a **3.4 × 3.0 cut-out** (radial × tangential) [A: from the body + 0.1 a side; set from the maker's footprint drawing].
+  Lens 0.71 under the board front [A: leads halfway up]. One data line through the chain; brightness capped in firmware.
+- **The race floor is solid** clear resin (no light bores). A **clear peg** (0.5 deep) hangs from the race into every cut-out, 0.21 over
+  the LED's lens: it carries each LED's light up into the race. Sites 1 and 13 (opposite) are the **locating pegs**: 0.1 a side
+  tangentially, so they stop the race turning; the other 22 are 0.2 clear all round. The encoder bearing still centres the cradle.
+  The two hollow pins and their board holes are gone.
+- Board left between neighbouring cut-outs: 1.76 mm (2-3 tracks cross the ring through each web).
+- Tight: at 6 o'clock the cut-out's outer edge is 0.06 short of the clear OLED's edge on the board (no clash; the OLED rests on board
+  beyond it). A 7.5° phase shift of the ring would open that up, if wanted at placement.
+- **The red VCSEL** is the **power light**: board front at (0.6, 25.6), 12 o'clock above the knob, straight up through the clear case;
+  a frosted (matte) disc printed on the case's inside face over it is the dot [A, case print feature].
+- The MCU in the model is now the STM32H743VIT6 (Q33 = A), same LQFP100 body.
+- Checks v0.52: 335 / 335, 0 unexpected clashes.
+
 ## Thrust race v0.51 (Ed, 8 Nov 2026)
 
 Supersedes the Ø2 figures below. [Ed 13:18 / 13:26] smaller balls, since all three kinds are sold at the smaller size, and the clear

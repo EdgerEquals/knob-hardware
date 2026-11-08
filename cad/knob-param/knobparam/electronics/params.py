@@ -47,7 +47,8 @@ P = dict(
     # (2 Nov 18:34 it sat on the BACK at the low middle of D, (0, -43.95), with D notched round it.)
     # body: [S] LQFP100 is 14 x 14, 16.0 over the leads, 1.6 max high. court: [A] chip + its decoupling caps (17.2 square).
     # side: "front" (z 0..1.6) or "back". margin: board kept between the courtyard and any window it would otherwise touch.
-    mcu=dict(part="STM32H7B0VBT6", pkg="LQFP100", side="front", xy=(0.0, 37.0), body=(16.0, 16.0, 1.6), court=17.2, margin=0.5),
+    pwr_vcsel_xy=(0.6, 25.6),   # [Ed 8 Nov 13:51] red VCSEL power light, 12 o'clock above the knob (panel frame) [A spot, from the spot study]
+    mcu=dict(part="STM32H743VIT6", pkg="LQFP100", side="front", xy=(0.0, 37.0), body=(16.0, 16.0, 1.6), court=17.2, margin=0.5),
     # ---- [Ed 3 Nov 09:47-11:32] layout v4: two vertical boards standing on the main-board front under the joystick, PANEL frame ----
     # L (-x): power (15 V input limit, 15->5 V and 5->3.3 V switchers on the outer face, filters and the MCU's analog supply inside).
     # R (+x): CAN transceiver, the joystick lines up to the top board, spare room. Behind the grip block (y >= 26.06), so not seen.

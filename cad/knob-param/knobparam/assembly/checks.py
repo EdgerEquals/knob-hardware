@@ -294,10 +294,9 @@ def cross(D, parts):
         rim_d, ch, f"nearest {rim_who}; end face r {ri:.2f}–{ro:.2f} at z {zi:.2f} " +
         ("stays open into the dial lip" if (cham or not sh) else f"under the {D['cap_shoulder_t']:g} mm cap shoulder (bond {D['cap_shoulder_glue']:g})"))
     entry = min(D["ot_r"] - D["sleeve_id"] / 2, D["knob_od"] / 2 - D["ot_r"])
-    row("light path through the emitter holes, the race and into the glass", min(D["em_ap"] / 2, entry), D["ot_seat_gap"],
-        f"{2 * D['em_n']} reverse-mount holes on r {D['ot_r']:.2f}; aperture Ø{D['em_ap']:.2f}; "
-        f"hollow pins in VCSEL {D['em_pin_i'][0] // 2 + 1} (round) and {D['em_pin_i'][1] // 2 + 1} (radial slot); "
-        f"land {D['ot_land_th']:.2f} mm")
+    row("light path from the LEDs up through the race into the glass", entry, D["ot_seat_gap"],
+        f"{len(D['em_holes'])} upside-down RGB on r {D['ot_r']:.2f}; clear peg + {D['ot_land_th']:.2f} solid clear floor, no bores; "
+        f"glass wall over the ring {entry:.2f} each side")
     # ---- v0.16 relative knob-vs-dial angle: diametric ring magnet in the knob under the dial TMAG5273 ----
     if D["rel_sensor"]:   # v0.16b [Ed]: removed by default
         B = ring_field(D)

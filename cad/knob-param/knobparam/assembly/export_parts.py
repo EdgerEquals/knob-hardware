@@ -25,7 +25,8 @@ RULES = [
     (r"^dial board ", "board", "PCBA parts (ESP32-S3-PICO-1-N8R8, LDO, PHY, 24-pin 0.4 receptacle, 405 nm diode, LEDs)", "PCBWay PCBA"),
     (r"^dial strap loop", "buy", "flex, 2-layer PI, 4 lines (2 + 2 spares)", "buy"),
     (r"^rod-link board", "board", "rod-link board (FR-4)", "PCBWay PCBA"),
-    (r"^MCU ", "board", "PCBA parts (STM32H7B0VBT6, LQFP100)", "PCBWay PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
+    (r"^MCU ", "board", "PCBA parts (STM32H743VIT6, LQFP100; Q33 = A, 7 Nov)", "PCBWay PCBA"),
+    (r"^power light VCSEL", "buy", "JNJOPTO JNJ-V-2835CW-665003-S-D1 red VCSEL (LCSC C42375664), the power light", "on the PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
     # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick, and the joystick's case cradle / gasket / top board
     (r"^vertical board [LR] \(", "board", "vertical board (FR-4, parts on both faces)", "PCBWay PCBA"),
     (r"^vertical board [LR] header", "buy", "right-angle 1.27 mm two-row hybrid THT / SMT header (on the PCBA)", "on the PCBA"),
@@ -63,7 +64,7 @@ RULES = [
     (r"anchor", "print", "PA-12", "MJF"),             # joystick rear spring anchor (printed), not a spring
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
     (r"^PCB$|^PCB back parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),
-    (r"^emitter ", "buy", "VCSEL / RGB LED (LCSC)", "on the PCBA"),
+    (r"^emitter ", "buy", "SK6812MINI-E reverse-mount RGB (LCSC C5149201)", "on the PCBA"),
     (r"^hall sensor|^adapter part|^adapter board", "board", "PCBA parts", "PCBWay PCBA"),
     (r"^encoder daughterboard|^encoder header|^encoder sensor", "board", "encoder daughterboard (EE-SX1321)", "PCBWay PCBA"),
     (r"^case$", "print", "UTR-8100 clear resin, front face polished; the joystick cradle printed in (v0.25, Ed 18:35)", "SLA"),

@@ -179,15 +179,14 @@ def checks(D, parts):
           f"fillet R{D['cr_bridge_fillet']:g} at the narrowest point of each top-idler breakout")
     # The clear race is fused into the cradle and sits flat on the PCB. Pins are hollow tubes in two VCSEL holes.
     from ..common.process import PROCESS
-    r.row("hollow race pin wall vs the SLA feature floor", D["em_wall"], PROCESS["sla"]["feature"],
-          f"bore Ø{D['em_ap']:.2f} is the aperture; pin OD Ø{D['em_pin_od']:.2f}")
-    r.row("emitter package covers its hole", D["em_pkg_min"] - D["em_hole_d"], 2 * D["em_cover_k"] * D["em_pkg_min"],
-          f"smaller body Ø{D['em_pkg_min']:.2f}; pin hole Ø{D['em_hole_d']:.2f}; open hole Ø{D['em_ap']:.2f}; reverse mount")
-    r.row("race web beside a pin hole", D["em_web"], D["ot_seat_gap"],
-          f"annulus each side of Ø{D['em_hole_d']:.2f} at r {D['ot_r']:.2f}; SLA feature floor is {PROCESS['sla']['feature']:.2f} and does not fit")
-    if D["ot_keep_ang"]:   # v0.19b: with the closed ring the emitters are evenly spaced; the cageless balls roll past them anyway
-        r.row("emitter hole centre clears the nearest ball", D["em_ball_clear"], 0.0,
-              f"holes sit in the ball gaps; pins in VCSEL holes {D['em_pin_i'][0]} and {D['em_pin_i'][1]}")
+    r.row("LED peg end over the LED's lens (air)", D["em_peg_gap"], 0.15,
+          f"peg {D['em_peg_depth']:.2f} into each cut-out; lens {-D['em_body_z'][1]:.2f} under the board front [A: leads halfway up]")
+    r.row("light pegs clear their cut-outs (a side)", D["em_peg_clear"], 0.15,
+          f"{len(D['em_holes']) - 2} light-only pegs {D['em_peg_w']:.2f} wide in {D['em_cut'][1]:.2f} cut-outs")
+    r.row("locating pegs: tangential fit in their cut-outs (a side)", D["em_loc_clear"], 0.05,
+          f"sites {D['em_loc_i'][0] + 1} and {D['em_loc_i'][1] + 1} (opposite); radial play {D['em_peg_clear']:.2f}; the encoder bearing centres the cradle")
+    r.row("board web between neighbouring LED cut-outs", D["em_web"], 1.5,
+          f"{len(D['em_holes'])} cut-outs {D['em_cut'][0]:.1f} x {D['em_cut'][1]:.1f} on r {D['ot_r']:.2f}; 2-3 tracks cross the ring through each web [A]")
     return r
 
 

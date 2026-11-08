@@ -59,10 +59,9 @@ def main():
         knob_hole_d_max=D["knob_od"] + D["sleeve_od_tol"] + 2 * D["knob_hole_clear"],
         faceplate_z=D["faceplate_z"], faceplate_t=D["faceplate_t"], faceplate_z_back=D["faceplate_z_back"],
         em_reverse=D["em_reverse"],
-        em_ap=D["em_ap"], em_hole_d=D["em_hole_d"], em_pin_od=D["em_pin_od"], em_pin_len=D["em_pin_len"],
-        em_holes=[dict(i=h["i"], kind=h["kind"], x=h["x"], y=h["y"], ang=h["ang"],
-                       hole="slot" if h["slot"] else "round", hole_d=h["hole_d"], slot_l=h["slot_l"],
-                       pin=h["pin"], aperture=D["em_ap"]) for h in D["em_holes"]],
+        em_cut=D["em_cut"], em_body_z=D["em_body_z"], em_loc_i=D["em_loc_i"], em_part="SK6812MINI-E (LCSC C5149201)",
+        em_holes=[dict(i=h["i"], kind=h["kind"], x=h["x"], y=h["y"], ang=h["ang"], loc=h["loc"]) for h in D["em_holes"]],
+        pwr_vcsel_xy=D.get("pwr_vcsel_xy"),
         # Case v0.1, 10HP: the shell sets the board width. Notches are where the M3 cover
         # bosses sit inside the outline (frame x,y and board bx,by).
         pcb=(D.get("nest_w", D["pcb_w"]), D.get("nest_above", D["pcb_above"]), D.get("nest_below", D["pcb_below"])),

@@ -30,8 +30,8 @@ import math
 STEPS = [
     # ------------------------------------------------------------------ main PCB, bench, front face up
     dict(id="pcb", name="Main PCB with its soldered parts (H7B0 on the front)", base=True, dir="+z", travel=10,
-         parts=[r"^PCB$", r"^PCB back parts", r"^PCB rod pad", r"^emitter ", r"^MCU ", r"^hall sensor ", r"^encoder sensor"],
-         note="PCBWay PCBA: emitters, Hall row, H7B0 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back; "
+         parts=[r"^PCB$", r"^PCB back parts", r"^PCB rod pad", r"^emitter ", r"^power light VCSEL", r"^MCU ", r"^hall sensor ", r"^encoder sensor"],
+         note="PCBWay PCBA: 24 upside-down RGB in their cut-outs (v0.52), the red VCSEL power light, Hall row, H743 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back; "
               "(Q30) the link flex hot-bar bonded onto the strip, shown with the jack unit (BOM 'board'; L4 step 1)"),
     dict(id="vboards", name="Vertical boards L and R onto the main board (hybrid headers, male pins on top)", dir="-z",
          travel="auto", parts=[r"^vertical board [LR]"],

@@ -12,14 +12,18 @@ from knobparam.assembly.build import build_all
 
 D = model.derive(model.default_params())
 parts, _, _, owner = build_all(D)
-balls = next(s for n, s in parts.items() if n.startswith("outer thrust load balls"))
-c = balls.solids()[0].center()
+AT_LED = len(sys.argv) > 2 and sys.argv[2] == "led"   # v0.52: cut through an LED site instead of a ball
+if AT_LED:
+    c = parts["emitter RGB 1"].center()
+else:
+    balls = next(s for n, s in parts.items() if n.startswith("outer thrust load balls"))
+    c = balls.solids()[0].center()
 th = math.atan2(c.Y, c.X)
 u = (math.cos(th), math.sin(th))
 pl = Plane(origin=(0, 0, 0), x_dir=(u[0], u[1], 0), z_dir=(-u[1], u[0], 0))
 R0, R1, Z0, Z1 = 14.5, 24.5, -3.2, 7.5
 COL = {"PCB": "#2e7d32", "base cradle": "#b3e5fc", "outer thrust": "#9e9e9e", "knob lower-cap land": "#ffcc80",
-       "bottom internal ring": "#ffe0b2", "knob glass sleeve": "#e1f5fe", "emitter": "#ef9a9a", "idler": "#ce93d8",
+       "bottom internal ring": "#ffe0b2", "knob glass sleeve": "#e1f5fe", "emitter": "#ef9a9a", "power light": "#ef9a9a", "idler": "#ce93d8",
        "hall": "#a5d6a7", "detent": "#d7ccc8", "control dial": "#cfd8dc", "encoder": "#cfd8dc", "case": "#eeeeee"}
 fig, ax = plt.subplots(figsize=(13, 8.5), dpi=130)
 seen = {}
@@ -59,7 +63,7 @@ ax.text(r, zb + 1.35, "top track's side walls beside the groove\n(knob cap: hub 
         fontsize=8.6, ha="center")
 handles = [plt.Rectangle((0, 0), 1, 1, fc=c, ec="#333") for c in seen.values()]
 ax.legend(handles, list(seen.keys()), fontsize=7.2, loc="lower left", ncol=2, framealpha=0.9)
-ax.set_title(f"The thrust race in section at a load ball, model {D.get('version')}: Ø{D['ot_ball_d']:g} balls on r {r:.2f}; "
+ax.set_title(f"The thrust race in section at {'an LED (locating peg)' if AT_LED else 'a load ball'}, model {D.get('version')}: Ø{D['ot_ball_d']:g} balls on r {r:.2f}; "
              f"groove r {rg:.2f}", fontsize=11, loc="left")
 fig.tight_layout()
 fig.savefig(sys.argv[1] if len(sys.argv) > 1 else "race-section.png")

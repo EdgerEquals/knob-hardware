@@ -109,14 +109,13 @@ def build(D):
     if fl is not None: c += fl
     blank = _thrust_blank(D)
     c = c & cyl(max(ro, D["ot_r"] + D["ot_rg"] + D["ot_track_extra"], D["ot_foot_ro"]), -0.01, D["z_top"])
-    # Flat race: a light bore at every emitter, no pocket. Two bores grow a hollow pin down into the PCB hole.
+    # v0.52 [Ed 8 Nov]: solid race floor (no bores); a clear peg from the underside into every LED cut-out in the board.
+    # Two opposite pegs fit tangentially and stop the race turning; the encoder bearing still centres the cradle.
+    pr0, pr1 = D["em_peg_r"]
     for h in D["em_holes"]:
-        c -= cyl(D["em_ap"] / 2, -0.02, D["ot_land_th"] + 0.05, h["x"], h["y"])
-    for h in D["em_holes"]:
-        if not h["pin"]:
-            continue
-        c += (cyl(D["em_pin_od"] / 2, -D["em_pin_len"], D["em_pin_len"], h["x"], h["y"])
-              - cyl(D["em_ap"] / 2, -D["em_pin_len"] - 0.01, D["em_pin_len"] + 0.02, h["x"], h["y"]))
+        w = D["em_loc_w"] if h["loc"] else D["em_peg_w"]
+        c += (Rot(0, 0, h["ang"]) * Pos((pr0 + pr1) / 2, 0, -D["em_peg_depth"])
+              * Box(pr1 - pr0, w, D["em_peg_depth"] + 0.02, align=(Align.CENTER, Align.CENTER, Align.MIN)))
     out = {"base cradle": c} | ({"outer thrust blank": blank} if blank is not None else {})
     ruby = set(D["ot_ruby_idx"])
     load, gems = [], []

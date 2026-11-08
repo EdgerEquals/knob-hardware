@@ -94,7 +94,10 @@ def build(D):
     w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]
     dk = " + ".join(k for k in D["pcb_windows"] if k.startswith("D"))
     out[f'clear OLED 1.51" SSD1309 (PCB front, over window {dk})'] = Pos(cx, cy, 0) * Box(w, h, th, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    if D.get("mcu"):   # H7B0 envelope over the leads, decoupling caps not modelled (panel frame)
+    if D.get("pwr_vcsel_xy"):   # v0.52 [Ed 8 Nov 13:51]: the red VCSEL is the power light, straight up through the clear case
+        vx, vy, vh = D["em_vcsel"]; px, py = D["pwr_vcsel_xy"]
+        out["power light VCSEL 665 nm (JNJ 2835, PCB front)"] = Pos(px, py, 0) * Box(vx, vy, vh, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if D.get("mcu"):   # MCU envelope over the leads, decoupling caps not modelled (panel frame)
         M = D["mcu"]; bw, bl, bh = M["body"]
         if M.get("side", "back") == "front":   # [Ed 3 Nov 09:47] v4: main-board front under the joystick
             out[f"MCU {M['part']} {M['pkg']} (PCB front, under the joystick)"] = Pos(M["xy"][0], M["xy"][1], 0.0) * Box(bw, bl, bh, align=A)
@@ -178,26 +181,18 @@ def pcb_full(D):
     return s
 
 def _em_cutters(D, t, extra):
-    """NPTH under the thrust race (mechanism frame). Bodies are reverse-mounted on the back; KiCad does not have the holes yet."""
-    out = []
-    for h in D["em_holes"]:
-        if h["slot"]:
-            out.append(Pos(h["x"], h["y"], -t - extra) * Rot(0, 0, h["ang"]) * extrude(
-                SlotOverall(h["slot_l"], h["hole_d"]), t + 2 * extra))
-        else:
-            out.append(cyl(h["hole_d"] / 2, -t - extra, t + 2 * extra, h["x"], h["y"]))
-    return out
+    """v0.52: a cut-out per upside-down RGB under the thrust race (mechanism frame); the LED's body sits in it."""
+    cw_r, cw_t = D["em_cut"]
+    return [Rot(0, 0, h["ang"]) * Pos(D["ot_r"], 0, -t - extra) * Box(cw_r, cw_t, t + 2 * extra, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            for h in D["em_holes"]]
 
 def emitters(D):
-    """VCSEL and RGB bodies on the PCB back, over their holes. Not pockets in the race."""
+    """v0.52: 24 SK6812MINI-E, soldered on the back pads with the body recessed in its cut-out, lens facing the race."""
     out = {}
-    gap = 0.02
+    bx, by, bh = D["em_rgb"]
     for h in D["em_holes"]:
-        body = D["em_vcsel"] if h["kind"] == "VCSEL" else D["em_rgb"]
-        bx, by, bh = body
-        out[f"emitter {h['kind']} {h['i'] // 2 + 1}"] = (
-            Pos(h["x"], h["y"], -D["pcb_t"] - bh - gap) * Rot(0, 0, h["ang"])
-            * Box(bx, by, bh, align=(Align.CENTER, Align.CENTER, Align.MIN)))
+        out[f"emitter RGB {h['i'] + 1}"] = (Rot(0, 0, h["ang"]) * Pos(D["ot_r"], 0, D["em_body_z"][0])
+                                           * Box(bx, by, bh, align=(Align.CENTER, Align.CENTER, Align.MIN)))
     return out
 
 def drv_boxes(D):
