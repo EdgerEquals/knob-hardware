@@ -189,7 +189,7 @@ def build():
          names={1: "VM", 2: "OUT1", 3: "OUT2", 4: "GND", 5: "IN2", 6: "IN1", 7: "GAINSEL", 8: "IPROPI", 9: "PAD"})
     C("100nF 16V", "VM", "GND", "motor", note="low-ESR bypass at VM [S]")
     C("22uF 10V", "VM", "GND", "motor", size="0805", note="bulk: TI gives no value ('system-level testing') [A]")
-    C("100nF 16V", "MOT_A", "MOT_B", "motor", face="F", note="across the 1220's tabs, at the motor [noise sweep]")
+    C("100nF 16V", "MOT_A", "MOT_B", "motor", note="across the 1220's tabs on the back, where they come through [noise sweep]")
     # GAINSEL three-level: fitted to ground = low gain (205 uA/A), which covers the 1220's whole range (held still at 5 V it draws
     # about 0.76 A [Ed bench 15:31]); with the 3.3 k below the limit sits at 0.51 / (3.3 k x 205 uA/A) = 0.75 A typ (0.65-0.87) [A].
     # Danny's lever-force reading (torque per amp) may move the limit or the gain: the open spot gives 1050 uA/A for finer reading

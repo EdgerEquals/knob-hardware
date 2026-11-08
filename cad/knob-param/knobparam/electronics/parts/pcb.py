@@ -187,7 +187,7 @@ def _em_cutters(D, t, extra):
             for h in D["em_holes"]]
 
 def emitters(D):
-    """v0.52: 24 SK6812MINI-E, soldered on the back pads with the body recessed in its cut-out, lens facing the race."""
+    """v0.52-v0.53: the ring SK6812MINI-E (12 since v0.53, Q44), soldered on the back pads with the body recessed in its cut-out, lens facing the race."""
     out = {}
     bx, by, bh = D["em_rgb"]
     for h in D["em_holes"]:

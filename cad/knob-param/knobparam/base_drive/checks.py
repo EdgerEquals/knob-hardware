@@ -186,7 +186,7 @@ def checks(D, parts):
     r.row("locating pegs: tangential fit in their cut-outs (a side)", D["em_loc_clear"], 0.05,
           f"sites {D['em_loc_i'][0] + 1} and {D['em_loc_i'][1] + 1} (opposite); radial play {D['em_peg_clear']:.2f}; the encoder bearing centres the cradle")
     r.row("board web between neighbouring LED cut-outs", D["em_web"], 1.5,
-          f"{len(D['em_holes'])} cut-outs {D['em_cut'][0]:.1f} x {D['em_cut'][1]:.1f} on r {D['ot_r']:.2f}; 2-3 tracks cross the ring through each web [A]")
+          f"{len(D['em_holes'])} cut-outs {D['em_cut'][0]:.1f} x {D['em_cut'][1]:.1f} on r {D['ot_r']:.2f}; the inner layers take about {int((D['em_web'] - 0.5) / 0.2)} tracks a web at 0.1 / 0.1, 0.3 off each cut-out; the back has the LEDs' pads (v0.53: 1.76 webs, 5 tracks, with 24) [A]")
     return r
 
 

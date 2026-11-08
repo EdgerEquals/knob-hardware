@@ -261,11 +261,14 @@ P = dict(
     ot_keep_ang=None,   # [Ed 2 Nov] no keep-out: the 716 driver (U20, C20–C22) moved inboard, so the ball ring closes and the
                         # 24 emitters sit every 15°. v0.19: (124.0, 137.0) with a printed blank in the gap
     ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
-    em_phase=0.0,   # [A] angle of emitter 1 when the ring is even (mechanism frame)
-    em_n=12,   # [Ed] half the ring sites (2 x em_n sites, every 15 deg under the race)
+    em_phase=15.0,   # [A] angle of emitter 1 when the ring is even (mechanism frame). v0.53: 15 puts the panel's 3 and 9 o'clock
+                     # (the side corridors past window D) in the middle of a web, not on a cut-out
+    em_n=6,   # [Ed 8 Nov 19:37 Q44 = A "12"] half the ring sites (2 x em_n sites, every 30 deg under the race); was 12 (24 sites):
+              # the LED's pads (2.0-3.4 out from its centre along the 3.2 body) landed in windows A, B, C, E and off the board edge
     em_vcsel=(2.8, 3.5, 0.8),   # [S] JNJ 2835 body, mm: v0.52 the one red VCSEL is the power light on the board FRONT (pwr_vcsel_xy)
-    em_rgb=(3.2, 2.8, 1.78),   # [S] SK6812MINI-E body (radial x tangential x height) [Ed 8 Nov 13:54: all 24 sites RGB, upside down]
-    em_cut=(3.4, 3.0),   # [A] board cut-out per LED (radial x tangential): body + 0.1 a side; set from the maker's footprint drawing
+    em_rgb=(2.8, 3.2, 1.78),   # [S] SK6812MINI-E body 3.2 x 2.8 x 1.78, given here radial x tangential x height: v0.53 [Q44] turned
+                               # along the ring, so its pads (at the 3.2 ends) run along the race and stay off the windows
+    em_cut=(3.0, 3.4),   # [A] board cut-out per LED (radial x tangential): body + 0.1 a side (marbastlib's 3.4 x 3.0 [S]), turned [Q44]
     em_lead_up=0.89,   # [A] lead plane above the body's bottom (leads halfway up the side [S Hackaday]); leads on the back pads
     em_peg_depth=0.5,   # [Ed 8 Nov 13:58] clear peg from the race's underside into each cut-out [A depth]
     em_peg_clear=0.2,   # [A] light pegs: clearance a side in the cut-out (never touch)

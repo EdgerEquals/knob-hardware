@@ -47,6 +47,8 @@ for face, zs in (("front", FRONT), ("back", BACK)):
 free = {f: board.difference(unary_union(list(occ[f].values()))) for f in occ}
 for f in free:
     print(f, "board", round(board.area), "mm2, free", round(free[f].area), "mm2")
-pickle.dump(dict(board=board, occ=occ, free=free, D={k: D[k] for k in ("pcb_windows", "mcu", "vb", "pwr_vcsel_xy", "clear_oled",
-                                                                        "clear_oled_xy", "z_pcb_back") if k in D}),
-            open(sys.argv[1], "wb"))
+KEYS = ("version", "pcb_windows", "mcu", "vb", "pwr_vcsel_xy", "clear_oled", "clear_oled_xy", "z_pcb_back", "pcb_t",
+        # v0.53: what the main board generator places from the model (step 3)
+        "mech_rot", "em_holes", "em_cut", "em_rgb", "ot_r", "hv_r", "hv_phi_s", "hv_mid", "hv_parts", "sens_xy", "sens_dir",
+        "enc_xy", "jb_post_xy", "jb_post_pin", "link_flex", "vb_legs", "vb_hdr", "motor_offset", "rod_pad_r")
+pickle.dump(dict(board=board, occ=occ, free=free, D={k: D[k] for k in KEYS if k in D}), open(sys.argv[1], "wb"))

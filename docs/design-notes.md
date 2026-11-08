@@ -65,6 +65,20 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Ring lights v0.53: 12, turned along the ring (Ed, 8 Nov 2026, Q44)
+
+[Ed 19:37 "12"]. Picture: `docs/img/ring-pads-q44.png`. Found while setting up the main board's placement: the SK6812MINI-E's
+leads leave its two short ends, so its pads sit 2.0-3.4 mm out from its centre along the 3.2 mm body (Keebio-Parts, MIT, and
+marbastlib, CERN-OHL-P, agree [S]). Along the radius (v0.52) the outer pads landed in windows A, B, C, E or off the board edge at 3
+and 9 o'clock (36 of 96).
+- **12 SK6812MINI-E every 30°**, the body turned along the ring, in **3.0 × 3.4 cut-outs** (radial × tangential), the first at 15° in the
+  mechanism frame (`em_n` 6, `em_phase` 15), so the panel's 3 and 9 o'clock fall in the middle of a web (the side tracks past
+  window D go there). Every pad on the board, 3.1 mm between neighbours.
+- Webs between cut-outs 6.21 mm (were 1.76): the ~40 tracks that cross the ring get room on the inner layers.
+- The pegs turn with the cut-outs: 10 light pegs 3.00 wide in 3.40, sites 1 and 7 locate (0.1 a side tangentially).
+- Full white is 0.43 A on the ring's 5 V (12 x 36 mA [S]).
+- Checks v0.53: 335 / 335, 0 unexpected clashes.
+
 ## Ring lights v0.52 (Ed, 8 Nov 2026)
 
 [Ed 13:35-14:02]. Picture: `docs/img/race-section-v052-led.png` (cut through an LED site).
