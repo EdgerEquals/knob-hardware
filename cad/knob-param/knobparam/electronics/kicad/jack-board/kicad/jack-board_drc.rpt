@@ -1,32 +1,28 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/jack-board/kicad/jack-board.kicad_pcb **
-** Created on 2026-11-08 16:54:58 **
+** Created on 2026-11-08 17:48:45 **
 
 ** Found 1 DRC violations **
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
-    @(107.5088 mm, 102.6612 mm): Via [VBUS] on F.Cu - B.Cu
+    @(111.1665 mm, 97.0227 mm): Via [GND] on F.Cu - B.Cu
 
-** Found 5 unconnected pads **
+** Found 4 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(99.2000 mm, 107.0000 mm): Pad 1 [VBUS] of P1 on F.Cu
-    @(100.8000 mm, 107.0000 mm): Pad 1 [VBUS] of P2 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(100.8000 mm, 107.0000 mm): Pad 1 [VBUS] of P2 on F.Cu
-    @(107.5481 mm, 102.6219 mm): Track [VBUS] on B.Cu, length 0.0556 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(99.2000 mm, 107.0000 mm): Pad 1 [VBUS] of P1 on F.Cu
     @(90.8000 mm, 102.4250 mm): Track [VBUS] on B.Cu, length 1.6519 mm
+    @(99.2000 mm, 107.0000 mm): Track [VBUS] on F.Cu, length 1.6000 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(99.2000 mm, 107.0000 mm): Track [VBUS] on F.Cu, length 1.6000 mm
+    @(109.2000 mm, 102.4250 mm): Track [VBUS] on B.Cu, length 1.2700 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(113.1000 mm, 99.8850 mm): Pad 6 [GND] of H2 on B.Cu
-    @(113.1000 mm, 97.3450 mm): Pad 10 [GND] of H2 on B.Cu
+    @(113.1000 mm, 97.3450 mm): Track [GND] on B.Cu, length 1.6019 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(99.1382 mm, 95.6295 mm): Track [GND] on F.Cu, length 4.3521 mm
-    @(113.1000 mm, 99.8850 mm): Pad 6 [GND] of H2 on B.Cu
+    @(98.9843 mm, 98.4085 mm): Track [GND] on F.Cu, length 1.1230 mm
+    @(111.1665 mm, 97.0227 mm): Via [GND] on F.Cu - B.Cu
 
 ** Found 0 Footprint errors **
 
