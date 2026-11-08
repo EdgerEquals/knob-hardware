@@ -69,3 +69,18 @@ Expected next, one at a time as they come up:
    under a thicker race (`docs/main-board-circuit-2026-11-07.md`, `docs/img/ring-lights-q35.png`).
 4. Layer count (after a first placement shows the density).
 (The back AMOLEDs' power chip is gone with Q33 = A.)
+
+## Step 3: placing the main board (8 Nov, Ed 19:02 "Go")
+Room map from the model, v0.52 (`tools/studies/main_board_room.py`, slices 0.05-2.2 mm off each face): the board is 2,866 mm²
+with its windows; the front has 985 mm² free (the knob drive, the clear OLED, the case's side ledges and the chip take the rest),
+the back 2,451 mm² (the 24 LEDs, the encoder sensor and the rim of its disc, the joystick's rear spring anchor, the back
+cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_plan_fig.py`, every block fitted into free room).
+- Front: the H743 under the joystick (fixed since layout v4), Tag-Connect pads beside it, the screen's 22 Ω and the link SPI's
+  33 Ω, the power light (fixed).
+- Back: behind the chip the REF3430 and the ADC input filters; inside the LED ring the DRV8213 by the motor, the rod link's
+  main end by the rod, the ring LEDs' own 5 V branch, the I2C pull-ups; the encoder's resistors by its sensor; pads for the
+  later cover board at the top. No part under the encoder disc's rim (it comes within 2.2 mm of the board).
+- The tight spot: window D leaves a 2.8 mm strip each side, and the LED cut-outs leave only 0.6 mm outside the ring at the
+  sides, so every track from the bottom (link flex, the 15 V post) to the top (the chip, boards L and R) threads between two
+  cut-outs (1.76 mm webs, about 5 tracks a layer at 0.1 / 0.1 mm, 0.3 off each cut-out [A]) into the ring and out again.
+  About 40 tracks plus three rails and ground: 4 layers at least; the count is settled after placing.
