@@ -37,7 +37,10 @@ Picture: `docs/img/main-board-inventory-v050.png` (the board's outline and windo
   no flash; 64 nets, 18 spare) or B keep the back screens with local drawing.
 
 Expected next, one at a time as they come up:
-1. The 1220 driver and its supply (15 V direct or a lower rail): needs Ed's bench numbers (the "Motor bench test sheet" doc is
+1. The 1220 driver and its supply (15 V direct or a lower rail). **[Ed 8 Nov 12:38] the 1220 is the 6 V version** (his AliExpress
+   listing: "Mini 12mm 1220 Coreless Planetary Gearbox Gear Motor DC 3V-12V 6V"). **Q34 (open):** A from the 5 V rail (it can never
+   see more than 5 V; less PWM ripple in a coreless motor [S maxon]) or B from 15 V with PWM capped at 40 % (`docs/img/motor-supply-q34.png`).
+   Then the driver needs Ed's bench numbers (the "Motor bench test sheet" doc is
    still empty): which voltage version, no-load current at 5 / 9 / 12 V, stall current at 5 / 9 V (pulses of 1-2 s).
 2. The power tree on vertical board L (15 V to 5 V and 3.3 V) once the motor's share is known.
 3. The RGB emitter part; the VCSEL driver.
