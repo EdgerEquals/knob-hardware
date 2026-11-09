@@ -615,11 +615,16 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
         vx, vy = x1 - x0, y1 - y0; l2 = vx * vx + vy * vy or 1e-12
         u = max(0.0, min(1.0, ((px - x0) * vx + (py - y0) * vy) / l2))
         return math.hypot(px - x0 - u * vx, py - y0 - u * vy)
+    order = []   # exposed pads first (a via in the pad), so a neighbouring pin's via does not take its spot
     for f in board.GetFootprints():
         cx, cy = pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1]
         for p in f.Pads():
-            if p.GetNetname() != "GND" or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD:
-                continue
+            if p.GetNetname() == "GND" and p.GetAttribute() == pcbnew.PAD_ATTRIB_SMD:
+                w_, h_ = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
+                order.append((0 if w_ * h_ >= 1.0 and min(w_, h_) >= 0.85 else 1, f, cx, cy, p))
+    order.sort(key=lambda o: o[0])
+    for _ep, f, cx, cy, p in order:
+        if True:
             side = "B" if p.IsOnLayer(pcbnew.B_Cu) else "F"
             px, py = pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]
             w, h = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
@@ -628,7 +633,7 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
             else:
                 ang0 = math.atan2(py - cy, px - cx) if math.hypot(px - cx, py - cy) > 0.05 else 0.0
                 cands = []
-                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5, 1.8, 2.2):
+                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5, 1.8, 2.2, 2.6, 3.0):
                     for k in range(16):
                         a_ = ang0 + (k // 2 + 1) * (math.pi / 8) * (1 if k % 2 else -1) if k else ang0
                         cands.append((px + (w / 2 + dist) * math.cos(a_) if abs(math.cos(a_)) > 0.7 else px + dist * math.cos(a_),
@@ -660,8 +665,8 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
                             break
                 if ok and any(math.hypot(qx - vx, qy - vy) < via_d + 0.15 for qx, qy in vias):
                     ok = False
-                if ok and any(math.hypot(hx - vx, hy - vy) < via_drill / 2 + hr + 0.23 for hx, hy, hr in holes):
-                    ok = False
+                if ok and any(math.hypot(hx - vx, hy - vy) < via_d / 2 + hr + 0.23 for hx, hy, hr in holes):
+                    ok = False   # the hole rule is copper to hole: the via's ring, not its drill
                 if ok and any(seg_d(vx, vy, x0, y0, x1, y1) < via_d / 2 + clr + hw for _l, x0, y0, x1, y1, hw in segs):
                     ok = False   # the via goes through every layer: clear of the ribbon on all of them
                 if ok and (vx, vy) != (px, py):
@@ -845,6 +850,14 @@ def route_board(passes, timeout):
     b = pcbnew.LoadBoard(pcb)
     print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
     res = _route(pcb, passes=passes, timeout=timeout)
+    print("first pass:", res)
+    # finishing pass: everything routed so far fixed, the router only completes what is left
+    b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b))
+    for t in b.GetTracks():
+        t.SetLocked(True)
+    save_board(pcb, b)
+    res = _route(pcb, passes=max(20, passes // 2), timeout=timeout, tag="_finish")
+    print("finishing pass:", res)
     b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b)); add_planes(b); save_board(pcb, b)
     nv, nu, txt = kt.drc(pcb, os.path.join(OUT, "drc.rpt"))
     left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))

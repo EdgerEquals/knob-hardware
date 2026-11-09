@@ -1,179 +1,7 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 10:17:27 **
+** Created on 2026-11-09 11:09:37 **
 
-** Found 188 DRC violations **
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2070 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(109.3108 mm, 73.9801 mm): Line on Edge.Cuts
-    @(104.1381 mm, 73.5481 mm): Via [SCK_L] on F.Cu - B.Cu
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2208 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(81.6400 mm, 146.8999 mm): Line on Edge.Cuts
-    @(109.9000 mm, 147.3457 mm): Via [SCK_L] on F.Cu - B.Cu
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2403 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.2301 mm, 74.3101 mm): Line on Edge.Cuts
-    @(103.5624 mm, 73.5481 mm): Track [SCK_L] on In2.Cu, length 1.4200 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2395 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(97.5071 mm, 86.2118 mm): Line on Edge.Cuts
-    @(97.2041 mm, 84.0223 mm): Track [I2C_SCL] on In3.Cu, length 8.9720 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2412 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(112.5421 mm, 56.1706 mm): Line on Edge.Cuts
-    @(113.3075 mm, 55.8659 mm): Track [USB_DP] on B.Cu, length 1.7739 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2250 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(113.7403 mm, 56.7076 mm): Line on Edge.Cuts
-    @(116.1281 mm, 58.6865 mm): Track [USB_DP] on B.Cu, length 3.9889 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2214 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(119.0699 mm, 146.6099 mm): Line on Edge.Cuts
-    @(119.5524 mm, 146.5303 mm): Track [USB_DM] on B.Cu, length 1.7639 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2401 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(113.7403 mm, 56.7076 mm): Line on Edge.Cuts
-    @(114.9729 mm, 57.3169 mm): Track [5V] on In2.Cu, length 2.2659 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2467 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(97.5071 mm, 86.2118 mm): Line on Edge.Cuts
-    @(97.0604 mm, 83.6918 mm): Track [5V] on In2.Cu, length 8.4657 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2478 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(112.5480 mm, 62.5692 mm): Line on Edge.Cuts
-    @(111.5223 mm, 62.8805 mm): Track [CAN_TX] on In2.Cu, length 4.5206 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2231 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(93.6116 mm, 82.7260 mm): Line on Edge.Cuts
-    @(96.0520 mm, 82.3688 mm): Track [HALL_EN] on F.Cu, length 1.0784 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2231 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(93.6116 mm, 82.7260 mm): Line on Edge.Cuts
-    @(95.6283 mm, 82.7925 mm): Track [HALL_EN] on F.Cu, length 0.5992 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2463 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.8809 mm, 78.9485 mm): Line on Edge.Cuts
-    @(103.1559 mm, 82.1559 mm): Track [RGB_EN] on In3.Cu, length 0.1232 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2224 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.1045 mm, 81.8461 mm): Line on Edge.Cuts
-    @(104.8707 mm, 83.8707 mm): Track [RGB_EN] on In3.Cu, length 2.4251 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2107 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.8809 mm, 78.9485 mm): Line on Edge.Cuts
-    @(102.8303 mm, 81.9535 mm): Track [RGB_EN] on In3.Cu, length 3.5291 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2063 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.8809 mm, 78.9485 mm): Line on Edge.Cuts
-    @(103.0327 mm, 82.1559 mm): Track [RGB_EN] on In3.Cu, length 0.2862 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2450 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(94.1213 mm, 73.4779 mm): Via [HALL1_L] on F.Cu - B.Cu
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2392 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(93.9533 mm, 73.6459 mm): Track [HALL1_L] on B.Cu, length 0.2376 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2392 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(93.0346 mm, 73.6459 mm): Track [HALL1_L] on B.Cu, length 0.9187 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2431 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(92.8598 mm, 73.4711 mm): Track [HALL1_L] on B.Cu, length 0.2472 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2205 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(95.1600 mm, 73.6561 mm): Track [HALL2_L] on In3.Cu, length 1.3949 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2469 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.9999 mm, 74.8400 mm): Line on Edge.Cuts
-    @(96.5549 mm, 73.6561 mm): Track [HALL2_L] on In3.Cu, length 1.1124 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2240 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.0000 mm, 73.9401 mm): Line on Edge.Cuts
-    @(94.7970 mm, 73.2931 mm): Track [HALL2_L] on In3.Cu, length 0.5134 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2406 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(80.8701 mm, 86.7899 mm): Line on Edge.Cuts
-    @(82.4039 mm, 88.7538 mm): Track [HALL4_L] on In2.Cu, length 2.9502 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2486 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(120.1716 mm, 92.8352 mm): Line on Edge.Cuts
-    @(116.8254 mm, 88.5823 mm): Track [RING_5V] on F.Cu, length 7.8705 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2239 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.1045 mm, 81.8461 mm): Line on Edge.Cuts
-    @(106.6897 mm, 83.1499 mm): Track [RING_5V] on B.Cu, length 2.4074 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2165 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(93.6116 mm, 117.2740 mm): Line on Edge.Cuts
-    @(92.4500 mm, 116.8575 mm): Track [RING_5V] on B.Cu, length 5.9267 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2161 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(114.1695 mm, 111.7655 mm): Line on Edge.Cuts
-    @(113.8227 mm, 111.4885 mm): Via [RING_D1] on F.Cu - B.Cu
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2167 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.8809 mm, 121.0515 mm): Line on Edge.Cuts
-    @(107.9041 mm, 119.8285 mm): Track [RING_D1] on In2.Cu, length 2.1126 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2073 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.1045 mm, 118.1539 mm): Line on Edge.Cuts
-    @(106.4103 mm, 121.3223 mm): Track [RING_D1] on In2.Cu, length 2.9838 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2135 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(114.1695 mm, 111.7655 mm): Line on Edge.Cuts
-    @(113.8227 mm, 111.4885 mm): Track [RING_D1] on B.Cu, length 1.5195 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2067 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(117.2740 mm, 93.6116 mm): Line on Edge.Cuts
-    @(118.2051 mm, 97.3289 mm): Track [RING_D4] on In2.Cu, length 2.7314 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2167 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(111.7655 mm, 85.8305 mm): Line on Edge.Cuts
-    @(111.4853 mm, 86.2735 mm): Track [RING_D4] on B.Cu, length 1.6125 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2132 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.8809 mm, 78.9485 mm): Line on Edge.Cuts
-    @(103.8105 mm, 82.9434 mm): Track [RING_D5] on In2.Cu, length 3.4118 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2234 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(103.1045 mm, 81.8461 mm): Line on Edge.Cuts
-    @(106.8999 mm, 83.0129 mm): Track [RING_D5] on In2.Cu, length 2.6239 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2150 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.6199 mm, 78.1299 mm): Line on Edge.Cuts
-    @(97.0610 mm, 78.2928 mm): Via [RING_D7] on F.Cu - B.Cu
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2231 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(93.6116 mm, 82.7260 mm): Line on Edge.Cuts
-    @(96.0520 mm, 82.3688 mm): Track [RING_D7] on In2.Cu, length 0.5992 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2096 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.8955 mm, 81.8461 mm): Line on Edge.Cuts
-    @(97.1686 mm, 78.4004 mm): Track [RING_D7] on In2.Cu, length 3.5577 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2088 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(96.8955 mm, 81.8461 mm): Line on Edge.Cuts
-    @(97.1686 mm, 81.9581 mm): Track [RING_D7] on In2.Cu, length 0.5808 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2231 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(93.6116 mm, 82.7260 mm): Line on Edge.Cuts
-    @(96.7579 mm, 82.3688 mm): Track [RING_D7] on In2.Cu, length 0.7059 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2328 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(82.7260 mm, 93.6116 mm): Line on Edge.Cuts
-    @(80.2055 mm, 92.0391 mm): Track [RING_D9] on B.Cu, length 2.5333 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2236 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(85.8305 mm, 111.7655 mm): Line on Edge.Cuts
-    @(88.9555 mm, 114.4845 mm): Track [RING_D10] on In2.Cu, length 9.4895 mm
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2419 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(81.8461 mm, 103.1045 mm): Line on Edge.Cuts
-    @(78.6431 mm, 103.4611 mm): Track [RING_D10] on B.Cu, length 3.1236 mm
+** Found 141 DRC violations **
 [hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
     Rule: board setup constraints hole; Severity: error
     @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
@@ -201,462 +29,458 @@
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(80.0500 mm, 86.6885 mm): Track [SCK_L] on F.Cu, length 12.0885 mm
-[via_dangling]: Via is not connected or connected on only one layer
+[track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(91.1253 mm, 65.9910 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.2500 mm, 59.1750 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.8000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(114.7000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(84.3388 mm, 89.5483 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.8215 mm, 88.3686 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(89.0538 mm, 63.1374 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(118.2250 mm, 149.8000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(111.7500 mm, 88.1500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(91.5197 mm, 87.3434 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(89.8000 mm, 90.0600 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(117.4400 mm, 99.2500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(95.4750 mm, 52.6500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(92.5814 mm, 89.6414 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(103.2700 mm, 89.9500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(79.6500 mm, 70.7750 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.7400 mm, 96.9500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(116.3000 mm, 105.7900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.4986 mm, 67.1934 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(83.2854 mm, 111.0158 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.3617 mm, 70.5866 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.7750 mm, 63.8250 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(91.7600 mm, 84.6500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.9120 mm, 95.2502 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.8600 mm, 82.2500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(104.0992 mm, 69.3580 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(108.9622 mm, 66.4518 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(106.6722 mm, 71.6248 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(100.4204 mm, 117.8913 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.1100 mm, 68.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(92.0900 mm, 95.0500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(112.1500 mm, 100.8600 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.9600 mm, 64.4500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(96.3597 mm, 97.4045 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.5462 mm, 69.4626 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(92.4500 mm, 92.5100 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(87.7778 mm, 64.9544 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(98.3058 mm, 120.8201 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.5277 mm, 70.8965 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(109.9500 mm, 117.1100 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(115.9000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(109.6500 mm, 57.1900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.1976 mm, 92.2257 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(120.8201 mm, 101.6942 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(97.2022 mm, 72.2979 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(113.0111 mm, 52.0763 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(87.5908 mm, 117.4697 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(109.4889 mm, 54.7237 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(109.1229 mm, 119.1850 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.1900 mm, 91.6800 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(96.5016 mm, 96.4572 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(113.8000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(102.6886 mm, 71.9678 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.5000 mm, 61.6100 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(116.7421 mm, 73.1500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(98.1500 mm, 73.4900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(116.5000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(81.3500 mm, 58.2000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(105.6522 mm, 71.8923 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.0937 mm, 71.7651 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(96.0151 mm, 149.6337 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.9300 mm, 70.4000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.1300 mm, 102.9000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(114.5100 mm, 67.9500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(99.2500 mm, 94.3100 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(107.6400 mm, 93.4000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(91.1482 mm, 61.4137 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(108.9251 mm, 63.4237 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(91.8100 mm, 51.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(79.1799 mm, 98.3058 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.4478 mm, 54.1077 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(89.4500 mm, 61.9900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(103.3743 mm, 107.9539 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(107.7500 mm, 113.6500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.6527 mm, 89.4461 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.6200 mm, 53.4000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(80.8150 mm, 109.1229 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(106.3600 mm, 97.0500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(105.7700 mm, 103.1000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(94.8967 mm, 94.6149 mm): Via [GND] on F.Cu - B.Cu
+    @(109.9000 mm, 147.4500 mm): Track [SCK_L] on F.Cu, length 29.8500 mm
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
     @(102.0597 mm, 93.4278 mm): Via [GND] on F.Cu - B.Cu
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
-    @(91.4400 mm, 100.8000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(104.1400 mm, 72.6000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.7576 mm, 71.5092 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(112.9400 mm, 89.6000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(79.1400 mm, 100.7500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(95.0033 mm, 92.5173 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(106.9500 mm, 95.0600 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(100.0000 mm, 106.1000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(100.9349 mm, 69.0663 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(92.4500 mm, 114.6900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(92.7849 mm, 70.6837 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(112.4092 mm, 82.5303 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(110.3500 mm, 91.0500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(106.4300 mm, 98.5500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(89.5361 mm, 65.3755 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(105.0100 mm, 52.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(96.8767 mm, 95.6935 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(108.9000 mm, 107.4900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(116.0501 mm, 71.8601 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(111.5666 mm, 65.6687 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
     @(100.9100 mm, 80.8500 mm): Via [GND] on F.Cu - B.Cu
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
-    @(101.1600 mm, 71.9500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(97.6126 mm, 72.9462 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(101.6942 mm, 79.1799 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.8771 mm, 80.8150 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(96.9500 mm, 69.4900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(93.7530 mm, 98.4722 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(117.1000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(95.3578 mm, 73.2521 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(108.9423 mm, 57.3978 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.8370 mm, 72.3851 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(114.4510 mm, 63.8039 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(102.1000 mm, 152.1000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(108.9000 mm, 71.2700 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(82.5303 mm, 87.5908 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.1850 mm, 90.8771 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(117.4697 mm, 112.4092 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(101.8500 mm, 69.4900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(105.9712 mm, 109.7494 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(95.0200 mm, 102.8000 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(90.7500 mm, 69.1900 mm): Via [GND] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(109.8500 mm, 68.1750 mm): Via [GND] on F.Cu - B.Cu
+    @(110.7750 mm, 63.8250 mm): Via [GND] on F.Cu - B.Cu
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
     @(106.9500 mm, 85.5500 mm): Via [GND] on F.Cu - B.Cu
 [via_dangling]: Via is not connected or connected on only one layer
     Local override; Severity: warning
+    @(96.8767 mm, 95.6935 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(102.7763 mm, 71.9251 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.6527 mm, 89.4461 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(104.0992 mm, 69.3580 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(106.6722 mm, 71.6248 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(92.7849 mm, 70.6837 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(105.0100 mm, 52.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(107.6400 mm, 93.4000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(107.7500 mm, 113.6500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.1253 mm, 65.9910 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(119.8370 mm, 72.3851 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(112.9400 mm, 89.6000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(114.7000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(112.4092 mm, 82.5303 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(108.9622 mm, 66.4518 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(116.5000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.7530 mm, 98.4722 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(102.1000 mm, 152.1000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(95.0200 mm, 102.8000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(105.6522 mm, 71.8923 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.8967 mm, 94.6149 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(97.7600 mm, 73.0000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(95.0033 mm, 92.5173 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(105.7700 mm, 103.1000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.1300 mm, 102.9000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.5000 mm, 61.6100 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(100.9349 mm, 69.0663 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.1976 mm, 92.2257 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(103.2700 mm, 89.9500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(100.4204 mm, 117.8913 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.1900 mm, 91.6800 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(114.5100 mm, 67.9500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(116.3000 mm, 105.7900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(115.9000 mm, 148.7500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(96.3597 mm, 97.4045 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(113.0111 mm, 52.0763 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.4478 mm, 54.1077 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(110.4986 mm, 67.1934 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
     @(100.8923 mm, 75.8768 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(104.1400 mm, 72.6000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.5197 mm, 87.3434 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(98.8521 mm, 72.6022 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(109.9500 mm, 117.1100 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(112.1500 mm, 100.8600 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.7600 mm, 84.6500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(79.1400 mm, 100.7500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(87.5908 mm, 117.4697 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(98.3058 mm, 120.8201 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(87.7778 mm, 64.9544 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.7400 mm, 96.9500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.2500 mm, 59.1750 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.0937 mm, 71.7651 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.7500 mm, 69.1900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(111.7500 mm, 88.1500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.8215 mm, 88.3686 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(116.0501 mm, 71.8601 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(110.8600 mm, 82.2500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.8100 mm, 51.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(110.9300 mm, 70.4000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(79.6500 mm, 70.7750 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(117.1000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(92.5814 mm, 89.6414 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(89.8000 mm, 90.0600 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(117.4697 mm, 112.4092 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(101.1600 mm, 71.9500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(110.8000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.5277 mm, 70.8965 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(100.0000 mm, 106.1000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(98.1500 mm, 73.4900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(96.5016 mm, 96.4572 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(108.9000 mm, 107.4900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(109.1229 mm, 119.1850 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(118.2250 mm, 149.8000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(89.5700 mm, 61.8400 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(95.3578 mm, 73.2521 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(92.4500 mm, 114.6900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(81.3500 mm, 58.2000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(99.2500 mm, 94.3100 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(79.1799 mm, 98.3058 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(89.5361 mm, 65.3755 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(92.4500 mm, 92.5100 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(113.8000 mm, 150.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(95.4750 mm, 52.6500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.4400 mm, 100.8000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(96.9500 mm, 69.4900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(92.0900 mm, 95.0500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(101.6942 mm, 79.1799 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(119.1850 mm, 90.8771 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(80.8150 mm, 109.1229 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(106.9500 mm, 95.0600 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(119.3617 mm, 70.5866 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(106.4300 mm, 98.5500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(91.1482 mm, 61.4137 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(96.0151 mm, 149.6337 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(83.2854 mm, 111.0158 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.6200 mm, 53.4000 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(109.8500 mm, 68.1750 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(105.9712 mm, 109.7494 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(114.4510 mm, 63.8039 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(120.8201 mm, 101.6942 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(90.8771 mm, 80.8150 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(106.3600 mm, 97.0500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(104.1114 mm, 71.9678 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(108.9251 mm, 63.4237 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(84.3388 mm, 89.5483 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(82.5303 mm, 87.5908 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.1100 mm, 68.8500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(108.9000 mm, 71.2700 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(108.9423 mm, 57.3978 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(110.3500 mm, 91.0500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(109.4889 mm, 54.7237 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(93.9600 mm, 64.4500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(88.9126 mm, 63.2538 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(103.3743 mm, 107.9539 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(111.5666 mm, 65.6687 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.5462 mm, 69.4626 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(119.7576 mm, 71.5092 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(109.6500 mm, 57.1900 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(117.4400 mm, 99.2500 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(94.9120 mm, 95.2502 mm): Via [GND] on F.Cu - B.Cu
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; Severity: warning
+    @(116.7421 mm, 73.1500 mm): Via [GND] on F.Cu - B.Cu
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(94.6750 mm, 148.0500 mm): Track [CS_DAC] on F.Cu, length 0.0724 mm
+    @(109.9000 mm, 148.6500 mm): Track [OLED_DC] on F.Cu, length 31.0500 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(79.1500 mm, 80.8311 mm): Track [CS_OLED] on F.Cu, length 0.0808 mm
+    @(78.5500 mm, 87.3115 mm): Track [OLED_RES] on F.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(109.9000 mm, 148.9500 mm): Track [OLED_RES] on F.Cu, length 31.3500 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.1500 mm, 87.1869 mm): Track [I2C_SDA] on B.Cu, length 12.5869 mm
+    @(121.4500 mm, 87.3115 mm): Track [I2C_SCL] on B.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.4500 mm, 87.3115 mm): Track [I2C_SDA] on B.Cu, length 12.7115 mm
+    @(120.5500 mm, 146.6000 mm): Track [MIDI_TX] on B.Cu, length 33.5377 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.4500 mm, 146.6000 mm): Track [I2C_SDA] on B.Cu, length 33.9115 mm
+    @(119.9500 mm, 146.6000 mm): Track [USB_DM] on B.Cu, length 33.2885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.8500 mm, 80.8311 mm): Track [IO_INT] on B.Cu, length 0.0946 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(119.9500 mm, 86.6885 mm): Track [USB_DM] on B.Cu, length 12.0885 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.4500 mm, 146.6000 mm): Track [CV_IN1_L] on In3.Cu, length 33.9115 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.4500 mm, 87.3115 mm): Track [CV_IN1_L] on In3.Cu, length 12.7115 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.2500 mm, 86.8131 mm): Track [AUDIO_IN_L] on In3.Cu, length 12.2131 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(119.9500 mm, 146.6000 mm): Track [AGND_SENSE_L] on In3.Cu, length 33.2885 mm
+    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
 
-** Found 149 unconnected pads **
+** Found 151 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(105.5500 mm, 70.6750 mm): Track [GND] on F.Cu, length 1.2216 mm
     @(105.5700 mm, 70.8500 mm): Track [GND] on B.Cu, length 2.0951 mm
+    @(105.5500 mm, 70.6750 mm): Track [GND] on F.Cu, length 1.2216 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(117.4291 mm, 71.4003 mm): Track [GND] on B.Cu, length 2.3311 mm
     @(117.4000 mm, 71.5950 mm): Track [GND] on F.Cu, length 1.3757 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.5000 mm, 64.5800 mm): Track [GND] on F.Cu, length 0.8448 mm
     @(90.2400 mm, 64.8000 mm): Pad 2 [GND] of R50 on B.Cu
+    @(90.5000 mm, 64.5800 mm): Track [GND] on F.Cu, length 0.8448 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
     @(96.3159 mm, 95.9166 mm): Track [GND] on F.Cu, length 0.6035 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(97.0300 mm, 73.0000 mm): Track [GND] on B.Cu, length 0.7230 mm
-    @(97.6126 mm, 72.9462 mm): Via [GND] on F.Cu - B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
     @(117.1000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(117.7000 mm, 149.8000 mm): Track [GND] on F.Cu, length 0.5250 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(116.5000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(117.1000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
+    @(116.5000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(116.5000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(115.9000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(89.4500 mm, 63.7700 mm): Track [GND] on F.Cu, length 1.7800 mm
+    @(89.4500 mm, 63.7700 mm): Track [GND] on F.Cu, length 0.7452 mm
     @(89.2300 mm, 64.3500 mm): Track [GND] on B.Cu, length 1.0702 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(94.6922 mm, 94.0335 mm): Track [GND] on F.Cu, length 0.6164 mm
+    @(97.7600 mm, 73.0000 mm): Via [GND] on F.Cu - B.Cu
+    @(98.1500 mm, 74.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(105.0200 mm, 72.6000 mm): Track [GND] on F.Cu, length 0.8800 mm
+    @(103.4000 mm, 72.1400 mm): Track [GND] on B.Cu, length 0.7319 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(94.0301 mm, 94.3713 mm): Track [GND] on F.Cu, length 1.2451 mm
+    @(94.6922 mm, 94.0335 mm): Track [GND] on F.Cu, length 0.6164 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(103.4000 mm, 72.1400 mm): Track [GND] on B.Cu, length 0.7319 mm
+    @(102.7763 mm, 71.9251 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(94.0500 mm, 70.6750 mm): Track [GND] on F.Cu, length 0.5673 mm
@@ -667,6 +491,10 @@
     @(92.3750 mm, 61.5000 mm): Track [GND] on F.Cu, length 1.2298 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(98.1500 mm, 72.4300 mm): Track [GND] on B.Cu, length 0.7230 mm
+    @(97.7600 mm, 73.0000 mm): Via [GND] on F.Cu - B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(94.3400 mm, 53.4000 mm): Track [GND] on F.Cu, length 0.7200 mm
     @(94.5500 mm, 55.3250 mm): Track [GND] on F.Cu, length 1.2216 mm
 [unconnected_items]: Missing connection between items
@@ -675,31 +503,27 @@
     @(89.2300 mm, 64.3500 mm): Track [GND] on B.Cu, length 1.0702 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(109.6500 mm, 57.9200 mm): Track [GND] on F.Cu, length 0.7300 mm
     @(107.7250 mm, 57.5000 mm): Track [GND] on F.Cu, length 1.2216 mm
+    @(109.6500 mm, 57.9200 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(91.9728 mm, 89.8075 mm): Track [GND] on F.Cu, length 0.6308 mm
     @(91.2820 mm, 90.0819 mm): Track [GND] on F.Cu, length 0.8946 mm
+    @(91.9728 mm, 89.8075 mm): Track [GND] on F.Cu, length 0.6308 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(90.1954 mm, 87.7315 mm): Track [GND] on F.Cu, length 0.8933 mm
     @(90.8983 mm, 87.4897 mm): Track [GND] on F.Cu, length 0.6384 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(94.1100 mm, 68.8500 mm): Via [GND] on F.Cu - B.Cu
-    @(94.5462 mm, 69.4626 mm): Via [GND] on F.Cu - B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(98.1500 mm, 74.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(97.6126 mm, 72.9462 mm): Via [GND] on F.Cu - B.Cu
+    @(94.0300 mm, 70.0000 mm): Track [GND] on B.Cu, length 0.7452 mm
+    @(93.3800 mm, 68.8500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(94.0500 mm, 70.6750 mm): Track [GND] on F.Cu, length 0.5673 mm
-    @(92.0000 mm, 69.9200 mm): Track [GND] on B.Cu, length 1.0951 mm
+    @(92.7849 mm, 70.6837 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(92.4500 mm, 92.5100 mm): Via [GND] on F.Cu - B.Cu
+    @(92.4500 mm, 91.7800 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(93.3625 mm, 93.1267 mm): Track [GND] on F.Cu, length 0.9160 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
@@ -707,52 +531,52 @@
     @(89.8000 mm, 89.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(105.0200 mm, 72.6000 mm): Track [GND] on F.Cu, length 0.8800 mm
-    @(103.4000 mm, 72.1400 mm): Track [GND] on B.Cu, length 0.7319 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(94.0459 mm, 92.4668 mm): Track [GND] on F.Cu, length 0.9587 mm
     @(93.3625 mm, 93.1267 mm): Track [GND] on F.Cu, length 0.9160 mm
+    @(94.0459 mm, 92.4668 mm): Track [GND] on F.Cu, length 0.9587 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(93.4100 mm, 102.9000 mm): Track [GND] on B.Cu, length 0.7200 mm
-    @(95.7400 mm, 102.8000 mm): Track [GND] on B.Cu, length 0.7200 mm
+    @(95.0200 mm, 102.8000 mm): Via [GND] on F.Cu - B.Cu
+    @(94.1300 mm, 102.9000 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(114.7000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(113.8000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
+    @(114.7000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(89.4500 mm, 63.7700 mm): Track [GND] on F.Cu, length 0.7452 mm
+    @(89.5700 mm, 62.6000 mm): Track [GND] on F.Cu, length 0.7600 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(106.5000 mm, 72.2900 mm): Track [GND] on B.Cu, length 0.6871 mm
     @(105.5500 mm, 70.6750 mm): Track [GND] on F.Cu, length 1.2216 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(105.0200 mm, 72.6000 mm): Track [GND] on F.Cu, length 0.8800 mm
     @(105.5500 mm, 70.6750 mm): Track [GND] on F.Cu, length 1.2216 mm
+    @(105.0200 mm, 72.6000 mm): Track [GND] on F.Cu, length 0.8800 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(110.5388 mm, 65.4965 mm): Track [GND] on B.Cu, length 1.0421 mm
     @(110.5388 mm, 66.4465 mm): Track [GND] on B.Cu, length 0.7481 mm
+    @(110.5388 mm, 65.4965 mm): Track [GND] on B.Cu, length 1.0421 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
     @(96.3597 mm, 97.4045 mm): Via [GND] on F.Cu - B.Cu
+    @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(118.6700 mm, 70.3250 mm): Track [GND] on F.Cu, length 0.7395 mm
+    @(89.5700 mm, 62.6000 mm): Track [GND] on F.Cu, length 0.7600 mm
+    @(90.5000 mm, 60.8800 mm): Track [GND] on F.Cu, length 0.7300 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(117.4291 mm, 71.4003 mm): Track [GND] on B.Cu, length 2.3311 mm
+    @(118.6700 mm, 70.3250 mm): Track [GND] on F.Cu, length 0.7395 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(108.0200 mm, 64.3500 mm): Track [GND] on B.Cu, length 1.2951 mm
     @(109.8500 mm, 63.8250 mm): Track [GND] on F.Cu, length 0.9250 mm
+    @(108.9251 mm, 63.4237 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(118.3290 mm, 72.4727 mm): Track [GND] on B.Cu, length 1.5105 mm
     @(117.4000 mm, 72.8650 mm): Track [GND] on F.Cu, length 0.7169 mm
-    @(118.3290 mm, 72.4727 mm): Pad 3 [GND] of U8 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(101.8500 mm, 71.0200 mm): Track [GND] on B.Cu, length 1.5300 mm
-    @(100.1500 mm, 69.8300 mm): Track [GND] on B.Cu, length 1.0951 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(95.4750 mm, 54.0500 mm): Track [GND] on B.Cu, length 1.4000 mm
@@ -763,24 +587,20 @@
     @(93.3300 mm, 72.5500 mm): Track [GND] on F.Cu, length 1.0951 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(92.3750 mm, 66.0000 mm): Track [GND] on F.Cu, length 1.2498 mm
     @(90.5000 mm, 64.5800 mm): Track [GND] on F.Cu, length 0.8448 mm
+    @(92.3750 mm, 66.0000 mm): Track [GND] on F.Cu, length 1.2498 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(90.1954 mm, 87.7315 mm): Track [GND] on F.Cu, length 0.8933 mm
     @(91.2820 mm, 90.0819 mm): Track [GND] on F.Cu, length 0.8946 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.5000 mm, 60.8800 mm): Track [GND] on F.Cu, length 0.7300 mm
-    @(89.4500 mm, 63.7700 mm): Track [GND] on F.Cu, length 1.7800 mm
+    @(101.1600 mm, 71.9500 mm): Via [GND] on F.Cu - B.Cu
+    @(101.8500 mm, 71.0200 mm): Track [GND] on B.Cu, length 1.2951 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(101.8500 mm, 71.0200 mm): Track [GND] on B.Cu, length 1.5300 mm
-    @(100.4300 mm, 71.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(108.3700 mm, 93.4000 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(106.9500 mm, 94.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(107.6400 mm, 93.4000 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(108.0571 mm, 65.5255 mm): Track [GND] on B.Cu, length 1.2951 mm
@@ -795,72 +615,68 @@
     @(114.7000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(106.2500 mm, 109.2000 mm): Track [GND] on B.Cu, length 0.6161 mm
     @(107.0000 mm, 108.2500 mm): Pad 9 [GND] of U9 on B.Cu
+    @(106.2500 mm, 109.2000 mm): Track [GND] on B.Cu, length 0.6161 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.7500 mm, 69.9200 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(92.0000 mm, 69.9200 mm): Track [GND] on B.Cu, length 1.0951 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(101.8500 mm, 71.0200 mm): Track [GND] on B.Cu, length 1.5300 mm
-    @(103.4000 mm, 72.1400 mm): Track [GND] on B.Cu, length 0.7319 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(118.6700 mm, 60.1650 mm): PTH pad 22 [GND] of J3
-    @(117.4000 mm, 60.1650 mm): PTH pad 21 [GND] of J3
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(81.3300 mm, 60.1650 mm): PTH pad 22 [GND] of J2
-    @(82.6000 mm, 60.1650 mm): PTH pad 21 [GND] of J2
+    @(90.7500 mm, 69.9200 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(82.6000 mm, 61.4350 mm): PTH pad 19 [GND] of J2
     @(82.6000 mm, 62.7050 mm): PTH pad 17 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(81.3300 mm, 72.8650 mm): PTH pad 2 [GND] of J2
-    @(81.3300 mm, 71.5950 mm): PTH pad 4 [GND] of J2
+    @(118.6700 mm, 60.1650 mm): PTH pad 22 [GND] of J3
+    @(117.4000 mm, 60.1650 mm): PTH pad 21 [GND] of J3
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(81.3300 mm, 65.2450 mm): PTH pad 14 [GND] of J2
+    @(82.6000 mm, 60.1650 mm): PTH pad 21 [GND] of J2
+    @(81.3300 mm, 60.1650 mm): PTH pad 22 [GND] of J2
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(81.3300 mm, 66.5150 mm): PTH pad 12 [GND] of J2
+    @(81.3300 mm, 65.2450 mm): PTH pad 14 [GND] of J2
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(81.3300 mm, 71.5950 mm): PTH pad 4 [GND] of J2
+    @(81.3300 mm, 72.8650 mm): PTH pad 2 [GND] of J2
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(81.3300 mm, 70.3250 mm): PTH pad 6 [GND] of J2
+    @(81.3300 mm, 71.5950 mm): PTH pad 4 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(81.3300 mm, 70.3250 mm): PTH pad 6 [GND] of J2
     @(81.3300 mm, 69.0550 mm): PTH pad 8 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(81.3300 mm, 70.3250 mm): PTH pad 6 [GND] of J2
-    @(81.3300 mm, 71.5950 mm): PTH pad 4 [GND] of J2
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
     @(82.6000 mm, 61.4350 mm): PTH pad 19 [GND] of J2
     @(82.6000 mm, 60.1650 mm): PTH pad 21 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(87.9500 mm, 64.2800 mm): Track [GND] on F.Cu, length 0.6961 mm
     @(89.2300 mm, 64.3500 mm): Track [GND] on B.Cu, length 1.0702 mm
+    @(87.9500 mm, 64.2800 mm): Track [GND] on F.Cu, length 0.6961 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
     @(94.0301 mm, 94.3713 mm): Track [GND] on F.Cu, length 1.2451 mm
+    @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(95.6703 mm, 96.2850 mm): Track [GND] on F.Cu, length 0.8489 mm
     @(94.4700 mm, 96.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(110.2100 mm, 70.4000 mm): Track [GND] on B.Cu, length 0.7200 mm
     @(109.8500 mm, 69.0750 mm): Track [GND] on F.Cu, length 0.9000 mm
+    @(110.2100 mm, 70.4000 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(94.0301 mm, 94.3713 mm): Track [GND] on F.Cu, length 1.2451 mm
     @(92.8200 mm, 95.0500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(94.0301 mm, 94.3713 mm): Track [GND] on F.Cu, length 1.2451 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(93.3625 mm, 93.1267 mm): Track [GND] on F.Cu, length 0.9160 mm
     @(94.0301 mm, 94.3713 mm): Track [GND] on F.Cu, length 1.2451 mm
+    @(93.3625 mm, 93.1267 mm): Track [GND] on F.Cu, length 0.9160 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(105.6300 mm, 97.0500 mm): Track [GND] on B.Cu, length 0.7300 mm
@@ -871,20 +687,20 @@
     @(90.9500 mm, 91.6800 mm): Track [GND] on B.Cu, length 0.7600 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(94.5000 mm, 98.5125 mm): Track [GND] on B.Cu, length 0.7481 mm
+    @(93.7530 mm, 98.4722 mm): Via [GND] on F.Cu - B.Cu
     @(93.7400 mm, 96.9500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(95.5300 mm, 72.5500 mm): Track [GND] on F.Cu, length 0.7230 mm
-    @(97.0300 mm, 73.0000 mm): Track [GND] on B.Cu, length 0.7230 mm
+    @(97.0300 mm, 73.0000 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(108.9000 mm, 71.9900 mm): Track [GND] on B.Cu, length 0.7200 mm
     @(110.2100 mm, 70.4000 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(110.8600 mm, 82.2500 mm): Via [GND] on F.Cu - B.Cu
-    @(112.6316 mm, 83.5147 mm): Track [GND] on B.Cu, length 1.0092 mm
+    @(112.4092 mm, 82.5303 mm): Via [GND] on F.Cu - B.Cu
+    @(110.1300 mm, 82.2500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(110.5388 mm, 66.4465 mm): Track [GND] on B.Cu, length 0.7481 mm
@@ -899,24 +715,28 @@
     @(95.5300 mm, 72.5500 mm): Track [GND] on F.Cu, length 0.7230 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(79.6500 mm, 71.6750 mm): Track [GND] on B.Cu, length 0.9000 mm
     @(81.3300 mm, 71.5950 mm): PTH pad 4 [GND] of J2
+    @(79.6500 mm, 71.6750 mm): Track [GND] on B.Cu, length 0.9000 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.5000 mm, 60.8800 mm): Track [GND] on F.Cu, length 0.7300 mm
+    @(100.4300 mm, 71.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(98.8521 mm, 72.6022 mm): Via [GND] on F.Cu - B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(90.2500 mm, 58.2750 mm): Track [GND] on F.Cu, length 0.9000 mm
+    @(90.5000 mm, 60.8800 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(93.2300 mm, 64.4500 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(92.3750 mm, 66.0000 mm): Track [GND] on F.Cu, length 1.2498 mm
+    @(93.2300 mm, 64.4500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(100.1800 mm, 80.8500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(100.9100 mm, 80.8500 mm): Via [GND] on F.Cu - B.Cu
     @(102.6966 mm, 79.4075 mm): Track [GND] on B.Cu, length 1.0279 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(113.6700 mm, 89.6000 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(111.7500 mm, 88.1500 mm): Via [GND] on F.Cu - B.Cu
+    @(110.8000 mm, 88.1500 mm): Track [GND] on B.Cu, length 0.9500 mm
+    @(112.9400 mm, 89.6000 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(108.9000 mm, 108.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
@@ -931,48 +751,48 @@
     @(90.7500 mm, 69.9200 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(106.9500 mm, 94.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(105.6300 mm, 97.0500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(101.8500 mm, 71.0200 mm): Track [GND] on B.Cu, length 1.2951 mm
+    @(100.1500 mm, 69.8300 mm): Track [GND] on B.Cu, length 1.0951 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(96.9500 mm, 70.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(97.0300 mm, 73.0000 mm): Track [GND] on B.Cu, length 0.7230 mm
+    @(106.9500 mm, 94.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(105.6300 mm, 97.0500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(92.3750 mm, 66.0000 mm): Track [GND] on F.Cu, length 1.2498 mm
     @(89.6350 mm, 67.5300 mm): Pad 5 [GND] of J4 on F.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(109.9500 mm, 117.1100 mm): Via [GND] on F.Cu - B.Cu
-    @(109.1229 mm, 119.1850 mm): Via [GND] on F.Cu - B.Cu
+    @(107.9609 mm, 119.1819 mm): Track [GND] on B.Cu, length 1.1620 mm
+    @(109.9500 mm, 116.3800 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(108.9000 mm, 71.9900 mm): Track [GND] on B.Cu, length 0.7200 mm
     @(106.6722 mm, 71.6248 mm): Via [GND] on F.Cu - B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(98.1500 mm, 72.4300 mm): Track [GND] on B.Cu, length 0.7452 mm
-    @(100.4300 mm, 71.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(108.9000 mm, 71.9900 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(83.5147 mm, 87.3684 mm): Track [GND] on B.Cu, length 1.0092 mm
-    @(84.3388 mm, 89.5483 mm): Via [GND] on F.Cu - B.Cu
+    @(83.6500 mm, 91.4700 mm): Track [GND] on B.Cu, length 2.0414 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(91.0800 mm, 51.8500 mm): Track [GND] on F.Cu, length 0.7300 mm
     @(94.3400 mm, 53.4000 mm): Track [GND] on F.Cu, length 0.7200 mm
+    @(91.0800 mm, 51.8500 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(93.4100 mm, 102.9000 mm): Pad 2 [GND] of RT1 on B.Cu
-    @(92.1700 mm, 100.8000 mm): Pad 2 [GND] of C44 on B.Cu
+    @(94.0300 mm, 70.0000 mm): Track [GND] on B.Cu, length 0.7452 mm
+    @(96.9500 mm, 70.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(92.1700 mm, 100.8000 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(93.4100 mm, 102.9000 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(79.4075 mm, 97.3034 mm): Track [GND] on B.Cu, length 1.0279 mm
-    @(79.8700 mm, 100.7500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(79.1400 mm, 100.7500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(109.6500 mm, 57.9200 mm): Track [GND] on F.Cu, length 0.7300 mm
     @(110.4000 mm, 54.5000 mm): Track [GND] on F.Cu, length 0.9382 mm
+    @(109.6500 mm, 57.9200 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(104.0943 mm, 107.9539 mm): Track [GND] on B.Cu, length 0.7200 mm
@@ -987,39 +807,35 @@
     @(81.3300 mm, 66.5150 mm): PTH pad 12 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(118.6700 mm, 62.7050 mm): PTH pad 18 [GND] of J3
+    @(118.6700 mm, 65.2450 mm): PTH pad 14 [GND] of J3
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(118.6700 mm, 62.7050 mm): PTH pad 18 [GND] of J3
     @(118.6700 mm, 60.1650 mm): PTH pad 22 [GND] of J3
-    @(118.6700 mm, 62.7050 mm): PTH pad 18 [GND] of J3
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(118.6700 mm, 62.7050 mm): PTH pad 18 [GND] of J3
-    @(118.6700 mm, 65.2450 mm): PTH pad 14 [GND] of J3
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
+    @(91.0300 mm, 84.6500 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(90.8983 mm, 87.4897 mm): Track [GND] on F.Cu, length 0.6384 mm
-    @(91.7600 mm, 84.6500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(99.2500 mm, 93.5800 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(96.3159 mm, 95.9166 mm): Track [GND] on F.Cu, length 0.6035 mm
-    @(99.2500 mm, 93.5800 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(112.1000 mm, 52.3000 mm): Track [GND] on F.Cu, length 0.9382 mm
     @(110.4000 mm, 54.5000 mm): Track [GND] on F.Cu, length 0.9382 mm
+    @(112.1000 mm, 52.3000 mm): Track [GND] on F.Cu, length 0.9382 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(103.0875 mm, 93.6000 mm): Track [GND] on B.Cu, length 1.0421 mm
     @(99.2500 mm, 93.5800 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(102.0597 mm, 93.4278 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(92.1700 mm, 100.8000 mm): Pad 2 [GND] of C44 on B.Cu
-    @(94.5000 mm, 98.5125 mm): Track [GND] on B.Cu, length 0.7481 mm
+    @(92.1700 mm, 100.8000 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(93.7530 mm, 98.4722 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(117.4000 mm, 67.7850 mm): PTH pad 9 [GND] of J3
     @(118.6700 mm, 65.2450 mm): PTH pad 14 [GND] of J3
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(118.6700 mm, 70.3250 mm): Track [GND] on F.Cu, length 0.7395 mm
     @(117.4000 mm, 67.7850 mm): PTH pad 9 [GND] of J3
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
@@ -1027,68 +843,72 @@
     @(82.6000 mm, 62.7050 mm): PTH pad 17 [GND] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(113.7800 mm, 67.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(117.4000 mm, 67.7850 mm): PTH pad 9 [GND] of J3
+    @(118.6700 mm, 70.3250 mm): Track [GND] on F.Cu, length 0.7395 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(83.5916 mm, 109.9903 mm): Track [GND] on B.Cu, length 1.0702 mm
+    @(117.4000 mm, 67.7850 mm): PTH pad 9 [GND] of J3
+    @(114.5100 mm, 67.9500 mm): Via [GND] on F.Cu - B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(80.8181 mm, 107.9609 mm): Track [GND] on B.Cu, length 1.1620 mm
+    @(83.5916 mm, 109.9903 mm): Track [GND] on B.Cu, length 1.0702 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(110.8000 mm, 88.1500 mm): Track [GND] on B.Cu, length 0.9500 mm
-    @(109.2375 mm, 91.0500 mm): Track [GND] on B.Cu, length 1.1125 mm
+    @(110.3500 mm, 91.0500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(110.8000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(113.8000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(114.4510 mm, 64.5339 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(110.5388 mm, 65.4965 mm): Track [GND] on B.Cu, length 1.0421 mm
+    @(114.4510 mm, 64.5339 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(113.7800 mm, 67.9500 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(110.5388 mm, 65.4965 mm): Track [GND] on B.Cu, length 1.0421 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(100.8923 mm, 75.8768 mm): Via [GND] on F.Cu - B.Cu
     @(98.1500 mm, 74.2200 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(101.7375 mm, 75.3500 mm): Track [GND] on B.Cu, length 0.9960 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(101.7375 mm, 75.3500 mm): Track [GND] on B.Cu, length 0.9960 mm
+    @(100.8923 mm, 75.8768 mm): Via [GND] on F.Cu - B.Cu
     @(102.6966 mm, 79.4075 mm): Track [GND] on B.Cu, length 1.0279 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(107.7500 mm, 112.7000 mm): Track [GND] on B.Cu, length 0.9500 mm
-    @(106.2500 mm, 109.2000 mm): Track [GND] on B.Cu, length 0.6161 mm
+    @(105.9712 mm, 109.7494 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(109.9500 mm, 116.3800 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(107.7500 mm, 112.7000 mm): Track [GND] on B.Cu, length 0.9500 mm
+    @(107.7500 mm, 113.6500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(120.5925 mm, 102.6966 mm): Track [GND] on B.Cu, length 1.0279 mm
     @(118.1700 mm, 99.2500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(120.5925 mm, 102.6966 mm): Track [GND] on B.Cu, length 1.0279 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(98.3058 mm, 120.8201 mm): Via [GND] on F.Cu - B.Cu
     @(100.4204 mm, 117.8913 mm): Via [GND] on F.Cu - B.Cu
+    @(97.3034 mm, 120.5925 mm): Track [GND] on B.Cu, length 1.0279 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(103.2700 mm, 89.9500 mm): Via [GND] on F.Cu - B.Cu
     @(103.0875 mm, 93.6000 mm): Track [GND] on B.Cu, length 1.0421 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(92.0391 mm, 80.8181 mm): Track [GND] on B.Cu, length 1.1620 mm
     @(91.0300 mm, 84.6500 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(92.0391 mm, 80.8181 mm): Track [GND] on B.Cu, length 1.1620 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(103.3743 mm, 107.9539 mm): Via [GND] on F.Cu - B.Cu
     @(100.0000 mm, 102.4500 mm): Track [GND] on F.Cu, length 3.6500 mm
-    @(104.0943 mm, 107.9539 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(106.9500 mm, 94.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(103.0875 mm, 93.6000 mm): Track [GND] on B.Cu, length 1.0421 mm
+    @(106.9500 mm, 94.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(106.9500 mm, 86.5000 mm): Track [GND] on B.Cu, length 0.9500 mm
@@ -1100,47 +920,47 @@
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(106.4900 mm, 103.1000 mm): Track [GND] on B.Cu, length 0.7200 mm
-    @(105.7100 mm, 98.5500 mm): Pad 2 [GND] of R41 on B.Cu
+    @(105.7100 mm, 98.5500 mm): Track [GND] on B.Cu, length 0.7200 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(110.1300 mm, 82.2500 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(106.9500 mm, 86.5000 mm): Track [GND] on B.Cu, length 0.9500 mm
+    @(106.9500 mm, 85.5500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(104.2800 mm, 52.8500 mm): Track [GND] on F.Cu, length 0.7300 mm
     @(110.4000 mm, 54.5000 mm): Track [GND] on F.Cu, length 0.9382 mm
+    @(104.2800 mm, 52.8500 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(87.3684 mm, 116.4853 mm): Track [GND] on B.Cu, length 1.0092 mm
     @(92.4500 mm, 115.4200 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(94.5500 mm, 55.3250 mm): Track [GND] on F.Cu, length 1.2216 mm
     @(90.2500 mm, 58.2750 mm): Track [GND] on F.Cu, length 0.9000 mm
+    @(94.5500 mm, 55.3250 mm): Track [GND] on F.Cu, length 1.2216 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(120.5925 mm, 102.6966 mm): Track [GND] on B.Cu, length 1.0279 mm
     @(116.3000 mm, 105.7900 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(117.4400 mm, 99.2500 mm): Via [GND] on F.Cu - B.Cu
     @(112.1500 mm, 100.1300 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(118.1700 mm, 99.2500 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(89.8000 mm, 89.3300 mm): Track [GND] on B.Cu, length 0.7300 mm
-    @(84.3388 mm, 89.5483 mm): Via [GND] on F.Cu - B.Cu
+    @(83.6500 mm, 91.4700 mm): Track [GND] on B.Cu, length 2.0414 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(108.0200 mm, 64.3500 mm): Track [GND] on B.Cu, length 1.2951 mm
+    @(108.9251 mm, 63.4237 mm): Via [GND] on F.Cu - B.Cu
     @(109.6500 mm, 57.9200 mm): Track [GND] on F.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(87.9500 mm, 64.2800 mm): Track [GND] on F.Cu, length 0.6961 mm
     @(82.6000 mm, 62.7050 mm): PTH pad 17 [GND] of J2
+    @(87.9500 mm, 64.2800 mm): Track [GND] on F.Cu, length 0.6961 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(119.1819 mm, 92.0391 mm): Track [GND] on B.Cu, length 1.1620 mm
     @(113.6700 mm, 89.6000 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(119.1850 mm, 90.8771 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(96.8000 mm, 148.8700 mm): Track [GND] on B.Cu, length 1.0951 mm
@@ -1155,64 +975,68 @@
     @(116.4853 mm, 112.6316 mm): Track [GND] on B.Cu, length 1.0092 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(83.2854 mm, 111.0158 mm): Via [GND] on F.Cu - B.Cu
+    @(83.5916 mm, 109.9903 mm): Track [GND] on B.Cu, length 1.0702 mm
     @(87.3684 mm, 116.4853 mm): Track [GND] on B.Cu, length 1.0092 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(107.9609 mm, 119.1819 mm): Track [GND] on B.Cu, length 1.1620 mm
     @(101.1504 mm, 117.8913 mm): Track [GND] on B.Cu, length 0.7300 mm
+    @(107.9609 mm, 119.1819 mm): Track [GND] on B.Cu, length 1.1620 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(92.4500 mm, 115.4200 mm): Track [GND] on B.Cu, length 0.7300 mm
     @(97.3034 mm, 120.5925 mm): Track [GND] on B.Cu, length 1.0279 mm
+    @(92.4500 mm, 115.4200 mm): Track [GND] on B.Cu, length 0.7300 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(79.4075 mm, 97.3034 mm): Track [GND] on B.Cu, length 1.0279 mm
     @(83.6500 mm, 91.4700 mm): Track [GND] on B.Cu, length 2.0414 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(106.9500 mm, 86.5000 mm): Track [GND] on B.Cu, length 0.9500 mm
     @(102.6966 mm, 79.4075 mm): Track [GND] on B.Cu, length 1.0279 mm
+    @(106.9500 mm, 85.5500 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(110.8000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
     @(102.1000 mm, 151.1500 mm): Track [GND] on B.Cu, length 0.9500 mm
+    @(110.8000 mm, 149.8000 mm): Track [GND] on F.Cu, length 1.0500 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(96.8000 mm, 148.8700 mm): Track [GND] on B.Cu, length 1.0951 mm
     @(83.5000 mm, 150.4500 mm): PTH pad 1 [GND] of MP1
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(98.3058 mm, 120.8201 mm): Via [GND] on F.Cu - B.Cu
     @(96.8000 mm, 148.8700 mm): Track [GND] on B.Cu, length 1.0951 mm
+    @(97.3034 mm, 120.5925 mm): Track [GND] on B.Cu, length 1.0279 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(112.6000 mm, 149.8000 mm): Pad 8 [I2C_SCL] of J1 on F.Cu
-    @(98.6875 mm, 94.4777 mm): Track [I2C_SCL] on In2.Cu, length 0.4586 mm
+    @(116.2000 mm, 149.8000 mm): Pad 20 [AUDIO_OUT] of J1 on F.Cu
+    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(117.4000 mm, 149.8000 mm): Pad 24 [AGND_SENSE_L] of J1 on F.Cu
-    @(119.9500 mm, 146.6000 mm): Track [AGND_SENSE_L] on In3.Cu, length 33.2885 mm
+    @(90.9213 mm, 90.7318 mm): Pad 1 [3V3] of U5 on F.Cu
+    @(91.2867 mm, 90.7200 mm): Track [3V3] on B.Cu, length 0.3367 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(88.9355 mm, 62.4831 mm): Track [3V3] on In2.Cu, length 0.6687 mm
-    @(90.5000 mm, 63.6200 mm): Pad 1 [3V3] of C2 on F.Cu
+    @(82.7595 mm, 67.9445 mm): Track [5V] on In2.Cu, length 10.8049 mm
+    @(82.6000 mm, 69.0550 mm): PTH pad 7 [5V] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(82.6000 mm, 70.3100 mm): Track [VSYS] on B.Cu, length 0.0150 mm
-    @(82.6000 mm, 71.5950 mm): PTH pad 3 [VSYS] of J2
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
+    @(82.6000 mm, 72.8650 mm): Track [VSYS] on In3.Cu, length 1.2700 mm
     @(97.3800 mm, 149.2500 mm): Track [VSYS] on B.Cu, length 4.7200 mm
-    @(82.6000 mm, 72.8650 mm): Track [VSYS] on In2.Cu, length 1.2700 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(101.2960 mm, 108.5200 mm): Track [MOT_A] on B.Cu, length 1.3540 mm
+    @(102.2719 mm, 108.5200 mm): Track [MOT_A] on B.Cu, length 0.3781 mm
     @(107.2500 mm, 109.2000 mm): Pad 2 [MOT_A] of U9 on B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(117.7330 mm, 92.4273 mm): Pad 4 [RING_D3] of D4 on B.Cu
-    @(119.1819 mm, 107.9609 mm): Pad 2 [RING_D3] of D3 on B.Cu
+    @(98.0500 mm, 70.6750 mm): Pad 34 [CV_IN2] of U1 on F.Cu
+    @(98.1500 mm, 71.4700 mm): Pad 1 [CV_IN2] of C20 on B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(98.1500 mm, 71.4700 mm): Pad 1 [CV_IN2] of C20 on B.Cu
+    @(109.9900 mm, 72.7500 mm): Pad 2 [CV_IN2] of R5 on B.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(117.7330 mm, 107.5726 mm): Track [RING_5V] on B.Cu, length 0.1310 mm
+    @(119.1435 mm, 99.2365 mm): Track [RING_5V] on B.Cu, length 0.0191 mm
 
 ** Found 0 Footprint errors **
 
