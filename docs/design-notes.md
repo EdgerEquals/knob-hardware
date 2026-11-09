@@ -72,6 +72,8 @@ Laid before the router, locked: the link flex's ribbon [Ed 09:31 "Y"] with each 
 the USB pair, and an escape via for each chip pin or filter pad the router could not reach [Ed 16:4x "A"]. Then Freerouting
 1.9.0 with ground left to the planes, and `electronics/kicad/patch_router.py` for the last few. The slow I2C / MIDI / interrupt
 lines left their ribbon and go round on the inner layers (100-160 mm) [A]; the analog lines keep their In3 ribbon.
+Model v0.54 checks the routed board: its parts on both faces, holes and rod pad come from `export_proxy.py`; 336 / 336 gap
+checks pass, no clashes.
 
 ## Main board: 6 layers (Ed, 9 Nov 2026, Q45)
 

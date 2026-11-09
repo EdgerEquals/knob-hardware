@@ -3,7 +3,7 @@ Reads: interface + own + IMPORTS (under_pcb big-gear tip for the J2 pad position
 import math, os, json
 
 P = dict(
-    kicad_frame="mech",   # [K] v0.19: the committed KiCad boards (v0.11/v0.12) are in the mechanism frame (motor at +X); "panel" once regenerated
+    kicad_frame="panel",   # [K] v0.54: main board v2 (9 Nov 2026) is laid out in the panel frame; the v0.11/v0.12 boards were "mech" (motor at +X)
     # ---- main PCB [K] ----
     pcb_w=49.0,   # [K] board width (x)
     pcb_above=50.0,   # [A] v0.20: proxy blank to the top edge; the case nest trims it (knob_drop2 put the nest top at ~49). KiCad v0.11: 42.4
@@ -126,6 +126,8 @@ def derive(D):
     # Read here (not in parts/pcb.py) so the part cache key follows the JSON.
     pj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "knob-main-pcb", "pcb_proxy.json")
     D["pcb_kicad"] = json.load(open(pj)) if os.path.exists(pj) else {}
+    if D["pcb_kicad"].get("rod_pad_r"):   # v0.54: main board v2 has the rod clamp footprint's own back pad (ring round the rod)
+        D["rod_pad_r"] = D["pcb_kicad"]["rod_pad_r"]
     gj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "joystick-daughterboard", "geom.json")
     D["js_pcb_holes"] = json.load(open(gj)).get("main_pcb_holes", []) if os.path.exists(gj) else []   # joystick build output
     # [Ed 3 Nov] layout v4: the vertical boards (panel frame). v0.24 [Ed 13:31-14:08]: a hybrid two-row 1.27 header at the bottom, male

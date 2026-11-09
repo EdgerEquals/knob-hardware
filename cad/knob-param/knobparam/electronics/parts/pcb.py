@@ -71,24 +71,27 @@ def build(D):
     else:
         pts = [(D["ha_r_m"] * math.cos(math.radians(a)), D["ha_r_m"] * math.sin(math.radians(a)), a) for a in D["ha_sens_angs"]]
     mcomps = []
-    for x, y, a in pts:
+    for x, y, a in (pts if K.get("frame", "mech") != "panel" else []):   # v2 has its own Hall decouplers (in back_parts)
         cl, cw, ch = D["adapter_env"]["C_0402"]
         mcomps.append(Pos(x, y, -t - ch) * Rot(0, 0, a) * Box(cw, cl, ch, align=A))
     drv_refs = {c[0] for c in D["drv_cluster"]}
     for x, y, w, l, h, a in drv_boxes(D):   # v0.19b: the 716 driver cluster follows drv_xy / drv_rot (KiCad to follow)
         mcomps.append(Pos(x, y, -t - h) * Rot(0, 0, a) * Box(w, l, h, align=A))
+    old_board = K.get("frame", "mech") != "panel"   # main board v2 (9 Nov 2026) is exported in the panel frame, every part its own
     for p in K.get("back_parts", []):
-        if p["ref"].startswith("C1") and len(p["ref"]) == 3: continue   # C11..C15 = the Hall decouplers above
+        if old_board and p["ref"].startswith("C1") and len(p["ref"]) == 3: continue   # v0.11: C11..C15 = the Hall decouplers above
         if p["ref"] in drv_refs: continue
         if p["ref"] in D["pcb_win_displaced"]: continue   # stale KiCad position inside a window: moves on regeneration
         box = Pos(p["x"], p["y"], -t - p["h"]) * Box(p["w"], p["l"], p["h"], align=A)
         (comps.append(_mr(D) * box) if _is_mech(D, p["x"], p["y"]) else comps.append(box))
+    front = [Pos(p["x"], p["y"], 0) * Box(p["w"], p["l"], p["h"], align=A) for p in K.get("front_parts", [])]   # v2: the front's own
     for px, py in (D["fm_pad_xy"] if D["feel_on"] else []):   # B.Cu pads [A] under the lead holes; wires drop from the 716's rear
         pad = Pos(px, py, -t - F["pad_t"]) * Rot(0, 0, D["fm_ang"] + 90) * Box(pl, pw, F["pad_t"], align=A)
         mcomps.append(pad - cyl(F["pad_hole"] / 2, -t - F["pad_t"] - 0.1, F["pad_t"] + 0.2, px, py))
     comps += [_mr(D) * c for c in mcomps]
     pad = cyl(D["rod_pad_r"], -t - D["rod_pad_t"], D["rod_pad_t"]) - cyl(D["h1_hole"] / 2, -t - 1, 2)
     out = {"PCB": b, "PCB back parts (Hall decouplers, J10, passives)": Compound(children=comps),
+           **({"PCB front parts (passives, crystal, 3D Hall)": Compound(children=front)} if front else {}),
            f"PCB rod pad VBUS Ø{2 * D['rod_pad_r']:.1f} (B.Cu)": pad}
     out.update({k: _mr(D) * v for k, v in emitters(D).items()})
     w, h, th = D["clear_oled"]; cx, cy = D["clear_oled_xy"]

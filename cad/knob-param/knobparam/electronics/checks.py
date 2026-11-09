@@ -115,6 +115,26 @@ def checks(D, parts):
                       "the KiCad parts under the courtyard are left out above (they move when the board is regenerated)")
     if D.get("vb"):   # [Ed 3 Nov 09:47-11:32] layout v4: vertical boards under the joystick
         _vb_rows(D, parts, r)
+    K = D.get("pcb_kicad", {})
+    if K.get("fixed"):   # v0.54: the parts the model places itself, where the KiCad board (v2) has them
+        import math as _m
+        F = K["fixed"]; offs = []
+        if "U1" in F and D.get("mcu"):
+            offs.append(("U1 chip", _m.hypot(F["U1"][0] - D["mcu"]["xy"][0], F["U1"][1] - D["mcu"]["xy"][1])))
+        if "D13" in F and D.get("pwr_vcsel_xy"):
+            offs.append(("D13 power light", _m.hypot(F["D13"][0] - D["pwr_vcsel_xy"][0], F["D13"][1] - D["pwr_vcsel_xy"][1])))
+        mr = _m.radians(D.get("mech_rot", 0.0))
+        leds = sorted((_m.atan2(v[1], v[0]), k, v) for k, v in F.items() if k.startswith("D") and k != "D13")
+        for h in D.get("em_holes", []):
+            a = _m.radians(h["ang"]); mx, my = D["ot_r"] * _m.cos(a), D["ot_r"] * _m.sin(a)
+            px, py = mx * _m.cos(mr) - my * _m.sin(mr), mx * _m.sin(mr) + my * _m.cos(mr)
+            if leds:
+                d, k = min((_m.hypot(v[0] - px, v[1] - py), k) for _a, k, v in leds)
+                offs.append((k + " ring LED", d))
+        if offs:
+            worst = max(offs, key=lambda o: o[1])
+            r.row("KiCad main board v2: chip, power light and ring LEDs where the model has them (largest offset, mm)", worst[1], 0.1,
+                  f"{len(offs)} parts; largest {worst[0]} (the placer's 0.05 grid) [A]", higher_ok=False)
     pad = [parts[n] for n in parts if n.startswith("PCB rod pad")]
     if pad:
         r.row("rod VBUS pad (B.Cu) vs back-side parts / pads", pad[0].distance_to(parts["PCB back parts (Hall decouplers, J10, passives)"]), D["rod_pad_clear"] - 0.01,

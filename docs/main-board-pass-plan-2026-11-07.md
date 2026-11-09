@@ -167,3 +167,20 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   - MOSI_L (the link flex's SPI to the screen boards) joins its 33 ohm resistor by a 57 mm way round.
   - Three escape vias sit under the H743's body (pins 54, 56, 58), tented.
 - Next: check the routed board against the model (step 4, the proxy from this board), then the fab pack.
+
+## Step 4: the model against the routed board (9 Nov evening, Ed 17:30 "Go") — model v0.54
+- `knob-main-pcb/v2/export_proxy.py` writes `knob-main-pcb/pcb_proxy.json` from the routed board (panel frame): the 9 holes its
+  footprints drill beyond the headers' legs, every part the model does not already have as a part of its own as a body box
+  (fab outline with its pads, the package's datasheet maximum height [A]) on both faces (100 back, 26 front), the rod clamp's
+  back pad (a ring of radius 2.2 round the rod; the model's Ø9.7 pad was a stand-in), and where the parts the model places
+  itself sit on the board.
+- Model: `kicad_frame` "panel"; the board proxy now carries the front parts too; the old board's made-up Hall decouplers and the
+  stale v0.16 joystick holes are gone with it; the rod pad follows the board. New check: the chip, the power light and the 12
+  ring LEDs on the board are where the model has them (largest 0.05 mm, the chip, by the placer's grid).
+- **v0.54: 336 / 336 gap checks pass, no clashes** (the known v0.53 clash of the old board's back parts with the USB-C key is
+  gone). Nearest board-related margins: ring LED bodies to the back parts 0.79 (target 0.5), rod pad to the back parts 0.64
+  (0.29), parts behind the board to the back AMOLEDs 5.6 (1.0).
+- Not done, said plainly: the section sheet's render fails on its encoder inset (an empty picture, before this change too), so
+  v0.54 has the check file only; and `--full` still loads the old v0.11 board's STEP (the v2 STEP is 5 MB with every via, not
+  committed; `kicad-cli pcb export step --board-only --user-origin 100x100mm` makes it in the panel frame).
+- Next: the fab pack for PCBWay (Gerbers, drill, BOM with LCSC and datasheet links, placement), then the pre-quote.
