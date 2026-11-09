@@ -864,14 +864,58 @@ def add_planes(board):
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 
 
+def _split_at_tees(board, locked_too):
+    """Cut every track where another track of its net ends on it part way along (a T) or a via of its net sits on it, so a stub
+    beyond the T can go without taking the T with it (9 Nov: trimming the ribbon's stubs whole broke SCK_L and AGND_SENSE_L)."""
+    tr = [t for t in board.GetTracks() if t.GetClass() != "PCB_VIA"]
+    ends = {}
+    for t in tr:
+        for q in (t.GetStart(), t.GetEnd()):
+            ends.setdefault((t.GetNetCode(), t.GetLayer()), []).append((q.x, q.y))
+    vias = {}
+    for v in board.GetTracks():
+        if v.GetClass() == "PCB_VIA":
+            vias.setdefault(v.GetNetCode(), []).append((v.GetPosition().x, v.GetPosition().y))
+    n_cut = 0
+    for t in tr:
+        if t.IsLocked() and not locked_too:
+            continue
+        ax, ay, bx, by = t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y
+        vx, vy = bx - ax, by - ay; l2 = float(vx * vx + vy * vy)
+        if l2 <= 0:
+            continue
+        hw = t.GetWidth() / 2; L = math.sqrt(l2); cuts = []
+        for (qx, qy) in ends.get((t.GetNetCode(), t.GetLayer()), []) + vias.get(t.GetNetCode(), []):
+            u = ((qx - ax) * vx + (qy - ay) * vy) / l2
+            if u * L <= hw or (1 - u) * L <= hw:
+                continue
+            if math.hypot(qx - ax - u * vx, qy - ay - u * vy) <= hw:
+                cuts.append(u)
+        if not cuts:
+            continue
+        pts = [(ax, ay)] + [(int(round(ax + u * vx)), int(round(ay + u * vy))) for u in sorted(set(round(c, 6) for c in cuts))] + [(bx, by)]
+        for (p0, p1) in zip(pts, pts[1:]):
+            if p0 == p1:
+                continue
+            s = pcbnew.PCB_TRACK(board); s.SetStart(pcbnew.VECTOR2I(*p0)); s.SetEnd(pcbnew.VECTOR2I(*p1)); s.SetWidth(t.GetWidth())
+            s.SetLayer(t.GetLayer()); s.SetNet(t.GetNet()); s.SetLocked(t.IsLocked()); board.Add(s)
+        board.Remove(t); KEEP.append(t); n_cut += 1
+    return n_cut
+
+
 def trim_dangling(board, locked_too=False):
-    """Remove track ends that lead nowhere (the router joined a ribbon line part way along, leaving the rest as a stub), segment by
-    segment until none is left. An end is joined if a pad on that layer covers it, a via sits on it, or another track of the net
-    touches it. Worked out on a snapshot, the board's items removed once at the end."""
+    """Remove track ends and vias that lead nowhere (the router joined a ribbon line part way along, leaving the rest as a stub;
+    a via left with copper on one layer only), until none is left. Tracks are first cut at every T, so only the stub goes. A
+    track end is joined if a pad on that layer covers it, a via sits on it, or another track of the net touches it; a via is
+    joined if copper of its net meets it on two layers (ground vias stay: the planes). Worked out on a snapshot, the board's items
+    removed once at the end."""
+    _split_at_tees(board, locked_too)
     items = [t for t in board.GetTracks() if t.GetClass() != "PCB_VIA"]
+    vitems = [v for v in board.GetTracks() if v.GetClass() == "PCB_VIA"]
     S = [dict(i=k, lay=t.GetLayer(), net=t.GetNetCode(), a=(t.GetStart().x, t.GetStart().y), b=(t.GetEnd().x, t.GetEnd().y),
               hw=t.GetWidth() / 2, locked=t.IsLocked()) for k, t in enumerate(items)]
-    V = [(v.GetNetCode(), v.GetPosition().x, v.GetPosition().y, v.GetWidth() / 2) for v in board.GetTracks() if v.GetClass() == "PCB_VIA"]
+    V = [dict(i=k, net=v.GetNetCode(), x=v.GetPosition().x, y=v.GetPosition().y, r=v.GetWidth() / 2, locked=v.IsLocked(),
+              gnd=v.GetNetname() == "GND") for k, v in enumerate(vitems)]
     PD = [(p, p.GetNetCode()) for f in board.GetFootprints() for p in f.Pads()]
     pad_hit = {}
 
@@ -880,28 +924,55 @@ def trim_dangling(board, locked_too=False):
         u = max(0.0, min(1.0, ((q[0] - ax) * vx + (q[1] - ay) * vy) / l2))
         return math.hypot(q[0] - ax - u * vx, q[1] - ay - u * vy) <= s_["hw"]
 
-    alive = {s_["i"] for s_ in S}
+    def pad_at(lay, net, q):
+        key = (lay, net, q)
+        if key not in pad_hit:
+            pad_hit[key] = any(n == net and (lay is None or p.IsOnLayer(lay)) and p.HitTest(pcbnew.VECTOR2I(int(q[0]), int(q[1])))
+                               for p, n in PD)
+        return pad_hit[key]
+
+    alive = {s_["i"] for s_ in S}; valive = {v["i"] for v in V}
     while True:
-        drop = []
+        drop, vdrop = [], []
         for s_ in S:
             if s_["i"] not in alive or (s_["locked"] and not locked_too):
                 continue
             for q in (s_["a"], s_["b"]):
                 if any(o["i"] in alive and o["i"] != s_["i"] and o["lay"] == s_["lay"] and o["net"] == s_["net"] and on_seg(q, o) for o in S):
                     continue
-                if any(n == s_["net"] and math.hypot(x - q[0], y - q[1]) <= r for n, x, y, r in V):
+                if any(v["i"] in valive and v["net"] == s_["net"] and math.hypot(v["x"] - q[0], v["y"] - q[1]) <= v["r"] for v in V):
                     continue
-                key = (s_["lay"], s_["net"], q)
-                if key not in pad_hit:
-                    pad_hit[key] = any(n == s_["net"] and p.IsOnLayer(s_["lay"]) and p.HitTest(pcbnew.VECTOR2I(int(q[0]), int(q[1])))
-                                       for p, n in PD)
-                if pad_hit[key]:
+                if pad_at(s_["lay"], s_["net"], q):
                     continue
                 drop.append(s_["i"]); break
-        if not drop:
+        for v in V:
+            if v["i"] not in valive or v["gnd"] or (v["locked"] and not locked_too):
+                continue
+            meet = [(s_["lay"], q) for s_ in S if s_["i"] in alive and s_["net"] == v["net"]
+                    for q in (s_["a"], s_["b"]) if math.hypot(q[0] - v["x"], q[1] - v["y"]) <= v["r"]]
+            lays = {l for l, _q in meet} | ({"pad"} if pad_at(None, v["net"], (v["x"], v["y"])) else set())
+            if len(lays) >= 2:
+                continue
+            # copper on one layer only: it goes if nothing, or one track, meets it; two or more tracks meeting there on one layer
+            # stay joined without it only if they end at the same point
+            if len(meet) <= 1 or len({q for _l, q in meet}) == 1:
+                vdrop.append(v["i"])
+            elif "pad" not in lays:   # tracks of one layer meeting in it at different points: joined by track to its middle instead
+                lay = next(iter(lays)); w = min(s_["hw"] for s_ in S if s_["i"] in alive and s_["net"] == v["net"] and s_["lay"] == lay
+                                               and any(math.hypot(q[0] - v["x"], q[1] - v["y"]) <= v["r"] for q in (s_["a"], s_["b"])))
+                for _l, q in meet:
+                    if q != (v["x"], v["y"]):
+                        s = pcbnew.PCB_TRACK(board); s.SetStart(pcbnew.VECTOR2I(int(q[0]), int(q[1])))
+                        s.SetEnd(pcbnew.VECTOR2I(int(v["x"]), int(v["y"]))); s.SetWidth(int(2 * w)); s.SetLayer(lay)
+                        s.SetNet(vitems[v["i"]].GetNet()); s.SetLocked(True); board.Add(s)
+                        k = len(items); items.append(s)
+                        S.append(dict(i=k, lay=lay, net=v["net"], a=(int(q[0]), int(q[1])), b=(int(v["x"]), int(v["y"])), hw=w, locked=True))
+                        alive.add(k)
+                vdrop.append(v["i"])
+        if not drop and not vdrop:
             break
-        alive -= set(drop)
-    gone = [items[k] for k in range(len(items)) if k not in alive]
+        alive -= set(drop); valive -= set(vdrop)
+    gone = [items[k] for k in range(len(items)) if k not in alive] + [vitems[k] for k in range(len(vitems)) if k not in valive]
     for t in gone:
         board.Remove(t); KEEP.append(t)
     return len(gone)

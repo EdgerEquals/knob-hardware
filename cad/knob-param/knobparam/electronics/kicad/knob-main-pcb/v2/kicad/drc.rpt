@@ -1,46 +1,9 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 17:25:35 **
+** Created on 2026-11-09 17:28:52 **
 
-** Found 11 DRC violations **
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(78.5500 mm, 87.3115 mm): Track [SCK_L] on F.Cu, length 12.7115 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(83.7500 mm, 102.6986 mm): Track [SCK_L] on F.Cu, length 0.1649 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(78.8500 mm, 87.1869 mm): Track [MOSI_L] on F.Cu, length 12.5869 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(79.4500 mm, 80.7688 mm): Track [CS_OLED] on F.Cu, length 0.0535 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.8500 mm, 87.0623 mm): Track [I2C_SCL] on B.Cu, length 12.4623 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.5500 mm, 86.9377 mm): Track [I2C_SDA] on B.Cu, length 12.3377 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.1500 mm, 87.1869 mm): Track [IO_INT] on B.Cu, length 12.5869 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.2500 mm, 86.8131 mm): Track [MIDI_TX] on B.Cu, length 12.2131 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.4500 mm, 80.9557 mm): Track [AGND_SENSE_L] on In3.Cu, length 0.1526 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(111.6435 mm, 106.1440 mm): Track [5V] on B.Cu, length 1.6879 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(83.1100 mm, 69.7900 mm): Track [VSYS] on In2.Cu, length 0.0250 mm
+** Found 0 DRC violations **
 
-** Found 1 unconnected pads **
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(109.6500 mm, 60.9100 mm): Pad 2 [MOSI_L] of R3 on F.Cu
-    @(78.8500 mm, 87.1869 mm): Track [MOSI_L] on F.Cu, length 12.5869 mm
+** Found 0 unconnected pads **
 
 ** Found 0 Footprint errors **
 
