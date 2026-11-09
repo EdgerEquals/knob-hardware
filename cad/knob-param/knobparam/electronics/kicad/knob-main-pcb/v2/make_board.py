@@ -990,6 +990,7 @@ def finish_route(passes, timeout):
     before = {key(t) for t in b.GetTracks()}
     print("ground vias added (placed, no room):", fanout_gnd(b, skip_done=True))
     new = [shape(t) for t in b.GetTracks() if key(t) not in before]
+    print("tiny tracks dropped:", drop_tiny(b))
     # 3. the router's copper, free to move; what now clashes with the new fan-out is left out for the router to redo
     n_copy = n_drop = 0
     for t in old.GetTracks():
@@ -1045,6 +1046,8 @@ def _patch_router(b):
 # in any number of passes once the rest was in (9 Nov): board L's 15 V feed from the post (75 mm), the USB pair from the flex pads
 # through the ribbon into the chip, and every flex line from its pad into its ribbon line (the far ends are left to the router)
 PREROUTE_FULL = ["VSYS", "USB_DP", "USB_DM"]
+# (tried 9 Nov: laying the last eight first as well; MIDI_TX and CV_IN1_L then went 95 mm round, the ribbon's top end is walled
+# in by J3's pins, window B and the lines that leave it first: that end needs a planned fan-out like the flex pads')
 # VSYS up the left strip on In2 (empty there; the other layers are the router's), the USB pair on the back and front, as its ribbon
 PREROUTE_LAYERS = {"VSYS": {pcbnew.F_Cu: 4.0, pcbnew.In3_Cu: 4.0, pcbnew.B_Cu: 4.0},
                    "USB_DP": {pcbnew.In2_Cu: 4.0, pcbnew.In3_Cu: 4.0}, "USB_DM": {pcbnew.In2_Cu: 4.0, pcbnew.In3_Cu: 4.0}}
@@ -1100,6 +1103,15 @@ PATCH_DEPTH = int(os.environ.get("PATCH_DEPTH", "0"))   # levels of taking up th
 PATCH_PEN = float(os.environ.get("PATCH_PEN", "200"))   # per cell of the router's copper crossed: ~100 mm of detour per track
 
 
+def drop_tiny(board, below=0.01):
+    """Tracks shorter than this (the router's own leftovers, 0.003 mm seen) go: Freerouting fails to read a net that has one back
+    ("normalization of net failed") and hangs."""
+    tiny = [t for t in board.GetTracks() if t.GetClass() != "PCB_VIA" and pcbnew.ToMM(t.GetLength()) < below]
+    for t in tiny:
+        board.Remove(t); KEEP.append(t)
+    return len(tiny)
+
+
 def force_and_resume(passes, timeout):
     """For what neither router can join: the patch router forces each one through, taking up the router's tracks in its way
     (they stay out), then Freerouting, given the board again with the forced paths fixed and its own tracks free, joins the nets
@@ -1131,6 +1143,7 @@ def force_and_resume(passes, timeout):
         else:
             n_ = pcbnew.PCB_TRACK(nb); n_.SetStart(t.GetStart()); n_.SetEnd(t.GetEnd()); n_.SetWidth(t.GetWidth()); n_.SetLayer(t.GetLayer())
         n_.SetNet(nb.FindNet(t.GetNetname())); n_.SetLocked(t.IsLocked()); nb.Add(n_)
+    print("tiny tracks dropped:", drop_tiny(nb))
     save_board(pcb, nb)
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
     print("router again:", _route(pcb, passes=passes, timeout=timeout, tag="_force", resume=True))

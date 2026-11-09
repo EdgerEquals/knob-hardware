@@ -30,7 +30,9 @@ for t in b.GetTracks():
 unc = [tuple(float(v) for v in m.groups()) for m in
        re.finditer(r"\[unconnected_items\][^\n]*\n[^\n]*\n\s*@\(([\d.]+) mm, ([\d.]+) mm\)[^\n]*\n\s*@\(([\d.]+) mm, ([\d.]+) mm\)", txt)]
 errs = [(float(m.group(2)), float(m.group(3)), m.group(1)) for m in
-        re.finditer(r"^\[(\w+)\][^\n]*\n[^\n]*\n\s*@\(([\d.]+) mm, ([\d.]+) mm\)", txt, re.M) if m.group(1) != "unconnected_items"]
+        re.finditer(r"^\[(\w+)\][^\n]*\n[^\n]*\n\s*@\(([\d.]+) mm, ([\d.]+) mm\)", txt, re.M)
+        if m.group(1) not in ("unconnected_items", "track_dangling", "via_dangling", "lib_footprint_issues")]
+stubs = len(re.findall(r"^\[(track_dangling|via_dangling)\]", txt, re.M))
 nv = re.search(r"\*\* Found (\d+) DRC violations", txt); nu = re.search(r"\*\* Found (\d+) unconnected pads", txt)
 
 
@@ -58,10 +60,10 @@ for k, (lays, title) in enumerate(panels):
     for x, y, _kind in errs:
         ax.plot(x - ORIGIN[0], -(y - ORIGIN[1]), "o", ms=7, mfc="none", mec="red", mew=1.2)
     ax.text(0.02, -0.01, f"{length[lays[0]]:.0f} mm of track", transform=ax.transAxes, fontsize=9.5, va="top")
-u = int(nu.group(1)) if nu else -1; v = int(nv.group(1)) if nv else -1
+u = int(nu.group(1)) if nu else -1; v = len(errs)
 fig.text(0.005, 0.975, "Main board, routed on 6 layers", fontsize=16, weight="bold", va="top")
-fig.text(0.005, 0.945, f"KiCad DRC: {u} not joined, {v} rule errors; {len(vias)} vias. In1 and In4 are the two unbroken ground planes "
-         "(not drawn). Seen from the front.", fontsize=11, va="top")
+fig.text(0.005, 0.945, f"KiCad DRC: {u} not joined (red lines), {v} rule errors; {stubs} unused stub ends (cleared at the end); "
+         f"{len(vias)} vias. In1 and In4 are the two unbroken ground planes (not drawn). Seen from the front.", fontsize=11, va="top")
 fig.text(0.005, 0.045, "Every ground pad has its own via to the planes. The link flex's lines run as one laid ribbon: up the right side on "
          "In3 (analog) and the back (I2C, MIDI, USB), up the left on the front (SPI to the screen boards).", fontsize=10.2, va="top")
 fig.savefig(sys.argv[3])

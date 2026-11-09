@@ -306,7 +306,7 @@ class PatchRouter:
             if n == 0:
                 tried.add(src_g); continue
             path = out[:n].tolist()
-            bad = self._violations(net, width, c, path, x0, y0, nx, N)
+            bad = self._violations(net, width, c, path, x0, y0, nx, N, rip)
             if bad:
                 if retries.get(src_g, 0) >= 12:
                     tried.add(src_g); continue
@@ -360,7 +360,7 @@ class PatchRouter:
             out.append((run[0][0], simp))
         return out, vias, pts
 
-    def _violations(self, net, width, c, path, x0, y0, nx, N):
+    def _violations(self, net, width, c, path, x0, y0, nx, N, rip=False):
         """Spots along the path's tracks (every 0.01 mm) that come within the clearance of other nets' copper, the holes or the
         edge, measured exactly: [(layer index, x, y)]."""
         runs, _v, _p = self._runs(path, x0, y0, nx, N)
@@ -373,8 +373,8 @@ class PatchRouter:
                 lo_x, hi_x, lo_y, hi_y = min(ax, bx) - 1.0, max(ax, bx) + 1.0, min(ay, by) - 1.0, max(ay, by) + 1.0
                 worst = np.full(n_, np.inf)
                 for it in self.items:
-                    if it["net"] == net or L not in it["layers"]:
-                        continue
+                    if it["net"] == net or L not in it["layers"] or (rip and self.soft(it)):
+                        continue   # (copper that may be taken up is taken up if the path comes too close)
                     b0, b1, b2, b3 = self._bbox(it)
                     if b2 < lo_x or b0 > hi_x or b3 < lo_y or b1 > hi_y:
                         continue
