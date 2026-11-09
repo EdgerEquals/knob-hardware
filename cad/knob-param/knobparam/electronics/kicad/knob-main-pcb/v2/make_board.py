@@ -1031,7 +1031,8 @@ def _patch_router(b):
     for rb in RIBBONS:
         if rb["clear_in2"]:
             half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
-            keep.append(Polygon(kic(LineString(rb["centre"]).buffer(half, cap_style=2, join_style=2).exterior.coords)))
+            path = rb.get("centre_by_layer", {}).get("In3.Cu", rb["centre"])
+            keep.append(Polygon(kic(LineString(path).buffer(half, cap_style=2, join_style=2).exterior.coords)))
     widths = {"default": RULES["track"]}
     for name, _c, w, members in CLASSES:
         for n in members:
@@ -1046,6 +1047,10 @@ def _patch_router(b):
 # in any number of passes once the rest was in (9 Nov): board L's 15 V feed from the post (75 mm), the USB pair from the flex pads
 # through the ribbon into the chip, and every flex line from its pad into its ribbon line (the far ends are left to the router)
 PREROUTE_FULL = ["VSYS", "USB_DP", "USB_DM"]
+# pins and pads the router could not reach on the 9 Nov runs: each gets a short stub to its own via first (escape), so the router
+# can come in on any layer: the chip's right-side pins 54-58 (walled in by their neighbours' front tracks to J3), pin 44 (DIAL_RX),
+# and the ADC filters R4 and R5 the flex's CV lines go to
+ESCAPES = [("U1", "54"), ("U1", "55"), ("U1", "56"), ("U1", "58"), ("U1", "44"), ("R4", "1"), ("R5", "2")]
 # (tried 9 Nov: laying the last eight first as well; MIDI_TX and CV_IN1_L then went 95 mm round, the ribbon's top end is walled
 # in by J3's pins, window B and the lines that leave it first: that end needs a planned fan-out like the flex pads')
 # VSYS up the left strip on In2 (empty there; the other layers are the router's), the USB pair on the back and front, as its ribbon
@@ -1059,6 +1064,11 @@ def preroute(b):
     j1 = {p.GetNetname(): pcbnew.ToMM(p.GetPosition().x) for f in b.GetFootprints() if f.GetReference() == "J1" for p in f.Pads()}
     flex = [n for _c, _cl, _w, nets, _l in FLEX_CLASSES for n in nets if n not in PREROUTE_FULL]
     pad_and_ribbon = lambda its: any(it.get("ref") == "J1" or it["kind"] == "track" for it in its)
+    for ref, num in ESCAPES:
+        v = pr.escape(ref, num)
+        out.append(f"{ref}.{num}: " + (f"via at {v}" if v else "no via spot"))
+        if not v:
+            failed.append(f"{ref}.{num}")
     jobs = [(n, None) for n in PREROUTE_FULL] + ([(n, pad_and_ribbon) for n in sorted(flex, key=lambda n: -j1.get(n, 0))]
                                                   if PREROUTE_PADS else [])
     for n, want in jobs:
@@ -1284,6 +1294,8 @@ RIBBONS = [
                                (14.29, 8.25), (18.19, 10.5), (20.7, 13.0), (20.7, 25.4)],
          layers={"B.Cu": ["USB_DM", "IO_INT", "I2C_SCL", "I2C_SDA", "MIDI_TX", "USB_DP"],
                  "In3.Cu": ["AGND_SENSE_L", "AUDIO_IN_L", "AUDIO_OUT", "CV_IN3_L", "CV_IN1_L", "CV_IN2_L"]}, clear_in2=True),
+         # (tried 9 Nov: carrying the analog lines on west along window B's notch, centre_by_layer; their last hop to the ADC
+         # filters then found no via room in the filters' tight cluster on the back, worse than leaving them to the router)
     dict(name="left", centre=[(9.9, -48.2), (-20.7, -48.2), (-20.7, -13.0), (-18.19, -10.5), (-15.5, -8.95), (-15.5, 8.95),
                               (-18.19, 10.5), (-20.7, 13.0), (-20.7, 25.4)],
          layers={"F.Cu": ["OLED_RES", "OLED_DC", "CS_OLED", "CS_DAC", "MOSI_L", "SCK_L"]}, clear_in2=False),
@@ -1344,7 +1356,7 @@ def ribbon_lines(board=None):
             n = len(nets)
             for i, net in enumerate(nets):
                 off = (i - (n - 1) / 2) * RIB_PITCH
-                pts = [(round(x, 4), round(y, 4)) for x, y in _offset(rb["centre"], off)]
+                pts = [(round(x, 4), round(y, 4)) for x, y in _offset(rb.get("centre_by_layer", {}).get(lay, rb["centre"]), off)]
                 if rb["name"] == "right" and net in via_of:
                     vx, vy = via_of[net]
                     pts = [(vx, vy), (vx, pts[0][1])] + pts[1:]          # from the via, to the line, along it (first point dropped)
@@ -1391,7 +1403,7 @@ def add_ribbons(board, rule_area=True):
         if not rb["clear_in2"]:
             continue
         half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
-        g = LineString(rb["centre"]).buffer(half, cap_style=2, join_style=2)
+        g = LineString(rb.get("centre_by_layer", {}).get("In3.Cu", rb["centre"])).buffer(half, cap_style=2, join_style=2)
         z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(False)
         z.SetDoNotAllowCopperPour(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
         z.SetLayer(pcbnew.In2_Cu); z.SetZoneName("keep In2 clear over the analog ribbon")
@@ -1412,14 +1424,16 @@ def refresh_ribbons(board):
     n = add_ribbons(board, rule_area=False)
     rb = [r for r in RIBBONS if r["name"] == "right"][0]
     half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
-    g = LineString(rb["centre"][:4]).buffer(half, cap_style=2, join_style=2)
-    z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(False)
-    z.SetDoNotAllowCopperPour(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
-    z.SetLayer(pcbnew.In2_Cu); z.SetZoneName("keep In2 clear over the analog ribbon (flex pads)")
-    ol = z.Outline(); ol.NewOutline()
-    for x, y in list(g.exterior.coords)[:-1]:
-        ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
-    board.Add(z)
+    path = rb.get("centre_by_layer", {}).get("In3.Cu", rb["centre"])
+    for part, name in ((path[:4], "flex pads"), (path[-3:], "top, along window B")):   # the stretches the placed board's area lacks
+        g = LineString(part).buffer(half, cap_style=2, join_style=2)
+        z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(False)
+        z.SetDoNotAllowCopperPour(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
+        z.SetLayer(pcbnew.In2_Cu); z.SetZoneName(f"keep In2 clear over the analog ribbon ({name})")
+        ol = z.Outline(); ol.NewOutline()
+        for x, y in list(g.exterior.coords)[:-1]:
+            ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
+        board.Add(z)
     return len(old), n
 
 

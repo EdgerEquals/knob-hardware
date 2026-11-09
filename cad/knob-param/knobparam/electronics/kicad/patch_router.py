@@ -165,7 +165,15 @@ class PatchRouter:
         """Copper that may be taken up and laid again: the router's own tracks and vias (not locked), not ground."""
         return it["kind"] in ("track", "via") and not it.get("locked", True) and it["net"] not in ("GND", "")
 
-    def route_net(self, net, width=None, pad=6.0, maxexp=60_000_000, rip=False, pen0=30.0, want=None, layer_cost=None):
+    def escape(self, ref, num, reach=3.0, min_d=0.55, layer_cost=None):
+        """A via for one pad (a chip pin): the shortest way on the pad's own layer to a spot within reach where a via clears every
+        layer, and the via there, both locked, so the router can reach the pin from any layer. Returns the via (x, y) or None."""
+        net = next((it["net"] for it in self.items if it.get("ref") == ref and it.get("num") == num), None)
+        if not net:
+            return None
+        return self.route_net(net, pad=reach, escape=(ref, num, min_d), layer_cost=layer_cost)
+
+    def route_net(self, net, width=None, pad=6.0, maxexp=60_000_000, rip=False, pen0=30.0, want=None, layer_cost=None, escape=None):
         """Join the net's islands; returns (islands left unjoined, what was added, nets whose tracks were taken up). With rip, the
         router's own tracks of other nets may be crossed at a price (pen0 per cell, more for a net taken up before); the ones crossed
         are taken up and their nets come back for the caller to join again."""
@@ -173,6 +181,10 @@ class PatchRouter:
         isl = self.islands(net)
         if want is not None:   # only these islands are joined (the rest of the net's copper is still free to cross)
             isl = [grp for grp in isl if want([self.items[i] for i in grp])]
+        if escape is not None:   # one island, the one with this pad; the target is any via spot near it
+            isl = [grp for grp in isl if any(self.items[i].get("ref") == escape[0] and self.items[i].get("num") == escape[1]
+                                             for i in grp)][:1]
+            isl = isl + isl   # (passes the two-island check below; the second is not used)
         if len(isl) < 2:
             return 0, [], set()
         g, ms, c = self.g, self.ms, self.rules["clearance"] + (self.ax if net in self.analog else 0.0)
@@ -273,6 +285,35 @@ class PatchRouter:
         cost[own] = 1.0; blk_u8 = ((blk_d | blk) & ~own).astype(np.uint8)
         vc = np.where(via_ok, np.float32(self.via_cost) + soft_v * Pc * 8 * g, INF).astype(np.float32)
         victims = set()
+        if escape is not None:
+            pin = next(self.items[i] for i in isl[0] if self.items[i].get("ref") == escape[0] and self.items[i].get("num") == escape[1])
+            Lp = min(pin["layers"])
+            far = np.hypot(X - pin["pi"]["x"], Y - pin["pi"]["y"]) >= escape[2]
+            tg = np.zeros((nl, ny, nx), np.uint8); tg[Lp] = (via_ok & far & ~own[Lp] & ~blk[Lp]).astype(np.uint8)
+            if not tg.any():
+                return None
+            cost_e = np.full_like(cost, INF); cost_e[Lp] = cost[Lp]   # the stub stays on the pad's layer
+            src = np.flatnonzero(cells[0][Lp].ravel()).astype(np.int32) + Lp * N
+            for _try in range(12):
+                out = np.zeros(400000, np.int32); rs = ctypes.c_int(0); P_ = router4._ptr
+                n = self.lib.route_search(nx, ny, nl, P_(cost_e.ravel(), ctypes.c_float), P_(np.full(N, INF, np.float32), ctypes.c_float),
+                                          P_(blk_u8.ravel(), ctypes.c_uint8), P_(src, ctypes.c_int), len(src), P_(tg.ravel(), ctypes.c_uint8),
+                                          None, None, 0, g, P_(out, ctypes.c_int), len(out), ctypes.byref(rs), maxexp)
+                if n == 0:
+                    return None
+                path = out[:n].tolist()
+                bad = self._violations(net, width, c, path, x0, y0, nx, N)
+                if not bad:
+                    break
+                for L_, bx_, by_ in bad:
+                    cost_e[L_][np.hypot(X - bx_, Y - by_) < 0.08] = INF
+            else:
+                return None
+            end = path[-1] % N; vx_, vy_ = x0 + g * (end % nx), y0 + g * (end // nx)
+            path = path + [((Lp + 1) % nl) * N + end]   # a layer change at the end: _apply puts the via there
+            self._apply(net, width, path, x0, y0, nx, N)
+            # (the one-cell run on the other layer adds no track)
+            return (round(vx_, 3), round(vy_, 3))
         # join islands while any search succeeds: from the largest group first; if it finds none of the rest, from the next group
         group = list(range(len(isl))); added = []
         def members(gid):
