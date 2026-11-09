@@ -10,33 +10,35 @@ designed with the dial board), then the layer count after a first placement.
 ## Pin map
 `tools/main_board_pinmap.py` on ST's pin data (STM32_open_pin_data, BSD-3-Clause, (c) 2020 STMicroelectronics, commit 7d1f151):
 `cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/pinmap/h743-lqfp100-simple.{json,txt}`. **61 nets on 82 I/O, 21 spare**
-(18 general; PC2_C and PC3_C analog only; PC13 a slow input only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
+(18 general; PC2_C and PC3_C analog only; PC13 and PC14 slow inputs only). Re-solved 8 Nov keeping every other net on its pin: AGND_SENSE
 [Q41], PWR_LIGHT in place of the VCSEL decoder [Q36]; 5V_EN for board L's 5 V buck [Q38]; MOT_nSLEEP gone (the
 DRV8213 has no sleep pin, it sleeps itself) and VIOLET_EN gone (no violet emitters). Rules: PC13-PC15 take slow inputs only (backup domain), the
 ADC-switch pads take analog only, each SPI / I2C / UART / FDCAN / timer serves one job, the interrupt inputs on different EXTI lines
-(IO_INT 10, HALL3D_INT 15, JOY_TE 9). **Re-solved 8 Nov evening against the first placement (step 3):** each net to the pin nearest where it goes on the board
+(IO_INT 15, HALL3D_INT 10, JOY_TE 9). **Re-solved 8 Nov evening against the first placement (step 3):** each net to the pin nearest where it goes on the board
 (`--near`, from `make_board.py --targets`), trying the chip's four quarter turns: turned 0° is shortest (straight-line total
 1,841 mm, was 2,143 as first placed). Same rules; USB held on OTG_FS (PA11 / PA12) for the ROM bootloader [A].
+**Again 9 Nov with the link flex's ribbon** (the flex lines' targets are the top ends of their planned ribbon, the SPI's at
+the top left, the rest at the top right): 32 nets moved, the SPI to the chip's left and bottom-left.
 
 | Group | Nets (pin) |
 |---|---|
-| Joystick screen, QUADSPI | CLK PB2, NCS PB10, IO0 PD11, IO1 PD12, IO2 PE2, IO3 PD13; RST PD15, TE PA9, PWR_EN PC8 |
-| Link flex SPI4 | SCK PE12, MOSI PE14; CS_DAC PE10, CS_OLED PE13, OLED_DC PD9, OLED_RES PE15 |
-| I2C3 | SCL PA8, SDA PC9; IO_INT PD10, HALL3D_INT PC15 |
-| MIDI, dial link | MIDI_TX PD8 (USART3); rod link [Q43 = A] DIAL_TX PB14 (TIM12_CH1), DIAL_RX PB15 (TIM12_CH2), Manchester by timer + DMA |
+| Joystick screen, QUADSPI | CLK PB2, NCS PB10, IO0 PD11, IO1 PD12, IO2 PE2, IO3 PD13; RST PD10, TE PD9, PWR_EN PC8 |
+| Link flex SPI4 | SCK PE12, MOSI PE6; CS_DAC PE7, CS_OLED PE8, OLED_DC PE5, OLED_RES PE4 |
+| I2C3 | SCL PA8, SDA PC9; IO_INT PB15, HALL3D_INT PE10 |
+| MIDI, dial link | MIDI_TX PD8 (USART3); rod link [Q43 = A] DIAL_TX PE13 (TIM1_CH3), DIAL_RX PE14 (TIM1_CH4), Manchester by timer + DMA |
 | USB FS | DM PA11, DP PA12 (OTG_FS: the ROM bootloader's USB DFU pins [C AN2606]) |
-| CAN (FDCAN2) | TX PB13, RX PB12, STBY PA10 |
-| ADC1 | CV_IN1 PC5, CV_IN2 PA6, CV_IN3 PC4, AUDIO_IN PB1, HALL1 PA1, HALL2 PC1, HALL4 PA3, HALL5 PA2, MOT_SENSE PA7, MOT_VOICE PA5, NTC PA0, JOY_LADDER PC0 |
-| ADC2, ground sense [Q41] | AGND_SENSE PB0 (ADC2_INP9): sampled by ADC2 at the same instant as ADC1's CV in / audio in (dual simultaneous mode), subtracted in firmware [A] |
+| CAN (FDCAN2) | TX PB13, RX PB12, STBY PA9 |
+| ADC1 | CV_IN1 PB1, CV_IN2 PB0, CV_IN3 PC5, AUDIO_IN PA2, HALL1 PC4, HALL2 PA3, HALL4 PA1, HALL5 PC0, MOT_SENSE PA6, MOT_VOICE PA7, NTC PA0, JOY_LADDER PC1 |
+| ADC2, ground sense [Q41] | AGND_SENSE PA5 (ADC2_INP19): sampled by ADC2 at the same instant as ADC1's CV in / audio in (dual simultaneous mode), subtracted in firmware [A] |
 | DAC1 | AUDIO_OUT PA4 |
 | Encoder (TIM8) | ENC_A PC6, ENC_B PC7 |
-| 1220 (TIM1), Halls | MOT_IN1 PE9, MOT_IN2 PE11 (100 kHz PWM [Q39]); HALL_EN PE7 |
+| 1220 (TIM4), Halls | MOT_IN1 PD14, MOT_IN2 PD15 (100 kHz PWM [Q39]); HALL_EN PE9 |
 | Power light [Q36] | PWR_LIGHT PB11 (TIM2_CH4, PWM into one transistor) |
-| RGB ring | RGB_DIN PD14 (TIM4 + DMA), RGB_EN PE8 (the ring's 5 V switch) |
-| Board L | 5V_EN PE6 (the 5 V buck's enable; 3.3 V is always on) [Q38] |
+| RGB ring | RGB_DIN PB14 (TIM12 + DMA), RGB_EN PE15 (the ring's 5 V switch) |
+| Board L | 5V_EN PE3 (the 5 V buck's enable; 3.3 V is always on) [Q38] |
 | Risley (reserved) | PB4, PB5 (TIM3), no tracks yet |
-| Cover board (later) | COVER_TX PD5, COVER_RX PD6 (USART2), COVER_EN PD2 |
-| System | BUS_PRESENT PC14; HSE PH0 / PH1; SWDIO PA13, SWCLK PA14, SWO PB3 |
+| Cover board (later) | COVER_TX PD5, COVER_RX PD6 (USART2), COVER_EN PD7 |
+| System | BUS_PRESENT PC15; HSE PH0 / PH1; SWDIO PA13, SWCLK PA14, SWO PB3 |
 
 ## H743 core [S AN4938 rev, ST: "Getting started with STM32H74xI/G and STM32H75xI/G MCU hardware development"]
 - **STM32H743VIT6** (LCSC C114409, US$7.86, 5,931 in stock, 7 Nov [S]). LQFP100 power pins from ST's pin data [S]: VDD 11, 27,

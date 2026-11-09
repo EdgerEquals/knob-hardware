@@ -552,7 +552,11 @@ def checks(pcb_path, fixed):
 
 # ------------------------------------------------------------------ routing trial (the layer-count question)
 FREEROUTING = os.environ.get("FREEROUTING_JAR", "/home/claude/tools/freerouting-1.9.0.jar")
-CLASSES = [("GND", 0.1, 0.25, ["GND"]),   # its own class so the router's -inc GND leaves ground to the planes and fanout vias
+# the link flex's lines as one planned ribbon [Ed 9 Nov 09:31 "Y"]: routed first, each group on its own layers, then locked
+FLEX_CLASSES = [("FlexAnalog", 0.15, 0.127, ["CV_IN1_L", "CV_IN2_L", "CV_IN3_L", "AUDIO_IN_L", "AUDIO_OUT", "AGND_SENSE_L"], ["In3.Cu"]),
+                ("FlexSPI", 0.1, 0.127, ["SCK_L", "MOSI_L", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES"], ["F.Cu"]),
+                ("FlexBus", 0.1, 0.127, ["I2C_SCL", "I2C_SDA", "IO_INT", "MIDI_TX", "USB_DP", "USB_DM"], ["B.Cu"])]
+CLASSES = [(n, c, w, nets) for n, c, w, nets, _l in FLEX_CLASSES] + [("GND", 0.1, 0.25, ["GND"]),   # its own class so the router's -inc GND leaves ground to the planes and fanout vias
            ("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
            ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
 
@@ -579,6 +583,17 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
     from shapely.geometry import Point
     inside = R["board"].buffer(-(via_d / 2 + RULES["edge"] + 0.02))
     rects = _pad_rects(board); gnd = board.FindNet("GND"); vias = []; n_ok = n_fail = 0
+    segs = []   # tracks already on the board (the ribbon): (layer, x0, y0, x1, y1, half width), KiCad local
+    for t in board.GetTracks():
+        if t.GetClass() == "PCB_VIA":
+            continue
+        segs.append((t.GetLayer(), pcbnew.ToMM(t.GetStart().x) - ORIGIN[0], pcbnew.ToMM(t.GetStart().y) - ORIGIN[1],
+                     pcbnew.ToMM(t.GetEnd().x) - ORIGIN[0], pcbnew.ToMM(t.GetEnd().y) - ORIGIN[1], pcbnew.ToMM(t.GetWidth()) / 2))
+
+    def seg_d(px, py, x0, y0, x1, y1):
+        vx, vy = x1 - x0, y1 - y0; l2 = vx * vx + vy * vy or 1e-12
+        u = max(0.0, min(1.0, ((px - x0) * vx + (py - y0) * vy) / l2))
+        return math.hypot(px - x0 - u * vx, py - y0 - u * vy)
     for f in board.GetFootprints():
         cx, cy = pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1]
         for p in f.Pads():
@@ -624,6 +639,15 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
                             break
                 if ok and any(math.hypot(qx - vx, qy - vy) < via_d + 0.15 for qx, qy in vias):
                     ok = False
+                if ok and any(seg_d(vx, vy, x0, y0, x1, y1) < via_d / 2 + clr + hw for _l, x0, y0, x1, y1, hw in segs):
+                    ok = False   # the via goes through every layer: clear of the ribbon on all of them
+                if ok and (vx, vy) != (px, py):
+                    lay_id = pcbnew.B_Cu if side == "B" else pcbnew.F_Cu
+                    tw = min(width, w, h)
+                    for t_ in range(0, 21):
+                        sx, sy = px + (vx - px) * t_ / 20, py + (vy - py) * t_ / 20
+                        if any(l == lay_id and seg_d(sx, sy, x0, y0, x1, y1) < tw / 2 + clr + hw for l, x0, y0, x1, y1, hw in segs):
+                            ok = False; break
                 if ok:
                     v = pcbnew.PCB_VIA(board); v.SetPosition(P(vx, vy)); v.SetWidth(mm(via_d)); v.SetDrill(mm(via_drill))
                     v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu); v.SetNet(gnd); v.SetLocked(True); board.Add(v)
@@ -659,20 +683,48 @@ def _dsn_inset(dsn, d):
     open(dsn, "w").write(txt)
 
 
-def _route(tp, passes, timeout):
-    """Freerouting 1.9.0 on a copy (ground left to the plane); returns (unconnected, violations) from KiCad's DRC."""
+def _dsn_layers(dsn, layers):
+    """Give some net classes their own layers in the .dsn ((circuit (use_layer ...)), Specctra), so the router keeps them there."""
+    import re
+    txt = open(dsn).read()
+    for cls, lays in layers.items():
+        m = re.search(r"\(class " + re.escape(cls) + r"\b.*?\(circuit\s*\n?\s*\(use_via [^)]*\)", txt, re.S)
+        if m:
+            txt = txt[:m.end()] + "\n        (use_layer " + " ".join(lays) + ")" + txt[m.end():]
+        else:
+            print("no class in the dsn:", cls)
+    open(dsn, "w").write(txt)
+
+
+def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag=""):
+    """Freerouting 1.9.0 on the board (ignored classes left alone, e.g. ground to the planes); imports the session without
+    doubling what was already there and locked; returns (unconnected, violations) from KiCad's DRC."""
     import subprocess, kicad7_tools as kt
+    tp = os.path.abspath(tp)
     dsn = tp.replace(".kicad_pcb", ".dsn"); ses = tp.replace(".kicad_pcb", ".ses")
     kt._fresh("dsn", tp, dsn)
     _dsn_inset(dsn, RULES["edge"] - 0.15 + 0.005)
-    log = open(tp.replace(".kicad_pcb", "_freerouting.txt"), "w")
+    if layers:
+        _dsn_layers(dsn, layers)
+    log = open(tp.replace(".kicad_pcb", f"_freerouting{tag}.txt"), "w")
     try:
-        subprocess.run(["xvfb-run", "-a", "java", "-jar", FREEROUTING, "-de", dsn, "-do", ses, "-mp", str(passes), "-inc", "GND"],
+        subprocess.run(["xvfb-run", "-a", "java", "-jar", FREEROUTING, "-de", dsn, "-do", ses, "-mp", str(passes), "-inc", ",".join(ignore)],
                        check=True, timeout=timeout, stdout=log, stderr=subprocess.STDOUT, cwd=os.path.dirname(tp))
     except subprocess.TimeoutExpired:
         print("router timed out with no session saved"); return None
-    unrouted = open(tp).read(); b = pcbnew.LoadBoard(tp)
-    print("imported", kt.import_ses(b, ses)); save_board(tp, b)
+    b = pcbnew.LoadBoard(tp)
+    key = lambda t: (t.GetClass(), t.GetNetname(), t.GetLayer(), t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y)
+    had = {key(t) for t in b.GetTracks()}
+    print("imported", kt.import_ses(b, ses))
+    seen = set(); dup = 0
+    for t in list(b.GetTracks()):
+        k = key(t)
+        if not t.IsLocked() and (k in had or k in seen):
+            b.Remove(t); dup += 1
+        seen.add(k)
+    if dup:
+        print("dropped", dup, "copies of what was already there")
+    save_board(tp, b)
     nv, nu, _ = kt.drc(tp)
     return nu, nv
 
@@ -723,10 +775,12 @@ def route_board(passes, timeout):
     pcb = os.path.join(OUT, NAME + ".kicad_pcb")
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
     b = pcbnew.LoadBoard(pcb)
-    for t in list(b.GetTracks()):
-        b.Remove(t)
+    for t in list(b.GetTracks()):   # start over, keeping the ribbon (locked) and its In2 rule area
+        if not t.IsLocked():
+            b.Remove(t)
     for z in list(b.Zones()):
-        b.Remove(z)
+        if not z.GetIsRuleArea():
+            b.Remove(z)
     print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
     res = _route(pcb, passes=passes, timeout=timeout)
     b = pcbnew.LoadBoard(pcb); add_planes(b); save_board(pcb, b)
@@ -784,6 +838,9 @@ def pin_targets(pcb, parts, out):
             if p.GetNetname():
                 bynet.setdefault(p.GetNetname(), []).append((f.GetReference(), p.GetNumber(), to_panel(p.GetPosition())))
     two = {p["ref"]: p for p in parts if len([v for v in p["pins"].values() if v]) == 2 and p["ref"][0] in "RF"}
+    rib_end = {net: pts[-1] for net, _lay, pts in ribbon_lines()}   # the flex lines arrive at the top of their ribbon
+    for net, end in rib_end.items():
+        bynet[net] = [(r, n_, end if r == "J1" else xy) for r, n_, xy in bynet.get(net, [])]
     targets = {}
     for net in design.PINMAP["nets"]:
         pts = []
@@ -800,6 +857,93 @@ def pin_targets(pcb, parts, out):
             targets[net] = (round(sum(x for x, _ in pts) / len(pts), 3), round(sum(y for _, y in pts) / len(pts), 3))
     json.dump(dict(centre=(cx, cy), rot=rot0, pin_xy=pin_xy, targets=targets), open(out, "w"), indent=0)
     return len(targets)
+
+
+# ------------------------------------------------------------------ the link flex's ribbon [Ed 9 Nov 09:31 "Y"]
+# (docs/img/flex-corridor.png) Laid before the router, locked: the analog lines on In3 (between In4's ground and an In2 kept
+# clear above them) and the I2C / MIDI / USB lines on the back, stacked, up the right strip beside windows D and C, in through
+# the gap between the LEDs at 330 deg, up inside the ring, out at 30 deg, up beside window B; the SPI lines on the front, left
+# along the strip under window D and up the left side the same way (210 / 150 deg). Panel frame; 0.3 pitch [A].
+RIB_PITCH = 0.3
+RIBBONS = [
+    dict(name="right", centre=[(20.7, -46.6), (20.7, -13.0), (18.19, -10.5), (14.29, -8.25), (14.29, 8.25), (18.19, 10.5),
+                               (20.7, 13.0), (20.7, 25.4)],
+         layers={"B.Cu": ["I2C_SCL", "I2C_SDA", "IO_INT", "MIDI_TX", "USB_DP", "USB_DM"],
+                 "In3.Cu": ["CV_IN1_L", "CV_IN2_L", "CV_IN3_L", "AUDIO_OUT", "AUDIO_IN_L", "AGND_SENSE_L"]}, clear_in2=True),
+    dict(name="left", centre=[(9.9, -48.2), (-20.7, -48.2), (-20.7, -13.0), (-18.19, -10.5), (-15.5, -8.95), (-15.5, 8.95),
+                              (-18.19, 10.5), (-20.7, 13.0), (-20.7, 25.4)],
+         layers={"F.Cu": ["SCK_L", "MOSI_L", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES"]}, clear_in2=False),
+]
+LAYER_ID = {"F.Cu": pcbnew.F_Cu, "In2.Cu": pcbnew.In2_Cu, "In3.Cu": pcbnew.In3_Cu, "B.Cu": pcbnew.B_Cu}
+
+
+def _offset(pts, d):
+    """A polyline moved d to its left (positive d), corners mitred: each segment shifted along its normal, neighbours joined where
+    their lines cross."""
+    segs = []
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        lx, ly = bx - ax, by - ay; ln = math.hypot(lx, ly); nx, ny = -ly / ln * d, lx / ln * d
+        segs.append(((ax + nx, ay + ny), (bx + nx, by + ny)))
+    out = [segs[0][0]]
+    for (p1, p2), (q1, q2) in zip(segs, segs[1:]):
+        d1 = (p2[0] - p1[0], p2[1] - p1[1]); d2 = (q2[0] - q1[0], q2[1] - q1[1])
+        den = d1[0] * d2[1] - d1[1] * d2[0]
+        if abs(den) < 1e-12:
+            out.append(p2); continue
+        t = ((q1[0] - p1[0]) * d2[1] - (q1[1] - p1[1]) * d2[0]) / den
+        out.append((p1[0] + t * d1[0], p1[1] + t * d1[1]))
+    out.append(segs[-1][1])
+    return out
+
+
+def ribbon_lines():
+    """[(net, layer name, [(x, y) panel ...])]: each ribbon line, offset from its ribbon's centre line (mitred corners)."""
+    out = []
+    for rb in RIBBONS:
+        for lay, nets in rb["layers"].items():
+            n = len(nets)
+            for i, net in enumerate(nets):
+                off = (i - (n - 1) / 2) * RIB_PITCH
+                out.append((net, lay, [(round(x, 4), round(y, 4)) for x, y in _offset(rb["centre"], off)]))
+    return out
+
+
+def ribbon_corridor(face, extra=0.25):
+    """Where the ribbon runs on a face (F, B): kept free of parts by the placer."""
+    from shapely.geometry import LineString
+    from shapely.ops import unary_union
+    lay = {"F": "F.Cu", "B": "B.Cu"}[face]
+    gs = []
+    for rb in RIBBONS:
+        if lay in rb["layers"]:
+            half = (len(rb["layers"][lay]) - 1) / 2 * RIB_PITCH + 0.0635 + extra
+            gs.append(LineString(rb["centre"]).buffer(half, cap_style=2, join_style=2))
+    return unary_union(gs) if gs else None
+
+
+def add_ribbons(board):
+    """The ribbon's tracks, locked, and a no-track area on In2 over the analog lines."""
+    from shapely.geometry import LineString
+    n_seg = 0
+    for net, lay, pts in ribbon_lines():
+        ni = board.FindNet(net)
+        assert ni is not None, net
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            t = pcbnew.PCB_TRACK(board); t.SetStart(P(*L(ax, ay))); t.SetEnd(P(*L(bx, by))); t.SetWidth(mm(RULES["track"]))
+            t.SetLayer(LAYER_ID[lay]); t.SetNet(ni); t.SetLocked(True); board.Add(t); n_seg += 1
+    for rb in RIBBONS:
+        if not rb["clear_in2"]:
+            continue
+        half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
+        g = LineString(rb["centre"]).buffer(half, cap_style=2, join_style=2)
+        z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(False)
+        z.SetDoNotAllowCopperPour(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
+        z.SetLayer(pcbnew.In2_Cu); z.SetZoneName("keep In2 clear over the analog ribbon")
+        ol = z.Outline(); ol.NewOutline()
+        for x, y in list(g.exterior.coords)[:-1]:
+            ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
+        board.Add(z)
+    return n_seg
 
 
 BLOCK_COL = {"mcu": "#9ecae1", "link": "#c6dbef", "screen": "#6baed6", "debug": "#d9d9d9", "light": "#fdae6b", "adc": "#a1d99b",
@@ -907,6 +1051,9 @@ def main():
     for face, key in (("F", "front"), ("B", "back")):
         mech = unary_union([g for n, g in R["occ"][key].items() if not n.startswith(ELECTRICAL)])
         free[face] = R["board"].difference(mech).buffer(-EDGE_KEEP)
+        cor = ribbon_corridor(face)
+        if cor is not None:
+            free[face] = free[face].difference(cor)
     room = Room(free)
     d = place_debug(parts, room, fixed)
     print(f"Tag-Connect pads at panel ({d[1]:.2f}, {-d[2]:.2f}), turned {d[3]}, {d[0]:.2f} from the plan's spot")
@@ -915,6 +1062,7 @@ def main():
     pcb = os.path.join(OUT, NAME + ".kicad_pcb")
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], ())
     board, dropped = build(parts, placement)
+    print("ribbon tracks:", add_ribbons(board))
     save_board(pcb, board)
     for nm in {p["fp"] for p in parts}:   # every footprint the board uses, as placed (no silkscreen), in its own library
         save_fp(LIB_DIR, _FP_CACHE[nm])
