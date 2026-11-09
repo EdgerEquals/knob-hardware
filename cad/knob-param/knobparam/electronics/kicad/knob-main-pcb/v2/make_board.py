@@ -22,6 +22,7 @@ from kicad7_tools import FP, V, mm, save_fp, write_project, drc, save_board
 
 NAME = "knob-main-pcb"; PCB_VERSION = "v2.0"
 LIB = "mb"; LIB_DIR = os.path.join(HERE, LIB + ".pretty")
+K7_DIR = os.path.join(HERE, ".k7cache.pretty")   # KiCad 7 copies of the repo's footprints (scratch, not committed)
 KLIB = "/usr/share/kicad/footprints"; REPO_LIB = os.path.join(KI, "footprints.pretty")
 OUT = os.path.join(HERE, "kicad")
 ORIGIN = (100.0, 100.0)
@@ -142,8 +143,22 @@ def _k7_copy(fn):
     t = re.sub(r"\(version \d+\)", "(version 20221018)", t, count=1)
     t = t.replace('(property "Reference" ', "(fp_text reference ").replace('(property "Value" ', "(fp_text value ")
     t = t.replace("(fill yes)", "(fill solid)").replace("(fill no)", "(fill none)")
-    os.makedirs(LIB_DIR, exist_ok=True)
-    open(os.path.join(LIB_DIR, fn + ".kicad_mod"), "w").write(t)
+    os.makedirs(K7_DIR, exist_ok=True)
+    open(os.path.join(K7_DIR, fn + ".kicad_mod"), "w").write(t)
+
+
+def save_fp_if_changed(fp):
+    """Write a footprint to the board's library only if it changed (ignoring time stamps and the order of its lines): a re-run
+    otherwise rewrites every file with new stamps."""
+    import tempfile, shutil, re, glob
+    tmp = tempfile.mkdtemp()
+    save_fp(tmp, fp)
+    norm = lambda t: sorted(re.sub(r"\((tstamp|uuid) [^)]*\)", "", ln).strip() for ln in t.splitlines())
+    for f in glob.glob(os.path.join(tmp, "*.kicad_mod")):
+        dst = os.path.join(LIB_DIR, os.path.basename(f))
+        if not os.path.exists(dst) or norm(open(dst).read()) != norm(open(f).read()):
+            shutil.copy(f, dst)
+    shutil.rmtree(tmp)
 
 
 def load_fp(board, name):
@@ -159,7 +174,7 @@ def _load_fp(board, name):
         lib, fn = name.split(":")
         path = os.path.join(KLIB, lib + ".pretty")
         if lib == "footprints":   # the repo's own, written in KiCad 8+ syntax: a KiCad 7 copy in this board's library
-            path = LIB_DIR; _k7_copy(fn)
+            path = K7_DIR; _k7_copy(fn)
         f = pcbnew.FootprintLoad(path, fn)
         assert f is not None, f"footprint {name} did not load"
         f.SetFPID(pcbnew.LIB_ID(LIB, fn))
@@ -1093,7 +1108,7 @@ def main():
     parts = design.build()
     fixed = fixed_parts(parts)
     for nm, fn in OWN.items():   # the board's own footprints, saved so the project opens on its own
-        save_fp(LIB_DIR, _FP_CACHE.setdefault(nm, _load_fp(pcbnew.BOARD(), nm)))
+        save_fp_if_changed(_FP_CACHE.setdefault(nm, _load_fp(pcbnew.BOARD(), nm)))
     free = {}
     for face, key in (("F", "front"), ("B", "back")):
         mech = unary_union([g for n, g in R["occ"][key].items() if not n.startswith(ELECTRICAL)])
@@ -1114,7 +1129,7 @@ def main():
     import shutil
     shutil.copy(pcb, os.path.join(OUT, "placed.kicad_pcb"))   # --route starts from this
     for nm in {p["fp"] for p in parts}:   # every footprint the board uses, as placed (no silkscreen), in its own library
-        save_fp(LIB_DIR, _FP_CACHE[nm])
+        save_fp_if_changed(_FP_CACHE[nm])
     json.dump({r: list(v) for r, v in placement.items()}, open(os.path.join(HERE, "placement.json"), "w"), indent=0)
     picture(parts, placement, os.path.join(HERE, "placement.png"), stats)
     v, u, _txt = drc(pcb, os.path.join(OUT, "drc.rpt"))
