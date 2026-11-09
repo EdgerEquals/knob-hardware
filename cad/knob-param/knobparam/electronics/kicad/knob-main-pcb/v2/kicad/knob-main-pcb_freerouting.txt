@@ -1,7 +1,7 @@
 Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=43109 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
-2026-11-09 09:29:23.269 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
-2026-11-09 09:29:23.351 [main] INFO  Settings were loaded from freerouting.json
-2026-11-09 09:29:24.425 [main] INFO  Opening '/home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.dsn'...
+2026-11-09 09:52:19.154 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
+2026-11-09 09:52:19.203 [main] INFO  Settings were loaded from freerouting.json
+2026-11-09 09:52:20.244 [main] INFO  Opening '/home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.dsn'...
 java.util.concurrent.CompletionException: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
 	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:315)
 	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:320)
@@ -15,4 +15,67 @@ Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonEl
 	at app.freerouting.management.VersionChecker.processResponse(VersionChecker.java:39)
 	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:718)
 	... 5 more
-2026-11-09 09:29:48.184 [Thread-35] INFO  Starting auto-routing...
+2026-11-09 09:52:42.525 [Thread-35] INFO  Starting auto-routing...
+2026-11-09 09:52:42.839 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:42.979 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:43.245 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:43.316 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:44.394 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.217 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.696 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.744 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.789 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.815 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.852 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.905 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:45.984 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:46.015 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:46.025 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:46.031 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:46.036 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:52:46.049 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:27.513 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:27.519 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:27.526 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:27.557 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:30.364 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:32.674 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:33.022 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:33.379 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:33.503 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:53:34.017 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:14.249 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:14.277 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:15.405 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:15.467 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:20.719 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:20.752 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:54:20.765 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:02.347 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:02.352 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:02.452 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:02.536 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:02.555 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:03.795 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:49.785 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:50.227 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:50.300 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:56.367 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:55:58.140 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:56:54.135 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:56:54.399 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:56:55.321 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:56:55.967 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:57:40.120 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:57:43.137 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:57:43.394 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:57:44.781 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:58:47.189 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:58:48.081 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:58:48.197 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:59:31.990 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 09:59:41.145 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 10:16:31.208 [Thread-35] INFO  Auto-routing was completed in 23 minute(s) 48.68 seconds.
+2026-11-09 10:16:31.310 [Thread-35] INFO  Starting route optimization on 1 thread...
+2026-11-09 10:17:26.518 [Thread-35] INFO  Route optimization was completed in 55.21 seconds.
+2026-11-09 10:17:26.585 [Thread-35] INFO  Saving '/home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.ses'...

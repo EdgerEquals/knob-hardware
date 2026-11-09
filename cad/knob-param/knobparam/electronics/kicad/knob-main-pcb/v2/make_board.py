@@ -583,6 +583,12 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
     from shapely.geometry import Point
     inside = R["board"].buffer(-(via_d / 2 + RULES["edge"] + 0.02))
     rects = _pad_rects(board); gnd = board.FindNet("GND"); vias = []; n_ok = n_fail = 0
+    holes = []   # every drilled hole (PTH, NPTH): the via's drill keeps the hole rule (0.2) + 0.03 to them
+    for f in board.GetFootprints():
+        for p in f.Pads():
+            if p.GetAttribute() in (pcbnew.PAD_ATTRIB_PTH, pcbnew.PAD_ATTRIB_NPTH):
+                holes.append((pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1],
+                              pcbnew.ToMM(max(p.GetDrillSize().x, p.GetDrillSize().y)) / 2))
     segs = []   # tracks already on the board (the ribbon): (layer, x0, y0, x1, y1, half width), KiCad local
     for t in board.GetTracks():
         if t.GetClass() == "PCB_VIA":
@@ -638,6 +644,8 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
                         if not ok:
                             break
                 if ok and any(math.hypot(qx - vx, qy - vy) < via_d + 0.15 for qx, qy in vias):
+                    ok = False
+                if ok and any(math.hypot(hx - vx, hy - vy) < via_drill / 2 + hr + 0.23 for hx, hy, hr in holes):
                     ok = False
                 if ok and any(seg_d(vx, vy, x0, y0, x1, y1) < via_d / 2 + clr + hw for _l, x0, y0, x1, y1, hw in segs):
                     ok = False   # the via goes through every layer: clear of the ribbon on all of them
@@ -703,7 +711,7 @@ def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag=""):
     tp = os.path.abspath(tp)
     dsn = tp.replace(".kicad_pcb", ".dsn"); ses = tp.replace(".kicad_pcb", ".ses")
     kt._fresh("dsn", tp, dsn)
-    _dsn_inset(dsn, RULES["edge"] - 0.15 + 0.005)
+    _dsn_inset(dsn, RULES["edge"] - 0.1 + 0.03)   # the router keeps only its 0.1 clearance to these (0.22-0.249 seen with 0.105)
     if layers:
         _dsn_layers(dsn, layers)
     log = open(tp.replace(".kicad_pcb", f"_freerouting{tag}.txt"), "w")
@@ -767,6 +775,49 @@ def add_planes(board):
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 
 
+def trim_dangling(board, locked_too=False):
+    """Remove track ends that lead nowhere (the router joined a ribbon line part way along, leaving the rest as a stub), segment by
+    segment until none is left. An end is joined if a pad on that layer covers it, a via sits on it, or another track of the net
+    touches it. Worked out on a snapshot, the board's items removed once at the end."""
+    items = [t for t in board.GetTracks() if t.GetClass() != "PCB_VIA"]
+    S = [dict(i=k, lay=t.GetLayer(), net=t.GetNetCode(), a=(t.GetStart().x, t.GetStart().y), b=(t.GetEnd().x, t.GetEnd().y),
+              hw=t.GetWidth() / 2, locked=t.IsLocked()) for k, t in enumerate(items)]
+    V = [(v.GetNetCode(), v.GetPosition().x, v.GetPosition().y, v.GetWidth() / 2) for v in board.GetTracks() if v.GetClass() == "PCB_VIA"]
+    PD = [(p, p.GetNetCode()) for f in board.GetFootprints() for p in f.Pads()]
+    pad_hit = {}
+
+    def on_seg(q, s_):
+        (ax, ay), (bx, by) = s_["a"], s_["b"]; vx, vy = bx - ax, by - ay; l2 = vx * vx + vy * vy or 1
+        u = max(0.0, min(1.0, ((q[0] - ax) * vx + (q[1] - ay) * vy) / l2))
+        return math.hypot(q[0] - ax - u * vx, q[1] - ay - u * vy) <= s_["hw"]
+
+    alive = {s_["i"] for s_ in S}
+    while True:
+        drop = []
+        for s_ in S:
+            if s_["i"] not in alive or (s_["locked"] and not locked_too):
+                continue
+            for q in (s_["a"], s_["b"]):
+                if any(o["i"] in alive and o["i"] != s_["i"] and o["lay"] == s_["lay"] and o["net"] == s_["net"] and on_seg(q, o) for o in S):
+                    continue
+                if any(n == s_["net"] and math.hypot(x - q[0], y - q[1]) <= r for n, x, y, r in V):
+                    continue
+                key = (s_["lay"], s_["net"], q)
+                if key not in pad_hit:
+                    pad_hit[key] = any(n == s_["net"] and p.IsOnLayer(s_["lay"]) and p.HitTest(pcbnew.VECTOR2I(int(q[0]), int(q[1])))
+                                       for p, n in PD)
+                if pad_hit[key]:
+                    continue
+                drop.append(s_["i"]); break
+        if not drop:
+            break
+        alive -= set(drop)
+    gone = [items[k] for k in range(len(items)) if k not in alive]
+    for t in gone:
+        board.Remove(t)
+    return len(gone)
+
+
 def route_board(passes, timeout):
     """The real thing on 6 layers: ground fanned out to the planes, the rest by Freerouting with the edge rule kept at windows and
     holes, the planes filled, KiCad's DRC. Works on the placed board in place (re-run the placement to start over)."""
@@ -775,15 +826,15 @@ def route_board(passes, timeout):
     pcb = os.path.join(OUT, NAME + ".kicad_pcb")
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
     b = pcbnew.LoadBoard(pcb)
-    for t in list(b.GetTracks()):   # start over, keeping the ribbon (locked) and its In2 rule area
-        if not t.IsLocked():
+    for t in list(b.GetTracks()):   # start over, keeping the ribbon (locked) and its In2 rule area; the fan-out is redone
+        if not t.IsLocked() or t.GetNetname() == "GND":
             b.Remove(t)
     for z in list(b.Zones()):
         if not z.GetIsRuleArea():
             b.Remove(z)
     print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
     res = _route(pcb, passes=passes, timeout=timeout)
-    b = pcbnew.LoadBoard(pcb); add_planes(b); save_board(pcb, b)
+    b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b)); add_planes(b); save_board(pcb, b)
     nv, nu, txt = kt.drc(pcb, os.path.join(OUT, "drc.rpt"))
     left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))
     kinds = Counter(re.findall(r"^\[(\w+)\]", txt, re.M))
