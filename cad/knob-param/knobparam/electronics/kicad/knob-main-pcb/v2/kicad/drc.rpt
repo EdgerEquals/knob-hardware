@@ -1,143 +1,93 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 13:19:57 **
+** Created on 2026-11-09 14:50:18 **
 
-** Found 30 DRC violations **
+** Found 12 DRC violations **
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(80.0500 mm, 86.6885 mm): Track [SCK_L] on F.Cu, length 12.0885 mm
+    @(78.5500 mm, 87.3115 mm): Track [SCK_L] on F.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(109.9000 mm, 147.4500 mm): Track [SCK_L] on F.Cu, length 29.8500 mm
+    @(81.7509 mm, 88.2135 mm): Track [OLED_RES] on F.Cu, length 0.1195 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(109.9000 mm, 148.3500 mm): Track [CS_OLED] on F.Cu, length 30.7500 mm
+    @(80.0500 mm, 86.6885 mm): Track [OLED_RES] on F.Cu, length 12.0885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(78.5500 mm, 87.3115 mm): Track [OLED_RES] on F.Cu, length 12.7115 mm
+    @(120.8500 mm, 87.0623 mm): Track [I2C_SCL] on B.Cu, length 12.4623 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(109.9000 mm, 148.9500 mm): Track [OLED_RES] on F.Cu, length 31.3500 mm
+    @(120.5500 mm, 86.9377 mm): Track [I2C_SDA] on B.Cu, length 12.3377 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.4500 mm, 87.3115 mm): Track [I2C_SCL] on B.Cu, length 12.7115 mm
+    @(121.1500 mm, 87.1869 mm): Track [IO_INT] on B.Cu, length 12.5869 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.4500 mm, 129.6440 mm): Track [I2C_SCL] on B.Cu, length 0.1301 mm
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(112.9000 mm, 150.7270 mm): Via [I2C_SDA] on F.Cu - B.Cu
+    @(120.2500 mm, 86.8131 mm): Track [MIDI_TX] on B.Cu, length 12.2131 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(121.1500 mm, 146.6000 mm): Track [I2C_SDA] on B.Cu, length 33.7869 mm
+    @(120.2500 mm, 86.8131 mm): Track [CV_IN1_L] on In3.Cu, length 12.2131 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(113.2000 mm, 148.0000 mm): Track [IO_INT] on B.Cu, length 0.8500 mm
+    @(119.9500 mm, 86.6885 mm): Track [CV_IN2_L] on In3.Cu, length 12.0885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.8500 mm, 146.6000 mm): Track [IO_INT] on B.Cu, length 33.6623 mm
+    @(121.4500 mm, 87.3115 mm): Track [AGND_SENSE_L] on In3.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.5500 mm, 146.6510 mm): Track [MIDI_TX] on B.Cu, length 0.0510 mm
+    @(111.6435 mm, 106.1440 mm): Track [5V] on B.Cu, length 1.6879 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.2500 mm, 86.8131 mm): Track [USB_DP] on B.Cu, length 12.2131 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(114.5000 mm, 148.1000 mm): Track [USB_DM] on B.Cu, length 0.4243 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(119.9500 mm, 86.6885 mm): Track [USB_DM] on B.Cu, length 12.0885 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(119.9500 mm, 146.6000 mm): Track [USB_DM] on B.Cu, length 33.2885 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.4500 mm, 146.6000 mm): Track [CV_IN1_L] on In3.Cu, length 33.9115 mm
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(115.6000 mm, 150.7870 mm): Via [CV_IN3_L] on F.Cu - B.Cu
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.8500 mm, 146.6000 mm): Track [CV_IN3_L] on In3.Cu, length 33.6623 mm
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.5930 mm, 148.6460 mm): Via [AUDIO_OUT] on F.Cu - B.Cu
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.5500 mm, 86.9377 mm): Track [AUDIO_OUT] on In3.Cu, length 12.3377 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(119.0630 mm, 149.1910 mm): Via [AUDIO_IN_L] on F.Cu - B.Cu
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(120.2500 mm, 146.6000 mm): Track [AUDIO_IN_L] on In3.Cu, length 33.4131 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(98.7500 mm, 51.9500 mm): Track [3V3] on F.Cu, length 0.7500 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(86.6509 mm, 67.5475 mm): Track [5V] on In2.Cu, length 0.1228 mm
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(105.5870 mm, 57.9087 mm): Via [SWDIO] on F.Cu - B.Cu
-[via_dangling]: Via is not connected or connected on only one layer
-    Local override; Severity: warning
-    @(86.4327 mm, 67.0206 mm): Via [SWDIO] on F.Cu - B.Cu
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(95.2500 mm, 58.8000 mm): Track [SWDIO] on In2.Cu, length 0.7071 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(97.0500 mm, 71.8561 mm): Track [HALL1] on F.Cu, length 0.0040 mm
+    @(83.1100 mm, 69.7900 mm): Track [VSYS] on In2.Cu, length 0.0250 mm
 
-** Found 11 unconnected pads **
+** Found 12 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(112.9000 mm, 149.8000 mm): Track [I2C_SDA] on F.Cu, length 0.9270 mm
-    @(121.1500 mm, 146.6000 mm): Track [I2C_SDA] on B.Cu, length 33.7869 mm
+    @(120.8500 mm, 87.0623 mm): Track [I2C_SCL] on B.Cu, length 12.4623 mm
+    @(107.0346 mm, 61.0000 mm): Track [I2C_SCL] on F.Cu, length 0.6904 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(120.8500 mm, 146.6000 mm): Track [IO_INT] on B.Cu, length 33.6623 mm
-    @(113.2000 mm, 148.0000 mm): Track [IO_INT] on B.Cu, length 0.8500 mm
+    @(120.5500 mm, 86.9377 mm): Track [I2C_SDA] on B.Cu, length 12.3377 mm
+    @(105.5600 mm, 64.4500 mm): Track [I2C_SDA] on B.Cu, length 0.6742 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(119.9500 mm, 146.6000 mm): Track [USB_DM] on B.Cu, length 33.2885 mm
-    @(114.5000 mm, 148.1000 mm): Track [USB_DM] on B.Cu, length 0.4243 mm
+    @(121.1500 mm, 87.1869 mm): Track [IO_INT] on B.Cu, length 12.5869 mm
+    @(107.7250 mm, 67.5000 mm): Pad 54 [IO_INT] of U1 on F.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(115.0000 mm, 149.8000 mm): Pad 16 [CV_IN1_L] of J1 on F.Cu
-    @(121.4500 mm, 146.6000 mm): Track [CV_IN1_L] on In3.Cu, length 33.9115 mm
+    @(120.2500 mm, 86.8131 mm): Track [MIDI_TX] on B.Cu, length 12.2131 mm
+    @(107.7250 mm, 67.0000 mm): Pad 55 [MIDI_TX] of U1 on F.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(120.8500 mm, 146.6000 mm): Track [CV_IN3_L] on In3.Cu, length 33.6623 mm
-    @(115.6000 mm, 149.8000 mm): Track [CV_IN3_L] on F.Cu, length 0.9870 mm
+    @(120.2500 mm, 86.8131 mm): Track [CV_IN1_L] on In3.Cu, length 12.2131 mm
+    @(111.2100 mm, 71.6000 mm): Pad 1 [CV_IN1_L] of R4 on B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(119.5930 mm, 148.6460 mm): Track [AUDIO_OUT] on In2.Cu, length 0.6490 mm
-    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
+    @(121.4500 mm, 87.3115 mm): Track [AGND_SENSE_L] on In3.Cu, length 12.7115 mm
+    @(106.3000 mm, 73.1100 mm): Track [AGND_SENSE_L] on B.Cu, length 0.2828 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(120.2500 mm, 146.6000 mm): Track [AUDIO_IN_L] on In3.Cu, length 33.4131 mm
-    @(119.0630 mm, 149.1910 mm): Via [AUDIO_IN_L] on F.Cu - B.Cu
+    @(90.5000 mm, 63.6200 mm): Pad 1 [3V3] of C2 on F.Cu
+    @(93.5367 mm, 62.0000 mm): Track [3V3] on F.Cu, length 1.1617 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(98.3000 mm, 53.7650 mm): Track [3V3] on B.Cu, length 2.2200 mm
-    @(98.7500 mm, 51.9500 mm): Track [3V3] on F.Cu, length 0.7500 mm
+    @(109.6500 mm, 58.8800 mm): Pad 1 [3V3] of C11 on F.Cu
+    @(107.7250 mm, 57.0000 mm): Track [3V3] on F.Cu, length 1.1857 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(95.2500 mm, 58.8000 mm): Track [SWDIO] on In2.Cu, length 0.7071 mm
-    @(106.4710 mm, 58.7927 mm): Track [SWDIO] on B.Cu, length 1.2502 mm
+    @(107.7250 mm, 66.5000 mm): Pad 56 [JOY_TE] of U1 on F.Cu
+    @(118.6700 mm, 66.5150 mm): PTH pad 12 [JOY_TE] of J3
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.5300 mm, 62.6000 mm): Pad 1 [NRST] of C12 on F.Cu
-    @(92.3750 mm, 63.5000 mm): Track [NRST] on F.Cu, length 0.9501 mm
+    @(98.1500 mm, 71.4700 mm): Track [CV_IN2] on B.Cu, length 1.0407 mm
+    @(109.9900 mm, 72.7500 mm): Pad 2 [CV_IN2] of R5 on B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(96.0700 mm, 71.6143 mm): Track [HALL1] on B.Cu, length 1.3857 mm
-    @(97.0500 mm, 71.8561 mm): Track [HALL1] on F.Cu, length 0.0040 mm
+    @(103.0500 mm, 70.6750 mm): Pad 44 [DIAL_RX] of U1 on F.Cu
+    @(103.0875 mm, 92.6500 mm): Track [DIAL_RX] on B.Cu, length 1.5225 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(107.7250 mm, 65.5000 mm): Pad 58 [JOY_QSPI_IO0] of U1 on F.Cu
+    @(112.9400 mm, 65.7000 mm): Pad 1 [JOY_QSPI_IO0] of R14 on F.Cu
 
 ** Found 0 Footprint errors **
 
