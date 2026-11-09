@@ -65,6 +65,14 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Main board routed (9 Nov 2026)
+
+KiCad DRC 0 / 0 on 6 layers (`docs/img/main-board-routed.png`; plan notes in `docs/main-board-pass-plan-2026-11-07.md`, step 3).
+Laid before the router, locked: the link flex's ribbon [Ed 09:31 "Y"] with each flex pad's stub to its own via, VSYS on In2,
+the USB pair, and an escape via for each chip pin or filter pad the router could not reach [Ed 16:4x "A"]. Then Freerouting
+1.9.0 with ground left to the planes, and `electronics/kicad/patch_router.py` for the last few. The slow I2C / MIDI / interrupt
+lines left their ribbon and go round on the inner layers (100-160 mm) [A]; the analog lines keep their In3 ribbon.
+
 ## Main board: 6 layers (Ed, 9 Nov 2026, Q45)
 
 [Ed 9 Nov 09:24 "B"]. Picture: `docs/img/layers-q45.png`. Routing trials of the first placement (Freerouting 1.9.0, 12 passes,

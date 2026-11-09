@@ -154,3 +154,16 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   (`ESCAPES`: chip pins 54-58 and 44, ADC filter pads R4.1 and R5.2; three of the chip's sit under its body, tented), then the
   full route again. If the corner still does not close, the next step is moving a couple of the filter resistors to open via
   room (a placement change; asked first).
+- **Routed: KiCad DRC 0 / 0** (9 Nov evening; `docs/img/main-board-routed.png`). With the escape vias the router left 3
+  (from 12); the patch router joined two, and MOSI_L after taking up two of the router's lines (CAN_STBY, JOY_PWR_EN), which it
+  then joined again. Trimming now cuts a track at every T before dropping a stub, so a stub's trim no longer breaks the line it
+  hangs off. 347 vias; track 1,397 mm front, 1,222 In2, 1,269 In3, 1,098 back; both ground planes filled.
+- Said plainly about the finished routing [A]:
+  - The analog lines run in their In3 ribbon (86-131 mm of each), USB in its back ribbon, SPI in its front ribbon; VSYS one
+    0.4 mm track on In2.
+  - The four slow back lines (I2C SCL / SDA, IO_INT, MIDI TX) left their ribbon lines near the flex pads and go round on the
+    inner layers instead: 100-160 mm each. Fine for 400 kHz I2C, an interrupt and 31.25 kbit/s MIDI, but untidy; a later
+    tidy-up could bring them back into the ribbon.
+  - MOSI_L (the link flex's SPI to the screen boards) joins its 33 ohm resistor by a 57 mm way round.
+  - Three escape vias sit under the H743's body (pins 54, 56, 58), tented.
+- Next: check the routed board against the model (step 4, the proxy from this board), then the fab pack.

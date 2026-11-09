@@ -64,7 +64,8 @@ u = int(nu.group(1)) if nu else -1; v = len(errs)
 fig.text(0.005, 0.975, "Main board, routed on 6 layers", fontsize=16, weight="bold", va="top")
 fig.text(0.005, 0.945, f"KiCad DRC: {u} not joined (red lines), {v} rule errors; {stubs} unused stub ends (cleared at the end); "
          f"{len(vias)} vias. In1 and In4 are the two unbroken ground planes (not drawn). Seen from the front.", fontsize=11, va="top")
-fig.text(0.005, 0.045, "Every ground pad has its own via to the planes. The link flex's lines run as one laid ribbon: up the right side on "
-         "In3 (analog) and the back (I2C, MIDI, USB), up the left on the front (SPI to the screen boards).", fontsize=10.2, va="top")
+fig.text(0.005, 0.045, "Every ground pad has its own via to the planes. The link flex's lines run as laid ribbons: up the right side on In3 "
+         "(analog) and the back (USB; on the finished board the slow I2C, MIDI and interrupt lines leave it near the flex pads and go "
+         "round on the inner layers), up the left on the front (SPI). VSYS (15 V) on In2 from the post to board L.", fontsize=10.2, va="top", wrap=True)
 fig.savefig(sys.argv[3])
 print(u, v, len(vias), {NAME[k]: round(x) for k, x in length.items()})
