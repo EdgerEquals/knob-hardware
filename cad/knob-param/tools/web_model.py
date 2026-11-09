@@ -7,7 +7,7 @@
 #   so smooth seams and tangent edges drop out).
 # Colours, materials and see-through come from knobparam/assembly/colours.py (the same table as the renders).
 # Run from cad/knob-param (after `tools/assembly_anim.py cache`):
-#   .venv/bin/python tools/web_model.py <out dir>      -> model.bin and model.txt (base64 of the gzipped model.bin, for the artifact)
+#   .venv/bin/python tools/web_model.py <out dir> [extra parts json]   -> model.bin and model.txt (base64 of the gzipped model.bin, for the artifact)
 # The viewer page is cad/viewer/knob-model.html (three.js r128); publish it with model.txt next to it.
 import json, os, struct, sys
 import numpy as np
@@ -22,6 +22,7 @@ GROUPS = [   # cache "sub" -> browser group name, in browser order
     ("electronics", "Electronics"),
     ("under_pcb", "Under the main board"),
     ("joystick", "Joystick"),
+    ("board_copper", "Main board copper (routed v2)"),
 ]
 
 
@@ -63,6 +64,9 @@ def main():
     cd = os.environ.get("KNOBPARAM_CACHE", os.path.join(os.getcwd(), ".cache-knob"))
     idx = json.load(open(os.path.join(cd, "anim", "index.json")))
     meta, parts = idx["meta"], idx["parts"]
+    if len(sys.argv) > 2:   # extra parts made outside the model (the routed main board's copper: export_copper_mesh.py)
+        for x in json.load(open(sys.argv[2])):
+            parts[x["n"]] = dict(sub=x["sub"], mesh=x["mesh"], bb=x["bb"])
     blob, recs = bytearray(), []
 
     def put(arr):

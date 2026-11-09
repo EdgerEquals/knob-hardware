@@ -32,6 +32,7 @@ MATERIALS = {
     "foam":    ("foam tape pads (black)", "#3a3a3a", False),
     "gasket":  ("silicone sponge gasket (grey)", "#8a8f94", False),
     "bead":    ("form-in-place silicone bead (dark grey)", "#55595e", False),   # v0.24 joystick cradle bead
+    "copper":  ("PCB copper, shown bare (routed main board, viewer only)", "#c8793a", False),
     "other":   ("unassigned (check the material rules)", "#ff00ff", False),
 }
 
@@ -40,6 +41,7 @@ def key(name):
     n = name[len("joystick: "):] if name.startswith("joystick: ") else name
     low = n.lower()
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
+    if low.startswith("main board copper"): return "copper"                            # viewer only (export_copper_mesh.py)
     if low.startswith("dial bezel"): return "bezel"                                    # v0.24 bezel cartridge
     if low.startswith("knob hub gear ring"): return "pa12"                             # v0.25 PA-12 ring glued in the clear cap
     if low.startswith("knob upper-cap hub"): return "pa12"                             # v0.25 [Ed 19:46] inner PA-12 hub (teeth + race)
