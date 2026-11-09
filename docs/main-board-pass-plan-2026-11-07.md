@@ -184,3 +184,8 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   v0.54 has the check file only; and `--full` still loads the old v0.11 board's STEP (the v2 STEP is 5 MB with every via, not
   committed; `kicad-cli pcb export step --board-only --user-origin 100x100mm` makes it in the panel frame).
 - Next: the fab pack for PCBWay (Gerbers, drill, BOM with LCSC and datasheet links, placement), then the pre-quote.
+- **Fab pack v2.0** (`knob-main-pcb/v2/fab/`, `fab_export.py knob-main-pcb`): 6-layer Gerbers (both ground planes filled), PTH /
+  NPTH Excellon with maps, pick-and-place for 145 parts on both faces, BOM (47 lines, with each part's datasheet link [Ed]),
+  KiCad DRC 0 / 0 in `reports/`. README says NOT READY TO ORDER until the passives get LCSC numbers (values and packages are
+  set; choosing the parts is the next step), and flags J2 / J3 [C]: fitted here by PCBA (design.py) or with the vertical boards.
+  Hand-fit and pad-only parts (J1, J4, J5, JP1, H1, M1, MP1, MP2) and the unfitted R10, R11, R31 are out of the BOM and CPL.

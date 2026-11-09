@@ -10,12 +10,26 @@ KiCad 7 (the cloud workspace has 7.0.11): kicad-cli 7 has no BOM, ERC or DRC com
 footprint fields and DRC runs through pcbnew (kicad7_tools.drc, no schematic parity); ERC is reported as not run."""
 import os, sys, csv, glob, re, json, shutil, subprocess, tempfile, zipfile, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
-BOARDS = {"knob-main-pcb": "knob-main-pcb/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad",
+BOARDS = {"knob-main-pcb": "knob-main-pcb/v2/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad",
           "jack-power-board": "jack-power-board/upper/kicad", "jack-lower-board": "jack-power-board/lower/kicad"}
-FAB = {"jack-power-board": "jack-power-board/upper/fab", "jack-lower-board": "jack-power-board/lower/fab"}   # else <board>/fab
-INNER = {"jack-power-board": ",In1.Cu,In2.Cu", "jack-lower-board": ",In1.Cu,In2.Cu"}                          # 4-layer boards
-NOTES = {"knob-main-pcb": "Board: 2 layers, FR-4, 1.6 mm; HASL or ENIG; green mask, white silk [A].\n"
-                          "Hand-fit parts (excluded from BOM/CPL): H1 rod pad, M1 1220 motor, M2 716 motor leads, J10 MCU-link pads.\n",
+FAB = {"jack-power-board": "jack-power-board/upper/fab", "jack-lower-board": "jack-power-board/lower/fab",
+       "knob-main-pcb": "knob-main-pcb/v2/fab"}   # else <board>/fab
+INNER = {"jack-power-board": ",In1.Cu,In2.Cu", "jack-lower-board": ",In1.Cu,In2.Cu",                         # 4-layer boards
+         "knob-main-pcb": ",In1.Cu,In2.Cu,In3.Cu,In4.Cu"}                                                       # 6 layers [Ed Q45]
+DESIGN_BOM = {"knob-main-pcb": "knob-main-pcb/v2/bom.csv"}   # design.py's BOM: datasheet links and who fits each part
+NOTES = {"knob-main-pcb": "Board v2 (9 Nov 2026): 6 layers [Ed Q45], FR-4, 1.6 mm: F.Cu signal, In1 ground plane, In2 signal, In3 signal\n"
+                          "(the link flex's analog lines), In4 ground plane, B.Cu signal; no controlled impedance. ENIG [A] (0.5 mm pitch LQFP,\n"
+                          "0.3 mm flex pads, 0.4 mm X2SON Halls); green mask, white silk [A]. Outline with five windows A-E, the ring LEDs'\n"
+                          "cut-outs and holes: see Edge.Cuts (inside corners: router radius per PCBWay [C]). Min track 0.127, gap 0.1 (0.15 for\n"
+                          "the flex's analog lines), vias 0.45 / 0.2 drill, all tented; three of them sit under U1's body (pins 54, 56, 58).\n"
+                          "Two-sided SMT: U1 (LQFP-100), the Halls, the crystal and the screen / SPI resistors on top; the 12 SK6812MINI-E\n"
+                          "(reverse-mount, their bodies down through cut-outs; MSL 5a), the motor driver, the encoder sensor and most passives\n"
+                          "on the bottom.\n"
+                          "Not in the BOM / CPL: J1 link-flex pads (the flex is hot-bar or hand soldered), J4 Tag-Connect pads, J5 cover-board pads,\n"
+                          "JP1 solder jumper, H1 rod clamp (hand-fit tube and nut), M1 1220 motor tabs (soldered at assembly), MP1 / MP2 posts\n"
+                          "(Ø1.0 pins of the jack unit's brass posts in plated Ø1.15 holes, soldered at assembly).\n"
+                          "J2 / J3: the vertical boards' 2x11 1.27 mm headers, in the BOM as PCBA-fitted (design.py) [C: fitted here or with the\n"
+                          "vertical boards]. Passives: values and packages set, LCSC numbers still to choose (next step).\n",
          "screen-adapter": "Board: 2 layers, FR-4, 1.0 mm; HASL or ENIG; green mask, white silk [A].\n"
                            "Hand-fit parts (excluded from BOM/CPL): C1 rod clamp.\n",
          "usb-c-board": "Board: 2 layers, FR-4, 1.6 mm, 12.0 x 6.0 mm; ENIG (the 8 spring-contact landing pads P1-P8 are bare gold, no paste);\n"
@@ -89,9 +103,16 @@ def export(name):
             rows = list(csv.DictReader(open(b)))
         rows = [r for r in rows if not r["Designator"].startswith("#")]
         for row in rows: row["Footprint"] = row["Footprint"].split(":")[-1]
+        ds = {}
+        if name in DESIGN_BOM:   # each part's datasheet link travels with it to PCBWay [Ed]
+            for d in csv.DictReader(open(os.path.join(HERE, DESIGN_BOM[name]))):
+                for ref in d["Refs"].split():
+                    ds[ref] = d.get("Datasheet", "")
         with open(os.path.join(fab, base + "-bom.csv"), "w", newline="") as f:
-            w = csv.writer(f); w.writerow(["Item", "Designator", "Qty", "Value", "Footprint", "Manufacturer", "MPN", "LCSC"])
-            for i, row in enumerate(rows, 1): w.writerow([i] + [row[k] for k in ("Designator", "Qty", "Value", "Footprint", "Manufacturer", "MPN", "LCSC")])
+            w = csv.writer(f); w.writerow(["Item", "Designator", "Qty", "Value", "Footprint", "Manufacturer", "MPN", "LCSC", "Datasheet"])
+            for i, row in enumerate(rows, 1):
+                link = next((ds[r] for r in row["Designator"].split(",") if ds.get(r)), "")
+                w.writerow([i] + [row[k] for k in ("Designator", "Qty", "Value", "Footprint", "Manufacturer", "MPN", "LCSC")] + [link])
         # CPL
         p = os.path.join(t, "pos.csv")
         r = run("pcb", "export", "pos", "--format", "csv", "--units", "mm", "--side", "both", *([] if KICAD7 else ["--exclude-dnp"]), "-o", p, pcb)

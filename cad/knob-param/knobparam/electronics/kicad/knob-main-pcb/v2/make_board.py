@@ -498,6 +498,7 @@ def build(parts, placement):
     from shapely.geometry import Polygon, Point
     board = pcbnew.BOARD()
     ds = board.GetDesignSettings(); ds.SetBoardThickness(mm(BT)); ds.SetCopperLayerCount(6)
+    tb = board.GetTitleBlock(); tb.SetTitle("knob main board"); tb.SetRevision(REV); tb.SetCompany("EMMICo / Edger Equals")
     ds.m_CopperEdgeClearance = mm(RULES["edge"])
     for lay in PLANE_LAYERS:   # Q45 = B [Ed 9 Nov 09:24]: front, In1 ground, In2, In3, In4 ground, back
         board.SetLayerType(lay, pcbnew.LT_POWER)
@@ -529,7 +530,7 @@ def build(parts, placement):
         f.Reference().SetTextSize(V(0.4, 0.4)); f.Reference().SetTextThickness(mm(0.06))
         if p["dnp"]:
             f.SetAttributes(f.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
-        if p["ref"][:2] in ("MP", "H1", "M1") or p["ref"] in ("J1", "J4", "J5"):   # hand-fitted, pads only, or bonded
+        if p["ref"][:2] in ("MP", "H1", "M1") or p["ref"] in ("J1", "J4", "J5", "JP1"):   # hand-fitted, pads only, bonded, a jumper
             f.SetAttributes(f.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
         for k, v in (("MPN", p["mpn"]), ("LCSC", p["lcsc"]), ("Note", p["note"])):
             if v:
@@ -579,6 +580,8 @@ CLASSES = [(n, c, w, nets) for n, c, w, nets, _l in FLEX_CLASSES] + [("GND", 0.1
            ("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
            ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
 
+
+REV = "v2.0"   # main board v2 (9 Nov 2026): the H743 board from the v0.53 model
 
 KEEP = []   # board items taken off a board: KiCad 7's python loses the board's track list once their wrappers are freed
 

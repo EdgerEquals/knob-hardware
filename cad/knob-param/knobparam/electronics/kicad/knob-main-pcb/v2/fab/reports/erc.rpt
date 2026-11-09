@@ -1,0 +1,5 @@
+ERC not run: kicad-cli 7.0.11 has no ERC command. The schematic and the board are
+generated from one netlist by make_board.py.
+** ERC messages: 0
+Errors 0
+Warnings 0

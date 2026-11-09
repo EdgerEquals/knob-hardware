@@ -5,6 +5,12 @@
   )
 
   (paper "A4")
+  (title_block
+    (title "knob main board")
+    (rev "v2.0")
+    (company "EMMICo / Edger Equals")
+  )
+
   (layers
     (0 "F.Cu" signal)
     (1 "In1.Cu" power)
