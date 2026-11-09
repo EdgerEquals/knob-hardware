@@ -1,17 +1,16 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 12:31:35 **
+** Created on 2026-11-09 13:00:50 **
 
 ** Found 15 DRC violations **
-[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2460 mm)
-    Rule: board setup constraints edge; Severity: error
-    @(89.1964 mm, 60.9951 mm): Line on Edge.Cuts
-    @(89.5700 mm, 62.6000 mm): Track [GND] on F.Cu, length 2.5100 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(80.0500 mm, 86.6885 mm): Track [SCK_L] on F.Cu, length 12.0885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(109.9000 mm, 147.4500 mm): Track [SCK_L] on F.Cu, length 29.8500 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(109.9000 mm, 148.3500 mm): Track [CS_OLED] on F.Cu, length 30.7500 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(78.5500 mm, 87.3115 mm): Track [OLED_RES] on F.Cu, length 12.7115 mm
@@ -24,6 +23,9 @@
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(121.4500 mm, 129.6440 mm): Track [I2C_SCL] on B.Cu, length 0.1301 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(121.1500 mm, 87.1869 mm): Track [I2C_SDA] on B.Cu, length 12.5869 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(120.2500 mm, 86.8131 mm): Track [USB_DP] on B.Cu, length 12.2131 mm
@@ -44,20 +46,13 @@
     @(120.5500 mm, 86.9377 mm): Track [AUDIO_OUT] on In3.Cu, length 12.3377 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(111.6435 mm, 106.1440 mm): Track [5V] on B.Cu, length 1.6879 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(112.8140 mm, 65.9715 mm): Track [VREFP] on B.Cu, length 0.0003 mm
+    @(86.6509 mm, 67.5475 mm): Track [5V] on In2.Cu, length 0.1228 mm
 
-** Found 12 unconnected pads **
+** Found 11 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(106.2500 mm, 109.2000 mm): Track [GND] on B.Cu, length 0.6161 mm
-    @(107.0000 mm, 108.2500 mm): Pad 9 [GND] of U9 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(89.6350 mm, 67.5300 mm): Pad 5 [GND] of J4 on F.Cu
-    @(90.7500 mm, 69.1900 mm): Via [GND] on F.Cu - B.Cu
+    @(114.7400 mm, 107.9901 mm): Track [I2C_SDA] on B.Cu, length 15.9802 mm
+    @(96.8613 mm, 89.4653 mm): Track [I2C_SDA] on In3.Cu, length 4.9093 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(114.1000 mm, 149.8000 mm): Pad 13 [USB_DP] of J1 on F.Cu
@@ -77,11 +72,11 @@
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(90.5000 mm, 63.6200 mm): Pad 1 [3V3] of C2 on F.Cu
-    @(89.9589 mm, 62.7974 mm): Track [3V3] on In2.Cu, length 1.0800 mm
+    @(89.9589 mm, 60.4796 mm): Track [3V3] on In2.Cu, length 2.3178 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
+    @(109.6500 mm, 58.8800 mm): Track [3V3] on F.Cu, length 0.7296 mm
     @(107.7250 mm, 57.0000 mm): Track [3V3] on F.Cu, length 1.2405 mm
-    @(109.6500 mm, 58.8800 mm): Track [3V3] on F.Cu, length 0.7295 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(82.6000 mm, 67.5475 mm): Track [5V] on In2.Cu, length 0.2375 mm
@@ -96,7 +91,7 @@
     @(82.6000 mm, 72.8650 mm): PTH pad 1 [VSYS] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(97.3800 mm, 149.2500 mm): Track [VSYS] on B.Cu, length 4.7200 mm
+    @(96.8000 mm, 149.8300 mm): Track [VSYS] on B.Cu, length 0.8202 mm
     @(82.6000 mm, 72.8650 mm): PTH pad 1 [VSYS] of J2
 
 ** Found 0 Footprint errors **

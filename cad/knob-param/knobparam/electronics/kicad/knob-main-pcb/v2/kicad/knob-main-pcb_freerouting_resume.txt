@@ -1,0 +1,53 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=43109 -Dhttp.nonProxyHosts=localhost|127.0.0.1|::1|127.*|0.*|::|169.254.*|api.anthropic.com|api-staging.anthropic.com|api-pr-preview.anthropic.com|mcp-proxy.anthropic.com|mcp-proxy-staging.anthropic.com|registry.npmjs.org|jsr.io|npm.jsr.io|pypi.org|files.pythonhosted.org|index.crates.io|proxy.golang.org|host.docker.internal|10.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*|192.168.*|100.64.0.0/10|*.svc.cluster.local|*.svc.cluster.local -Djdk.http.auth.tunneling.disabledSchemes= -Djdk.http.auth.proxying.disabledSchemes=
+2026-11-09 12:38:33.852 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
+2026-11-09 12:38:33.901 [main] INFO  Settings were loaded from freerouting.json
+2026-11-09 12:38:34.939 [main] INFO  Opening '/home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.dsn'...
+java.util.concurrent.CompletionException: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
+	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:315)
+	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:320)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:722)
+	at java.base/java.util.concurrent.CompletableFuture.postComplete(CompletableFuture.java:510)
+	at java.base/java.util.concurrent.CompletableFuture.postFire(CompletableFuture.java:614)
+	at java.base/java.util.concurrent.CompletableFuture$UniWhenComplete.tryFire(CompletableFuture.java:844)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:482)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
+	at app.freerouting.management.VersionChecker.processResponse(VersionChecker.java:39)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:718)
+	... 5 more
+2026-11-09 12:38:57.883 [Thread-35] INFO  Starting auto-routing...
+2026-11-09 12:39:05.412 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:39:50.462 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:40:32.592 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:41:15.086 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:41:57.224 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:42:39.849 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:43:23.893 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:44:06.863 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:44:48.795 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:45:30.506 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:46:14.163 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:46:57.428 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:47:39.797 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:48:22.660 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:49:06.001 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:49:49.076 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:50:31.474 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:51:14.299 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:51:58.264 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:52:41.953 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:53:25.021 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:54:02.848 [Thread-35] WARN  There were only 4.00 changes in the last 20 passes, so it's very likely that autorouter can't improve the result much further. It is recommended to stop it and finish the board manually.
+2026-11-09 12:54:07.998 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:54:51.471 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:55:35.336 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:56:19.757 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:57:04.368 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:57:46.963 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:58:30.412 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:59:13.608 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 12:59:57.719 [Thread-35] WARN  FloatLine: Parameter is null
+2026-11-09 13:00:35.206 [Thread-35] INFO  Auto-routing was completed in 21 minute(s) 37.32 seconds.
+2026-11-09 13:00:35.315 [Thread-35] INFO  Starting route optimization on 1 thread...
+2026-11-09 13:00:40.802 [Thread-35] INFO  Route optimization was completed in 5.49 seconds.
+2026-11-09 13:00:40.845 [Thread-35] INFO  Saving '/home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.ses'...
