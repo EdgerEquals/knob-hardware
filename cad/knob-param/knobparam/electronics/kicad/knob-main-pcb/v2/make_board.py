@@ -28,6 +28,7 @@ ORIGIN = (100.0, 100.0)
 BT = 1.6
 RULES = dict(clearance=0.1, track=0.127, min_track=0.1, via_d=0.45, via_drill=0.2, edge=0.25)
 GRID = 0.1                     # mm, the placer's room raster
+PLANE_LAYERS = (pcbnew.In1_Cu, pcbnew.In4_Cu)   # the two ground planes [Q45 = B]
 EDGE_KEEP = 0.25               # courtyards this far inside the board edge, the windows and the cut-outs
 POWER_W = {"GND": 0.0, "3V3": 0.15, "5V": 0.3, "VSYS": 0.5, "VM": 0.5, "RING_5V": 0.3, "RING_IN": 0.5, "VDDA": 0.5, "VREFP": 0.8}
 # the parts the model draws itself and this board places as fixed parts: left out of the mechanical keep-out
@@ -471,9 +472,10 @@ def footprint_holes(fixed):
 def build(parts, placement):
     from shapely.geometry import Polygon, Point
     board = pcbnew.BOARD()
-    ds = board.GetDesignSettings(); ds.SetBoardThickness(mm(BT)); ds.SetCopperLayerCount(4)
+    ds = board.GetDesignSettings(); ds.SetBoardThickness(mm(BT)); ds.SetCopperLayerCount(6)
     ds.m_CopperEdgeClearance = mm(RULES["edge"])
-    board.SetLayerType(pcbnew.In1_Cu, pcbnew.LT_POWER)
+    for lay in PLANE_LAYERS:   # Q45 = B [Ed 9 Nov 09:24]: front, In1 ground, In2, In3, In4 ground, back
+        board.SetLayerType(lay, pcbnew.LT_POWER)
     skip = footprint_holes(None)
     loops = [list(R["board"].exterior.coords)]
     dropped = 0
@@ -585,12 +587,12 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
             side = "B" if p.IsOnLayer(pcbnew.B_Cu) else "F"
             px, py = pcbnew.ToMM(p.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(p.GetPosition().y) - ORIGIN[1]
             w, h = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
-            if w >= 1.4 and h >= 1.4 and math.hypot(px - cx, py - cy) < 0.3:
+            if w * h >= 1.0 and min(w, h) >= 0.85 and math.hypot(px - cx, py - cy) < 0.3:   # an exposed pad: the via in it
                 cands = [(px, py)]
             else:
                 ang0 = math.atan2(py - cy, px - cx) if math.hypot(px - cx, py - cy) > 0.05 else 0.0
                 cands = []
-                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5):
+                for dist in (0.45, 0.6, 0.8, 1.0, 1.25, 1.5, 1.8, 2.2):
                     for k in range(16):
                         a_ = ang0 + (k // 2 + 1) * (math.pi / 8) * (1 if k % 2 else -1) if k else ang0
                         cands.append((px + (w / 2 + dist) * math.cos(a_) if abs(math.cos(a_)) > 0.7 else px + dist * math.cos(a_),
@@ -610,16 +612,23 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
                         continue
                     if d < via_d / 2 + clr:
                         ok = False; break
-                    if side in lay and (vx, vy) != (px, py):
-                        if any(_rect_dist(px + (vx - px) * t / 10, py + (vy - py) * t / 10, x0, y0, x1, y1) < width / 2 + clr for t in range(1, 11)):
-                            ok = False; break
+                    if side in lay and (vx, vy) != (px, py):   # the short track, outside its own pad (a narrow pad's track is as wide as it)
+                        tw = min(width, w, h)
+                        for t in range(1, 21):
+                            sx, sy = px + (vx - px) * t / 20, py + (vy - py) * t / 20
+                            if abs(sx - px) <= w / 2 and abs(sy - py) <= h / 2:
+                                continue
+                            if _rect_dist(sx, sy, x0, y0, x1, y1) < tw / 2 + clr:
+                                ok = False; break
+                        if not ok:
+                            break
                 if ok and any(math.hypot(qx - vx, qy - vy) < via_d + 0.15 for qx, qy in vias):
                     ok = False
                 if ok:
                     v = pcbnew.PCB_VIA(board); v.SetPosition(P(vx, vy)); v.SetWidth(mm(via_d)); v.SetDrill(mm(via_drill))
                     v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu); v.SetNet(gnd); v.SetLocked(True); board.Add(v)
                     if (vx, vy) != (px, py):
-                        tr = pcbnew.PCB_TRACK(board); tr.SetStart(P(px, py)); tr.SetEnd(P(vx, vy)); tr.SetWidth(mm(width))
+                        tr = pcbnew.PCB_TRACK(board); tr.SetStart(P(px, py)); tr.SetEnd(P(vx, vy)); tr.SetWidth(mm(min(width, w, h)))
                         tr.SetLayer(pcbnew.B_Cu if side == "B" else pcbnew.F_Cu); tr.SetNet(gnd); tr.SetLocked(True); board.Add(tr)
                     vias.append((vx, vy)); placed = True; n_ok += 1
                     break
@@ -640,7 +649,14 @@ def _dsn_inset(dsn, d):
     if g.geom_type != "Polygon":
         g = max(g.geoms, key=lambda q: q.area)
     body = "  ".join(f"{x:.1f} {y:.1f}" for x, y in g.exterior.coords)
-    open(dsn, "w").write(txt[:m.start(1)] + body + txt[m.end(1):])
+    txt = txt[:m.start(1)] + body + txt[m.end(1):]
+
+    def grow(mm_):   # the board's holes and windows (keepouts) grown by the same d, so tracks keep the edge rule there too
+        nums = [float(v) for v in mm_.group(1).split()]
+        q = Polygon(list(zip(nums[0::2], nums[1::2]))).buffer(d * k, join_style=1, resolution=4)
+        return '(keepout "" (polygon signal 0  ' + "  ".join(f"{x:.1f} {y:.1f}" for x, y in q.exterior.coords) + ")"
+    txt = re.sub(r'\(keepout "" \(polygon signal 0\s+([-\d\s.]+)\)', grow, txt)
+    open(dsn, "w").write(txt)
 
 
 def _route(tp, passes, timeout):
@@ -683,6 +699,43 @@ def trial_planes(tp, planes, log=print):
     log(f"with the planes: unconnected {nu}, violations {nv}, vias {vias}; {dict(kinds)}")
     log("left: " + ", ".join(f"{n} {c}" for n, c in left.most_common()))
     return nu, nv, vias, left
+
+
+def add_planes(board):
+    """The two ground planes, over the whole board (KiCad keeps them off the windows, cut-outs and holes by the edge rule)."""
+    gnd = board.FindNet("GND")
+    for lay in PLANE_LAYERS:
+        z = pcbnew.ZONE(board); z.SetLayer(lay); z.SetNet(gnd); z.SetLocalClearance(mm(0.2)); z.SetMinThickness(mm(0.15))
+        z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL); z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+        z.SetZoneName("GND " + board.GetLayerName(lay))
+        ol = z.Outline(); ol.NewOutline()
+        for x, y in R["board"].exterior.coords:
+            ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
+        board.Add(z)
+    pcbnew.ZONE_FILLER(board).Fill(board.Zones())
+
+
+def route_board(passes, timeout):
+    """The real thing on 6 layers: ground fanned out to the planes, the rest by Freerouting with the edge rule kept at windows and
+    holes, the planes filled, KiCad's DRC. Works on the placed board in place (re-run the placement to start over)."""
+    import re, kicad7_tools as kt
+    from collections import Counter
+    pcb = os.path.join(OUT, NAME + ".kicad_pcb")
+    write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
+    b = pcbnew.LoadBoard(pcb)
+    for t in list(b.GetTracks()):
+        b.Remove(t)
+    for z in list(b.Zones()):
+        b.Remove(z)
+    print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
+    res = _route(pcb, passes=passes, timeout=timeout)
+    b = pcbnew.LoadBoard(pcb); add_planes(b); save_board(pcb, b)
+    nv, nu, txt = kt.drc(pcb, os.path.join(OUT, "drc.rpt"))
+    left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))
+    kinds = Counter(re.findall(r"^\[(\w+)\]", txt, re.M))
+    vias = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
+    print(f"routed: unconnected {nu}, violations {nv}, vias {vias}; {dict(kinds)}")
+    print("left: " + ", ".join(f"{n} {c}" for n, c in left.most_common()))
 
 
 def route_trial(pcb, layers, timeout):
@@ -826,11 +879,15 @@ def main():
     ap.add_argument("--trial", type=int, default=0, help="route a copy of the placed board on this many layers (4 or 6) and stop")
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--targets", help="write the pin-map targets of the placed board to this json and stop")
+    ap.add_argument("--route", type=int, default=0, help="route the placed board in place with this many router passes and stop")
     a = ap.parse_args()
     R = pickle.load(open(a.room, "rb"))
     R["board"], n_filled = clean_board()
     if a.targets:
         print("pin targets for", pin_targets(os.path.join(OUT, NAME + ".kicad_pcb"), design.build(), a.targets), "nets")
+        return
+    if a.route:
+        route_board(a.route, a.timeout)
         return
     if os.environ.get("TRIAL_PLANES_ONLY"):   # fill the planes of a finished trial and count (TRIAL_PLANES_ONLY=<trial dir name>)
         trial_planes(os.path.join(OUT, os.environ["TRIAL_PLANES_ONLY"], NAME + ".kicad_pcb"),

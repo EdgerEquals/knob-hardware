@@ -79,8 +79,9 @@ def board_pads(board, origin, layers=None):
 
 class Router4:
     def __init__(self, pads, outline, rules, widths, g=0.05, margin=0.036, via_cost=1.2, gnd="GND", ep_min=1.4, log=print,
-                 layer_cost=None):
-        """pads from board_pads(board, origin, layers); layer_cost: a cost factor per routing layer (default 1 each)."""
+                 layer_cost=None, holes=()):
+        """pads from board_pads(board, origin, layers); layer_cost: a cost factor per routing layer (default 1 each); holes: the
+        board's inner cut-outs (windows, slots) as point lists, kept like the outer edge (main board v2, 9 Nov 2026)."""
         self.lib = _lib(); self.log = log
         self.nl = max(max(p["layers"]) for p in pads if p["layers"]) + 1
         self.layer_cost = np.asarray(layer_cost or [1.0] * self.nl, np.float32).reshape(-1, 1)
@@ -96,8 +97,11 @@ class Router4:
         X, Y = np.meshgrid(self.x0 + g * np.arange(self.nx), self.y0 + g * np.arange(self.ny))
         from matplotlib.path import Path
         inside = Path(outline).contains_points(np.c_[X.ravel(), Y.ravel()]).reshape(X.shape)
+        for h in holes:
+            inside &= ~Path(h).contains_points(np.c_[X.ravel(), Y.ravel()]).reshape(X.shape)
         dd = np.full(X.shape, np.inf)
-        for (ax_, ay_), (bx_, by_) in zip(outline, outline[1:] + outline[:1]):
+        rings = [list(outline)] + [list(h) for h in holes]
+        for (ax_, ay_), (bx_, by_) in [seg for r in rings for seg in zip(r, r[1:] + r[:1])]:
             vx, vy = bx_ - ax_, by_ - ay_; L2 = vx * vx + vy * vy or 1e-12
             t = np.clip(((X - ax_) * vx + (Y - ay_) * vy) / L2, 0, 1)
             dd = np.minimum(dd, np.hypot(X - ax_ - t * vx, Y - ay_ - t * vy))
