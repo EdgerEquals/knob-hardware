@@ -484,6 +484,16 @@ def footprint_holes(fixed):
     return out
 
 
+def edge_polygon():
+    """The board as drawn on Edge.Cuts (panel frame): the room map's board less the holes a footprint drills itself (the header
+    pins' holes are plated holes of their pads, not cut-outs)."""
+    from shapely.geometry import Polygon
+    skip = footprint_holes(None)
+    keep = [h for h in R["board"].interiors
+            if not (any(math.hypot(Polygon(h).centroid.x - x, Polygon(h).centroid.y - y) < 0.15 for x, y in skip) and Polygon(h).area < 9.0)]
+    return Polygon(R["board"].exterior.coords, [h.coords for h in keep])
+
+
 def build(parts, placement):
     from shapely.geometry import Polygon, Point
     board = pcbnew.BOARD()
@@ -491,15 +501,9 @@ def build(parts, placement):
     ds.m_CopperEdgeClearance = mm(RULES["edge"])
     for lay in PLANE_LAYERS:   # Q45 = B [Ed 9 Nov 09:24]: front, In1 ground, In2, In3, In4 ground, back
         board.SetLayerType(lay, pcbnew.LT_POWER)
-    skip = footprint_holes(None)
-    loops = [list(R["board"].exterior.coords)]
-    dropped = 0
-    for hole in R["board"].interiors:
-        c = Polygon(hole).centroid
-        if any(math.hypot(c.x - x, c.y - y) < 0.15 for x, y in skip) and Polygon(hole).area < 9.0:
-            dropped += 1
-            continue
-        loops.append(list(hole.coords))
+    edge = edge_polygon()
+    loops = [list(edge.exterior.coords)] + [list(h.coords) for h in edge.interiors]
+    dropped = len(R["board"].interiors) - len(edge.interiors)
     for pts in loops:
         pts = [L(x, y) for x, y in pts]
         for (ax, ay), (bx, by) in zip(pts, pts[1:]):
@@ -574,6 +578,9 @@ FLEX_CLASSES = [("FlexAnalog", 0.15, 0.127, ["CV_IN1_L", "CV_IN2_L", "CV_IN3_L",
 CLASSES = [(n, c, w, nets) for n, c, w, nets, _l in FLEX_CLASSES] + [("GND", 0.1, 0.25, ["GND"]),   # its own class so the router's -inc GND leaves ground to the planes and fanout vias
            ("Power", 0.1, 0.4, ["VSYS", "5V", "VM", "RING_IN", "RING_5V", "MOT_A", "MOT_B"]),
            ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
+
+
+KEEP = []   # board items taken off a board: KiCad 7's python loses the board's track list once their wrappers are freed
 
 
 def _pad_rects(board):
@@ -803,14 +810,14 @@ def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag="", resume=Fal
     key = lambda t: (t.GetClass(), t.GetNetname(), t.GetLayer(), t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y)
     if resume:   # the router was free to move the unlocked tracks: the session has what it kept, so the old ones go
         for t in [t for t in b.GetTracks() if not t.IsLocked()]:
-            b.Remove(t)
+            b.Remove(t); KEEP.append(t)
     had = {key(t) for t in b.GetTracks()}
     print("imported", kt.import_ses(b, ses))
     seen = set(); dup = 0
     for t in list(b.GetTracks()):
         k = key(t)
         if not t.IsLocked() and (k in had or k in seen):
-            b.Remove(t); dup += 1
+            b.Remove(t); KEEP.append(t); dup += 1
         seen.add(k)
     if dup:
         print("dropped", dup, "copies of what was already there")
@@ -896,7 +903,7 @@ def trim_dangling(board, locked_too=False):
         alive -= set(drop)
     gone = [items[k] for k in range(len(items)) if k not in alive]
     for t in gone:
-        board.Remove(t)
+        board.Remove(t); KEEP.append(t)
     return len(gone)
 
 
@@ -910,7 +917,11 @@ def route_board(passes, timeout):
     import shutil
     shutil.copy(os.path.join(OUT, "placed.kicad_pcb"), pcb)   # start from the placed board: the ribbon and its In2 rule area, no routes
     b = pcbnew.LoadBoard(pcb)
-    print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
+    print("ribbon laid again (old tracks, new items):", refresh_ribbons(b))
+    print("ground vias (placed, no room):", fanout_gnd(b, skip_done=True))
+    laid, failed = preroute(b)
+    print("laid before the router:\n  " + "\n  ".join(laid)); print("not laid:", failed or "none")
+    save_board(pcb, b)
     res = _route(pcb, passes=passes, timeout=timeout)
     print("first pass:", res)
     # finishing pass: everything routed so far fixed, the router only completes what is left
@@ -972,8 +983,8 @@ def finish_route(passes, timeout):
     for t in bad:
         for v in [v for v in b.GetTracks() if v.GetClass() == "PCB_VIA" and v.GetNetname() == "GND" and
                   (v.GetPosition() == t.GetEnd() or v.GetPosition() == t.GetStart())]:
-            b.Remove(v)
-        b.Remove(t)
+            b.Remove(v); KEEP.append(v)
+        b.Remove(t); KEEP.append(t)
     print(f"fan-out tracks off for the edge rule: {len(bad)}")
     # 2. the ground pads still without a via, with the router's copper not there yet (it gives way, step 3)
     before = {key(t) for t in b.GetTracks()}
@@ -1007,18 +1018,14 @@ def finish_route(passes, timeout):
     os.remove(routed)
 
 
-def patch_finish(narrow=(0.25, 0.2, 0.127)):
-    """Join what the router left (patch_router.py): each unjoined net searched on a 0.05 grid around the copper already there,
-    at its class width first, narrower only if that finds no way. Then the dangling ends, the planes refilled, KiCad's DRC."""
-    import re, kicad7_tools as kt, patch_router
-    from collections import Counter
+def _patch_router(b):
+    """patch_router.PatchRouter on this board: the four signal layers, the board as drawn on Edge.Cuts, the net classes' widths,
+    the flex's analog lines kept further off, no tracks on In2 over the analog ribbon."""
+    import patch_router
     from shapely.geometry import Polygon, LineString
-    pcb = os.path.join(OUT, NAME + ".kicad_pcb")
-    nv, nu, txt = kt.drc(pcb)
-    nets = sorted(set(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt)) - {"GND"})
-    b = pcbnew.LoadBoard(pcb)
     kic = lambda pts: [(ORIGIN[0] + x, ORIGIN[1] - y) for x, y in pts]
-    outline = Polygon(kic(R["board"].exterior.coords), [kic(i.coords) for i in R["board"].interiors])
+    eg = edge_polygon()
+    outline = Polygon(kic(eg.exterior.coords), [kic(i.coords) for i in eg.interiors])
     keep = []
     for rb in RIBBONS:
         if rb["clear_in2"]:
@@ -1030,25 +1037,78 @@ def patch_finish(narrow=(0.25, 0.2, 0.127)):
             widths[n] = w
     analog = [n for name, c, w, members, _l in FLEX_CLASSES if name == "FlexAnalog" for n in members]
     rules = dict(RULES, hole_clearance=0.2, hole_to_hole=0.25)
-    pr = patch_router.PatchRouter(b, [pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.In3_Cu, pcbnew.B_Cu], outline, rules, widths, analog=analog,
-                                  keepouts={pcbnew.In2_Cu: keep})
-    report = []
-    for n in nets:
+    return patch_router.PatchRouter(b, [pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.In3_Cu, pcbnew.B_Cu], outline, rules, widths, analog=analog,
+                                    keepouts={pcbnew.In2_Cu: keep}), widths
+
+
+# laid before the router, on the empty board (with the ribbon and the ground fan-out): the connections the router could not make
+# in any number of passes once the rest was in (9 Nov): board L's 15 V feed from the post (75 mm), the USB pair from the flex pads
+# through the ribbon into the chip, and every flex line from its pad into its ribbon line (the far ends are left to the router)
+PREROUTE_FULL = ["VSYS", "USB_DP", "USB_DM"]
+# VSYS up the left strip on In2 (empty there; the other layers are the router's), the USB pair on the back and front, as its ribbon
+PREROUTE_LAYERS = {"VSYS": {pcbnew.F_Cu: 4.0, pcbnew.In3_Cu: 4.0, pcbnew.B_Cu: 4.0},
+                   "USB_DP": {pcbnew.In2_Cu: 4.0, pcbnew.In3_Cu: 4.0}, "USB_DM": {pcbnew.In2_Cu: 4.0, pcbnew.In3_Cu: 4.0}}
+PREROUTE_PADS = False   # the flex pads' links: laid as part of the ribbon now (flex_fanout)
+
+
+def preroute(b):
+    pr, widths = _patch_router(b); out = []; failed = []
+    j1 = {p.GetNetname(): pcbnew.ToMM(p.GetPosition().x) for f in b.GetFootprints() if f.GetReference() == "J1" for p in f.Pads()}
+    flex = [n for _c, _cl, _w, nets, _l in FLEX_CLASSES for n in nets if n not in PREROUTE_FULL]
+    pad_and_ribbon = lambda its: any(it.get("ref") == "J1" or it["kind"] == "track" for it in its)
+    jobs = [(n, None) for n in PREROUTE_FULL] + ([(n, pad_and_ribbon) for n in sorted(flex, key=lambda n: -j1.get(n, 0))]
+                                                  if PREROUTE_PADS else [])
+    for n, want in jobs:
+        left, added, _v = pr.route_net(n, want=want, layer_cost=PREROUTE_LAYERS.get(n))
+        out += [f"{n}: {a['length']:.1f} mm on {', '.join(b.GetLayerName(l) for l in a['layers'])}, {len(a['vias'])} via(s)" for a in added]
+        if left:
+            failed.append(f"{n} ({left})")
+    return out, failed
+
+
+PATCH_PEN = float(os.environ.get("PATCH_PEN", "200"))   # per cell of the router's copper crossed: ~100 mm of detour per track
+
+
+def patch_finish(narrow=(0.25, 0.2, 0.127)):
+    """Join what the router left (patch_router.py): each unjoined net searched on a 0.05 grid around the copper already there,
+    at its class width first, narrower only if that finds no way. Then the dangling ends, the planes refilled, KiCad's DRC."""
+    import re, kicad7_tools as kt, patch_router
+    from collections import Counter
+    from shapely.geometry import Polygon, LineString
+    pcb = os.path.join(OUT, NAME + ".kicad_pcb")
+    nv, nu, txt = kt.drc(pcb)
+    nets = sorted(set(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt)) - {"GND"})
+    b = pcbnew.LoadBoard(pcb)
+    pr, widths = _patch_router(b)
+    report = []; failed = []
+
+    def join(n, depth):
+        """Join net n; up to depth 2 it may take up the router's tracks of other nets (dearer each level), and the nets it took up
+        are joined again one level down; at the last level nothing is taken up, so the chain stops."""
         w0 = widths.get(n, widths["default"])
         for w in [w0] + [x for x in narrow if x < w0]:
-            left, added = pr.route_net(n, width=w)
+            left, added, victims = pr.route_net(n, width=w, rip=depth < 2, pen0=PATCH_PEN * 5 ** depth)
             for a in added:
-                report.append(f"{n}: {a['length']:.1f} mm at {w} mm on {', '.join(b.GetLayerName(l) for l in a['layers'])}, "
-                              f"{len(a['vias'])} via(s)")
+                report.append("  " * depth + f"{n}: {a['length']:.1f} mm at {w} mm on "
+                              f"{', '.join(b.GetLayerName(l) for l in a['layers'])}, {len(a['vias'])} via(s)")
+            if victims:
+                report.append("  " * depth + f"  taken up for {n}: {', '.join(sorted(victims))}")
+                for v in sorted(victims):
+                    join(v, depth + 1)
             if left == 0:
-                break
-            print(f"  {n}: {left} island(s) not joined at {w} mm")
+                return
+        failed.append(n)
+    for n in nets:
+        join(n, 0)
+    queue = failed
     print("\n".join(report))
+    if queue:
+        print("not joined:", ", ".join(queue))
+    print("dangling track ends trimmed:", trim_dangling(b))   # on the board in hand (a second load in this process came back unusable)
     pcbnew.ZONE_FILLER(b).Fill(b.Zones()); save_board(pcb, b)
-    b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b)); save_board(pcb, b)
     nv, nu, txt = kt.drc(pcb)
     if nu == 0:   # every net joined: the ribbon's unused ends can go too
-        b = pcbnew.LoadBoard(pcb); print("ribbon stubs trimmed:", trim_dangling(b, locked_too=True))
+        print("ribbon stubs trimmed:", trim_dangling(b, locked_too=True))
         pcbnew.ZONE_FILLER(b).Fill(b.Zones()); save_board(pcb, b)
     nv, nu, txt = kt.drc(pcb, os.path.join(OUT, "drc.rpt"))
     left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))
@@ -1132,15 +1192,42 @@ def pin_targets(pcb, parts, out):
 # the gap between the LEDs at 330 deg, up inside the ring, out at 30 deg, up beside window B; the SPI lines on the front, left
 # along the strip under window D and up the left side the same way (210 / 150 deg). Panel frame; 0.3 pitch [A].
 RIB_PITCH = 0.3
+# 9 Nov, second layout: the right ribbon now starts under the flex pads (on the back and In3, below the front pads) and each flex
+# pad gets a planned way down into it, a short front stub to its own via (every other pad up, the rest down, two staggered rows),
+# so the 0.3 mm pads no longer leave it to the router; the left ribbon's lines start at their pads. Lines are listed from the
+# right-hand side of the ribbon's direction (panel frame) to the left, in the order their pads' vias come.
 RIBBONS = [
-    dict(name="right", centre=[(20.7, -46.6), (20.7, -13.0), (18.19, -10.5), (14.29, -8.25), (14.29, 8.25), (18.19, 10.5),
-                               (20.7, 13.0), (20.7, 25.4)],
-         layers={"B.Cu": ["I2C_SCL", "I2C_SDA", "IO_INT", "MIDI_TX", "USB_DP", "USB_DM"],
-                 "In3.Cu": ["CV_IN1_L", "CV_IN2_L", "CV_IN3_L", "AUDIO_OUT", "AUDIO_IN_L", "AGND_SENSE_L"]}, clear_in2=True),
+    dict(name="right", centre=[(12.3, -49.725), (18.0, -49.725), (20.7, -47.025), (20.7, -13.0), (18.19, -10.5), (14.29, -8.25),
+                               (14.29, 8.25), (18.19, 10.5), (20.7, 13.0), (20.7, 25.4)],
+         layers={"B.Cu": ["USB_DM", "IO_INT", "I2C_SCL", "I2C_SDA", "MIDI_TX", "USB_DP"],
+                 "In3.Cu": ["AGND_SENSE_L", "AUDIO_IN_L", "AUDIO_OUT", "CV_IN3_L", "CV_IN1_L", "CV_IN2_L"]}, clear_in2=True),
     dict(name="left", centre=[(9.9, -48.2), (-20.7, -48.2), (-20.7, -13.0), (-18.19, -10.5), (-15.5, -8.95), (-15.5, 8.95),
                               (-18.19, 10.5), (-20.7, 13.0), (-20.7, 25.4)],
-         layers={"F.Cu": ["SCK_L", "MOSI_L", "CS_DAC", "CS_OLED", "OLED_DC", "OLED_RES"]}, clear_in2=False),
+         layers={"F.Cu": ["OLED_RES", "OLED_DC", "CS_OLED", "CS_DAC", "MOSI_L", "SCK_L"]}, clear_in2=False),
 ]
+# the flex pads' vias (KiCad frame): pads 8-25 alternate, odd up, even down (pad 7's front line to the left ribbon passes where
+# pad 8's via would be above); each row staggered 0.3 so neighbours keep 0.2 mm
+FAN_UP_Y, FAN_DOWN_Y, FAN_STAGGER = (148.3, 148.0), (151.15, 151.45), 0.3
+
+
+def flex_fanout(board):
+    """{net: (pad x, pad y, via x, via y)} for the flex pads that drop to a via (KiCad frame), and the left ribbon's pads
+    {net: (x, y)}."""
+    j1 = [p for f in board.GetFootprints() if f.GetReference() == "J1" for p in f.Pads()]
+    vias, left = {}, {}
+    left_nets = [n for rb in RIBBONS if rb["name"] == "left" for n in rb["layers"]["F.Cu"]]
+    for p in j1:
+        k = int(p.GetNumber()); x, y = pcbnew.ToMM(p.GetPosition().x), pcbnew.ToMM(p.GetPosition().y); n = p.GetNetname()
+        if n in left_nets:
+            left[n] = (x, y); continue
+        if k < 8 and n != "GND":
+            continue
+        up = k % 2 == 1 and k >= 8
+        row = FAN_UP_Y if up else FAN_DOWN_Y
+        vias[(n, k)] = (x, y, x, row[((k - 1) // 2) % 2] if up else row[(k // 2) % 2])
+    return vias, left
+
+
 LAYER_ID = {"F.Cu": pcbnew.F_Cu, "In2.Cu": pcbnew.In2_Cu, "In3.Cu": pcbnew.In3_Cu, "B.Cu": pcbnew.B_Cu}
 
 
@@ -1163,15 +1250,25 @@ def _offset(pts, d):
     return out
 
 
-def ribbon_lines():
-    """[(net, layer name, [(x, y) panel ...])]: each ribbon line, offset from its ribbon's centre line (mitred corners)."""
+def ribbon_lines(board=None):
+    """[(net, layer name, [(x, y) panel ...])]: each ribbon line, offset from its ribbon's centre line (mitred corners). With the
+    board: the right ribbon's lines begin at their pads' vias (a stub from the line to the via) and the left ribbon's at their pads."""
     out = []
+    vias, left = flex_fanout(board) if board is not None else ({}, {})
+    via_of = {n: (vx - ORIGIN[0], ORIGIN[1] - vy) for (n, _k), (_px, _py, vx, vy) in vias.items()}
     for rb in RIBBONS:
         for lay, nets in rb["layers"].items():
             n = len(nets)
             for i, net in enumerate(nets):
                 off = (i - (n - 1) / 2) * RIB_PITCH
-                out.append((net, lay, [(round(x, 4), round(y, 4)) for x, y in _offset(rb["centre"], off)]))
+                pts = [(round(x, 4), round(y, 4)) for x, y in _offset(rb["centre"], off)]
+                if rb["name"] == "right" and net in via_of:
+                    vx, vy = via_of[net]
+                    pts = [(vx, vy), (vx, pts[0][1])] + pts[1:]          # from the via, to the line, along it (first point dropped)
+                elif rb["name"] == "left" and net in left:
+                    px, py = left[net][0] - ORIGIN[0], ORIGIN[1] - left[net][1]
+                    pts = [(px, py), (px, pts[0][1])] + pts             # from the pad, up to the line, along it
+                out.append((net, lay, pts))
     return out
 
 
@@ -1188,17 +1285,26 @@ def ribbon_corridor(face, extra=0.25):
     return unary_union(gs) if gs else None
 
 
-def add_ribbons(board):
-    """The ribbon's tracks, locked, and a no-track area on In2 over the analog lines."""
+def add_ribbons(board, rule_area=True):
+    """The ribbon's tracks, locked; the flex pads' front stubs and vias; a no-track area on In2 over the analog lines."""
     from shapely.geometry import LineString
     n_seg = 0
-    for net, lay, pts in ribbon_lines():
+    vias, _left = flex_fanout(board)
+    for net, lay, pts in ribbon_lines(board):
         ni = board.FindNet(net)
         assert ni is not None, net
         for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            if (ax, ay) == (bx, by):
+                continue
             t = pcbnew.PCB_TRACK(board); t.SetStart(P(*L(ax, ay))); t.SetEnd(P(*L(bx, by))); t.SetWidth(mm(RULES["track"]))
             t.SetLayer(LAYER_ID[lay]); t.SetNet(ni); t.SetLocked(True); board.Add(t); n_seg += 1
-    for rb in RIBBONS:
+    for (net, _k), (px, py, vx, vy) in vias.items():   # front stub from the pad to its via
+        ni = board.FindNet(net); w = RULES["track"] if net != "GND" else 0.15
+        t = pcbnew.PCB_TRACK(board); t.SetStart(pcbnew.VECTOR2I(mm(px), mm(py))); t.SetEnd(pcbnew.VECTOR2I(mm(vx), mm(vy)))
+        t.SetWidth(mm(w)); t.SetLayer(pcbnew.F_Cu); t.SetNet(ni); t.SetLocked(True); board.Add(t); n_seg += 1
+        v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(mm(vx), mm(vy))); v.SetWidth(mm(RULES["via_d"]))
+        v.SetDrill(mm(RULES["via_drill"])); v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu); v.SetNet(ni); v.SetLocked(True); board.Add(v)
+    for rb in RIBBONS if rule_area else []:
         if not rb["clear_in2"]:
             continue
         half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
@@ -1211,6 +1317,27 @@ def add_ribbons(board):
             ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
         board.Add(z)
     return n_seg
+
+
+def refresh_ribbons(board):
+    """The placed board's ribbon (laid at placement) taken off and laid again as RIBBONS now has it, with the flex pads' stubs and
+    vias; an extra In2 rule area over the new stretch under the flex pads (the placed one stays)."""
+    from shapely.geometry import LineString
+    old = [t for t in board.GetTracks() if t.IsLocked()]
+    for t in old:
+        board.Remove(t); KEEP.append(t)
+    n = add_ribbons(board, rule_area=False)
+    rb = [r for r in RIBBONS if r["name"] == "right"][0]
+    half = (len(rb["layers"]["In3.Cu"]) - 1) / 2 * RIB_PITCH + 0.3
+    g = LineString(rb["centre"][:4]).buffer(half, cap_style=2, join_style=2)
+    z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(False)
+    z.SetDoNotAllowCopperPour(False); z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
+    z.SetLayer(pcbnew.In2_Cu); z.SetZoneName("keep In2 clear over the analog ribbon (flex pads)")
+    ol = z.Outline(); ol.NewOutline()
+    for x, y in list(g.exterior.coords)[:-1]:
+        ol.Append(mm(ORIGIN[0] + x), mm(ORIGIN[1] - y))
+    board.Add(z)
+    return len(old), n
 
 
 BLOCK_COL = {"mcu": "#9ecae1", "link": "#c6dbef", "screen": "#6baed6", "debug": "#d9d9d9", "light": "#fdae6b", "adc": "#a1d99b",
