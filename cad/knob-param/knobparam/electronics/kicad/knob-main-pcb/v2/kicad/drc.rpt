@@ -1,16 +1,19 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 14:54:54 **
+** Created on 2026-11-09 17:25:35 **
 
-** Found 12 DRC violations **
+** Found 11 DRC violations **
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(78.5500 mm, 87.3115 mm): Track [SCK_L] on F.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(81.7509 mm, 88.2135 mm): Track [OLED_RES] on F.Cu, length 0.1195 mm
+    @(83.7500 mm, 102.6986 mm): Track [SCK_L] on F.Cu, length 0.1649 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(80.0500 mm, 86.6885 mm): Track [OLED_RES] on F.Cu, length 12.0885 mm
+    @(78.8500 mm, 87.1869 mm): Track [MOSI_L] on F.Cu, length 12.5869 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(79.4500 mm, 80.7688 mm): Track [CS_OLED] on F.Cu, length 0.0535 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(120.8500 mm, 87.0623 mm): Track [I2C_SCL] on B.Cu, length 12.4623 mm
@@ -25,13 +28,7 @@
     @(120.2500 mm, 86.8131 mm): Track [MIDI_TX] on B.Cu, length 12.2131 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.2500 mm, 86.8131 mm): Track [CV_IN1_L] on In3.Cu, length 12.2131 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(119.9500 mm, 86.6885 mm): Track [CV_IN2_L] on In3.Cu, length 12.0885 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(121.4500 mm, 87.3115 mm): Track [AGND_SENSE_L] on In3.Cu, length 12.7115 mm
+    @(121.4500 mm, 80.9557 mm): Track [AGND_SENSE_L] on In3.Cu, length 0.1526 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(111.6435 mm, 106.1440 mm): Track [5V] on B.Cu, length 1.6879 mm
@@ -39,39 +36,11 @@
     Local override; Severity: warning
     @(83.1100 mm, 69.7900 mm): Track [VSYS] on In2.Cu, length 0.0250 mm
 
-** Found 8 unconnected pads **
+** Found 1 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(121.1500 mm, 87.1869 mm): Track [IO_INT] on B.Cu, length 12.5869 mm
-    @(107.7250 mm, 67.5000 mm): Pad 54 [IO_INT] of U1 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(120.2500 mm, 86.8131 mm): Track [MIDI_TX] on B.Cu, length 12.2131 mm
-    @(107.7250 mm, 67.0000 mm): Pad 55 [MIDI_TX] of U1 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(120.2500 mm, 86.8131 mm): Track [CV_IN1_L] on In3.Cu, length 12.2131 mm
-    @(111.2100 mm, 71.6000 mm): Pad 1 [CV_IN1_L] of R4 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(93.5367 mm, 62.0000 mm): Track [3V3] on F.Cu, length 1.1617 mm
-    @(90.5000 mm, 63.6200 mm): Pad 1 [3V3] of C2 on F.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(107.7250 mm, 66.5000 mm): Pad 56 [JOY_TE] of U1 on F.Cu
-    @(118.6700 mm, 66.5150 mm): PTH pad 12 [JOY_TE] of J3
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(98.1500 mm, 71.4700 mm): Track [CV_IN2] on B.Cu, length 1.0407 mm
-    @(109.9900 mm, 72.7500 mm): Pad 2 [CV_IN2] of R5 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(103.0500 mm, 70.6750 mm): Pad 44 [DIAL_RX] of U1 on F.Cu
-    @(103.0875 mm, 92.6500 mm): Track [DIAL_RX] on B.Cu, length 1.5225 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(107.7250 mm, 65.5000 mm): Pad 58 [JOY_QSPI_IO0] of U1 on F.Cu
-    @(112.9400 mm, 65.7000 mm): Pad 1 [JOY_QSPI_IO0] of R14 on F.Cu
+    @(109.6500 mm, 60.9100 mm): Pad 2 [MOSI_L] of R3 on F.Cu
+    @(78.8500 mm, 87.1869 mm): Track [MOSI_L] on F.Cu, length 12.5869 mm
 
 ** Found 0 Footprint errors **
 
