@@ -28,12 +28,38 @@ def _ref(prefix):
     return f"{prefix}{_count[prefix]}"
 
 
+# Datasheet for every chosen part [Ed 9 Nov: a Datasheet column in the board's BOM, so the reference travels with the part to
+# PCBWay]: the maker's sheet where its link is the maker's own, else the LCSC part page (which carries the sheet). Passives by
+# value only: the LCSC page once the fab export picks the exact part.
+DATASHEET = {
+    "STM32H743VIT6": "https://www.st.com/resource/en/datasheet/stm32h743vi.pdf",
+    "REF3430IDBVR": "https://www.ti.com/lit/gpn/REF34",
+    "DRV8213DSGR": "https://www.ti.com/lit/gpn/drv8213",
+    "TPS22918DBVR": "https://www.ti.com/lit/gpn/tps22918",
+    "SN74AHCT1G125DBVR": "https://www.ti.com/lit/gpn/sn74ahct1g125",
+    "TLV3601DBVR": "https://www.ti.com/lit/gpn/TLV3601",
+    "TMAG5253BA3IQDMRR": "https://www.ti.com/lit/gpn/tmag5253",
+    "TMAG5273A2QDBVR": "https://www.ti.com/lit/gpn/tmag5273",
+    "NR3015T470M": "https://www.lcsc.com/product-detail/C87171.html",
+    "NCP15XH103F03RC": "https://www.lcsc.com/product-detail/C77131.html",
+    "BLM18KG121TZ1D": "https://www.lcsc.com/product-detail/C396652.html",
+    "2N7002": "https://www.lcsc.com/product-detail/C8545.html",
+    "SK6812MINI-E": "https://www.lcsc.com/product-detail/C5149201.html",
+    "X322525MOB4SI": "https://www.lcsc.com/product-detail/C9006.html",
+    "FCM1608KF-601T03": "https://www.lcsc.com/product-detail/C141723.html",
+    "EE-SX1321": "https://www.lcsc.com/product-detail/C469128.html",
+    "JNJ-V-2835CW-665003-S-D1": "https://www.lcsc.com/product-detail/C42375664.html",
+    "TC2030-IDC-NL": "https://www.tag-connect.com/product/tc2030-idc-nl",
+}
+
+
 def part(prefix, value, fp, pins, block, face="B", lcsc="", mpn="", note="", names=None, ref=None, dnp=False):
     r = ref or _ref(prefix)
     if ref and ref[len(prefix):].isdigit():   # a fixed ref takes its number out of the count
         _count[prefix] = max(_count.get(prefix, 0), int(ref[len(prefix):]))
+    ds = DATASHEET.get(mpn) or DATASHEET.get(value) or (f"https://www.lcsc.com/product-detail/{lcsc}.html" if lcsc else "")
     PARTS.append(dict(ref=r, value=value, fp=fp, pins={str(k): v for k, v in pins.items()}, block=block, face=face, lcsc=lcsc,
-                      mpn=mpn, note=note, names={str(k): v for k, v in (names or {}).items()}, dnp=dnp))
+                      mpn=mpn, note=note, names={str(k): v for k, v in (names or {}).items()}, dnp=dnp, datasheet=ds))
     return r
 
 
@@ -293,8 +319,27 @@ def check(parts):
     return dict(single=bad, missing=missing, unwired_power=unwired_power, dup=sorted(dup))
 
 
+def write_bom(parts, path):
+    """The board's BOM spreadsheet (CSV): one row per kind of part, with its datasheet link [Ed 9 Nov]."""
+    import csv
+    rows = {}
+    for p in parts:
+        k = (p["value"], p["fp"].split(":")[-1], p["mpn"], p["lcsc"], p["dnp"])
+        rows.setdefault(k, []).append(p)
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Refs", "Qty", "Value", "Footprint", "MPN", "LCSC", "Datasheet", "Fitted by", "Note"])
+        for (val, fp, mpn, lcsc, dnp), ps in sorted(rows.items(), key=lambda kv: (kv[0][4], kv[1][0]["ref"][0], kv[0][0])):
+            refs = sorted((p["ref"] for p in ps), key=lambda r: (r.rstrip("0123456789"), int("0" + r[len(r.rstrip("0123456789")):])))
+            fit = ("no" if dnp else "pads only" if refs[0] in ("J4", "J5") else
+                   "by hand" if refs[0] in ("MP1", "MP2", "H1", "M1", "J1") else "PCBA")
+            w.writerow([" ".join(refs), len(ps), val, fp, mpn, lcsc, ps[0]["datasheet"], fit, ps[0]["note"]])
+    return len(rows)
+
+
 if __name__ == "__main__":
     P = build()
+    print("BOM lines:", write_bom(P, os.path.join(HERE, "bom.csv")))
     ck = check(P)
     blocks = {}
     for p in P:

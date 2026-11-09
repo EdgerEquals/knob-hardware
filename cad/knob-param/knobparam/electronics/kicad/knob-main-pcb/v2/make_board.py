@@ -825,13 +825,9 @@ def route_board(passes, timeout):
     from collections import Counter
     pcb = os.path.join(OUT, NAME + ".kicad_pcb")
     write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
+    import shutil
+    shutil.copy(os.path.join(OUT, "placed.kicad_pcb"), pcb)   # start from the placed board: the ribbon and its In2 rule area, no routes
     b = pcbnew.LoadBoard(pcb)
-    for t in list(b.GetTracks()):   # start over, keeping the ribbon (locked) and its In2 rule area; the fan-out is redone
-        if not t.IsLocked() or t.GetNetname() == "GND":
-            b.Remove(t)
-    for z in list(b.Zones()):
-        if not z.GetIsRuleArea():
-            b.Remove(z)
     print("ground vias (placed, no room):", fanout_gnd(b)); save_board(pcb, b)
     res = _route(pcb, passes=passes, timeout=timeout)
     b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b)); add_planes(b); save_board(pcb, b)
@@ -1115,6 +1111,8 @@ def main():
     board, dropped = build(parts, placement)
     print("ribbon tracks:", add_ribbons(board))
     save_board(pcb, board)
+    import shutil
+    shutil.copy(pcb, os.path.join(OUT, "placed.kicad_pcb"))   # --route starts from this
     for nm in {p["fp"] for p in parts}:   # every footprint the board uses, as placed (no silkscreen), in its own library
         save_fp(LIB_DIR, _FP_CACHE[nm])
     json.dump({r: list(v) for r, v in placement.items()}, open(os.path.join(HERE, "placement.json"), "w"), indent=0)

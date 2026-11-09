@@ -1,0 +1,58 @@
+Refs,Qty,Value,Footprint,MPN,LCSC,Datasheet,Fitted by,Note
+C1 C2 C3 C4 C5 C10 C11 C12 C16 C18 C25 C27 C29 C31 C33 C44 C45 C46 C47 C48 C49 C50 C51 C52 C53 C54 C55 C56 C59 C60,30,100nF,C_0402_1005Metric,,,,PCBA,one at each VDD pin [S AN4938 2.2]
+C34 C36 C58,3,100nF 16V,C_0402_1005Metric,,,,PCBA,low-ESR bypass at VM [S]
+C62,1,100nF 25V,C_0402_1005Metric,,,,PCBA,
+C6 C64,2,10uF,C_0603_1608Metric,,,,PCBA,package bulk (4.7 uF min) [S AN4938 7.4]
+C61,1,10uF 25V,C_0805_2012Metric,,,,PCBA,at the post
+C13 C14,2,15pF C0G,C_0402_1005Metric,,,,PCBA,
+C41 C65,2,1nF,C_0402_1005Metric,,,,PCBA,2.5 ms rise at 5 V [S: SR = 0.55 x CT + 30 us/V]: about 90 mA into the 44 uF
+C19 C20 C21 C22 C23 C24 C26 C28 C30 C32 C37 C38 C39,13,1nF C0G,C_0402_1005Metric,,,,PCBA,
+C9 C15 C17,3,1uF,C_0402_1005Metric,,,,PCBA,
+C40 C57,2,1uF 10V,C_0402_1005Metric,,,,PCBA,
+C7 C8,2,2.2uF,C_0603_1608Metric,,,,PCBA,"ESR < 100 mohm, VCAP1 and VCAP2 tied [S AN4938 fig 18]"
+C35 C42 C43 C63,4,22uF 10V,C_0805_2012Metric,,,,PCBA,bulk: TI gives no value ('system-level testing') [A]
+D13,1,JNJ-V-2835CW-665003-S-D1,LED_PLCC_2835,JNJ-V-2835CW-665003-S-D1,C42375664,https://www.lcsc.com/product-detail/C42375664.html,PCBA,"665 nm VCSEL, threshold about 4 mA; [C] pads and polarity against JNJ's drawing; [C] optical power at the chosen current"
+D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12,12,SK6812MINI-E,LED_SK6812MINI-E_Reverse,SK6812MINI-E,C5149201,https://www.lcsc.com/product-detail/C5149201.html,PCBA,ring site 1/12; pads after Keebio-Parts (MIT) and marbastlib (CERN-OHL-P) [S]; MSL 5a; [C] pin order against the datasheet drawing of the revision LCSC ships
+FB2,1,BLM18KG121TZ1D,L_0603_1608Metric,BLM18KG121TZ1D,C396652,https://www.lcsc.com/product-detail/C396652.html,PCBA,"Murata, 120R at 100 MHz, 30 mohm, 3 A [S]"
+FB1,1,FCM1608KF-601T03,L_0603_1608Metric,FCM1608KF-601T03,C141723,https://www.lcsc.com/product-detail/C141723.html,PCBA,"600R at 100 MHz, the bead AN4938 table 9 names [S]"
+H1,1,TubeRodClamp_M1.6,TubeRodClamp_Main_M1.6,,,,by hand,"tube = ground, rod = 5 V + data [Q43]"
+JP1,1,BOOT0 to 3V3 (bridge to start the ROM bootloader),SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,,,,PCBA,[A]
+J4,1,TC2030-IDC-NL,Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical,,,https://www.tag-connect.com/product/tc2030-idc-nl,pads only,"pads only, nothing fitted; cable TC2030-CTX-NL [S Tag-Connect]"
+J2,1,board L header 2x11 1.27 THT,VBoard_L_Header_2x11_P1.27_THT,,,,PCBA,"vertical board L (power): 15 V up, 5 V and 3.3 V down, 5V_EN, the switch ladder [A order]"
+J3,1,board R header 2x11 1.27 hybrid,VBoard_R_Header_2x11_P1.27_Hybrid,,,,PCBA,"vertical board R: the screen's quad port, CAN to its transceiver [A order]; 8 SMT legs over the encoder sensor, 14 THT [S model v0.52 vb_hdr]"
+J5,1,cover board pads,Pads_1x6_P1.27_SMD,,,,pads only,the later back-screen board (Q33 = A): pads only [A]
+J1,1,link flex pads,LinkFlex_MainBoard_Pads_25x0.3,,,,by hand,"the flex's solder end, hot-bar or hand [Q29/Q30]; pin 24 = the jack unit's quiet ground, read as AGND_SENSE [Q41]"
+L1,1,NR3015T470M,L_Taiyo-Yuden_NR-30xx,NR3015T470M,C87171,https://www.lcsc.com/product-detail/C87171.html,PCBA,"Taiyo Yuden 47 uH, 3 x 3 x 1.5, DCR 1.34 ohm, Isat 0.32 A, SRF >= 17 MHz [S]; the dial's 0.12 A drops 0.16 V here [A]; [C] LCSC stock (alt SXN SMNR3015-470MT C135243, DCR 1.63, no SRF listed)"
+M1,1,"1220 coreless planetary, 6 V (hand-solder)",Motor_1220_Tabs_Relief,,,,by hand,6 V version [Ed 8 Nov 12:38]; run from 5 V [Q34]
+MP1,1,post GND,Post_Pin_1.0,,,,by hand,"Ø1.0 pin of the Ø2 post, plated Ø1.15, Ø1.6 pad [Q24, as the jack power board's end; C the main-board end]"
+MP2,1,post VSYS,Post_Pin_1.0,,,,by hand,15 V [Q38: straight up to board L]
+Q1,1,2N7002,SOT-23,2N7002,C8545,https://www.lcsc.com/product-detail/C8545.html,PCBA,"JSCJ, JLC basic part"
+R29,1,0R,R_0805_2012Metric,,,,PCBA,"the motor's own branch from the 5 V pins [A, noise sweep]"
+R30,1,0R,R_0402_1005Metric,,,,PCBA,GAINSEL low [A; C bench]
+R4 R5 R6 R7 R8 R18 R19 R20 R21 R22 R27 R28 R33 R39 R47,15,100R,R_0402_1005Metric,,,,PCBA,scaled on the jack board [S]
+R37 R48 R49,3,100k,R_0402_1005Metric,,,,PCBA,off until the H743 says so (ON must not float) [S]
+R1 R23 R25 R26 R34 R40 R41 R42,8,10k,R_0402_1005Metric,,,,PCBA,[S AN4938 table 9]
+R36,1,10k 1%,R_0402_1005Metric,,,,PCBA,
+RT1,1,10k NTC B3380,R_0402_1005Metric,NCP15XH103F03RC,C77131,https://www.lcsc.com/product-detail/C77131.html,PCBA,"Murata, B25/50 3380 K +-1 % [S]"
+R35,1,15k,R_0402_1005Metric,,,,PCBA,
+R9,1,1M,R_0402_1005Metric,,,,PCBA,reads 0 with the flex out [A]
+R43,1,1k,R_0402_1005Metric,,,,PCBA,limits the clamp current at power-up (5 V step through the coupling cap)
+R24 R46,2,220R,R_0402_1005Metric,,,,PCBA,LED 9-10 mA [S v0.11]
+R12 R13 R14 R15 R16 R17,6,22R,R_0402_1005Metric,,,,PCBA,[A] at the H743
+R50,1,27k,R_0402_1005Metric,,,,PCBA,
+R32,1,3.3k 1%,R_0402_1005Metric,,,,PCBA,current limit about 0.75 A [A; C bench]
+R2 R3 R38,3,33R,R_0402_1005Metric,,,,PCBA,[A] edges for the 25-way flex
+R44,1,4.7k,R_0402_1005Metric,,,,PCBA,
+R45,1,47k,R_0402_1005Metric,,,,PCBA,hysteresis about 0.3 V [A]
+U9,1,DRV8213DSGR,WSON-8-1EP_2x2mm_P0.5mm_EP0.9x1.6mm,DRV8213DSGR,C22407186,https://www.ti.com/lit/gpn/drv8213,PCBA,"sleeps itself (no nSLEEP) [S]; US$0.68, 3,698 in stock (8 Nov)"
+U8,1,EE-SX1321,Omron_EE-SX1321,EE-SX1321,C469128,https://www.lcsc.com/product-detail/C469128.html,PCBA,"slot tangent to the disc rim (model sens_xy); E1 = A, E2 = B"
+U2,1,REF3430IDBVR,SOT-23-6,REF3430IDBVR,C2156866,https://www.ti.com/lit/gpn/REF34,PCBA,"EN tied to IN (on >= 1.6 V, never above IN); output stable 0.1-10 uF [S TI REF34]"
+U11,1,SN74AHCT1G125DBVR,SOT-23-5,SN74AHCT1G125DBVR,C7484,https://www.ti.com/lit/gpn/sn74ahct1g125,PCBA,"VIH 2.0 V at 5 V [S]; powered with the ring so it never drives a dead chain; its input takes 5.5 V with VCC off (no clamp to VCC) [S], so RGB_DIN can sit at either level [A]"
+U1,1,STM32H743VIT6,LQFP-100_14x14mm_P0.5mm,STM32H743VIT6,C114409,https://www.st.com/resource/en/datasheet/stm32h743vi.pdf,PCBA,under the joystick (layout v4); pins from the pin map
+U12,1,TLV3601DBVR,SOT-23-5,TLV3601DBVR,C5213958,https://www.ti.com/lit/gpn/TLV3601,PCBA,"2.5 ns, push-pull, inputs to the rails +-0.2 V [S]; wired inverting (firmware flips the code) [A]. US$2.80 and 626 in stock (8 Nov): [C] a 40 ns part is enough at 2 Mbit/s if stock stays low"
+U3 U4 U5 U6,4,TMAG5253BA3IQDMRR,X2SON-4_TMAG5253,TMAG5253BA3IQDMRR,C22401868,https://www.ti.com/lit/gpn/tmag5253,PCBA,Hall row 1/5 (linear)
+U7,1,TMAG5273A2QDBVR,SOT-23-6_TMAG5273_Tight,TMAG5273A2QDBVR,C3715882,https://www.ti.com/lit/gpn/tmag5273,PCBA,"Hall row 3/5 (3D, I2C; A2 +-133 mT)"
+U10,1,TPS22918DBVR,SOT-23-6,TPS22918DBVR,C131941,https://www.ti.com/lit/gpn/tps22918,PCBA,"2 A, 52 mohm at 5 V; QOD to VOUT = 24 ohm discharge (load <= 200 uF) [S]"
+Y1,1,25MHz 12pF,Crystal_SMD_3225-4Pin_3.2x2.5mm,X322525MOB4SI,C9006,https://www.lcsc.com/product-detail/C9006.html,PCBA,25 / 5 x 192 / 2 = 480 MHz [A]; [C] trim the 15 pF on the first boards
+R31,1,0R,R_0402_1005Metric,,,,no,spot for GAINSEL high
+R10 R11,2,4.7k,R_0402_1005Metric,,,,no,not fitted: the pull-ups are on the jack board [S]
