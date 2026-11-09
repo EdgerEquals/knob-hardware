@@ -141,3 +141,16 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   around the copper already there (router4's search in C), each path checked exactly against the clearances and searched
   again around anything it comes too close to; it may take up the router's own tracks of other nets at a price and join
   those again, two levels deep at most.
+- **Fourth run** (fan-out, VSYS and USB laid first): the router left 12, no rule errors; the patch router joined 4 more
+  (8 left, `docs/img/main-board-routed-8-left.png`, `docs/img/main-board-last-8.png`). The 8 sit in two crowded spots: where the
+  right ribbon comes out at the top (walled in by J3's through-hole pins, the encoder sensor's large back pads, window B's notch
+  and the ADC filters' tight cluster on the back) with the chip's right-side pins 54-58 next to it, and the 7 mm neck between
+  windows A and B under the chip.
+- Tried and left out, said plainly: taking up the router's tracks to force the 8 through (two levels deep) moved the jam onto
+  about 30 other lines, and the router then ran out of time rejoining them (17 left); carrying the analog lines on west along
+  window B's notch left their last hop to the ADC filters with no via room. A 0.003 mm track the router itself left made it
+  hang reading the board back ("normalization of net failed"): such slivers are now dropped first.
+- **Ed 9 Nov 16:4x "A: plan the top end"**: the pins it could not reach get a short stub to their own via before the router
+  (`ESCAPES`: chip pins 54-58 and 44, ADC filter pads R4.1 and R5.2; three of the chip's sit under its body, tented), then the
+  full route again. If the corner still does not close, the next step is moving a couple of the filter resistors to open via
+  room (a placement change; asked first).
