@@ -116,3 +116,5 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   the link flex's lines going up to the chip: they all squeeze up the 2.5 mm strip beside window D on the right. Neither finishes
   on the router alone; B leaves about half as much to finish by hand and gives the analog lines ground on both sides.
   [C] PCBWay to price both in the pre-quote. (A first pair of trials had the router routing ground too: 43 / 21 left.)
+  **Q45 = B [Ed 9 Nov 09:24]: 6 layers**, front, In1 ground plane, In2, In3, In4 ground plane, back (four signal layers, the
+  analog lines between two grounds). [C] PCBWay prices it in the pre-quote.

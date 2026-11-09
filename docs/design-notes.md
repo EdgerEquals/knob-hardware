@@ -65,6 +65,13 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Main board: 6 layers (Ed, 9 Nov 2026, Q45)
+
+[Ed 9 Nov 09:24 "B"]. Picture: `docs/img/layers-q45.png`. Routing trials of the first placement (Freerouting 1.9.0, 12 passes,
+ground left to the planes): 4 layers left 41 connections, 6 layers with two ground planes 27 (8 of each are ground pads still
+without a via). Stack: **front, In1 ground, In2, In3, In4 ground, back**; the analog lines run between two grounds. The tight
+spot either way is the link flex's lines going up the 2.5 mm strip beside window D. [C] PCBWay prices it in the pre-quote.
+
 ## Ring lights v0.53: 12, turned along the ring (Ed, 8 Nov 2026, Q44)
 
 [Ed 19:37 "12"]. Picture: `docs/img/ring-pads-q44.png`. Found while setting up the main board's placement: the SK6812MINI-E's
