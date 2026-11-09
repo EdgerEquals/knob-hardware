@@ -1,40 +1,17 @@
 ** Drc report for /home/claude/knob-hardware/cad/knob-param/knobparam/electronics/kicad/knob-main-pcb/v2/kicad/knob-main-pcb.kicad_pcb **
-** Created on 2026-11-09 11:09:39 **
+** Created on 2026-11-09 12:31:35 **
 
 ** Found 15 DRC violations **
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
-[hole_clearance]: Hole clearance violation (board setup constraints hole clearance 0.2000 mm; actual 0.1832 mm)
-    Rule: board setup constraints hole; Severity: error
-    @(90.2704 mm, 65.3930 mm): Via [GND] on F.Cu - B.Cu
-    @(90.0160 mm, 66.2600 mm): NPTH pad of J4
+[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 0.2500 mm; actual 0.2460 mm)
+    Rule: board setup constraints edge; Severity: error
+    @(89.1964 mm, 60.9951 mm): Line on Edge.Cuts
+    @(89.5700 mm, 62.6000 mm): Track [GND] on F.Cu, length 2.5100 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(80.0500 mm, 86.6885 mm): Track [SCK_L] on F.Cu, length 12.0885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(109.9000 mm, 147.4500 mm): Track [SCK_L] on F.Cu, length 29.8500 mm
-[track_dangling]: Track has unconnected end
-    Local override; Severity: warning
-    @(109.9000 mm, 148.6500 mm): Track [OLED_DC] on F.Cu, length 31.0500 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(78.5500 mm, 87.3115 mm): Track [OLED_RES] on F.Cu, length 12.7115 mm
@@ -46,59 +23,81 @@
     @(121.4500 mm, 87.3115 mm): Track [I2C_SCL] on B.Cu, length 12.7115 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.5500 mm, 146.6000 mm): Track [MIDI_TX] on B.Cu, length 33.5377 mm
+    @(121.4500 mm, 129.6440 mm): Track [I2C_SCL] on B.Cu, length 0.1301 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(120.2500 mm, 86.8131 mm): Track [USB_DP] on B.Cu, length 12.2131 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(120.2500 mm, 146.6000 mm): Track [USB_DP] on B.Cu, length 33.4131 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(119.9500 mm, 86.6885 mm): Track [USB_DM] on B.Cu, length 12.0885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
     @(119.9500 mm, 146.6000 mm): Track [USB_DM] on B.Cu, length 33.2885 mm
 [track_dangling]: Track has unconnected end
     Local override; Severity: warning
-    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
+    @(121.4500 mm, 146.6000 mm): Track [CV_IN1_L] on In3.Cu, length 33.9115 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(120.5500 mm, 86.9377 mm): Track [AUDIO_OUT] on In3.Cu, length 12.3377 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(111.6435 mm, 106.1440 mm): Track [5V] on B.Cu, length 1.6879 mm
+[track_dangling]: Track has unconnected end
+    Local override; Severity: warning
+    @(112.8140 mm, 65.9715 mm): Track [VREFP] on B.Cu, length 0.0003 mm
 
-** Found 11 unconnected pads **
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(90.2400 mm, 64.8000 mm): Pad 2 [GND] of R50 on B.Cu
-    @(90.5000 mm, 64.5800 mm): Track [GND] on F.Cu, length 0.8448 mm
+** Found 12 unconnected pads **
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
     @(106.2500 mm, 109.2000 mm): Track [GND] on B.Cu, length 0.6161 mm
     @(107.0000 mm, 108.2500 mm): Pad 9 [GND] of U9 on B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.7500 mm, 69.1900 mm): Via [GND] on F.Cu - B.Cu
     @(89.6350 mm, 67.5300 mm): Pad 5 [GND] of J4 on F.Cu
+    @(90.7500 mm, 69.1900 mm): Via [GND] on F.Cu - B.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(116.2000 mm, 149.8000 mm): Pad 20 [AUDIO_OUT] of J1 on F.Cu
-    @(120.5500 mm, 146.6000 mm): Track [AUDIO_OUT] on In3.Cu, length 33.5377 mm
+    @(114.1000 mm, 149.8000 mm): Pad 13 [USB_DP] of J1 on F.Cu
+    @(120.2500 mm, 146.6000 mm): Track [USB_DP] on B.Cu, length 33.4131 mm
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(90.9213 mm, 90.7318 mm): Pad 1 [3V3] of U5 on F.Cu
-    @(91.2867 mm, 90.7200 mm): Track [3V3] on B.Cu, length 0.3367 mm
+    @(120.2500 mm, 86.8131 mm): Track [USB_DP] on B.Cu, length 12.2131 mm
+    @(107.7250 mm, 59.0000 mm): Pad 71 [USB_DP] of U1 on F.Cu
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(82.7595 mm, 67.9445 mm): Track [5V] on In2.Cu, length 10.8049 mm
+    @(119.9500 mm, 86.6885 mm): Track [USB_DM] on B.Cu, length 12.0885 mm
+    @(107.7250 mm, 59.5000 mm): Pad 70 [USB_DM] of U1 on F.Cu
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(115.0000 mm, 149.8000 mm): Pad 16 [CV_IN1_L] of J1 on F.Cu
+    @(121.4500 mm, 146.6000 mm): Track [CV_IN1_L] on In3.Cu, length 33.9115 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(90.5000 mm, 63.6200 mm): Pad 1 [3V3] of C2 on F.Cu
+    @(89.9589 mm, 62.7974 mm): Track [3V3] on In2.Cu, length 1.0800 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(107.7250 mm, 57.0000 mm): Track [3V3] on F.Cu, length 1.2405 mm
+    @(109.6500 mm, 58.8800 mm): Track [3V3] on F.Cu, length 0.7295 mm
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(82.6000 mm, 67.5475 mm): Track [5V] on In2.Cu, length 0.2375 mm
     @(82.6000 mm, 69.0550 mm): PTH pad 7 [5V] of J2
 [unconnected_items]: Missing connection between items
     Local override; Severity: error
-    @(82.6000 mm, 72.8650 mm): Track [VSYS] on In3.Cu, length 1.2700 mm
+    @(85.9058 mm, 67.0192 mm): Track [VSYS] on B.Cu, length 4.6751 mm
+    @(82.6000 mm, 71.5950 mm): PTH pad 3 [VSYS] of J2
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
+    @(82.6000 mm, 71.5950 mm): PTH pad 3 [VSYS] of J2
+    @(82.6000 mm, 72.8650 mm): PTH pad 1 [VSYS] of J2
+[unconnected_items]: Missing connection between items
+    Local override; Severity: error
     @(97.3800 mm, 149.2500 mm): Track [VSYS] on B.Cu, length 4.7200 mm
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(102.2719 mm, 108.5200 mm): Track [MOT_A] on B.Cu, length 0.3781 mm
-    @(107.2500 mm, 109.2000 mm): Pad 2 [MOT_A] of U9 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(98.0500 mm, 70.6750 mm): Pad 34 [CV_IN2] of U1 on F.Cu
-    @(98.1500 mm, 71.4700 mm): Pad 1 [CV_IN2] of C20 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(98.1500 mm, 71.4700 mm): Pad 1 [CV_IN2] of C20 on B.Cu
-    @(109.9900 mm, 72.7500 mm): Pad 2 [CV_IN2] of R5 on B.Cu
-[unconnected_items]: Missing connection between items
-    Local override; Severity: error
-    @(117.7330 mm, 107.5726 mm): Track [RING_5V] on B.Cu, length 0.1310 mm
-    @(119.1435 mm, 99.2365 mm): Track [RING_5V] on B.Cu, length 0.0191 mm
+    @(82.6000 mm, 72.8650 mm): PTH pad 1 [VSYS] of J2
 
 ** Found 0 Footprint errors **
 

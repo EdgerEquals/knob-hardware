@@ -580,24 +580,34 @@ def _pad_rects(board):
     out = []
     for f in board.GetFootprints():
         for p in f.Pads():
+            if not p.IsOnCopperLayer():   # paste-only apertures (an exposed pad's paste windows): no copper
+                continue
             bb = p.GetBoundingBox()
             lay = ({"F"} if p.IsOnLayer(pcbnew.F_Cu) and not p.IsOnLayer(pcbnew.B_Cu) else
                    {"B"} if p.IsOnLayer(pcbnew.B_Cu) and not p.IsOnLayer(pcbnew.F_Cu) else {"F", "B", "I"})
             out.append((lay, pcbnew.ToMM(bb.GetLeft()) - ORIGIN[0], pcbnew.ToMM(bb.GetTop()) - ORIGIN[1],
-                        pcbnew.ToMM(bb.GetRight()) - ORIGIN[0], pcbnew.ToMM(bb.GetBottom()) - ORIGIN[1], p.GetNetname(), p))
+                        pcbnew.ToMM(bb.GetRight()) - ORIGIN[0], pcbnew.ToMM(bb.GetBottom()) - ORIGIN[1], p.GetNetname(), _pad_key(p)))
     return out
+
+
+def _pad_key(p):
+    """A pad's identity: SWIG gives a new python object for the same pad on every call, so `is` never matches."""
+    return (p.GetParent().GetReference(), p.GetNumber(), p.GetPosition().x, p.GetPosition().y)
 
 
 def _rect_dist(px, py, x0, y0, x1, y1):
     return math.hypot(max(x0 - px, 0.0, px - x1), max(y0 - py, 0.0, py - y1))
 
 
-def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
+def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25, skip_done=False):
     """A via to the In1 ground plane beside every ground SMD pad (in the middle of an exposed pad), with a short track on the pad's
     face, clear of every pad, the other vias, the edge and the holes (as the jack power board's fanout_gnd)."""
     from shapely.geometry import Point
     inside = R["board"].buffer(-(via_d / 2 + RULES["edge"] + 0.02))
-    rects = _pad_rects(board); gnd = board.FindNet("GND"); vias = []; n_ok = n_fail = 0
+    inside_t = {}   # where a short track of this width may run: its copper keeps the edge rule too (C12's ran 0.2 from the edge)
+    rects = _pad_rects(board); gnd = board.FindNet("GND"); n_ok = n_fail = 0
+    vias = [(pcbnew.ToMM(v.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(v.GetPosition().y) - ORIGIN[1])   # vias already there
+            for v in board.GetTracks() if v.GetClass() == "PCB_VIA"]
     holes = []   # every drilled hole (PTH, NPTH): the via's drill keeps the hole rule (0.2) + 0.03 to them
     for f in board.GetFootprints():
         for p in f.Pads():
@@ -619,7 +629,10 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
     for f in board.GetFootprints():
         cx, cy = pcbnew.ToMM(f.GetPosition().x) - ORIGIN[0], pcbnew.ToMM(f.GetPosition().y) - ORIGIN[1]
         for p in f.Pads():
-            if p.GetNetname() == "GND" and p.GetAttribute() == pcbnew.PAD_ATTRIB_SMD:
+            if p.GetNetname() == "GND" and p.GetAttribute() in (pcbnew.PAD_ATTRIB_SMD, pcbnew.PAD_ATTRIB_CONN):   # CONN: the Tag-Connect's pads
+                if skip_done and any(t.GetNetname() == "GND" and (p.HitTest(t.GetStart()) or p.HitTest(t.GetEnd()))
+                                     for t in board.GetTracks()):
+                    continue   # already has its via (finishing a routed board)
                 w_, h_ = pcbnew.ToMM(p.GetBoundingBox().GetWidth()), pcbnew.ToMM(p.GetBoundingBox().GetHeight())
                 order.append((0 if w_ * h_ >= 1.0 and min(w_, h_) >= 0.85 else 1, f, cx, cy, p))
     order.sort(key=lambda o: o[0])
@@ -638,13 +651,18 @@ def fanout_gnd(board, via_d=0.45, via_drill=0.2, clr=0.13, width=0.25):
                         a_ = ang0 + (k // 2 + 1) * (math.pi / 8) * (1 if k % 2 else -1) if k else ang0
                         cands.append((px + (w / 2 + dist) * math.cos(a_) if abs(math.cos(a_)) > 0.7 else px + dist * math.cos(a_),
                                       py + (h / 2 + dist) * math.sin(a_) if abs(math.sin(a_)) > 0.7 else py + dist * math.sin(a_)))
-            placed = False
+            placed = False; me = _pad_key(p); tw = min(width, w, h)
+            if tw not in inside_t:
+                inside_t[tw] = R["board"].buffer(-(tw / 2 + RULES["edge"] + 0.02))
             for vx, vy in cands:
                 if not inside.contains(Point(vx, -vy)):
                     continue
+                if any(not inside_t[tw].contains(Point(px + (vx - px) * t_ / 20, -(py + (vy - py) * t_ / 20))) for t_ in range(1, 20)
+                       if not (abs((vx - px) * t_ / 20) <= w / 2 and abs((vy - py) * t_ / 20) <= h / 2)):
+                    continue   # the track outside its pad must keep the edge rule
                 ok = True
                 for lay, x0, y0, x1, y1, n, pp in rects:
-                    if pp is p:
+                    if pp == me:
                         continue
                     d = _rect_dist(vx, vy, x0, y0, x1, y1)
                     if n == "GND":
@@ -724,7 +742,7 @@ def _dsn_layers(dsn, layers):
     open(dsn, "w").write(txt)
 
 
-def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag=""):
+def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag="", resume=False):
     """Freerouting 1.9.0 on the board (ignored classes left alone, e.g. ground to the planes); imports the session without
     doubling what was already there and locked; returns (unconnected, violations) from KiCad's DRC."""
     import subprocess, kicad7_tools as kt
@@ -742,6 +760,9 @@ def _route(tp, passes, timeout, ignore=("GND",), layers=None, tag=""):
         print("router timed out with no session saved"); return None
     b = pcbnew.LoadBoard(tp)
     key = lambda t: (t.GetClass(), t.GetNetname(), t.GetLayer(), t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y)
+    if resume:   # the router was free to move the unlocked tracks: the session has what it kept, so the old ones go
+        for t in [t for t in b.GetTracks() if not t.IsLocked()]:
+            b.Remove(t)
     had = {key(t) for t in b.GetTracks()}
     print("imported", kt.import_ses(b, ses))
     seen = set(); dup = 0
@@ -865,6 +886,62 @@ def route_board(passes, timeout):
     vias = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
     print(f"routed: unconnected {nu}, violations {nv}, vias {vias}; {dict(kinds)}")
     print("left: " + ", ".join(f"{n} {c}" for n, c in left.most_common()))
+
+
+def finish_route(passes, timeout):
+    """Finish a routed board: start again from the placed board (ribbon, In2 rule area), bring the routed copper across with the
+    ground fan-out and the ribbon fixed and the router's own tracks free, drop fan-out tracks that break the edge rule, add the
+    ground vias still missing, and let the router complete what is left, ripping up its own tracks where it needs to."""
+    import re, shutil, kicad7_tools as kt
+    from collections import Counter
+    from shapely.geometry import Point
+    pcb = os.path.join(OUT, NAME + ".kicad_pcb"); routed = os.path.join(OUT, "routed_prev.kicad_pcb")
+    shutil.copy(pcb, routed)
+    write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
+    old = pcbnew.LoadBoard(routed); b = pcbnew.LoadBoard(os.path.join(OUT, "placed.kicad_pcb"))
+    key = lambda t: (t.GetClass(), t.GetNetname(), t.GetLayer(), t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y)
+    have = {key(t) for t in b.GetTracks()}
+    n_copy = 0
+    for t in old.GetTracks():
+        if key(t) in have:
+            continue
+        if t.GetClass() == "PCB_VIA":
+            n = pcbnew.PCB_VIA(b); n.SetPosition(t.GetPosition()); n.SetWidth(t.GetWidth()); n.SetDrill(t.GetDrillValue())
+            n.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        else:
+            n = pcbnew.PCB_TRACK(b); n.SetStart(t.GetStart()); n.SetEnd(t.GetEnd()); n.SetWidth(t.GetWidth()); n.SetLayer(t.GetLayer())
+        n.SetNet(b.FindNet(t.GetNetname())); n.SetLocked(t.GetNetname() == "GND"); b.Add(n); n_copy += 1
+    # fan-out tracks whose copper comes within the edge rule: the track and its via go, the pad is fanned out again
+    bad = []
+    for t in b.GetTracks():
+        if t.GetNetname() != "GND" or t.GetClass() == "PCB_VIA":
+            continue
+        hw = pcbnew.ToMM(t.GetWidth()) / 2; ok_area = R["board"].buffer(-(hw + RULES["edge"] - 0.005))
+        (x0, y0), (x1, y1) = [(pcbnew.ToMM(v.x) - ORIGIN[0], -(pcbnew.ToMM(v.y) - ORIGIN[1])) for v in (t.GetStart(), t.GetEnd())]
+        if any(not ok_area.contains(Point(x0 + (x1 - x0) * k / 10, y0 + (y1 - y0) * k / 10)) for k in range(1, 11)):
+            bad.append(t)
+    for t in bad:
+        for v in [v for v in b.GetTracks() if v.GetClass() == "PCB_VIA" and v.GetNetname() == "GND" and
+                  (v.GetPosition() == t.GetEnd() or v.GetPosition() == t.GetStart())]:
+            b.Remove(v)
+        b.Remove(t)
+    print(f"copied {n_copy} routed items; fan-out tracks off for the edge rule: {len(bad)}")
+    print("ground vias added (placed, no room):", fanout_gnd(b, skip_done=True)); save_board(pcb, b)
+    res = _route(pcb, passes=passes, timeout=timeout, tag="_resume", resume=True)
+    print("resumed:", res)
+    b = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b))
+    save_board(pcb, b)
+    nv, nu, txt = kt.drc(pcb)
+    if nu == 0:   # every net joined: the ribbon's unused ends can go too
+        b = pcbnew.LoadBoard(pcb); print("ribbon stubs trimmed:", trim_dangling(b, locked_too=True)); save_board(pcb, b)
+    b = pcbnew.LoadBoard(pcb); add_planes(b); save_board(pcb, b)
+    nv, nu, txt = kt.drc(pcb, os.path.join(OUT, "drc.rpt"))
+    left = Counter(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt))
+    kinds = Counter(re.findall(r"^\[(\w+)\]", txt, re.M))
+    vias = sum(1 for t in b.GetTracks() if t.GetClass() == "PCB_VIA")
+    print(f"finished: unconnected {nu}, violations {nv}, vias {vias}; {dict(kinds)}")
+    print("left: " + ", ".join(f"{n} {c}" for n, c in left.most_common()))
+    os.remove(routed)
 
 
 def route_trial(pcb, layers, timeout):
@@ -1099,6 +1176,7 @@ def main():
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--targets", help="write the pin-map targets of the placed board to this json and stop")
     ap.add_argument("--route", type=int, default=0, help="route the placed board in place with this many router passes and stop")
+    ap.add_argument("--finish", type=int, default=0, help="finish the routed board (router's tracks free, rip-up allowed) with this many passes")
     a = ap.parse_args()
     R = pickle.load(open(a.room, "rb"))
     R["board"], n_filled = clean_board()
@@ -1107,6 +1185,9 @@ def main():
         return
     if a.route:
         route_board(a.route, a.timeout)
+        return
+    if a.finish:
+        finish_route(a.finish, a.timeout)
         return
     if os.environ.get("TRIAL_PLANES_ONLY"):   # fill the planes of a finished trial and count (TRIAL_PLANES_ONLY=<trial dir name>)
         trial_planes(os.path.join(OUT, os.environ["TRIAL_PLANES_ONLY"], NAME + ".kicad_pcb"),
