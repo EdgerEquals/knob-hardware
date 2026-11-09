@@ -65,13 +65,56 @@ def part(prefix, value, fp, pins, block, face="B", lcsc="", mpn="", note="", nam
 
 _SIZE = {"0201": "R_0201_0603Metric", "0402": "R_0402_1005Metric", "0603": "R_0603_1608Metric", "0805": "R_0805_2012Metric"}
 
+# The passives' parts (9 Nov 2026, for the PCBWay pack): every C-number, MPN and rating read on lcsc.com / jlcpcb.com that day [S];
+# Samsung capacitors, UNI-ROYAL 1% thick-film resistors (Yageo for 22R and 33R, the UNI-ROYAL ones out of stock).
+# (kind, value as the netlist writes it, size) -> (LCSC, MPN, datasheet)
+_UR = "https://www.lcsc.com/datasheet/C25744.pdf"   # UNI-ROYAL 0402WGF series
+PASSIVE = {
+    ("C", "15pF C0G", "0402"): ("C86285", "CL05C150JB5NNNC", "https://datasheet.lcsc.com/lcsc/2304140030_Samsung-Electro-Mechanics-CL05C150JB5NNNC_C86285.pdf"),
+    ("C", "100nF", "0402"): ("C1525", "CL05B104KO5NNNC", "https://www.lcsc.com/datasheet/C1525.pdf"),               # 16 V X7R
+    ("C", "100nF 16V", "0402"): ("C1525", "CL05B104KO5NNNC", "https://www.lcsc.com/datasheet/C1525.pdf"),
+    ("C", "100nF 50V", "0402"): ("C307331", "CL05B104KB54PNC", "https://www.lcsc.com/datasheet/C307331.pdf"),       # on 15 V
+    ("C", "1nF C0G", "0402"): ("C307441", "CL05C102JB5NNNC", "https://www.lcsc.com/datasheet/C307441.pdf"),
+    ("C", "1uF", "0402"): ("C52923", "CL05A105KA5NQNC", "https://www.lcsc.com/datasheet/C52923.pdf"),               # 25 V X5R
+    ("C", "22uF 16V", "0805"): ("C98190", "CL21A226MOQNNNE", "https://www.lcsc.com/datasheet/C98190.pdf"),
+    ("C", "10uF", "0603"): ("C19702", "CL10A106KP8NNNC", "https://www.lcsc.com/datasheet/C19702.pdf"),              # 10 V X5R
+    ("C", "10uF 25V", "0805"): ("C15850", "CL21A106KAYNNNE", "https://www.lcsc.com/datasheet/C15850.pdf"),
+    ("C", "2.2uF", "0603"): ("C23630", "CL10A225KO8NNNC", "https://www.lcsc.com/datasheet/C23630.pdf"),             # 16 V X5R
+    ("R", "10k", "0402"): ("C25744", "0402WGF1002TCE", _UR), ("R", "10k 1%", "0402"): ("C25744", "0402WGF1002TCE", _UR),
+    ("R", "22R", "0402"): ("C114765", "RC0402FR-0722RL", "https://datasheet.lcsc.com/szlcsc/YAGEO-RC0402FR-0722RL_C114765.pdf"),
+    ("R", "100R", "0402"): ("C25076", "0402WGF1000TCE", _UR),
+    ("R", "33R", "0402"): ("C138002", "RC0402FR-0733RL", "https://datasheet.lcsc.com/szlcsc/YAGEO-RC0402FR-0722RL_C114765.pdf"),
+    ("R", "0R", "0402"): ("C17168", "0402WGF0000TCE", "https://www.lcsc.com/datasheet/C17168.pdf"),                 # 1 A jumper
+    ("R", "0R", "0805"): ("C17477", "0805W8F0000T5E", "https://www.lcsc.com/datasheet/C17477.pdf"),                 # 2 A jumper
+    ("R", "3.3k 1%", "0402"): ("C25890", "0402WGF3301TCE", _UR), ("R", "15k", "0402"): ("C25756", "0402WGF1502TCE", _UR),
+    ("R", "1k", "0402"): ("C11702", "0402WGF1001TCE", _UR), ("R", "4.7k", "0402"): ("C25900", "0402WGF4701TCE", _UR),
+    ("R", "47k", "0402"): ("C25792", "0402WGF4702TCE", _UR), ("R", "220R", "0402"): ("C25091", "0402WGF2200TCE", _UR),
+    ("R", "100k", "0402"): ("C25741", "0402WGF1003TCE", _UR), ("R", "27k", "0402"): ("C25771", "0402WGF2702TCE", _UR),
+    ("R", "1M", "0402"): ("C26083", "0402WGF1004TCE", _UR),
+}
+VALUE_FIX = {"1nF": "1nF C0G", "1uF 10V": "1uF", "22uF 10V": "22uF 16V", "100nF 25V": "100nF 50V"}   # what the parts above are
+
+
+def _passive(kind, val, size):
+    val = VALUE_FIX.get(val, val)
+    lcsc, mpn, ds = PASSIVE.get((kind, val, size), ("", "", ""))
+    return val, lcsc, mpn, ds
+
 
 def R(val, a, b, block, size="0402", note="", face="B", dnp=False):
-    return part("R", val, "Resistor_SMD:" + _SIZE[size], {1: a, 2: b}, block, face=face, note=note, dnp=dnp)
+    val, lcsc, mpn, ds = _passive("R", val, size)
+    r = part("R", val, "Resistor_SMD:" + _SIZE[size], {1: a, 2: b}, block, face=face, note=note, dnp=dnp, lcsc=lcsc, mpn=mpn)
+    if ds:
+        PARTS[-1]["datasheet"] = ds
+    return r
 
 
 def C(val, a, b, block, size="0402", note="", face="B", dnp=False):
-    return part("C", val, "Capacitor_SMD:" + _SIZE[size].replace("R_", "C_"), {1: a, 2: b}, block, face=face, note=note, dnp=dnp)
+    val, lcsc, mpn, ds = _passive("C", val, size)
+    r = part("C", val, "Capacitor_SMD:" + _SIZE[size].replace("R_", "C_"), {1: a, 2: b}, block, face=face, note=note, dnp=dnp, lcsc=lcsc, mpn=mpn)
+    if ds:
+        PARTS[-1]["datasheet"] = ds
+    return r
 
 
 def adc_rc(line, pin, block, face="B", note=""):
@@ -114,7 +157,8 @@ def build():
          note="the flex's solder end, hot-bar or hand [Q29/Q30]; pin 24 = the jack unit's quiet ground, read as AGND_SENSE [Q41]",
          ref="J1")
     part("J", "board L header 2x11 1.27 THT", "mb:VBoard_L_Header_2x11_P1.27_THT", {i + 1: n for i, n in enumerate(HDR_L)}, "headers",
-         face="F", note="vertical board L (power): 15 V up, 5 V and 3.3 V down, 5V_EN, the switch ladder [A order]", ref="J2")
+         face="F", note="vertical board L (power): 15 V up, 5 V and 3.3 V down, 5V_EN, the switch ladder [A order]; the right-angle "
+              "header comes on board L, its legs soldered into these holes at assembly [Ed 9 Nov A]", ref="J2")
     part("J", "board R header 2x11 1.27 hybrid", "mb:VBoard_R_Header_2x11_P1.27_Hybrid", {i + 1: n for i, n in enumerate(HDR_R)},
          "headers", face="F", note="vertical board R: the screen's quad port, CAN to its transceiver [A order]; 8 SMT legs over the "
          "encoder sensor, 14 THT [S model v0.52 vb_hdr]", ref="J3")
@@ -331,7 +375,8 @@ def write_bom(parts, path):
         w.writerow(["Refs", "Qty", "Value", "Footprint", "MPN", "LCSC", "Datasheet", "Fitted by", "Note"])
         for (val, fp, mpn, lcsc, dnp), ps in sorted(rows.items(), key=lambda kv: (kv[0][4], kv[1][0]["ref"][0], kv[0][0])):
             refs = sorted((p["ref"] for p in ps), key=lambda r: (r.rstrip("0123456789"), int("0" + r[len(r.rstrip("0123456789")):])))
-            fit = ("no" if dnp else "pads only" if refs[0] in ("J4", "J5") else
+            fit = ("no" if dnp else "pads only" if refs[0] in ("J4", "J5", "JP1") else
+                   "with the vertical boards" if refs[0] in ("J2", "J3") else          # [Ed 9 Nov 18:0x "A"]
                    "by hand" if refs[0] in ("MP1", "MP2", "H1", "M1", "J1") else "PCBA")
             w.writerow([" ".join(refs), len(ps), val, fp, mpn, lcsc, ps[0]["datasheet"], fit, ps[0]["note"]])
     return len(rows)

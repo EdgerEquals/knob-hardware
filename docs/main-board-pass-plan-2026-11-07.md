@@ -189,3 +189,13 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   KiCad DRC 0 / 0 in `reports/`. README says NOT READY TO ORDER until the passives get LCSC numbers (values and packages are
   set; choosing the parts is the next step), and flags J2 / J3 [C]: fitted here by PCBA (design.py) or with the vertical boards.
   Hand-fit and pad-only parts (J1, J4, J5, JP1, H1, M1, MP1, MP2) and the unfitted R10, R11, R31 are out of the BOM and CPL.
+- **J2 / J3 = A [Ed 9 Nov 18:0x]**: the vertical boards' right-angle headers come fitted on those boards; their legs are soldered
+  into the main board at assembly. Out of the main board's BOM and pick-and-place.
+- **Passives chosen** (`design.py` PASSIVE; every C-number, MPN and rating read on lcsc.com / jlcpcb.com on 9 Nov [S]): Samsung
+  capacitors (100 nF 16 V X7R C1525, 1 nF C0G C307441, 15 pF C0G C86285, 1 uF 25 V C52923, 10 uF 10 V 0603 C19702, 2.2 uF 16 V
+  C23630, 22 uF 16 V 0805 C98190, 10 uF 25 V 0805 C15850, 100 nF 50 V C307331) and 1% thick-film resistors (UNI-ROYAL 0402WGF;
+  Yageo RC0402FR for 22R and 33R, the UNI-ROYAL ones out of stock); 0R jumpers rated 1 A (0402) and 2 A (0805, the motor's
+  branch). Value labels follow the parts: "1nF" is C0G, "22uF 10V" is 16 V, "100nF 25V" is 50 V, "1uF 10V" is 25 V.
+  Said plainly: X5R capacitors lose much of their value under DC bias; the 10 uF on 15 V (C61) keeps well under half, as bulk
+  at the board's entry (board L's buck has its own input capacitors) [A]. The 22 uF 25 V part was out of stock.
+- **Fab pack v2.0: READY TO QUOTE** (43 BOM lines, 143 parts, each with MPN, LCSC and datasheet link; DRC 0 / 0).

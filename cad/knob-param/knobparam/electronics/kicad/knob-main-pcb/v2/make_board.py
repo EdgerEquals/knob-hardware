@@ -530,7 +530,8 @@ def build(parts, placement):
         f.Reference().SetTextSize(V(0.4, 0.4)); f.Reference().SetTextThickness(mm(0.06))
         if p["dnp"]:
             f.SetAttributes(f.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
-        if p["ref"][:2] in ("MP", "H1", "M1") or p["ref"] in ("J1", "J4", "J5", "JP1"):   # hand-fitted, pads only, bonded, a jumper
+        if p["ref"][:2] in ("MP", "H1", "M1") or p["ref"] in ("J1", "J2", "J3", "J4", "J5", "JP1"):   # hand-fitted, pads only, bonded,
+            # a jumper, or the vertical boards' headers (they come on those boards [Ed 9 Nov "A"])
             f.SetAttributes(f.GetAttributes() | pcbnew.FP_EXCLUDE_FROM_BOM | pcbnew.FP_EXCLUDE_FROM_POS_FILES)
         for k, v in (("MPN", p["mpn"]), ("LCSC", p["lcsc"]), ("Note", p["note"])):
             if v:

@@ -28,8 +28,10 @@ NOTES = {"knob-main-pcb": "Board v2 (9 Nov 2026): 6 layers [Ed Q45], FR-4, 1.6 m
                           "Not in the BOM / CPL: J1 link-flex pads (the flex is hot-bar or hand soldered), J4 Tag-Connect pads, J5 cover-board pads,\n"
                           "JP1 solder jumper, H1 rod clamp (hand-fit tube and nut), M1 1220 motor tabs (soldered at assembly), MP1 / MP2 posts\n"
                           "(Ø1.0 pins of the jack unit's brass posts in plated Ø1.15 holes, soldered at assembly).\n"
-                          "J2 / J3: the vertical boards' 2x11 1.27 mm headers, in the BOM as PCBA-fitted (design.py) [C: fitted here or with the\n"
-                          "vertical boards]. Passives: values and packages set, LCSC numbers still to choose (next step).\n",
+                          "J2 / J3: holes and pads for the vertical boards' 2x11 1.27 mm right-angle headers, which come fitted on those boards;\n"
+                          "their legs are soldered into this board at assembly [Ed 9 Nov]. Not in this BOM / CPL.\n"
+                          "Passives: Samsung capacitors and UNI-ROYAL / Yageo 1% resistors, LCSC numbers read on lcsc.com on 9 Nov 2026.\n"
+                          "Not fitted (out of BOM / CPL): R10, R11 (I2C pull-ups, on the jack board), R31 (GAINSEL-high spot).\n",
          "screen-adapter": "Board: 2 layers, FR-4, 1.0 mm; HASL or ENIG; green mask, white silk [A].\n"
                            "Hand-fit parts (excluded from BOM/CPL): C1 rod clamp.\n",
          "usb-c-board": "Board: 2 layers, FR-4, 1.6 mm, 12.0 x 6.0 mm; ENIG (the 8 spring-contact landing pads P1-P8 are bare gold, no paste);\n"
