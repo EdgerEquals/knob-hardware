@@ -118,3 +118,26 @@ cover's rim). Plan: `docs/img/main-board-plan.png` (`tools/studies/main_board_pl
   [C] PCBWay to price both in the pre-quote. (A first pair of trials had the router routing ground too: 43 / 21 left.)
   **Q45 = B [Ed 9 Nov 09:24]: 6 layers**, front, In1 ground plane, In2, In3, In4 ground plane, back (four signal layers, the
   analog lines between two grounds). [C] PCBWay prices it in the pre-quote.
+
+## Step 3: routing the main board (9 Nov)
+- **The ribbon** [Ed 09:31 "Y"] (`docs/img/flex-corridor.png`): the link flex's lines laid first and locked, the analog ones on
+  In3 with In2 kept clear above them (a rule area), I2C / MIDI / USB on the back, both up the right strip beside windows D and
+  C, in between two LEDs and out again; the SPI lines on the front up the left side. Then ground: a via beside every ground pad
+  (one in the middle of an exposed pad; C12 by the edge has no room, so a 1.2 mm track joins it to C9's). Then Freerouting
+  1.9.0 with ground left to the two planes, a pass with the first result fixed, KiCad's DRC.
+- **What the router left** (third run, then five passes with rip-up from that result): 11 connections, every ground pad joined,
+  no rule errors. One by one they were three knots: the flex pads (0.3 mm apart, every line to a via, the ground vias placed
+  first boxing pads in), board L's 15 V feed (75 mm from the post at the bottom to J2 at the top left, by the end walled in
+  by the router's own tracks on every layer) and the USB pair into the chip.
+- **So those three are laid before the router too** [A] (`make_board.py`: `flex_fanout`, `preroute`):
+  - Flex pads: each pad a short front stub to its own via, odd pads up and even down, each row staggered 0.3 (vias 0.2 mm
+    apart); the right ribbon now starts under the pads, its lines in the order their vias come, so no line crosses another;
+    the SPI lines start at their pads and step up into the left ribbon. Tight, said plainly: next to the pads the analog
+    lines keep 0.16 mm from the neighbouring pads (their rule is 0.15; the pads' own pitch sets it). The USB pair now runs at
+    the two edges of its 6-line ribbon, 1.5 mm apart (fine for full-speed USB [A]); the flex's pinout is unchanged.
+  - 15 V (VSYS): one 0.4 mm track on In2 from the post to J2, found by the patch router (below) on the empty board.
+  - USB: the ribbon's ends into the chip on the back and front.
+- **Patch router** (`electronics/kicad/patch_router.py`): joins what the router leaves, one net at a time, on a 0.05 mm grid
+  around the copper already there (router4's search in C), each path checked exactly against the clearances and searched
+  again around anything it comes too close to; it may take up the router's own tracks of other nets at a price and join
+  those again, two levels deep at most.
