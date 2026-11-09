@@ -36,9 +36,15 @@ def pad_info(p):
         kind = "circle"
     elif sh == pcbnew.PAD_SHAPE_OVAL:
         kind = "oval"
-    elif sh == pcbnew.PAD_SHAPE_CUSTOM:   # its outline's box, square to the board (larger than the pad: safe)
-        bb = p.GetBoundingBox(); kind = "rect"; ang = 0.0
-        w, h = _mm(bb.GetWidth()), _mm(bb.GetHeight())
+    elif sh == pcbnew.PAD_SHAPE_CUSTOM:   # its real outline (the rod clamp's ring pads: their box is not centred on the anchor)
+        ps = p.GetEffectivePolygon(); polys = []
+        for k in range(ps.OutlineCount()):
+            o = ps.Outline(k)
+            polys.append(Polygon([(_mm(o.CPoint(i).x), _mm(o.CPoint(i).y)) for i in range(o.PointCount())],
+                                 [[(_mm(ps.Hole(k, j).CPoint(i).x), _mm(ps.Hole(k, j).CPoint(i).y)) for i in range(ps.Hole(k, j).PointCount())]
+                                  for j in range(ps.HoleCount(k))]).buffer(0))
+        poly = shapely.union_all(polys)
+        return dict(x=x, y=y, w=w, h=h, kind="poly", ang=0.0, poly=poly)
     else:
         kind = "rect"
     return dict(x=x, y=y, w=w, h=h, kind=kind, ang=ang)
@@ -46,6 +52,10 @@ def pad_info(p):
 
 def pad_dist(X, Y, pi):
     """Signed distance from points to the pad (negative inside), in the pad's own frame."""
+    if pi["kind"] == "poly":
+        pts = shapely.points(np.c_[np.ravel(X), np.ravel(Y)])
+        d = shapely.distance(pi["poly"], pts) - shapely.distance(pi["poly"].exterior, pts) * shapely.contains(pi["poly"], pts)
+        return np.asarray(d, float).reshape(np.shape(X))
     a = math.radians(pi["ang"]); dx, dy = X - pi["x"], Y - pi["y"]
     # KiCad's y points down and its angles turn counter-clockwise on screen: the pad frame is the board frame turned by -a in y-down
     u = dx * math.cos(a) - dy * math.sin(a); v = dx * math.sin(a) + dy * math.cos(a)
@@ -53,6 +63,8 @@ def pad_dist(X, Y, pi):
 
 
 def pad_poly(pi, grow=0.0):
+    if pi["kind"] == "poly":
+        return pi["poly"].buffer(grow) if grow else pi["poly"]
     if pi["kind"] == "circle":
         return Point(pi["x"], pi["y"]).buffer(pi["w"] / 2 + grow, 16)
     if pi["kind"] == "oval":
@@ -112,6 +124,8 @@ class PatchRouter:
 
     def _bbox(self, it):
         if it["kind"] == "pad":
+            if it["pi"]["kind"] == "poly":
+                return it["pi"]["poly"].bounds
             r = math.hypot(it["pi"]["w"], it["pi"]["h"]) / 2
             return it["pi"]["x"] - r, it["pi"]["y"] - r, it["pi"]["x"] + r, it["pi"]["y"] + r
         if it["kind"] in ("via", "hole"):

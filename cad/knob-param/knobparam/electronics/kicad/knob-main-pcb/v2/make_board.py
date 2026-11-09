@@ -1066,7 +1066,76 @@ def preroute(b):
     return out, failed
 
 
+def free_router_tracks(b):
+    """Unlock the router's own tracks and vias (route_board locks everything after its first pass) so the patch router may take
+    them up; what was laid on purpose stays locked: ground, the nets laid before the router, the ribbon and the flex pads' stubs and
+    vias. Returns how many were freed."""
+    from shapely.geometry import LineString, Point
+    lines = {}
+    for net, _lay, pts in ribbon_lines(b):
+        lines.setdefault(net, []).append(LineString([(ORIGIN[0] + x, ORIGIN[1] - y) for x, y in pts]))
+    vias, _left = flex_fanout(b)
+    stub = {(net, round(px, 3), round(py, 3), round(vx, 3), round(vy, 3)) for (net, _k), (px, py, vx, vy) in vias.items()}
+    via_at = {(net, round(vx, 3), round(vy, 3)) for (net, _k), (_px, _py, vx, vy) in vias.items()}
+    n = 0
+    for t in b.GetTracks():
+        net = t.GetNetname()
+        if not t.IsLocked() or net == "GND" or net in PREROUTE_FULL:
+            continue
+        if t.GetClass() == "PCB_VIA":
+            x, y = pcbnew.ToMM(t.GetPosition().x), pcbnew.ToMM(t.GetPosition().y)
+            if (net, round(x, 3), round(y, 3)) in via_at:
+                continue
+        else:
+            a = (pcbnew.ToMM(t.GetStart().x), pcbnew.ToMM(t.GetStart().y)); e = (pcbnew.ToMM(t.GetEnd().x), pcbnew.ToMM(t.GetEnd().y))
+            if any(l.distance(Point(a)) < 0.002 and l.distance(Point(e)) < 0.002 for l in lines.get(net, [])):
+                continue
+            if (net, round(a[0], 3), round(a[1], 3), round(e[0], 3), round(e[1], 3)) in stub:
+                continue
+        t.SetLocked(False); n += 1
+    return n
+
+
+PATCH_DEPTH = int(os.environ.get("PATCH_DEPTH", "0"))   # levels of taking up the router's tracks (0: none; 2 made it worse on 9 Nov)
 PATCH_PEN = float(os.environ.get("PATCH_PEN", "200"))   # per cell of the router's copper crossed: ~100 mm of detour per track
+
+
+def force_and_resume(passes, timeout):
+    """For what neither router can join: the patch router forces each one through, taking up the router's tracks in its way
+    (they stay out), then Freerouting, given the board again with the forced paths fixed and its own tracks free, joins the nets
+    that were taken up (it is better at many easy nets than at a few walled-in ones); then the patch step."""
+    import re, shutil, kicad7_tools as kt
+    pcb = os.path.join(OUT, NAME + ".kicad_pcb")
+    nv, nu, txt = kt.drc(pcb)
+    nets = sorted(set(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt)) - {"GND"})
+    b = pcbnew.LoadBoard(pcb)
+    print("router's tracks freed:", free_router_tracks(b))
+    pr, widths = _patch_router(b); taken = set()
+    for n in nets:
+        left, added, victims = pr.route_net(n, rip=True, pen0=PATCH_PEN)
+        taken |= victims
+        print(f"  {n}: {'forced' if not left else 'still ' + str(left) + ' left'}"
+              + (f", {sum(a['length'] for a in added):.1f} mm, {sum(len(a['vias']) for a in added)} via(s)" if added else "")
+              + (f"; took up {', '.join(sorted(victims))}" if victims else ""))
+    print("taken up for the router to join again:", ", ".join(sorted(taken)) or "none")
+    # the board again from the placed one (no planes: the router works without them), everything carried over as it is locked
+    key = lambda t: (t.GetClass(), t.GetNetname(), t.GetLayer(), t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y)
+    nb = pcbnew.LoadBoard(os.path.join(OUT, "placed.kicad_pcb")); refresh_ribbons(nb)
+    have = {key(t) for t in nb.GetTracks()}
+    for t in b.GetTracks():
+        if key(t) in have:
+            continue
+        if t.GetClass() == "PCB_VIA":
+            n_ = pcbnew.PCB_VIA(nb); n_.SetPosition(t.GetPosition()); n_.SetWidth(t.GetWidth()); n_.SetDrill(t.GetDrillValue())
+            n_.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        else:
+            n_ = pcbnew.PCB_TRACK(nb); n_.SetStart(t.GetStart()); n_.SetEnd(t.GetEnd()); n_.SetWidth(t.GetWidth()); n_.SetLayer(t.GetLayer())
+        n_.SetNet(nb.FindNet(t.GetNetname())); n_.SetLocked(t.IsLocked()); nb.Add(n_)
+    save_board(pcb, nb)
+    write_project(OUT, NAME, RULES, [(LIB, "${KIPRJMOD}/../" + LIB + ".pretty")], CLASSES)
+    print("router again:", _route(pcb, passes=passes, timeout=timeout, tag="_force", resume=True))
+    b2 = pcbnew.LoadBoard(pcb); print("dangling track ends trimmed:", trim_dangling(b2)); add_planes(b2); save_board(pcb, b2)
+    patch_finish()
 
 
 def patch_finish(narrow=(0.25, 0.2, 0.127)):
@@ -1079,6 +1148,7 @@ def patch_finish(narrow=(0.25, 0.2, 0.127)):
     nv, nu, txt = kt.drc(pcb)
     nets = sorted(set(re.findall(r"\[unconnected_items\][^\n]*\n[^\n]*\n[^\n]*\[([^\]]+)\]", txt)) - {"GND"})
     b = pcbnew.LoadBoard(pcb)
+    print("router's tracks freed for taking up:", free_router_tracks(b))
     pr, widths = _patch_router(b)
     report = []; failed = []
 
@@ -1087,7 +1157,7 @@ def patch_finish(narrow=(0.25, 0.2, 0.127)):
         are joined again one level down; at the last level nothing is taken up, so the chain stops."""
         w0 = widths.get(n, widths["default"])
         for w in [w0] + [x for x in narrow if x < w0]:
-            left, added, victims = pr.route_net(n, width=w, rip=depth < 2, pen0=PATCH_PEN * 5 ** depth)
+            left, added, victims = pr.route_net(n, width=w, rip=depth < PATCH_DEPTH, pen0=PATCH_PEN * 5 ** depth)
             for a in added:
                 report.append("  " * depth + f"{n}: {a['length']:.1f} mm at {w} mm on "
                               f"{', '.join(b.GetLayerName(l) for l in a['layers'])}, {len(a['vias'])} via(s)")
@@ -1418,6 +1488,7 @@ def main():
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--targets", help="write the pin-map targets of the placed board to this json and stop")
     ap.add_argument("--route", type=int, default=0, help="route the placed board in place with this many router passes and stop")
+    ap.add_argument("--force", type=int, default=0, help="force the unjoined through (taking up the router's tracks), then the router again with this many passes, then --patch")
     ap.add_argument("--patch", action="store_true", help="join what the router left with the patch router (patch_router.py)")
     ap.add_argument("--finish", type=int, default=0, help="finish the routed board (router's tracks free, rip-up allowed) with this many passes")
     a = ap.parse_args()
@@ -1434,6 +1505,9 @@ def main():
         return
     if a.patch:
         patch_finish()
+        return
+    if a.force:
+        force_and_resume(a.force, a.timeout)
         return
     if os.environ.get("TRIAL_PLANES_ONLY"):   # fill the planes of a finished trial and count (TRIAL_PLANES_ONLY=<trial dir name>)
         trial_planes(os.path.join(OUT, os.environ["TRIAL_PLANES_ONLY"], NAME + ".kicad_pcb"),
