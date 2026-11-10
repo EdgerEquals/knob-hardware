@@ -14,35 +14,6 @@
   0.0
  ],
  "sw_rot": -45.0,
- "headers": [],
- "standoffs": [],
- "drill_m2": 2.4,
- "pad_m2": 3.2,
- "hdr": {
-  "part": "Samtec TSW-105-xx-T-D long-post 2x5 header, post about 21.5 mm for the 30 mm cradle (exact -xx code to pick)",
-  "lcsc": "consigned",
-  "mate": 21.5,
-  "ins": 2.54,
-  "tail": 2.79,
-  "n": 5,
-  "rows": 2,
-  "axis": "y"
- },
- "sock": {
-  "part": "2.54 mm 2x5 female socket, 11 mm (hanxia PM2.54 H11 family, 2x5 part to pick)",
-  "lcsc": "TBC",
-  "h": 11.0,
-  "tail": 3.2,
-  "n": 5,
-  "rows": 2
- },
- "standoff": {
-  "part": "M2x30 female-female brass standoff (stock size; printed spacer if none in stock)",
-  "lcsc": "TBC",
-  "length": 30.0,
-  "od": 3.2,
-  "kind": "female-female"
- },
  "place_y": 40.629999999999995,
  "main_pcb_holes": [
   {
@@ -70,72 +41,11 @@
    "what": "hold-down spring"
   }
  ],
- "hdr_body": [
-  5.08,
-  12.7
- ],
- "hdr_pins": [
-  [
-   -1.27,
-   -5.08
-  ],
-  [
-   -1.27,
-   -2.54
-  ],
-  [
-   -1.27,
-   0.0
-  ],
-  [
-   -1.27,
-   2.54
-  ],
-  [
-   -1.27,
-   5.08
-  ],
-  [
-   1.27,
-   -5.08
-  ],
-  [
-   1.27,
-   -2.54
-  ],
-  [
-   1.27,
-   0.0
-  ],
-  [
-   1.27,
-   2.54
-  ],
-  [
-   1.27,
-   5.08
-  ]
- ],
- "cradle_ring": {
-  "inner": [
-   null,
-   null
-  ],
-  "outer": [
-   null,
-   null,
-   null
-  ]
- },
  "fpc_socket": {
   "part": "Panasonic AXE530127",
   "x": 16.0,
   "long_y": 8.4,
   "short_x": 3.0
- },
- "tab": {
-  "x1": 17.8,
-  "hy": 4.5
  },
  "top_joint": {
   "kind": "sockets",

@@ -2,7 +2,8 @@
 its B2B header sits at x +11.75; the custom jumper's top end (socket + stiffener) hangs under it. Which guide and press-spring
 positions clear it, and do the existing joystick checks still pass?
 Run from cad/joystick-param with the knob-param venv:  python fmst02_guide_study.py <fmst02.brep>
-The jumper's top end is an envelope [A] until the panel's B2B family is known."""
+The jumper's top end is an envelope [A] until the panel's B2B family is known.
+Historical (v0.6): it reads the press springs and the press peg, which v0.8 removed; run it on the v0.6 model (git 4fbcae0)."""
 import sys, os, copy, itertools
 sys.path.insert(0, os.getcwd())
 from build123d import import_brep, Pos, Rot, Box, Align, Cylinder

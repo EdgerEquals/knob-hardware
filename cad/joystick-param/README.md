@@ -16,7 +16,8 @@ Notes: `docs/layout-v4-2026-11-03.md` ("Step 1 follow-ups in the model"). v0.7 t
 
 v0.7 (3 Nov 2026, layout v4 step 1): base `case`. The top board rests on the knob-param vertical boards' spring contacts and is glued
 into a clear SLA cradle captured by the case (flange on a gasket behind the faceplate, lip ring in its cutout); the glued cradle,
-dowels, H11 sockets and long-pin headers below are gone, and the carrier narrows to make room for the lip. `base="cradle"` keeps v0.6.
+dowels, H11 sockets and long-pin headers below are gone, and the carrier narrows to make room for the lip. (v0.6 and earlier, and the
+v0.7 spring contacts, are in git history up to 3238bb9: the model now builds only `base="case"`.)
 Notes: `docs/top-screen-joystick.md` (v0.7) and `docs/layout-v4-2026-11-03.md` ("Step 1 in the model"). The v0.6 text follows.
 
 Parametric build123d model of the top-screen 5-way joystick. An Alps SKRHADE010 sits on the carrier axis, on a daughterboard
@@ -41,9 +42,11 @@ Run it with the knob-param venv: `cad/knob-param/.venv/bin/python build.py`.
 
 - `jsparam/params.py`: `P` (tags: [A] assumed, [Ed] from Ed, [S] datasheet) and `derive()`.
 - `jsparam/parts.py`: parts, all in the local frame. z is measured from the main-PCB front face. The origin is the carrier centre.
-- `jsparam/checks.py`: stem/cup, spring preload and press force, captive bezel, switch centring, symmetry, four standoffs, wall thickness, knob clearance.
+- `jsparam/checks.py`: the bezel's cup on the stem, the up-stop (guide heads on cushions), captive bezel, the case cradle (v0.9: printed
+  with the case), the screen jumper, hold-down springs and tipping, switch centring, symmetry, wall thickness, knob clearance.
 - `jsparam/render.py`: the colour PNG and the views.
 
-The KiCad daughterboard is at `cad/knob-param/knobparam/electronics/kicad/joystick-daughterboard/`. `build.py` writes
-`geom.json` there; `make_project.py` (system `python3`, with pcbnew) turns that into the board. The fab pack is
-`joystick-daughterboard/fab/`.
+The KiCad daughterboard folder is `cad/knob-param/knobparam/electronics/kicad/joystick-daughterboard/`. `build.py` writes
+`geom.json` there: `main_pcb_holes` (the hold-down spring bores, read by the knob model's electronics) and what the top board's KiCad
+generator will need (`top_joint`, `guide_keepout`, `corner_notches`). `make_project.py` there is the superseded v0.4 daughterboard
+generator (headers, standoffs); it no longer matches `geom.json`.
