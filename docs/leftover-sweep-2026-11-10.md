@@ -14,7 +14,8 @@ see **Done in v0.56** at the end. A (physical) goes to him one item at a time.
    (3.4 × 6.4, 1.6 neck) on main board v2 (KiCad x 110.8–114.2, y 56.17–62.57, and the mirror) and on the joystick top board.
    The jumper's S2/S3 legs were also placed against the old grub line. Fix: springs to y ±2.0 (0.6 web) and move `jmp_y3`,
    or keep the slot.
-2. **Knob collar under the faceplate** ✔. A Ø47.4 × 7.5 tube round the knob hole (`case/parts/shell.py:235`,
+2. **DONE (v0.58) [Ed, "B: remove it"]:** no collar (`collar_h_mult` 0); the glass fits tight only through the 2.5 plate; case 3.3 g lighter; the coat stays out of the knob hole; `collar_r` still sets the joystick flange's limit. 329 / 329 pass.
+   Was: **Knob collar under the faceplate** ✔. A Ø47.4 × 7.5 tube round the knob hole (`case/parts/shell.py:235`,
    `case/params.py:241`, `collar_h_mult` × the corner-screw Ø). Added in v0.1 for the labyrinth and the knob bolts; both
    gone (knob bolts removed 2 Nov, `knob_bolt_n=0`). The glass now runs 10 mm (not the faceplate's 2.5) through a bore with
    0.20 radial air. It also sets the joystick cradle flange's −y edge (`jsparam/params.py:1071`). Fix: `collar_h_mult=0`.

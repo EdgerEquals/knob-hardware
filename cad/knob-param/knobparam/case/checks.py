@@ -120,8 +120,9 @@ def checks(D, parts):
         f"wall {D['wall']:.2f} + clearance {D['pcb_clear']:.2f} each side of the {D['nest_w']:.2f} board")
     row("bezel on the 10HP panel", D["bezel_margin"], 0.0,
         f"bezel {D['bezel_w']:.2f} wide, {D['bezel_margin']:.2f} mm each side; a 49 mm bezel would have {D['bezel49_margin']:.2f}")
-    row("knob collar inside the panel", D["collar_margin"], D["sla_min"],
-        f"Ø{D['knob_od_used']:.2f} knob, collar Ø{D['collar_od']:.2f}, {D['collar_margin']:.2f} mm of panel outside it")
+    if D["collar_h"] > 0:
+        row("knob collar inside the panel", D["collar_margin"], D["sla_min"],
+            f"Ø{D['knob_od_used']:.2f} knob, collar Ø{D['collar_od']:.2f}, {D['collar_margin']:.2f} mm of panel outside it")
     row("boss axis inside the PCB", D["pcb_x1"] - D["boss_x"], 0.0,
         f"boss x ±{D['boss_x']:.2f}, PCB edge ±{D['pcb_x1']:.2f}, notch Ø{2 * D['notch_r']:.2f}")
     if not D["top_corners"]:
@@ -182,8 +183,9 @@ def checks(D, parts):
     row("knob hole is open", 0.0 if _inside(case, D["ox"], D["oy"], z_mid) else 1.0, 1.0, "probe on the dial axis, in the plate")
     row("shell back is open for the PCB", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_rim"] + D["z_ledge0"]) / 2) else 1.0, 1.0,
         "the PCB drops in from the back and stops on the ledge; the cover clamps it")
-    row("collar bore is open", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_collar0"] + D["z_fp0"]) / 2) else 1.0, 1.0,
-        "knob module slides down through the collar")
+    if D["collar_h"] > 0:   # (no collar since 10 Nov; the plate's own hole is the row above)
+        row("collar bore is open", 0.0 if _inside(case, D["ox"], D["oy"], (D["z_collar0"] + D["z_fp0"]) / 2) else 1.0, 1.0,
+            "knob module slides down through the collar")
     rim_y = D["panel_y0"] + D["edge_w"] / 2
     row("edge strip is material", 1.0 if _inside(case, D["ox"], rim_y, (D["z_fp0"] + D["z_fp1"]) / 2) else 0.0, 1.0,
         "bottom rim is the same plate as the rest of the face")

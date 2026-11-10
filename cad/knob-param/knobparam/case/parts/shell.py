@@ -231,8 +231,8 @@ def build(D):
         ny0, ny1 = D["jack_notch_y"]
         case = _sub(case, _box(D["x_in0"], -D["pcb_x1"] + lw + sl, ny0, ny1, z0 - sl, z1 + sl))
         case = _sub(case, _box(D["pcb_x1"] - lw - sl, D["x_in1"], ny0, ny1, z0 - sl, z1 + sl))
-    # collar under the knob opening; the knob module slides down through it
-    case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
+    if D["collar_h"] > 0:   # collar under the knob opening (none since 10 Nov, collar_h_mult 0)
+        case = _add(case, _cyl_z(D["collar_r"], D["z_collar0"], D["z_fp0"] + fu, D["ox"], D["oy"]))
     for x, y in D["knob_bolts"]:
         case = _add(case, _cyl_z(D["screw_boss_r"], D["z_bolt0"], D["z_fp0"] + fu, x, y))
     if D["scanner_enabled"]:
@@ -331,7 +331,10 @@ def build(D):
         ny0, ny1 = D["jack_notch_y"]
         glow = _sub(glow, _box(D["x_in0"] - sl, D["x_in0"] + g0 + gt + sl, ny0, ny1, D["z_rim"] - sl, D["z_fp1"]))
         glow = _sub(glow, _box(D["x_in1"] - g0 - gt - sl, D["x_in1"] + sl, ny0, ny1, D["z_rim"] - sl, D["z_fp1"]))
-    glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
+    if D["collar_h"] > 0:
+        glow = _sub(glow, _cyl_z(D["collar_r"] + D["glow_gap"], D["z_collar0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
+    else:   # no collar: the coat only stays out of the knob hole
+        glow = _sub(glow, _cyl_z(D["knob_hole_r"] + D["glow_gap"], D["z_ledge0"] - sl, D["z_fp1"], D["ox"], D["oy"]))
     if D["tft_on_front"]:
         glow = _sub(glow, _box(D["win_x0"], D["win_x1"], D["win_y0"], D["win_y1"], D["tft_z0"], D["tft_z1"]))
 

@@ -3,7 +3,7 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.57",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19). v0.57 [Ed 10 Nov, "A: two springs, hooked from the back"]: joystick v0.10, two hold-down springs on its axis, one round hole each in main board v2.1. v0.56 [Ed 10 Nov, "A: yes, do it"]: the leftover sweep's safe fixes (no made part changes; the model now has the jack stacks in place and C20-C22 on the board). v0.55 [Ed 10 Nov 11:23]: the Hall rib slopes down past the spring column
+    version="v0.58",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19). v0.58 [Ed 10 Nov, "B: remove it"]: no knob collar under the faceplate. v0.57 [Ed 10 Nov, "A: two springs, hooked from the back"]: joystick v0.10, two hold-down springs on its axis, one round hole each in main board v2.1. v0.56 [Ed 10 Nov, "A: yes, do it"]: the leftover sweep's safe fixes (no made part changes; the model now has the jack stacks in place and C20-C22 on the board). v0.55 [Ed 10 Nov 11:23]: the Hall rib slopes down past the spring column
                        # v0.48 [Ed 6 Nov 11:35 Q24 = A]: the posts step down to Ø1.0 pins through the power board's ears
                        # v0.47 [Ed 6 Nov 11:27 Q23 = A]: a second board under the jack power board (the parts need 839 mm² of footprint, it had
                        #   603 free); both flex connectors move to its underside

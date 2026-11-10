@@ -229,8 +229,9 @@ P = dict(
 
     # ---- knob collar under the plate, bolts up into the shell ----
     # The seal itself is the thin ring on the front face (interface lab_ring_*).
-    collar_h_mult=3.0,     # [A] collar length / screw diameter
-    collar_wall=2.5,       # [A] radial wall of the tube the knob slides through
+    collar_h_mult=0.0,     # [Ed 10 Nov, leftover sweep "B: remove it"] no collar under the faceplate (v0.1-v0.57: 3.0 x the corner-screw Ø,
+                           # a 7.5 tube for the labyrinth and the knob bolts, both gone); the glass now fits tight only through the 2.5 plate
+    collar_wall=2.5,       # [A] radial wall of the old collar; collar_r still sets the joystick cradle flange's -y limit
     knob_bolt_n=0,         # [Ed] 2 Nov: knob bolts removed (v0.2 had 4)
     seat_gap=0.08,         # [A] air so the cover, the shell and the PCB do not fuse in the model
     nest_gap=0.05,         # [A] air, PCB front face to the ledge stop (solids stay apart)

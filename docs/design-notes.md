@@ -69,7 +69,7 @@ catalogue number is assigned here. The main PCB was not edited.
 
 `docs/leftover-sweep-2026-11-10.md`. v0.56: the safe fixes (model mistakes, superseded boards archived in
 `electronics/kicad/superseded/`, dead code and checks; no made part changed). v0.57: joystick v0.10, two hold-down springs on
-the axis (1.8 N each) through one round hole per side in main board v2.1 (`docs/top-screen-joystick.md`, v0.10).
+the axis (1.8 N each) through one round hole per side in main board v2.1 (`docs/top-screen-joystick.md`, v0.10). v0.58: no knob collar under the faceplate (the glass's tight fit is the 2.5 plate only).
 
 ## Hall arm rib slopes past the spring column, v0.55 (Ed, 10 Nov 2026)
 
