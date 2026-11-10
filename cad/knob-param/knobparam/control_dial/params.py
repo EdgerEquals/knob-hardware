@@ -72,7 +72,6 @@ P = dict(
     carr_pin_ang=270.0,   # [A] locating-pin angle
     carr_mag=(3.0, 1.0),   # [Ed] v0.17: Ø3×1 N52 in the dial shoulder (the base), at 90°, opposite the Ø1 pin
     carr_mate=(3.0, 1.0),   # [Ed] v0.17: Ø3×1 N52 in the carrier, facing the base magnet (attracting)
-    carr_steel=(2.0, 0.5),   # unused in v0.17 (v0.16 was a steel disc pulled by a Ø2×1 magnet)
     carr_pin=(1.0, 1.5, 0.8),   # [A] Ø1 steel dowel: pressed depth in the dial, engagement in the carrier
     carr_mag_gap=0.0,   # [A] carrier magnet top below the dial shoulder (0 = flush, touching the steel disc)
     carr_pin_clear=0.05,   # [A] carrier hole over the pin
@@ -120,7 +119,7 @@ P = dict(
     sp_w_lo=(6.0, 5.0),   # [A] low spoke width at the dial tube / at sp_r_join (z fan_z0..fan_top, under the pinion caps' level)
     sp_w_hi=5.0,   # [A] high spoke width (z flange underside..land top)
     sp_r_join=9.0,   # [A] the low spoke runs to sp_r_join + 0.2
-    sp_r_hi0=8.7,   # [A] the step up to the flange level starts here (past the centring-spring anchor post)
+    sp_r_hi0=8.7,   # [A] the step up to the flange level starts here (it cleared v0.30's anchor post 2, gone since v0.31; kept, harmless)
     sp_core=1.0,   # [A] flange material between the top of the train groove and the bottom of a dimple
     # ---- v0.24 [Ed 3 Nov 12:28-12:58] the dial screen as a drop-in bezel cartridge, knob +4.4 (screen "z132a2441-1.32", interface
     # cart=True). Spec: docs/handover-2026-11-03.md "Job 1"; concept docs/img/dial-concept-2-cartridge.png. Every (x, y) and angle

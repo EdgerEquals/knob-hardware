@@ -82,7 +82,7 @@ def checks(D, parts):
         sg = min(a.distance_to(b) for a, b in itertools.combinations(sens, 2))
         r.row("Hall sensor body spacing on the PCB", sg, T["sensor_gap"], f"{D['hv_n']} sensors at pitch {D['hv_pitch']:g}: " + ", ".join(f"H{i + 1} {p.split()[0]}" for i, p in enumerate(D['hv_parts'])))
     em = [parts[n] for n in parts if n.startswith("emitter ")]
-    bp = parts.get("PCB back parts (Hall decouplers, J10, passives)")
+    bp = next((parts[n] for n in parts if n.startswith("PCB back parts")), None)
     if em and bp is not None:   # v0.19b [Ed 2 Nov]: no keep-out; the 716 driver sits inboard of the even emitter ring
         r.row("emitter bodies vs back-side parts", min(e.distance_to(bp) for e in em), 0.5,
               f"{len(em)} emitters every {360 / len(em):g}°; " + (f"U20 at ({D['drv_xy'][0]:.1f}, {D['drv_xy'][1]:.1f}) turned {D['drv_rot']:g}° (mechanism frame)"
@@ -137,6 +137,6 @@ def checks(D, parts):
                   f"{len(offs)} parts; largest {worst[0]} (the placer's 0.05 grid) [A]", higher_ok=False)
     pad = [parts[n] for n in parts if n.startswith("PCB rod pad")]
     if pad:
-        r.row("rod VBUS pad (B.Cu) vs back-side parts / pads", pad[0].distance_to(parts["PCB back parts (Hall decouplers, J10, passives)"]), D["rod_pad_clear"] - 0.01,
+        r.row("rod VBUS pad (B.Cu) vs back-side parts / pads", pad[0].distance_to(next(parts[n] for n in parts if n.startswith("PCB back parts"))), D["rod_pad_clear"] - 0.01,
               f"pad Ø{2 * D['rod_pad_r']:.2f} (was the Ø4 washer footprint); nut clamps straight on it, no washer")
     return r

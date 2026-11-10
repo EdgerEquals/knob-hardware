@@ -526,9 +526,9 @@ def build(D):
         jacks["jack board headers (2 x 2x6 1.27, SMD) [A]"] = hdrs
         pb = _box(bx0, bx1, by0, by1, D["jb2_z0"], D["jb2_z1"])
         if D.get("jb_post_xy"):   # v0.34 [Ed 22:21] the tab down over the posts in the main board's strip
-            hx, ty = D["jb_tab"]
+            tx, ty = D["jb_tab"]   # 10 Nov sweep: was `hx`, which overwrote the headers' x for the lower stacks below
             for x, y in D["jb_post_xy"]:
-                pb = _add(pb, _box(x - hx, x + hx, ty, by0 + D["fuse"], D["jb2_z0"], D["jb2_z1"]))
+                pb = _add(pb, _box(x - tx, x + tx, ty, by0 + D["fuse"], D["jb2_z0"], D["jb2_z1"]))
             pin = D.get("jb_post_pin")
             for i, (x, y) in enumerate(D["jb_post_xy"], 1):
                 post = _cyl_z(D["jb_post_d"] / 2, 0.02, D["jb2_z0"] - 0.02, x, y)

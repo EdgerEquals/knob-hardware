@@ -331,7 +331,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     glow = parts["glow coat (inside walls)"]
     beam = beam_solid(D) if D["scanner_enabled"] else None
     show = [("case", case), ("glow", glow), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
-            ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
+            ("PCB", parts["PCB"]), ("back TFT window", parts.get("back TFT window")),
             ("back TFT module", parts.get("back TFT module (placeholder)")),
             ("corner screw 1", parts["corner screw 1"])]
     if beam is not None:
@@ -343,9 +343,9 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
     shots = []
     joint = [("case", case), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
              ("corner screw 1", parts["corner screw 1"]), ("PCB", parts["PCB"]),
-             ("back TFT window", parts["back TFT window"])]
+             ("back TFT window", parts.get("back TFT window"))]
     plan_show = [("case", case), ("back cover", next(v for k, v in parts.items() if k.startswith("back cover"))),
-                 ("PCB", parts["PCB"]), ("back TFT window", parts["back TFT window"]),
+                 ("PCB", parts["PCB"]), ("back TFT window", parts.get("back TFT window")),
                  ("corner screw 1", parts["corner screw 1"])]
     if preview:
         shots = [("mid", "SECTION through both side walls", joint, "xz"),
@@ -406,7 +406,7 @@ def render_case(D, parts, preview=False, full=True, export=False, rows=None, cla
               f"knob top {D['knob_top_used']:.2f} − proud {D['knob_proud']:.2f} → plate {D['z_fp1']:.2f}"
               f"    plate {D['wall']:.2f} + cavity {D['z_fp0']:.2f} + PCB {D['pcb_t']:.2f}"
               f" + rear {D['rear_stack']:.2f} + cover past stack {past_stack:.2f}\n"
-              f"back TFT {D['win_w']:.2f} × {D['win_h']:.2f}    "
+              f"back screens' window {D['win_w']:.2f} × {D['win_h']:.2f}    "
               f"x {D['win_x0']:.2f}..{D['win_x1']:.2f}    "
               f"y {D['win_y0']:.2f}..{D['win_y1']:.2f}    "
               f"z {D['tft_z0']:.2f}..{D['tft_z1']:.2f}\n"

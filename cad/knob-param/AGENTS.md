@@ -45,12 +45,13 @@ cad/knob-param/
     assembly/         interface.py (INTERFACE params + derive), params.py (version, ...), build.py (merge order),
                       checks.py (cross-checks + clashes), render.py, report.py, hall_dyn.py
     main_knob/        knob body + skirt, hub gear, cone race + balls, bottom ring, diametric ring magnet
-    control_dial/     dial tube + lip, screen, carrier cartridge + FPC strap, dial TMAG5273 board, Hall arm + fan + lever, thrust balls
-    base_drive/       cradle, brass tube, rod + sleeve, 1220 motor + pinion, idlers, 716 feel motor + open saddle,
-                      mech (detents, ball track, cushion stops, centring springs)
+    control_dial/     dial lower part (tube, Hall arm + magnets, detent spoke, spring column) + dish, bezel cartridge (dial screen,
+                      bezel, dial board, plug pad), strap loop; older options by flag (fan, lever, thrust balls)
+    base_drive/       cradle (Hall slot + stop faces, spring posts), brass tube, rod + sleeve, 1220 motor + pinion, idlers,
+                      mech (detent block + ball train, centring springs); the 716 feel motor only with feel_on (Q27, parked)
     under_pcb/        encoder disc (slotted rim, no teeth), EE-SX1321
-    electronics/      main PCB (proxy + committed STEP), adapter, Hall sensor row, rod VBUS pad, connectors;
-                      kicad/ = KiCad projects (knob-main-pcb, screen-adapter), footprints, footprint generators
+    electronics/      main PCB proxy (from the v2 board's pcb_proxy.json), Hall sensor row, rod VBUS pad, connectors;
+                      kicad/ = KiCad projects (knob-main-pcb/v2, the jack boards, USB-C board, link flex), footprints, superseded/
 ```
 
 Each sub folder has the same shape:
@@ -136,18 +137,15 @@ $PY cad/knob-param/build.py --full --render  # real main-PCB STEP instead of the
 
 * On `param-dev`, `knobparam/electronics/kicad/` is the **source of truth** for the main PCB and the
   screen adapter (newer than the v0.11 snapshot in `cad/pcbs/`, which is left untouched for `main`).
-* **Not needed** for anything in `build.py` / `report.py`. The proxy board is built from params;
-  `--full` imports the committed `knobparam/electronics/kicad/knob-main-pcb/knob-main-pcb.step`.
-* kicad-cli (KiCad 9) is needed only by the **electronics** agent to regenerate boards / STEP / footprints
-  (`apt install kicad` or the KiCad PPA). After regenerating the STEP, commit it.
-* `kicad/*/knob_main_pcb.py` and `screen_adapter.py` are legacy generators that need `cad/tools/sheet`;
-  they are not used by the parametric build.
-* v0.16b boards (main PCB v0.11, screen adapter v0.4, joystick daughterboard v0.1) are **generated**: `cad_constraints.json`
-  (`export_cad_constraints.py`, cadenv) -> `make_v016_footprints.py` -> `<board>/kicad/make_board.py`
-  (`/usr/bin/python3`, pcbnew; one netlist -> schematic + board, DRC schematic parity; main board
-  `--route` = Freerouting 2.1.0 on Java 21, retried until 0 unconnected) -> `export_pcb_proxy.py`
-  (`pcb_proxy.json`: extra holes / back-side parts for the proxy) -> `fab_export.py` (PCBWay pack in `<board>/fab/`).
-  Re-running `make_board.py` without `--route` leaves the main board unrouted.
+* **Not needed** for anything in `build.py` / `report.py`. The proxy board is built from params plus
+  `knob-main-pcb/pcb_proxy.json`. `--full` stops with a message until main board v2 has a STEP (the committed one was v0.11).
+* Main board v2 (`knob-main-pcb/v2/`, 6 layers, KiCad 7 pcbnew via `/usr/bin/python3`): `design.py` (netlist, parts, BOM with
+  datasheet links) -> `make_board.py` (placement, the flex ribbons, routing: Freerouting 1.9.0 plus `patch_router.py`) ->
+  `export_proxy.py` (`pcb_proxy.json`: the board's holes, both faces' parts and its rod pad, panel frame) -> `fab_export.py`
+  (PCBWay pack in `v2/fab/`). `export_copper_mesh.py` meshes the copper for the 3D viewer.
+* Superseded (archived 10 Nov 2026 in `kicad/superseded/`, not run, not to be quoted): main PCB v0.11, screen adapter v0.4,
+  joystick daughterboard v0.4, and the v0.16b pipeline (`export_cad_constraints.py` -> `cad_constraints.json` ->
+  `make_v016_footprints.py`, the old `export_pcb_proxy.py`). `kicad/joystick-daughterboard/geom.json` stays: the model reads it.
 
 ## Deliverable conventions (assembly agent)
 

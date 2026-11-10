@@ -10,7 +10,7 @@ KiCad 7 (the cloud workspace has 7.0.11): kicad-cli 7 has no BOM, ERC or DRC com
 footprint fields and DRC runs through pcbnew (kicad7_tools.drc, no schematic parity); ERC is reported as not run."""
 import os, sys, csv, glob, re, json, shutil, subprocess, tempfile, zipfile, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
-BOARDS = {"knob-main-pcb": "knob-main-pcb/v2/kicad", "screen-adapter": "screen-adapter/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad",
+BOARDS = {"knob-main-pcb": "knob-main-pcb/v2/kicad", "usb-c-board": "usb-c-board/kicad", "jack-board": "jack-board/kicad",
           "jack-power-board": "jack-power-board/upper/kicad", "jack-lower-board": "jack-power-board/lower/kicad"}
 FAB = {"jack-power-board": "jack-power-board/upper/fab", "jack-lower-board": "jack-power-board/lower/fab",
        "knob-main-pcb": "knob-main-pcb/v2/fab"}   # else <board>/fab
@@ -32,8 +32,7 @@ NOTES = {"knob-main-pcb": "Board v2 (9 Nov 2026): 6 layers [Ed Q45], FR-4, 1.6 m
                           "their legs are soldered into this board at assembly [Ed 9 Nov]. Not in this BOM / CPL.\n"
                           "Passives: Samsung capacitors and UNI-ROYAL / Yageo 1% resistors, LCSC numbers read on lcsc.com on 9 Nov 2026.\n"
                           "Not fitted (out of BOM / CPL): R10, R11 (I2C pull-ups, on the jack board), R31 (GAINSEL-high spot).\n",
-         "screen-adapter": "Board: 2 layers, FR-4, 1.0 mm; HASL or ENIG; green mask, white silk [A].\n"
-                           "Hand-fit parts (excluded from BOM/CPL): C1 rod clamp.\n",
+         # (screen-adapter v0.4: superseded by the rod-link board in v0.24, archived in superseded/ on 10 Nov)
          "usb-c-board": "Board: 2 layers, FR-4, 1.6 mm, 12.0 x 6.0 mm; ENIG (the 8 spring-contact landing pads P1-P8 are bare gold, no paste);\n"
                         "green mask, no silk. Min track 0.127, min gap 0.1 by rule (routed to 0.127 + margin), vias 0.45 / 0.2 drill.\n"
                         "J1: 16 SMD pads plus 4 shell legs in plated slots (through-hole solder from the top side; they don't come through).\n"

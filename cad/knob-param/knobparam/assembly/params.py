@@ -3,7 +3,7 @@ P = dict(
     # ---- 1220 motor [M] ----
     tab_solder=0.1,   # [A] solder fillet past the motor tab tip on the PCB back
     # ---- v0.15: screen turns with the dial ----
-    version="v0.55",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19). v0.55 [Ed 10 Nov 11:23]: the Hall rib slopes down past the spring column
+    version="v0.56",   # output -> assemblies/knob-stack-<version>/  (panel size is owned by the case sub since v0.19). v0.56 [Ed 10 Nov, "A: yes, do it"]: the leftover sweep's safe fixes (no made part changes; the model now has the jack stacks in place and C20-C22 on the board). v0.55 [Ed 10 Nov 11:23]: the Hall rib slopes down past the spring column
                        # v0.48 [Ed 6 Nov 11:35 Q24 = A]: the posts step down to Ø1.0 pins through the power board's ears
                        # v0.47 [Ed 6 Nov 11:27 Q23 = A]: a second board under the jack power board (the parts need 839 mm² of footprint, it had
                        #   603 free); both flex connectors move to its underside
@@ -79,7 +79,6 @@ P = dict(
                     pins=0.10),          # [A] ± male pins on the vertical board (placement and the board's lean)
     vb_capture=dict(lead_in=0.25,        # [A] socket entry funnel over the 0.4 pin (radial capture)
                     board_float=0.20),   # [A] v0.25: the top board in its nest (0.2 a side) while the glue is still wet (v0.24: the cradle's lip float)
-    vb_buckle_margin=3.0,    # [A] Euler load / post load, each board
     knob_hole_clear=0.4,   # [A] faceplate hole radius over the knob radius
     faceplate_z_v023=38.8,   # [Ed 3 Nov 12:41] faceplate front in v0.23: only the knob grows (+4.4), so it must stay here (check row)
     rho=dict(glass=2.5e-3, pol=1.2e-3, tape=1.0e-3, petg=1.27e-3, ndfeb=7.5e-3, steel=7.85e-3, fpc_g=0.35),   # [A] g/mm3; FPC+B2B mass g

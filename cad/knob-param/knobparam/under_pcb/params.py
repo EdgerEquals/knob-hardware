@@ -1,10 +1,9 @@
 """under_pcb own params + derive (encoder pinion/shaft/bearings, big gear + slotted rim, EE-SX1321, back-panel depth).
-The 716 feel motor is a base_drive part as of v0.16. Reads: interface + own + IMPORTS (electronics board outline)."""
+The 716 feel motor is a base_drive part as of v0.16. Reads: interface + own + IMPORTS."""
 import math
 
 P = dict(
     # ---- main PCB [K] ----
-    pcb_margin=0.5,   # [A] big gear tip to the board edge
     # ---- encoder take-off [A] ----
     enc_shaft_d=2.0,
     sens=dict(body_x=5.1, body_y=4.0, body_h=4.0, slot_w=2.0, slot_d=2.8, axis_from_open=1.0, ap_w=0.3, ap_h=1.0, ap_pitch=0.8, term_w=1.0, term_t=0.2, term_h=1.0, term_pitch=1.4),   # [S] Omron EE-SX1321 datasheet p3 (2026-11-01; was EE-SX1131 5.0 wide): 1.55 arm + 2.0 slot + 1.55 arm, slot 2.8 deep, axis 1.0 below the open face, 2 apertures 0.3 x 1.0 along the slot, terminal pitch 1.4
@@ -46,8 +45,7 @@ P = dict(
     enc_tht_tail=1.0,        # [A] tail past the main-board front
 )
 
-IMPORTS = {"electronics": ["pcb_w", "pcb_above", "pcb_below"],
-           "main_knob": ["hb_mid"]}
+IMPORTS = {"main_knob": ["hb_mid"]}   # (10 Nov sweep: the board-outline import fed only an unused big-gear limit)
 EXPORTS = ["d_big_tip", "z_rear_min", "h_big_bot", "enc_hold_dz",   # -> electronics (J2 pads below the wheel); case (Q27 rear_hold)
            "enc_tht_xy"]                             # -> electronics (v0.24: main-board holes for the riser's THT pins, mechanism frame)
 
@@ -97,7 +95,6 @@ def derive(D):
     # deepest under-PCB part, for the case cover depth (v0.19)
     D["z_rear_min"] = min(D["h_hub_bot"], D["enc_shaft_bot"], D["brg2_seat_z0"], D["z_sens_open"])
     ex, ey = D["enc_xy"]
-    r_avail = min(ex + D["pcb_w"] / 2, D["pcb_w"] / 2 - ex, ey + D["pcb_below"], D["pcb_above"] - ey) - D["pcb_margin"]
     D["disc_r"] = D["rim_r1"]                                            # plain disc out to the slotted rim (no teeth)
     D["z_big"] = 0
     D["d_big_tip"] = 2 * D["disc_r"]                                     # the disc is the envelope; the old phantom tooth count followed the spur module

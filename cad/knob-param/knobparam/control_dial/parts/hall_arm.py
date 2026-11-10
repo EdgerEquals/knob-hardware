@@ -221,21 +221,14 @@ def spring_leadins(D):
 
 def lever(D):
     """Radial lever on the dial tube at sl_ang: bar above the thrust cage, end block, spring pin on top.
-    v0.17: no cushion-magnet pocket unless cu_on."""
+    v0.17: no cushion-magnet pocket (the cushion option went in the 10 Nov sweep)."""
     a, r1, w = D["sl_ang"], D["sl_r"], D["sl_w"]; r0 = D["dial_tube_od"] / 2 - 0.3
     rb = D["sl_pin_r"]
     bar = Pos((r0 + r1) / 2, 0, D["hv_spoke_z0"]) * Box(r1 - r0, w, D["sl_top"] - D["hv_spoke_z0"], align=A)
     end = Pos((rb + r1) / 2, 0, D["sl_z0"]) * Box(max(r1 - rb, 0.2), w, D["sl_top"] - D["sl_z0"], align=A)
     pin = cyl(D["sl_pin_d"] / 2, D["sl_top"] - 0.01, D["sl_pin_top"] - D["sl_top"] + 0.01, D["sl_pin_r"], 0)
     body = bar + end + pin
-    if D["cu_on"]:
-        md, mh = D["cu_mag"]
-        body -= Pos(D["cu_mag_r"], 0, D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01)
     return Rot(0, 0, a) * body
-
-def lever_magnet(D, travel=0.0):
-    md, mh = D["cu_mag"]
-    return Rot(0, 0, D["sl_ang"] + travel) * (Pos(D["cu_mag_r"], 0, D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
 
 def wing_cuts(D):
     """Ball-track grooves in the wing underside (over each detent) + the two latch dimples per detent in the wing top."""
@@ -260,8 +253,6 @@ def magnets(D, travel=0.0):
 def build(D):
     pol = D["hv_pol"] if _vern(D) else [1] * len(magnets(D))
     out = {f"hall magnet {i + 1} {'N' if pol[i] > 0 else 'S'}-down": m for i, m in enumerate(magnets(D))}   # v0.16b [Ed]: N/S/N/S/N
-    if _vern(D) and D["fan_on"] and D["cu_on"]:
-        out[f"cushion magnet lever {D['cu_mag'][0]:g}x{D['cu_mag'][1]:g}"] = lever_magnet(D)
     return out
 
 # ---- v0.14 sector layout ----

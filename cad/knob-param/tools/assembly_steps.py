@@ -29,10 +29,10 @@ import math
 
 STEPS = [
     # ------------------------------------------------------------------ main PCB, bench, front face up
-    dict(id="pcb", name="Main PCB with its soldered parts (H7B0 on the front)", base=True, dir="+z", travel=10,
+    dict(id="pcb", name="Main PCB with its soldered parts (H743 on the front)", base=True, dir="+z", travel=10,
          parts=[r"^PCB$", r"^PCB back parts", r"^PCB front parts", r"^PCB rod pad", r"^emitter ", r"^power light VCSEL", r"^MCU ", r"^hall sensor ", r"^encoder sensor"],
          note="PCBWay PCBA: 12 upside-down RGB in their cut-outs (v0.53, Q44; 24 in v0.52), the red VCSEL power light, Hall row, H743 under the joystick, rod pad, and (v0.49, Q27) the EE-SX1321 on the back; "
-              "(Q30) the link flex hot-bar bonded onto the strip, shown with the jack unit (BOM 'board'; L4 step 1)"),
+              "(Q30) the link flex hot-bar bonded onto the strip, shown with the jack unit (BOM: bought flex; L4 step 1)"),
     dict(id="vboards", name="Vertical boards L and R onto the main board (hybrid headers, male pins on top)", dir="-z",
          travel="auto", parts=[r"^vertical board [LR]"],
          note="PCBA: THT legs through the main board, SMT legs over the encoder riser; no standoff (L4 Ed 13:31-13:39)"),
@@ -79,7 +79,7 @@ STEPS = [
     # ------------------------------------------------------------------ v0.25 [Ed 18:12-19:46]: the dial's lower part goes in first
     # (built off to the side), then the anchor pins, the detent block and the cap; the balls; the dish is bonded on last.
     dict(id="es-pins", name="Two steel hook pins pressed into the tops of the cradle's spring posts", dir="-z", travel=4,
-         parts=[r"^spring anchor pin"], note="v0.31 [Ed 4 Nov 16:35]: the posts are printed up from the cradle plate (150° and 310°)",
+         parts=[r"^spring anchor pin"], note="v0.31 [Ed 4 Nov 16:35]: the posts are printed up from the cradle plate (150° and 306°)",
          expect=[(r"^spring anchor pin", r"^base cradle$", "press", "pressed into the posts")]),
     dict(id="dial", sub="dial", base=True, name="Control dial lower part (tube, Hall and detent spokes; v0.31: column on the Hall arm, no lever)",
          parts=[r"^control dial lower part"], note="MJF PA-12; the dial is two parts since v0.25 [Ed 18:12]"),
@@ -101,7 +101,7 @@ STEPS = [
          dir="-z", travel="auto", note="after the pedestal, the train and the dial's lower part, before the cap [Ed 18:15]; epoxy on the flat seat [A]. "
          ""),
     dict(id="springs", name="Two extension centring springs hooked from the column's pin to the posts' pins, from above", dir="-z",
-         travel=6, parts=[r"^centring spring"], note="v0.31 [Ed 4 Nov 16:35]: at z 15, over the detent block's top; the knob is open at the "
+         travel=6, parts=[r"^centring spring"], note="v0.31 [Ed 4 Nov 16:35]: at z 10.5, beside the detent block; the knob is open at the "
          "top until the cap goes on", expect=[(r"^centring spring", r"^spring (anchor )?pin", "hook", "hooked on the pins")]),
     dict(id="cap", sub="cap", base=True, name="Knob upper-cap, clear UTR-8100 part (web, plug, glass seat)",
          parts=[r"^knob upper-cap \(clear"], note="SLA, clear [Ed 19:00]"),
@@ -152,8 +152,8 @@ STEPS = [
          parts=[r"^corner insert"], note="epoxied in the resin (CD)"),
     dict(id="shell-usb", sub="shell", name="USB-C board + receptacle slid in from behind along the bottom-wall channel onto its ledge",
          dir="+z", travel="auto", parts=[r"^USB-C board", r"^USB-C receptacle"],
-         note="before the board stack: its top 2.4 is inside the box, where the main board sits; its two power wires to the jack unit "
-              "(which now comes in with the stack) are decision 5 (L4 step 2, Ed 4 Nov 20:15)"),
+         note="before the board stack: its top 2.4 is inside the box, where the main board sits; its power reaches the jack unit "
+              "through the eight spring contacts (v0.35 on), which meet as the stack goes in"),
     dict(id="shell-usb-key", sub="shell", name="Printed key into the channel behind the USB-C board (the back cover holds it in)",
          dir="+z", travel="auto", parts=[r"^USB-C key"], note="no glue: comes out with the cover off (L4 step 2, option C, Ed 4 Nov 20:15)"),
     dict(id="jcr-tb", sub="shell", name="Top board PCBA (SW1, two 13-way sockets, FPC socket) up from the back, glued under the printed shoulders",

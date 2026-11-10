@@ -13,9 +13,7 @@ MATERIALS = {
     "lens":    ("dial screen cover glass (lens)", "#a9d6ea", True),        # v0.24 Z132A2441
     "bezel":   ("PA-12 MJF, dyed black (dial bezel) [A]", "#3a3e42", False),   # v0.24 bezel cartridge (material open [C])
     "pa12":    ("PA-12, MJF (natural grey)", "#6e7377", False),
-    "petg":    ("PETG, opaque (seal ring)", "#2b3035", False),
     "asacf":   ("ASA-CF, black (back cover, screen pad)", "#1f2124", False),
-    "nylon":   ("nylon pinion (natural)", "#e8e1cf", False),   # v0.25: no part uses it (every gear is printed PA-12)
     "steel":   ("stainless steel: screws, shafts, balls, springs, bearings, USB-C shell", "#a9b0b6", False),
     "brass":   ("brass: tube, inserts, standoffs; ENIG pad", "#c9a227", False),
     "magnet":  ("N52 magnets, nickel-plated", "#c3c8cd", False),
@@ -31,7 +29,6 @@ MATERIALS = {
     "silicone": ("silicone O-ring (black)", "#141414", False),
     "foam":    ("foam tape pads (black)", "#3a3a3a", False),
     "gasket":  ("silicone sponge gasket (grey)", "#8a8f94", False),
-    "bead":    ("form-in-place silicone bead (dark grey)", "#55595e", False),   # v0.24 joystick cradle bead
     "copper":  ("PCB copper, shown bare (routed main board, viewer only)", "#c8793a", False),
     "other":   ("unassigned (check the material rules)", "#ff00ff", False),
 }
@@ -42,6 +39,7 @@ def key(name):
     low = n.lower()
     # name overrides first: places where the BOM material string is generic or the part is a sub-feature
     if low.startswith("main board copper"): return "copper"                            # viewer only (export_copper_mesh.py)
+    if low.startswith(("control dial lower part", "control dial dish")): return "pa12"   # 10 Nov sweep: "spring column" read as steel
     if low.startswith("dial bezel"): return "bezel"                                    # v0.24 bezel cartridge
     if low.startswith("knob hub gear ring"): return "pa12"                             # v0.25 PA-12 ring glued in the clear cap
     if low.startswith("knob upper-cap hub"): return "pa12"                             # v0.25 [Ed 19:46] inner PA-12 hub (teeth + race)
@@ -55,20 +53,16 @@ def key(name):
     if low.startswith(("dial board part", "dial board receptacle")): return "ic"
     if "o-ring" in low: return "silicone"
     if "foam pad" in low: return "foam"                       # v0.6 joystick screen pads
-    if "form-in-place" in low: return "bead"                  # v0.24 joystick cradle bead
     if "up-stop cushion" in low: return "gasket"              # v0.24 silicone sponge rings under the guide bosses
     if low.startswith("top-board socket"): return "ic"        # v0.24 1.27 sockets under the joystick top board
     if low.startswith("vertical board") and "male pins" in low: return "ic"   # v0.24 male 1.27 headers
-    if "gasket" in low: return "gasket"                       # v0.23 joystick cradle gasket
     if low.startswith("vertical board") and ("header" in low or "spring contacts" in low): return "ic"   # v0.23 (contacts: black body)
     if low.startswith("vertical board") and "fr4" in low or "top board" in low: return "pcb"           # v0.23 boards
     if low.startswith("mcu "): return "ic"                     # [Ed 18:34] H7B0 LQFP100 on the main PCB back
     if "jumper" in low and ("b2b socket" in low or "plug end" in low): return "ic"   # v0.6 jumper connectors
-    if "seal ring" in low: return "petg"
     if "clear oled" in low: return "oled"
     if "ruby" in low: return "ruby"
     if "glass" in low and "ball" in low: return "glass"
-    if "nylon" in low: return "nylon"
     if "rod pad" in low: return "brass"
     if "spring" in low: return "steel"                       # 'non-magnetic' springs must not read as magnets
     if "socket" in low and "fpc" in low: return "ic"           # FPC socket on the joystick board
@@ -77,7 +71,7 @@ def key(name):
     if low.startswith(("jack board", "jack power board", "jack lower board")):   # v0.33 [Ed 21:30], v0.47 [Ed Q23 = A]: the jack boards
         return "ic" if any(k in low for k in ("envelope", "header", "stacks", "zif", "fpc connector")) else "pcb"
     if low.startswith("jack ") and ("bushing" in low or "nut" in low): return "steel"
-    if low.startswith("pcb back parts"): return "ic"
+    if low.startswith(("pcb back parts", "pcb front parts")): return "ic"
     if low.startswith(("usb-c board vbus", "usb-c board data")): return "ic"     # v0.37 TVS / ESD on the USB-C board
     if "daughterboard" in low or low == "pcb" or low.startswith("adapter board") or "pd board" in low or low.startswith("usb-c board ("): return "pcb"
     if low.startswith(("hall sensor", "encoder sensor", "dial tmag", "adapter part")) or "header" in low or low.startswith("sw1") or (low.startswith("socket ") and "h11" in low):
@@ -93,7 +87,6 @@ def key(name):
     if "utr-8100" in m: return "clear"
     if "pa-12" in m: return "pa12"
     if "asa-cf" in m: return "asacf"
-    if "petg" in m: return "petg"
     if "borosilicate" in m: return "glass"
     if m == "display": return "display"
     if "fr-4" in m: return "pcb"

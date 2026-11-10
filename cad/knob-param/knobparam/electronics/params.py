@@ -96,7 +96,6 @@ P = dict(
                 tab_min=2.0),      # [A] narrowest end tab beside the sockets (v0.24: the posts that bore on the top board)
     rod_pad_clear=0.3,   # [A] v0.16 B.Cu rod (VBUS) pad to the nearest other back-side copper / part / hole
     pcb_slot_clear=0.3,   # [A] motor-tab slot over the tab, each side
-    hall_z=0.65,   # [A] TMAG5273 element above the adapter top
     # ---- v0.15: Hall vernier (arm down through the cradle slot, 5 magnets x 5 sensors, arcs crossing) ----
     hv_adc_bits=12,   # [A] MCU ADC
     hv_fs=4000.0,   # [A] per-sensor sample rate (Hz), 5 channels -> 20 ksps
@@ -105,7 +104,7 @@ P = dict(
 )
 
 IMPORTS = {"under_pcb": ["d_big_tip", "enc_tht_xy"]}   # enc_tht_xy: v0.24 encoder-riser THT pins (main-board holes, build time only)
-EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> under_pcb (big-gear size from the board outline)
+EXPORTS = ["pcb_w", "pcb_above", "pcb_below",          # -> case (the board's nest)
            "clear_oled", "clear_oled_xy",                 # -> case (ledge relief round the clear OLED)
            "adapter_d", "adapter_fps", "adapter_env"]   # -> control_dial (cup pocket, J1/U3 positions, strap height)
 
@@ -122,7 +121,7 @@ def derive(D):
     M = D["motor"]; obs += [D["offset"] - M["term_pitch"] / 2 - (M["term_w"] + 0.3) / 2]
     D["rod_pad_r"] = min(obs) - D["rod_pad_clear"]
     # v0.16 [Ed]: U3 TMAG5273 removed from the fixed adapter board; v0.16b: the dial sensor is dropped (rel_sensor=False). KiCad screen-adapter v0.4 done.
-    # KiCad is the source of truth for the board: holes / slots / back-side parts it adds beyond the params (export_pcb_proxy.py).
+    # KiCad is the source of truth for the board: holes / slots / back-side parts it adds beyond the params (knob-main-pcb/v2/export_proxy.py).
     # Read here (not in parts/pcb.py) so the part cache key follows the JSON.
     pj = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kicad", "knob-main-pcb", "pcb_proxy.json")
     D["pcb_kicad"] = json.load(open(pj)) if os.path.exists(pj) else {}

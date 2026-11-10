@@ -65,7 +65,6 @@ def _split_rows(D, row):
         D["tgt"]["arm_vs_cradle"], f"flange r {D['ad_land_r0']:.2f}-{D['ad_land_r1']:.2f}, ±{D['ad_land_half']:.1f}°, z {D['sp_z_fu']:.2f}-{D['ad_z_land']:.2f}")
     row("split detent: ball still in the end dimple at the hard stop (rim - offset, mm)", D["ad_rim"] - D["ad_stop_off"], D["det_stop_clear"],
         f"hard stop ±{T:.2f}° is {D['ad_stop_off']:.2f} mm of arc past the ±{D['det_deg']:g}° dimple")
-    row("split detent: train centred under the detent ball (mm)", 0.0, 0.0, "load path spring > ball > flange > train > pedestal > plate", higher_ok=False)
     b, s = D["bt_ball"], D["tk_small"]
     row("ball train: separator below both races ((big - small)/2, mm)", (b - s) / 2, D["tk_seat_min"])
     row("ball train: separator cannot pass a load ball in the groove (big + small - groove Ø, mm)", b + s - 2 * D["bt_groove_r"], 0.1)
@@ -304,7 +303,7 @@ def _tail(D, parts, r):
             row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
             f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
-            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}{_taper_txt(D)}",
+            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, underside z {D['ha_rib_z_cage']:.1f} to r {D['ha_rib_r_step']:.2f} (the old thrust cage's step) / {D['ha_rib_z_low']:.1f} beyond, top {D['ha_rib_z_top']:.1f}{_taper_txt(D)}",
             higher_ok=False)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)
@@ -331,8 +330,9 @@ def _tail(D, parts, r):
             row("dial: flat carrier seat under the carrier magnet pocket (inner wall)", D["carr_r"] - D["carr_mag"][0] / 2 - D["cone_seat_r"],
                 D["carr_seat_wall"] - 1e-6, f"seat r {D['cone_seat_r']:.2f} out to the screen cut")
         if D["kb_race"] == "chamfer":
-            row("dial: material under the cup-boss bore (above the hub bottom)", D["z_bore0"] - D["z_hub0"], D["dial_bore_floor"] - 1e-6,
-                f"socket on the tube {D['hold_socket_len']:.2f}" if D["adapter_cup"] else "no cup: plain tube ID")
+            if D["adapter_cup"]:   # 10 Nov sweep: with no cup (v0.16 on) this equalled its own target
+                row("dial: material under the cup-boss bore (above the hub bottom)", D["z_bore0"] - D["z_hub0"], D["dial_bore_floor"] - 1e-6,
+                    f"socket on the tube {D['hold_socket_len']:.2f}")
             row("seat: groove land to the 45° face ends (min)", D["kb_land"], T["race_land"],
                 f"track at {D['kb_race_at']:g} of the {D['kb_face_len']:.2f} gusset face, both faces grooved")
         else:

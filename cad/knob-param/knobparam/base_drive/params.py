@@ -19,13 +19,6 @@ P = dict(
     rod_proud=0.5,   # [S]/[A]
     # ---- base cradle [A] ----
     cr_clear=0.5,
-    peg_d_ratio=0.46,   # [A] locating peg diameter / plate thickness (~Ø1.6 on the 3.5 plate)
-    peg_r_ratio=0.55,   # [A] peg radius / cradle radius
-    peg_len_k=0.6,   # [A] peg engagement / PCB thickness
-    peg_slot_k=0.5,   # [A] extra slot length / peg diameter (one hole is slotted)
-    cradle_glue_k=0.03,   # [A] glue-line thickness / plate thickness
-    cradle_land_k=0.35,   # [A] glue-land width / plate thickness
-    cradle_foot_k=1.0,   # [A] future stiffener = this × cradle radius. The solid stays at r_out.
     cr_web_min=1.2,   # [Ed] v0.17: webs left round every support after the skinny-bridge cuts
     cr_bridge_fillet=0.5,   # [Ed] v0.17: fillet on those cuts (cut at the narrowest point)
     pad_cb=(7.0, 0.6),
@@ -64,7 +57,6 @@ P = dict(
     fm_band_h=1.2,   # [A] band height (two narrow contact bands)
     fm_band_in=0.5,   # [A] band in from the grip ends
     fm_split=100.0,   # [A] split plane angle from the outboard direction (ears at the can sides, clear of the skirt)
-    fm_ear=(1.6, 0.8),   # [A] ear radial length, tangential thickness (each half)
     fm_screw_d=0.0,   # overwritten: can_d * saddle_k_small (M1.2 on the Ø7 feel motor)
     saddle_k_small=1.2 / 7.0,   # [A] screw / can, small motors (feel, and later the Risley / mirror hooks)
     saddle_k_main=1.4 / 12.0,   # [A] screw / can, the 1220
@@ -148,7 +140,7 @@ P = dict(
     dt_hang_at=(0.0, 1.0),   # [A] the arm's root in the head: this far out from the head's inner radius, this many degrees in from
                              # its edge on the post's side (clear of the grub bore: row)
     dt_hang_F=1.0,   # [A] spring pull on post 2, conservative (initial tension + full travel; the springs' rate is ~0.23 N/mm)
-    # ---- v0.31 [Ed 4 Nov 16:35] (interface es_on): the centring springs lifted above the detent block. Two posts printed up from the
+    # ---- v0.31 [Ed 4 Nov 16:35] (interface es_on): the centring springs lifted (z 10.5, beside the detent block). Two posts printed up from the
     # cradle plate (UTR-8100, with the cradle) to just under the springs; two extension springs at es_z from the Hall arm's column pin
     # to the posts' pins. The spots are the free ones a grid search found (tools/studies/dial_hallspring_sketch.py: clear of the dial
     # swept ±travel and every other part by 0.3, plate top to z 16). ----
@@ -170,35 +162,6 @@ IMPORTS = {"control_dial": ["tb_on", "tb_pcd", "tb_groove_r", "tb_z_ball",
                             "dial_spring"],   # v0.30 compression centring springs: the dial's centring rate
            "main_knob": ["h_bi1", "hb_mid"]}   # feel-motor can sits above the bottom ring; herringbone apex
 EXPORTS = []
-
-
-def _place_pegs(D):
-    """Two locating pegs on the cradle. One PCB hole is round, one is slotted along the radius."""
-    peg_r = D["r_out"] * D["peg_r_ratio"]
-    need = D["peg_d"] / 2 + D["cr_clear"]
-    blocks = [(0.0, 0.0, D["brass_od"] / 2 + D["peg_d"]),
-              (D["offset"], 0.0, D["motor_bore_d"] / 2 + D["peg_d"]),
-              (*D["enc_xy"], D["brg"]["D"] / 2 + D["peg_d"]),
-              (*D["fm_xy"], D["feel"]["can_d"] / 2)]
-    for x, y in D["idler_xy"]:
-        blocks.append((x, y, D["enc_pocket_d"] / 2 + D["peg_d"] / 2))
-    for r, a in zip(D["hv_r"], D["hv_phi_s"]):
-        blocks.append((r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 2.0))
-    def clear(a):
-        x, y = peg_r * math.cos(math.radians(a)), peg_r * math.sin(math.radians(a))
-        return min(math.hypot(x - bx, y - by) - br for bx, by, br in blocks)
-    best = None
-    for a in range(0, 360, 5):
-        for b in range(a + 90, a + 270, 5):
-            c = min(clear(a), clear(b % 360))
-            if best is None or c > best[0]:
-                best = (c, a, b % 360)
-    _c, a, b = best
-    def xy(ang):
-        return (peg_r * math.cos(math.radians(ang)), peg_r * math.sin(math.radians(ang)))
-    D["peg_xy"] = [xy(a), xy(b)]
-    D["peg_ang"] = [a, b]
-    D["peg_r"] = peg_r
 
 
 def _pol(r, a): return r * math.cos(math.radians(a)), r * math.sin(math.radians(a))
@@ -465,18 +428,11 @@ def derive(D):
     D["h_pinion0"] = D["h_shaft_tip"] - D["motor_pinion_face"]
     # ---- cradle ----
     D["r_out"] = D["skirt_id"] / 2 - D["cr_clear"]
-    D["cradle_foot_r"] = D["r_out"] * D["cradle_foot_k"]   # exported; not drawn past r_out
-    D["cradle_glue"] = D["plate_t"] * D["cradle_glue_k"]
-    D["cradle_land"] = D["plate_t"] * D["cradle_land_k"]
-    D["peg_d"] = D["plate_t"] * D["peg_d_ratio"]
-    D["peg_len"] = D["pcb_t"] * D["peg_len_k"]
-    D["peg_slot"] = D["peg_d"] * (1.0 + D["peg_slot_k"])
     D["cr_bore_d"] = D["brass_od"] + 2 * D["glue_gap"]
     D["motor_bore_d"] = M["body_d"] + 2 * D["motor_glue"]
     D["motor_collar_od"] = D["motor_bore_d"] + 2 * D["motor_collar_wall"]
     D["enc_pocket_d"] = D["d_pin_tip"] + 2 * D["pocket_clear"]
     D["dial_clear_d"] = D["dial_tube_od"] + 2 * D["dial_tube_clear"]
-    _place_pegs(D)
     # ---- idlers ----
     D["idler_floor"] = D["h_pin0"] - D["idler_hub_len"]
     D["idler_pocket_top"] = D["h_pin1"] + D["cr_clear"]

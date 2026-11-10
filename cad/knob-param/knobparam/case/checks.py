@@ -111,8 +111,7 @@ def checks(D, parts):
     row("10HP panel", D["panel_w"], 10 * D["hp_pitch"] - D["hp_gap"],
         f"{D['hp']}HP  {D['panel_w']:.2f} mm, wall {D['wall']:.2f}")
     row("PCB width within the shell", D["pcb_max_w"] - D["nest_w"], 0.0,
-        f"board {D['nest_w']:.2f} wide, {D['nest_above']:.2f} above, {D['nest_below']:.2f} below "
-        f"(live {D['pcb_w']:.2f} × {D['pcb_live_above']:.2f}/{D['pcb_live_below']:.2f})")
+        f"board {D['nest_w']:.2f} wide, {D['nest_above']:.2f} above, {D['nest_below']:.2f} below")
     row("PCB inside the side walls", D["x_in1"] - D["pcb_x1"], D["pcb_clear"],
         f"board edge ±{D['pcb_x1']:.2f}, wall inner ±{D['x_in1']:.2f}")
     row("PCB inside the top and bottom", min(D["y_in1"] - D["pcb_y1"], D["pcb_y0"] - D["y_in0"]), D["pcb_clear"],
@@ -125,8 +124,6 @@ def checks(D, parts):
         f"Ø{D['knob_od_used']:.2f} knob, collar Ø{D['collar_od']:.2f}, {D['collar_margin']:.2f} mm of panel outside it")
     row("boss axis inside the PCB", D["pcb_x1"] - D["boss_x"], 0.0,
         f"boss x ±{D['boss_x']:.2f}, PCB edge ±{D['pcb_x1']:.2f}, notch Ø{2 * D['notch_r']:.2f}")
-    row("boss clears the knob hole", D["boss_knob_clear"], D["boss_gap"],
-        f"upper bosses y {D['corners'][2][1]:.2f}, room between knob and joystick {D['boss_y_room']:.2f}")
     if not D["top_corners"]:
         row("boss clears the joystick opening", D["boss_joy_clear"], D["boss_gap"],
             "upper pair sits under the joystick hole")
@@ -219,12 +216,9 @@ def checks(D, parts):
     else:
         row("thread engagement / diameter", D["tap_len"] / D["screw_d"], D["engage_min"],
             f"printed M{D['screw_d']:.0f}×{D['screw_p']:.2f}, engagement {D['tap_len']:.2f} (asked {D['engage']:.2f})")
-    if False:  # v0.19: brass insert; see "resin wall round the insert"
-        row("boss wall / diameter", (D["screw_boss_r"] - D["screw_d"] / 2) / D["screw_d"], D["boss_wall_mult"],
-            f"boss Ø{2 * D['screw_boss_r']:.2f} around the Ø{D['screw_d']:.2f} thread")
     back = D.get("cover_screw") == "back"
     std = "ISO 14580" if back else "ISO 4762"
-    row("PETG over the screw head" if back else "PETG under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
+    row("cover over the screw head" if back else "cover under the screw head", D["cover_skin"], D["cover_under_mult"] * D["screw_d"],
         f"{std} head Ø{D['screw_dk']:.1f}×{D['head_k']:.2f}, {D.get('screw_drive', 'hex')}; counterbore {D['cbore_depth']:.2f} "
         f"(head {D['head_below']:.2f} below the face); " +
         (f"in from the back, under a Ø{2 * D.get('col_r', 0):.1f} column; solid over the head {D['cover_skin']:.2f}" if back else
@@ -253,9 +247,9 @@ def checks(D, parts):
         f"notch Ø{2 * D['notch_r']:.2f} at x {D['corners'][1][0]:.2f}, y {D['corners'][1][1]:.2f}")
     row("corner screw tip vs faceplate", D["z_fp0"] - D["z_tip"], D["tip_clear"],
         f"tip z {D['z_tip']:.2f}, plate underside {D['z_fp0']:.2f}")
-    row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
-        f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
-    if D["knob_bolt_n"] > 0:
+    if D["knob_bolt_n"] > 0:   # 10 Nov sweep: knob bolts removed 2 Nov; both rows only with bolts
+        row("knob bolt tip vs front skin", D["z_fp1"] - D["z_bolt_tip"], D["wall"],
+            f"{len(D['knob_bolts'])} bolts up into the shell, tip z {D['z_bolt_tip']:.2f}")
         row("knob bolts present", float(len(D["knob_bolts"])), 2.0,
             f"{len(D['knob_bolts'])} on the lower arc; the TFT window and the bosses leave room for fewer than {D['knob_bolt_n']}")
     # a point in the boss wall (outside the thread) is resin

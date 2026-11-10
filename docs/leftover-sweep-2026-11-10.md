@@ -2,7 +2,8 @@
 
 [Ed 12:05: "check that we haven't got anything left over ... from things we've changed"]. Four read-only sweeps (dial
 mechanism; knob, case and assembly code; electronics and the KiCad boards; joystick) plus a scan for parameters nothing reads.
-Nothing was changed by the sweep. Main findings were re-checked by hand (marked ✔).
+The sweep itself changed nothing; main findings were re-checked by hand (marked ✔). Ed then said yes to the safe part (B, C, D):
+see **Done in v0.56** at the end. A (physical) goes to him one item at a time.
 
 ## A. Physical leftovers (in a made part or board): Ed's call, one at a time
 
@@ -86,3 +87,33 @@ or encoder-slot holes; rule areas current; one single-pad net (RING_DOUT, expect
 pin map matches on all three boards. Jack unit and USB-C boards match the model. Built parts: no hanger, stop blocks,
 plate-level posts, cushion or compression-spring pockets, thrust groove, cradle track grooves, fan, ears, TFT pocket or
 scanner shelf; every case cut-out has a part in or through it; every part sits in exactly one assembly step.
+
+## Done in v0.56 (Ed: "A: yes, do it")
+
+Proof of no change to a made part: every one of the 171 knob parts was snapshotted (volume and box) before and after, and
+the only differences are the intended ones (the jack stacks now at x ±11.15 with their keep-outs, and C20–C22 back in the
+board's back parts). Check rows: 336 → 331, every remaining value unchanged; 331 / 331 pass, no clashes.
+
+- **B:** travel fixed at 10.7388° [Ed 4 Nov 15:46] (perturbing the old ear's numbers now moves no part; `bt_ball` and
+  `fan_r0_frac` still matter, they are the live train balls and the rib's full-width radius); C20–C22 in the proxy (the skip
+  only applies with `feel_on`); the stacks' `hx` bug; parts-list and colour rules (the dial's lower part is PA-12, jack lower
+  board, stacks, front parts, EE-SX1321, inserts, link flex, spring contacts; joystick rules kept, the viewer colours use them);
+  `--full` stops with a message until v2 has a STEP; KNOWN emptied; the case preview no longer needs the TFT window; the case no
+  longer reads `cad_constraints.json` (its rod pad comes from the v2 proxy). The glue-gap row is left for Ed (a limit to set).
+- **C:** `electronics/kicad/superseded/` holds main PCB v0.11, screen adapter v0.4, joystick daughterboard v0.4 and the v0.16b
+  pipeline (README says do not quote; the two old READMEs now say SUPERSEDED). `fab_export.py` no longer builds the adapter.
+  `docs/manufacturing-pcbway.md` and `AGENTS.md` updated.
+- **D:** removed: unread params (`z_motor_pinion, hub_gear_min, skirt_clear, det_r_frac, ot_keep_r, hall_z, carr_steel, fm_ear,
+  joystick_commit, scr_t, scr_below_knob, bz_t, bz_max, roof_pad, cover_rho, rear_clear, jack_nut, vb_buckle_margin, sw_push,
+  boss_wall_mult, pcb_margin`), the cushion-magnet option (it no longer built), the never-built cradle pegs, the case's
+  unused `press_travel` / `fp_rebate`, under_pcb's unused board-outline import, a switched-off check block. Rows removed:
+  "train centred" (0 ≤ 0), "material under the cup-boss bore" (no cup), "boss clears the knob hole" (v0.2 bosses); gated:
+  the riser row (now only with the riser) and the knob-bolt tip row (only with bolts). Renamed to what they measure: the
+  Hall arm vs cradle, the dial vs detent spring / grub / pedestal, the detent block mount, "cover over the screw head".
+  Stale comments and docstrings corrected.
+- **Kept on purpose:** code behind the version flags (the lever, stop blocks and v0.30 hanger with `es_on` / `hs_slot` off,
+  the v0.16–v0.21 fan, ears and arc detent, the thrust carrier) still rebuilds those versions; parked options keep theirs
+  (`feel_on` Q27 with the riser, driver and feel steps; `cc_on`; the scanner and optics); Ed's finish notes
+  (`finish_front`, `finish_other`, `resin_face_rough`). The old ear/fan placement still computes the rib's full-width radius.
+  The case's section sheet still imports across subs (`build.py --contract` reported that before the sweep too).
+- **Joystick model:** tidied on its own branch (see its commit).

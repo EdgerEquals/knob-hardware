@@ -1,5 +1,5 @@
 joystick-daughterboard v0.4 PCBWay pack, generated 2026-11-01 14:53 by make_project.py
-READY TO QUOTE
+SUPERSEDED (10 Nov 2026) - DO NOT QUOTE. Was: READY TO QUOTE
 
 {
   "board": "joystick-daughterboard",

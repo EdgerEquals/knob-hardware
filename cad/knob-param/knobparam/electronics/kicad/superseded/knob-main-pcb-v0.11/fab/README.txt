@@ -1,5 +1,5 @@
 knob-main-pcb v0.11 PCBWay pack, generated 2026-11-01 17:33 AWST by fab_export.py
-READY TO QUOTE
+SUPERSEDED (10 Nov 2026) - DO NOT QUOTE. Was: READY TO QUOTE
 
 {
   "board": "knob-main-pcb",

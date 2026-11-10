@@ -8,12 +8,7 @@ from ..common.checks import Rows, min_dist
 from ..common.util import cyl
 from ..common import model
 
-KNOWN = {"PCB / motor": "1220 rear boss Ø3×0.6 into the PCB front: the KiCad M1 footprint has no Ø3.2 relief hole yet (v0.13 same)",
-         # v0.32: J10 (the 2x14 placeholder test-pad field on B.Cu, 0.05 thick) sits at y -57.27..-52.92 in the committed v0.11 board, 4 mm
-         # off the board's bottom edge (-53.3); the key's back end (behind the case rim, at the cover's face) meets those pads. Stale
-         # placement: the KiCad regeneration (handover, after step 2) puts J10 back on the board.
-         "PCB back parts (Hall decouplers, J10, passives) / USB-C key (printed, held by the back cover)":
-             "J10 placeholder pads 4 mm off the board edge in the v0.11 KiCad board (stale); fixed by the KiCad regeneration"}
+KNOWN = {}   # accepted clashes: none (10 Nov sweep dropped the two v0.11 / v0.13 board ones, so a return shows as a failure)
 
 def local(D, parts, owner, subs=None):
     rows = []
@@ -88,7 +83,7 @@ def cross(D, parts):
             cr_far = cr - near                                                      # stop faces checked separately
         else:
             cr_far = cr - sector(0, D["sl_r"] + 3, 60, -1, 20, D["sl_ang"]) if D["fan_on"] else cr   # stop blocks checked separately
-        row("Hall arm / fan vs cradle, detent blocks, track (±travel)", min_dist(list(ARM.values()), [cr_far]), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
+        row("Hall arm (dial lower part) vs the cradle and its stop faces (±travel)", min_dist(list(ARM.values()), [cr_far]), T["arm_vs_cradle"], f"slot r {D['hv_slot_r0']:.2f}-{D['hv_slot_r1']:.2f}")
         if D.get("hs_slot"):
             note = (f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, "
                     "the ball's bore play)")
@@ -115,15 +110,8 @@ def cross(D, parts):
                 f"stop contact at ±{D['travel_deg']:.2f}° (past the ±{D['det_deg']:g}° end detent by {D['travel_deg'] - D['det_deg']:.2f}°, the ball's bore play)")
             row("dial lever meets the stop faces at ±travel (gap)", max(lv(t).distance_to(stops) for t in (-D["travel_deg"], D["travel_deg"])), 0.02, "flush contact = hard end stop", higher_ok=False)
         if D["fan_on"]:
-            if D["cu_on"]:
-                md, mh = D["cu_mag"]; m_dip = D["hv_br"] / (4e-7 * math.pi) * math.pi * (md / 2e3) ** 2 * (mh / 1e3)
-                cus = [parts[n] for n in parts if n.startswith("cushion magnet")]
-                dmin = min(c.distance_to(s_) for c in cus for s_ in sens) + md / 2
-                bst = 1e3 * 2e-7 * m_dip / (dmin / 1e3) ** 3 * len(cus)
-                row("cushion magnets: stray field at the nearest Hall-row sensor / range", bst / D["hv_sensor"]["range_mt"], D["cu_stray_max"],
-                    f"{len(cus)} × Ø{md:g}×{mh:g}, nearest {dmin:.1f} mm, ≤ {bst:.2f} mT", higher_ok=False)
             fan_d = min(ARM[t].distance_to(parts[n]) for t in TR for n in parts if n.startswith("detent") and "ball" not in n)
-            row("fan vs detent springs / grubs (±travel)", fan_d, T["arm_vs_cradle"])
+            row("dial lower part vs the detent spring, grub and pedestal (±travel)", fan_d, T["arm_vs_cradle"])
         mi = D["hv_mid"]["idx"] if D["hv_mid"] else -1
         s53 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" not in n]
         s73 = [parts[n] for n in parts if n.startswith("hall sensor") and "TMAG5273" in n]
@@ -438,7 +426,7 @@ def _arc_cross(D, parts, row, TR, ARM):
         from ..base_drive.parts.mech import split_mount
         mt = split_mount(model.view(D, "base_drive"))
         bd = min(ARM[th].distance_to(mt) for th in TR)
-        row("split detent mount (pedestal, wall, bracket, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
+        row("split detent mount (detent block: wall, bracket, boss) vs the arm across ±travel (mm)", bd, T["arm_vs_cradle"],
             f"wall r {D['sp_wall_r0']:.2f}-{D.get('sp_wall_r1_used', D['sp_wall_r1']):.3f}; land top {D['ad_z_land']:.2f}, boss from {D['det_z0']:.2f}"
             + ("; v0.25 the separate detent block [Ed 18:15]" if D.get("dt_block") else ""))
         caps = [s for n, s in parts.items() if "cap" in n and "pinion" in n]

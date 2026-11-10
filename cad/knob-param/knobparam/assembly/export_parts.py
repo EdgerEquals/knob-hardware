@@ -8,15 +8,17 @@ from collections import OrderedDict
 
 # (regex on the part name, kind, material, process). First match wins. kind: print | buy | board | ref
 RULES = [
-    # v0.33 [Ed 4 Nov 21:30] step 2, decision 3 option B: the jack board (jacks soldered on) and the jack power board under it
+    # v0.33 [Ed 4 Nov 21:30] step 2, decision 3 option B: the jack board (jacks soldered on), the jack power board under it, and
+    # (v0.47, Q23) the jack lower board under that
     (r"^clear OLED flex", "ref", "the clear OLED's own flex (part of the display)", "-"),
-    (r"^link flex", "buy", "custom FPC, 0.5 mm, ~16 lines [A]", "PCBWay"),
-    (r"^USB spring contact", "buy", "spring contact Ø0.6-0.7, ~4.2 working, ~1 A [A][C]", "on the jack board PCBA"),
+    (r"^link flex", "buy", "custom FPC, single-sided PI, 25 lines at 0.3, PI stiffener at the contacts (Q29) [A]", "PCBWay"),
+    (r"^USB spring contact", "buy", "Harwin P70-5100045 spring contact, Ø1.03, 2 A, works 3.85-4.20 [S-dist]", "on the jack board PCBA"),
     (r"^USB-C board (VBUS TVS|data ESD)", "buy", "TVS / ESD (LCSC) [A]", "on the USB-C board PCBA"),
     (r"^jack unit post", "buy", "brass Ø2 pin [A] (soldered in the jack power board's tab)", "buy"),
-    (r"^jack (power )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
-    (r"^jack (power )?board.*(ZIF|headers|FPC connector)", "buy", "FPC connector (XUNPU C2856805 / Hirose FH26W C2904698) / XFCN 1.27 stack (C2840009 + C2840010)", "on the PCBA"),
-    (r"^jack board|^jack power board", "board", "jack boards, FR-4 1.6 [A] (KiCad with step 2)", "PCBWay PCBA"),
+    (r"^jack (power |lower )?board .*envelope", "ref", "parts envelope [A] (the parts come with the KiCad boards)", "-"),
+    (r"^jack (power |lower )?board.*(ZIF|headers|stacks|FPC connector)", "buy",
+     "FPC connector (XUNPU C2856805 / Hirose FH26W C2904698) / XFCN 1.27 stack (C2840009 + C2840010)", "on the PCBA"),
+    (r"^jack board|^jack power board|^jack lower board", "board", "jack boards, FR-4 [A] (KiCad)", "PCBWay PCBA"),
     # [Ed 3 Nov 12:41-12:58] v0.24 dial screen as a bezel cartridge (Waveshare Z132A2441), dial board, rod-link board, strap loop
     (r"^dial bezel", "print", "PA-12, dyed black [A] (bezel material open: MJF to match the dial, or SLA [C])", "MJF"),
     (r"^dial screen Z132A2441", "buy", "Waveshare Z132A2441-V0 1.32in AMOLED (lens, panel, flex, 24-pin plug) [C: bare panel source]", "buy"),
@@ -25,71 +27,56 @@ RULES = [
     (r"^dial board ", "board", "PCBA parts (ESP32-S3-PICO-1-N8R8, LDO, PHY, 24-pin 0.4 receptacle, 405 nm diode, LEDs)", "PCBWay PCBA"),
     (r"^dial strap loop", "buy", "flex, 2-layer PI, 4 lines (2 + 2 spares)", "buy"),
     (r"^rod-link board", "board", "rod-link board (FR-4)", "PCBWay PCBA"),
+    (r"^control dial lower part|^control dial dish", "print", "PA-12", "MJF"),   # 10 Nov sweep: its name says "spring column"
     (r"^MCU ", "board", "PCBA parts (STM32H743VIT6, LQFP100; Q33 = A, 7 Nov)", "PCBWay PCBA"),
     (r"^power light VCSEL", "buy", "JNJOPTO JNJ-V-2835CW-665003-S-D1 red VCSEL (LCSC C42375664), the power light", "on the PCBA"),   # [Ed 3 Nov] v0.23: main PCB front, under the joystick
-    # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick, and the joystick's case cradle / gasket / top board
+    # [Ed 3 Nov] v0.23 layout v4: vertical boards under the joystick (the joystick's own parts are listed by cad/joystick-param)
     (r"^vertical board [LR] \(", "board", "vertical board (FR-4, parts on both faces)", "PCBWay PCBA"),
     (r"^vertical board [LR] header", "buy", "right-angle 1.27 mm two-row hybrid THT / SMT header (on the PCBA)", "on the PCBA"),
-    # v0.24 [Ed 13:31-14:08]: pins into sockets, the bead, the up-stop cushions
     (r"^vertical board [LR] male pins", "buy", "right-angle 1.27 mm single-row male header, SMT (on the PCBA)", "on the PCBA"),
+    # the joystick's parts (viewer colours; its BOM is cad/joystick-param's)
     (r"top-board socket", "buy", "1.27 mm single-row female socket 3.4, SMT (on the top-board PCBA)", "on the PCBA"),
-    (r"form-in-place", "buy", "form-in-place silicone bead (dispensed)", "dispense"),
     (r"up-stop cushion", "buy", "BISCO HT-870 silicone sponge ring 1.59, die-cut", "buy"),
-    (r"^vertical board [LR] spring contacts", "buy", "right-angle spring-contact (pogo) strip (on the PCBA)", "on the PCBA"),
-    (r"^vertical boards' standoff", "buy", "M2 female-female brass standoff", "buy"),
-    (r"case cradle", "print", "UTR-8100 clear resin", "SLA"),
-    (r"gasket", "buy", "closed-cell silicone sponge gasket, die-cut", "buy"),
-    (r"top board", "board", "joystick top board (FR-4, ENIG contact pads)", "PCBWay PCBA"),
+    (r"top board", "board", "joystick top board (FR-4)", "PCBWay PCBA"),
+    (r"foam pad", "buy", "foam tape (PET carrier), cut to shape", "buy"),   # v0.6 joystick screen pads
+    (r"SKRHADE010", "buy", "Alps SKRHADE010 switch (on the top-board PCBA)", "on the PCBA"),
     # v0.25 (dial job): "non-magnetic" springs read as magnets and the spring anchor pins as printed anchors; the detent block's
     # name mentions its pins (hardware rule); the cap's inner hub is PA-12 [Ed 19:46]. Explicit rules ahead of the generic ones.
-    (r"^centring spring", "buy", "stainless 316 extension spring, OD 1.5, wire 0.2, extended hooks (non-magnetic; v0.31 rate / free lengths in check.json)", "buy"),
+    (r"^centring spring", "buy", "stainless 316 extension spring, OD 1.6, wire 0.2, extended hooks (non-magnetic; v0.31 rate / free lengths in check.json)", "buy"),
     (r"^spring pin on", "buy", "steel dowel Ø0.8 (spring hook pin, pressed into the Hall arm's column)", "buy"),
     (r"^spring anchor pin", "buy", "steel dowel Ø0.8 (spring anchor, pressed into a cradle post)", "buy"),
     (r"^detent block \(", "print", "UTR-8100 clear resin (glued on two Ø1 pins) [Ed 18:15]", "SLA"),
     (r"^knob upper-cap hub", "print", "PA-12: hub-gear teeth + 45° ball race, keyed and glued into the clear cap [Ed 19:46]", "MJF"),
     (r"magnet", "buy", "N52 magnet", "buy"),
     (r"locating pin|dowel", "buy", "steel dowel", "buy"),
-    (r"saddle strap|saddle seat|screen carrier|holder", "print", "PA-12", "MJF"),
-    (r"foam pad", "buy", "foam tape (PET carrier), cut to shape", "buy"),   # v0.6 joystick screen pads
     (r"FPC|jumper|B2B", "buy", "flex / connector", "buy"),
     (r"O-ring", "buy", "silicone O-ring (metric)", "buy"),
-    (r"seal ring", "print", "PETG, opaque", "FDM"),   # v0.19b: before the glass rule (the name says 'bonded on the glass')
-    # v0.25 [Ed 3 Nov 19:00-19:12]: the hub gear is a PA-12 ring glued into a clear upper cap; the feel pinion is printed
-    (r"^knob hub gear ring", "print", "PA-12, glued into the clear upper cap (keyed collar)", "MJF"),
     (r"knob upper-cap", "print", "UTR-8100 clear resin (PCBWay lists no WaterShed XC, 3 Nov) [Ed 19:00]", "SLA"),   # v0.19b-v0.24: PA-12 MJF (it carried the hub gear)
-    (r"^feel motor pinion (?!cap)", "print", "PA-12, printed 11T m0.5 [Ed 19:12 item 9]", "MJF"),
     (r"base cradle", "print", "UTR-8100 clear resin (clear race fused in)", "SLA"),   # the race land is the light path
     (r"train pedestal", "print", "UTR-8100 clear resin", "SLA"),   # v0.22b: before the hardware rule (its name says 'grub-set')
-    (r"nylon", "print", "PA-12 (nylon 12)", "MJF"),   # v0.25 [Ed 19:12 item 9]: was "buy Tempero 0.5M-12T"; every gear is printed
     (r"anchor", "print", "PA-12", "MJF"),             # joystick rear spring anchor (printed), not a spring
     (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
-    (r"^PCB$|^PCB back parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),
+    (r"^PCB$|^PCB back parts|^PCB front parts|^PCB rod pad", "board", "FR-4 main PCB (KiCad)", "PCBWay PCBA"),
     (r"^emitter ", "buy", "SK6812MINI-E reverse-mount RGB (LCSC C5149201)", "on the PCBA"),
-    (r"^hall sensor|^adapter part|^adapter board", "board", "PCBA parts", "PCBWay PCBA"),
-    (r"^encoder daughterboard|^encoder header|^encoder sensor", "board", "encoder daughterboard (EE-SX1321)", "PCBWay PCBA"),
+    (r"^hall sensor", "board", "PCBA parts", "PCBWay PCBA"),
+    (r"^encoder sensor", "board", "EE-SX1321 on the main board's back (Q27; LCSC C469128)", "PCBWay PCBA"),
     (r"^case$", "print", "UTR-8100 clear resin, front face polished; the joystick cradle printed in (v0.25, Ed 18:35)", "SLA"),
     (r"^USB-C key", "print", "UTR-8100 clear resin [A], printed with the case; fills the bottom-wall channel behind the USB-C board, "
                              "held in by the back cover (v0.32, Ed 4 Nov 20:15)", "SLA"),
     (r"glow coat", "ref", "Shimicoat strontium aluminate, brushed", "Ed"),
     (r"back cover|lower screen pad", "print", "ASA-CF, black (print floor-down; PET/Kapton film under the screens)", "FDM"),
     (r"cap\b|caps\b|Fresnel", "print", "UTR-8100 clear resin", "SLA"),
-    (r"thrust carrier|thrust race|bottom thrust", "print", "UTR-8100 clear resin", "SLA"),
-    (r"Risley wedge", "print", "UTR-8100 clear resin (acrylic fallback)", "SLA"),
     (r"glass|sleeve \(borosilicate|borosilicate", "buy", "borosilicate tube", "buy"),
     (r"^back AMOLED|screen panel|^screen\b|AMOLED|clear OLED", "buy", "display", "buy"),
     (r"^jack |PJ366ST|bushing|^USB-C receptacle", "buy", "PJ366ST jack / USB-C", "buy"),
     (r"^USB-C board \(socket", "board", "USB-C board (socket, TVS, ESD; v0.37: PD chip on the jack power board)", "PCBWay PCBA"),
-    (r"motor coreless|feel motor coreless|^motor$|1220", "buy", "motor", "buy"),
+    (r"^motor$|1220", "buy", "motor", "buy"),
     (r"bearing(?! 2 seat)", "buy", "F682ZZ bearing", "buy"),
     (r"bearing 2 seat", "print", "PA-12", "MJF"),
+    (r"\binsert\b", "buy", "brass heat-set insert (M2.5 case corners, M2 joystick guides)", "buy"),   # 10 Nov sweep: was the brass tube rule
     (r"brass tube|brass", "buy", "brass 5x3 tube", "buy"),
-    (r"rod|nut|screw|grub|insert|pin\b|pins\b|dowel|shaft", "buy", "steel / brass hardware", "buy"),
-    (r"ball|ruby", "buy", "steel / glass / ruby balls", "buy"),
-    (r"thrust blank", "print", "UTR-8100 clear resin", "SLA"),
-    (r"clear OLED", "buy", "EastRising ER-OLED1.51-1B (SSD1309, transparent)", "-"),
+    (r"rod|nut|screw|grub|pin\b|pins\b|dowel|shaft", "buy", "steel / brass hardware", "buy"),
     (r"spring", "buy", "stainless 316 / phosphor bronze spring", "buy"),
-    (r"magnet|cushion", "buy", "N52 magnet", "buy"),
-    (r"FPC|jumper|strap|B2B", "buy", "flex / connector", "buy"),
     (r"gear|pinion|idler|ring\b|knob|dial|cradle|saddle|carrier|holder|disc|standoff|lever|arm|detent|hub|clip|seat", "print", "PA-12", "MJF"),
 ]
 

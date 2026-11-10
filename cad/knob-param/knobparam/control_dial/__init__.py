@@ -1,5 +1,6 @@
-"""control_dial sub-assembly: dial tube + lip (+ ball seating groove), thrust carrier + balls, hub magnet, Hall arm + magnet row,
-screen panel + FPC fold/B2B + diametral service strap, screen carrier (on the dial) + fixed adapter cup.
+"""control_dial sub-assembly: the dial's lower part (tube, Hall arm + magnet row, detent spoke, spring column) and dish, the
+v0.24 bezel cartridge (dial screen, bezel, dial board, plug pad), the strap loop. Older options still built by their flags: the
+thrust carrier (tb_on), the v0.16 screen panel / carrier and the adapter cup.
 Owner: control_dial agent. Public helpers for the assembly cross-checks: arm(D, travel), strap_bent(D, travel)."""
 from . import params
 from .parts import dial, thrust, hall_arm, screen, holder, cartridge

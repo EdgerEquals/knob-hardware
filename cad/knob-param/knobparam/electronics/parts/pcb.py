@@ -1,6 +1,7 @@
 """Main PCB PROXY: outline, holes (H1, H2, M2, 1220 tab slots + KiCad extras: M1 Ø3.2 relief, joystick spring / pin holes and FPC slot)
 and the key back-side component boxes. KiCad is the source of truth: the extras and the back-side parts come from
-kicad/knob-main-pcb/pcb_proxy.json (export_pcb_proxy.py, run after make_board.py; read by params.derive -> D['pcb_kicad']). Full KiCad STEP: pcb_full()."""
+kicad/knob-main-pcb/pcb_proxy.json (knob-main-pcb/v2/export_proxy.py, run after make_board.py; read by params.derive -> D['pcb_kicad']).
+Full KiCad STEP: pcb_full() (no v2 STEP yet)."""
 import math, os
 from build123d import *
 from ...common.util import A, cyl
@@ -16,8 +17,8 @@ def _mpt(D, x, y):
     return c * x - s * y, s * x + c * y
 
 def _is_mech(D, x, y):
-    # KiCad boards up to v0.12 are laid out in the mechanism frame (motor at +X). A board regenerated from the v0.19
-    # cad_constraints.json is already in the panel frame: set electronics kicad_frame = "panel" and nothing is turned.
+    # KiCad boards up to v0.12 were laid out in the mechanism frame (motor at +X). Main board v2 is in the panel frame
+    # (electronics kicad_frame = "panel"), so nothing is turned.
     return D.get("kicad_frame", "mech") == "mech" and math.hypot(x, y) < D.get("mech_rot_r", 23.0)
 
 def build(D):
@@ -55,7 +56,7 @@ def build(D):
         if f"slot {i}" in gone: continue
         dx, dy = sl["dx"], sl["dy"]; r = min(dx, dy) / 2
         b -= Pos(sl["x"], sl["y"], -t - 1) * extrude(SlotOverall(max(dx, dy), 2 * r, rotation=0 if dx >= dy else 90), t + 2)
-    for h in D.get("js_pcb_holes", []):   # v0.19b: joystick standoff screws + hold-down springs (cad/joystick-param geom.json)
+    for h in D.get("js_pcb_holes", []):   # the joystick's hold-down spring holes (cad/joystick-param geom.json)
         b -= cyl(h["d"] / 2, -t - 1, t + 2, h["x"], h["y"])
     if D.get("vb"):   # [Ed 3 Nov] v4: PTH for the vertical boards' right-angle header legs (v0.24: the THT ones of the hybrid header)
         for sx in (-1, 1):
@@ -74,7 +75,7 @@ def build(D):
     for x, y, a in (pts if K.get("frame", "mech") != "panel" else []):   # v2 has its own Hall decouplers (in back_parts)
         cl, cw, ch = D["adapter_env"]["C_0402"]
         mcomps.append(Pos(x, y, -t - ch) * Rot(0, 0, a) * Box(cw, cl, ch, align=A))
-    drv_refs = {c[0] for c in D["drv_cluster"]}
+    drv_refs = {c[0] for c in D["drv_cluster"]} if D["feel_on"] else set()   # 10 Nov sweep: v2 reuses C20-C22 as ADC filter caps
     for x, y, w, l, h, a in drv_boxes(D):   # v0.19b: the 716 driver cluster follows drv_xy / drv_rot (KiCad to follow)
         mcomps.append(Pos(x, y, -t - h) * Rot(0, 0, a) * Box(w, l, h, align=A))
     old_board = K.get("frame", "mech") != "panel"   # main board v2 (9 Nov 2026) is exported in the panel frame, every part its own
@@ -90,7 +91,7 @@ def build(D):
         mcomps.append(pad - cyl(F["pad_hole"] / 2, -t - F["pad_t"] - 0.1, F["pad_t"] + 0.2, px, py))
     comps += [_mr(D) * c for c in mcomps]
     pad = cyl(D["rod_pad_r"], -t - D["rod_pad_t"], D["rod_pad_t"]) - cyl(D["h1_hole"] / 2, -t - 1, 2)
-    out = {"PCB": b, "PCB back parts (Hall decouplers, J10, passives)": Compound(children=comps),
+    out = {"PCB": b, "PCB back parts (passives, Hall decouplers)": Compound(children=comps),
            **({"PCB front parts (passives, crystal, 3D Hall)": Compound(children=front)} if front else {}),
            f"PCB rod pad VBUS Ø{2 * D['rod_pad_r']:.1f} (B.Cu)": pad}
     out.update({k: _mr(D) * v for k, v in emitters(D).items()})
@@ -167,11 +168,15 @@ def hole_hits(D, K):
     return out
 
 
-STEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad", "knob-main-pcb", "knob-main-pcb.step")
+STEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad", "knob-main-pcb", "v2", "knob-main-pcb.step")   # not made yet
 
 def pcb_full(D):
     """The real board (KiCad STEP export, committed in electronics/kicad/knob-main-pcb/), moved into the dial frame.
-    Needs NO KiCad: only build123d's STEP import. Regenerate the STEP with kicad-cli after editing the board (see AGENTS.md)."""
+    Needs NO KiCad: only build123d's STEP import. Regenerate the STEP with kicad-cli after editing the board (see AGENTS.md).
+    10 Nov sweep: the committed STEP is the v0.11 board (mechanism frame, motor at +X); main board v2 has no STEP yet, so --full
+    stops here rather than load the old board."""
+    raise RuntimeError("build.py --full: no main board v2 STEP yet (the committed knob-main-pcb.step is the v0.11 board); "
+                       "export one from knob-main-pcb/v2/kicad with kicad-cli and place it in the panel frame first")
     s = import_step(STEP); zf = s.bounding_box().max.Z
     s = Pos(-D["axis_bx"], D["axis_by"], -zf) * s
     # same NPTHs the proxy drills; the KiCad board does not have them yet (see design notes).

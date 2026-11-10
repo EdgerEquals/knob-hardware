@@ -1,6 +1,8 @@
-"""v0.16 dial mechanics on the cradle side [Ed]: top-loaded spring-ball detent blocks over the fan wings (ball, spring, grub
-screw in a threaded bore: the grub sets the feel), the Ø1 ball track under each detent, the centring-spring anchor posts and
-the magnet cushion stop blocks either side of the dial lever. Angles / radii come from the INTERFACE (_place_mech).
+"""Dial mechanics on the cradle side. Now (v0.31 on): the detent block (v0.25: wall, bracket, boss with the spring-ball detent and
+its grub), the ball train and its pedestal, the two spring posts printed up from the cradle plate with their pins, and the
+two extension centring springs (es_on). The hard stop is in the Hall slot (hall_slot.py).
+Older options still built by their flags: v0.16 detent blocks over the fan wings and the Ø1 ball tracks, the lever's anchor
+posts and stop blocks (es_on / hs_slot False), the v0.30 hanger. Angles / radii come from the INTERFACE (_place_mech).
 v0.21 [Ed 2 Nov] (arm_det "arc", control_dial EXPORTS): ONE detent out on the arc at the arm's end, its boss on a bridge
 over the arm from two columns; three ball tracks (big, small, big) whose layout control_dial owns."""
 import math
@@ -132,10 +134,6 @@ def stop_blocks(D):
         if _hung(D, k): continue
         q = cyl(D["sl_post_d"] / 2, z_post, max(D["sl_pin_top"] - z_post, 0.4), px, py)
         s = q if s is None else s + q
-    if D["cu_on"]:
-        md, mh = D["cu_mag"]
-        for sg, aa in ((1, a + T), (-1, a - T)):
-            s -= Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2 + 0.025, mh + 0.01))
     return s
 
 def _hung(D, k):   # v0.30 [Ed 4 Nov 15:46]: anchor post k (1-based) hangs from the detent block
@@ -273,10 +271,6 @@ def build(D):
         out["detent block (UTR-8100: wall, bracket, boss; glued on two pins)"] = detent_block(D)
         for k, p in enumerate(detent_pins(D), 1):
             out[f"detent block locating pin {k} Ø{D['dt_pin'][0]:g}"] = p
-    if D["cu_on"]:
-        md, mh = D["cu_mag"]; a, w, T = D["sl_ang"], D["sl_w"], D["travel_deg"]
-        for k, (sg, aa) in enumerate(((1, a + T), (-1, a - T)), 1):
-            out[f"cushion magnet stop {k} {md:g}x{mh:g}"] = Rot(0, 0, aa) * (Pos(D["cu_mag_r"], sg * (w / 2 + mh / 2), D["cu_z"]) * Rot(90, 0, 0) * Cylinder(md / 2, mh))
     if D["es_on"]:   # v0.31 [Ed 4 Nov 16:35]: two extension springs at es_z, the Hall arm column's pin and the posts' pins
         for k, coil in enumerate(es_springs_at(D, 0.0), 1):
             out[f"centring spring {k} (extension, 316, non-magnetic)"] = coil

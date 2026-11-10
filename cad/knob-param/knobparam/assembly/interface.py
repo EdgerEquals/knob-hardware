@@ -22,8 +22,6 @@ P = dict(
     pressure=20.0,   # [A] spur pressure angle (RW and Tempero catalogue pinions are 20°)
     backlash=0.1,   # [A] leftover spur default; herringbone uses hb_backlash, nylon spur meshes use brass_backlash (name kept)
     motor_offset=10.75,   # [Ed/K] dial axis to the 1220 motor axis (KiCad). The mesh centre distance is hub_cd.
-    z_motor_pinion=12,   # unused in v0.18 (the pinion is the RW catalogue tooth count hub_z_pin)
-    hub_gear_min=True,   # unused in v0.18; the hub tooth count is the one in hub_ratio closest to motor_offset
     z_enc_pinion=14,   # overwritten: ring-stage pinion tooth count (encoder, both idlers, the compound's small gear)
     # ---- ring stage (internal ring, encoder pinion, both idlers, the compound's small gear). v0.18-v0.24: 25° herringbone.
     # v0.25 [Ed 3 Nov 19:00-19:06]: straight (spur) teeth, ONE-PIECE ring ("definitely not split"), smallest teeth at the
@@ -83,7 +81,6 @@ P = dict(
     # ---- 1220 motor [M] ----
     motor=dict(title="Motor 1220 coreless planetary", body_d=12.0, motor_len=20.0, gearbox_len=17.0, boss_d=4.0, boss_len=1.0, shaft_d=3.0, shaft_flat=2.5, shaft_len=5.5, flat_len=4.5, seam_groove=0.3, endcap_len=1.5, endcap_d=11.0, rear_boss_d=3.0, rear_boss_len=0.6, term_w=1.2, term_t=0.3, term_len=2.5, term_pitch=6.0, mount_holes=None, ratio="1:144 (3-stage)", version="v0.1"),
     # ---- knob [Ed/A] ----
-    skirt_clear=1.0,   # [Ed/A] old motor-can preference. A root wall of knob_wall cannot keep this inside the fixed OD.
     ring_can_clear=0.5,   # [A] 1220 can to the ring tips after the band thickens inward. Same clearance as the cradle.
     knob_wall=2.0,   # [A] skirt wall (ring root to OD is what is left: flagged)
     skirt_gap=2.0,   # [Ed] bottom ring underside above the PCB front
@@ -110,7 +107,8 @@ P = dict(
     # ---- control dial [Ed/A] ----
     dial_tube_id=5.12,   # [Ed] dial tube Ø5.12/Ø8.12
     dial_tube_wall=1.5,   # [Ed] dial tube Ø5.12/Ø8.12
-    travel_deg=5.5,   # overwritten in derive [Ed]: hard-stop angle. v0.17 = det_deg + the ball's bore play (see det_stop_clear)
+    travel_deg=10.738823720349224,   # [Ed 4 Nov 15:46, kept ±10.74] the dial's hard-stop angle. v0.17-v0.55 worked it out from the v0.17 ear
+                     # detent's radius (det_deg + det_stop_clear at det_r_nom); fixed here (10 Nov sweep) so the old ear's numbers can't move it
     det_n=1,   # [Ed] 2 Nov: one spring-ball detent with three dimples (v0.18 had two)
     det_deg=10.0,   # [Ed] v0.17: dial latches at the centre and at both ends, ±10° (v0.16 was ±5°)
     det_stop_clear=0.10,   # [A] mm arc at the detent radius: hard stop past the seated end detent (ball bore play; the closest the ball allows)
@@ -191,7 +189,6 @@ P = dict(
     det_ball=1.5,   # [Ed/A] detent ball (a bit bigger than the Ø1 race balls)
     det_dimple=0.25,   # [A] dimple depth in the wing top (spherical seat) at ±det_deg
     det_gap=0.35,   # [A] detent boss underside above the land it rides on (v0.22: 0.35, was 0.3; the dial lift to the adapter board is 0.3)
-    det_r_frac=0.5,   # [A] detent radius at this fraction across the wing (0 = inner edge, 1 = outer)
     bt_ball=1.0,   # [Ed] Ø1 balls in the track under each detent
     bt_up=0.3,   # [A] ball centre above the cradle plate (fan underside another bt_up above it)
     bt_groove_r=0.55,   # [A] groove radius in the plate and in the wing underside
@@ -210,8 +207,9 @@ P = dict(
     cc_z=2.6,   # [A] spring axis height (the Hall bar is in the plate over z 1.75-3.5)
     cc_od=1.5,   # [A] spring OD (316 stainless, non-magnetic: the Hall magnets are beside it)
     hs_slot=True,   # [Ed 4 Nov 15:46] v0.30 (option A): the dial's hard stop in the Hall slot (stop faces the Hall bar meets at ±travel),
-                    # the r 7 stop blocks gone; the lever and the two extension springs stay; anchor post 2 hangs from the detent block
-    es_on=True,   # [Ed 4 Nov 16:35] v0.31 (Danny 16:02-16:27): the centring springs lifted above the detent block: two extension
+                    # the r 7 stop blocks gone (in v0.30 the lever stayed and anchor post 2 hung from the detent block; v0.31 es_on replaced both)
+    es_on=True,   # [Ed 4 Nov 16:35] v0.31 (Danny 16:02-16:27): the centring springs lifted (sketch: over the detent block; built at z 10.5,
+                  # beside the block, under its 13.55 top): two extension
                   # springs at z es_z pull a pin on a column rising from the Hall arm's rib (the lever goes) toward two posts printed up
                   # from the cradle plate. The hard stop stays in the Hall slot (hs_slot). Sketch docs/img/dial-hallspring-sketch.png
     es_rp=8.0,   # [A, sketch] the column's pin radius, on the rib's line (ha_ang0)
@@ -222,12 +220,8 @@ P = dict(
     es_col_d=2.4,   # [A] the column on the rib (PA-12, part of the dial's lower part)
     cc_on=False,   # [Ed 4 Nov 15:46: option B, parked] v0.30: compression centring springs on an arc in the cradle plate, one each side of the Hall arm's
                   # first link, and the hard stop in the Hall slot (two stop faces the arm's links meet at ±travel). No lever on the dial,
-                  # no stop blocks, no anchor posts or pins. The sl_* values still place the detent and the webs as before (no other
-                  # geometry moves). False = v0.17-v0.29: the lever, two extension springs on anchor posts, the r 7 stop blocks.
-    cu_on=False,   # [Ed] v0.17: cushion magnets removed (v0.16 had three Ø1.5×0.5 repelling cushions)
-    cu_mag=(1.5, 0.5),   # [Ed/A] unused when cu_on is False (kept so a --set cu_on=True rebuilds v0.16)
-    cu_mag_r=7.8,   # [A] cushion magnet radius on the lever end
-    cu_stray_max=0.03,   # [A] cushion stray field at the nearest Hall-row sensor / sensor range
+                  # no stop blocks, no anchor posts or pins. (10 Nov sweep: with es_on the sl_* values move no part.) False = v0.17-v0.29: the lever, two extension springs on anchor posts, the r 7 stop blocks.
+    # (v0.16's cushion magnets, removed in v0.17 [Ed]: the cu_* option was taken out in the 10 Nov sweep, it no longer built)
     # ---- v0.17 Hall-arm rib [Ed]: tapered spine on the sweeping arm, PA12 ----
     ha_rib_w0=3.0,   # [Ed] rib width at the hub
     ha_rib_w1=5.2,   # [Ed] rib width at the hammerhead (fan_r0) and on out to ha_rib_r1
@@ -264,7 +258,6 @@ P = dict(
     ot_foot_ro=21.2,   # [A] clear race foot, outer radius: 0.3 off the case (its nearest fixed part out there, r 21.51)
     ot_keep_ang=None,   # [Ed 2 Nov] no keep-out: the 716 driver (U20, C20–C22) moved inboard, so the ball ring closes and the
                         # 24 emitters sit every 15°. v0.19: (124.0, 137.0) with a printed blank in the gap
-    ot_keep_r=(18.0, 20.5),   # [Ed] radial band of that keep-out
     em_phase=15.0,   # [A] angle of emitter 1 when the ring is even (mechanism frame). v0.53: 15 puts the panel's 3 and 9 o'clock
                      # (the side corridors past window D) in the middle of a web, not on a cut-out
     em_n=6,   # [Ed 8 Nov 19:37 Q44 = A "12"] half the ring sites (2 x em_n sites, every 30 deg under the race); was 12 (24 sites):
@@ -636,9 +629,8 @@ def _det_r_nom(D):
 
 
 def _set_travel(D):
-    """[Ed] hard stop just past ±det_deg, by the ball's bore play at the detent radius. Overwrites travel_deg."""
+    """The v0.17 ear detent's radius (det_r_nom), still the old placement's datum. v0.56: travel_deg is a fixed [Ed] value."""
     D["det_r_nom"] = _det_r_nom(D)
-    D["travel_deg"] = D["det_deg"] + math.degrees(D["det_stop_clear"] / D["det_r_nom"])
 
 
 def _ot_solution(D, root_r, R):
@@ -947,7 +939,6 @@ def _place_mech(D):
     D["hall_win_out"] = win
     D["bt_z"] = D["plate_t"] + D["bt_up"]
     D["sl_pin_top"] = D["sl_top"] + D["sl_spring_gap"] + D["sl_spring"][0] + 0.4
-    D["cu_z"] = (D["sl_z0"] + D["sl_top"]) / 2
     # rib section (shared with the deflection check and the arm solid)
     D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
     D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
@@ -1026,7 +1017,7 @@ def derive(D):
     # ---- mating heights ----
     D["z_top"] = D["z_glass"]
     # Faceplate front is the knob screen top, set back by knob_proud. PCB front is z = 0.
-    # sub/case-v01 reads faceplate_z and faceplate_t from cad_constraints.json.
+    # (sub/case-v01 read faceplate_z and faceplate_t from cad_constraints.json; archived 10 Nov, the case reads D now.)
     D["faceplate_z"] = D["z_top"] - D["knob_proud"]
     D["faceplate_z_back"] = D["faceplate_z"] - D["faceplate_t"]
     D["z_board_top"] = D["z_holder0"] - D["nut_m"] - D["cord_clear"]      # adapter board top (50.60)

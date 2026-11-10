@@ -28,7 +28,6 @@ import os
 
 P = dict(
     case_rev="v0.1",
-    joystick_commit="bce854b54acdef8a2a4c86b35ff4460e1a8e460a",   # [J] sub/joystick-v04
     knob_commit="00502746fa2fb2aaef44580e1b9edbcc907f73e7",       # [N] sub/assembly-v017
     # ---- Eurorack panel, from the module scope unless a wall will not fit ----
     # 10HP actual width in the scope is 50.50 = 10 × 5.08 − 0.30 (Doepfer table, layout v2+).
@@ -63,22 +62,16 @@ P = dict(
     glow_gap=0.30,         # [A] air between the drawn coat and the wall (keeps the solids apart)
     # ---- knob opening (v0.17 / joystick plan) ----
     knob_od_design=42.0,   # [Ed] glass + caps, about Ø42. Opening uses the larger of this and the live knob.
-    z_knob_snap=52.5,      # [N] z_knob_top on v0.16b and v0.17, until cad_constraints carries it
+    z_knob_snap=52.5,      # [N] z_knob_top (v0.16b on; only the case preview's footer text reads it)
     knob_rad_clear=0.20,   # [A] = one SLA tolerance, radial, dial and knob share this hole
     # ---- joystick bezel (v0.4 snapshot; formulas match jsparam.derive) ----
     scr_w=41.62,           # [J] DO0164FMST05 landscape width
     scr_h=26.74,           # [J]
-    scr_t=1.5,             # [J]
-    scr_below_knob=5.0,    # [J][Ed] screen top 5 mm under the knob top, before the 0.30 pad
     bz_lip=1.2,            # [J][Ed] lip, max 1.5
-    bz_t=1.2,              # [J][Ed] bezel thickness
-    bz_max=1.5,            # [Ed] lip and bezel thickness must not exceed this
     fp_overlap=0.90,       # [J] lip covers the faceplate at rest
     up_gap=0.55,           # [J] review fix 2 Nov: the face is one flat plane (no rebate), so the joystick block floats press travel
                            # (0.35) + one SLA tolerance above it (v0.4: 0.02 over a rebate the case never had)
-    roof_pad=0.30,         # [J] glass sits on the spring pads; raises the glass 0.30
     sw_tilt=0.25,          # [J][S] SKRHADE010 tilt travel
-    sw_push=0.15,          # [J][S] centre press
     grip_h=5.0,            # [Ed 2 Nov] joystick bezel is a grip block at least 5 mm tall (replaces the 1.2 mm bezel thickness)
     joy_rule="rail",       # [Ed 2 Nov] "rail": the joystick sits as high as the top rail screw keep-out allows; "knob": v0.4,
                            # as close to the knob as the process stack allows
@@ -145,7 +138,6 @@ P = dict(
     thread_fit=0.22,       # [A] radial air so the screw and the printed thread do not occupy the same solid
     engage_min=2.0,        # [Ed] engagement / diameter, minimum
     engage_mult=3.0,       # [Ed] used when there is room past the minimum
-    boss_wall_mult=1.0,    # [Ed] resin around the thread, in diameters
     screw_hole_ratio=0.08, # [A] clearance hole over the screw, as a fraction of the diameter
     tip_clear_ratio=0.5,   # [A] screw tip stays this many diameters off the PCB and off rear parts
     # ---- back cover: transparent smoky-grey PETG, as shallow as the countersink allows ----
@@ -232,7 +224,6 @@ P = dict(
     boss_gap=0.40,         # [A] air, boss to the knob hole and to the joystick opening
     cover_mat="ASA-CF",    # [Ed 2 Nov] back cover and lower screen pad: carbon-filled ASA, FDM (was PETG). Stiffer (~4.2 GPa),
                            # HDT ~100 °C, so the corner-column clamp does not creep. Print floor-down; thin PET/Kapton film under the screens
-    cover_rho=1.12e-3,     # [A] ASA-CF, g/mm³
     cover_rgb=(40, 42, 45),  # [A] black, as printed
     cover_opacity=0.55,    # [A] render only (the real part is opaque)
 
@@ -249,7 +240,6 @@ P = dict(
     clamp_keep=0.45,       # [A] clamp overlap uses this fraction of the nearest B-side edge clearance
     cover_pocket=0.40,     # [A] air, pocket wall to the rear envelope (d_big_tip)
     pcb_clear=0.60,        # [A] air, PCB edge to the inner side wall
-    rear_clear=0.80,       # [A] air, d_big_tip envelope to the inner side wall
     fuse=0.02,             # [A] overlap so adjacent walls fuse into one solid
     cut_slop=0.50,         # [A] cutters run this far past the face they open
     edge_w=2.2,            # [A] light-pipe band at the faceplate rim
@@ -269,7 +259,6 @@ P = dict(
     # ---- front jacks, only counted. Thonkiconn PJ398SM [S], body width [A] ----
     jack_hole=6.6,         # [Ed 4 Nov 22:52] panel hole for the 6.0 bushing (was 6.2 [S]): ±0.3 float, since the jack unit's posts are
                            # soldered at both ends; the Ø8 nut still covers it
-    jack_nut=7.8,          # [S] knurled nut
     jack_body=10.5,        # [S] PJ366ST body (was 12.0 assumed)
     jack_air=0.80,         # [A] air between bodies, and off the knob
     # PJ366ST (stereo Thonkiconn), from the community STEP model clacktronics/AudioJacks (MIT, Barwise).
@@ -415,26 +404,11 @@ def _json(path):
         return {}
 
 
-def _data_files():
+def _proxy_file():
+    """The main board's proxy (knob-main-pcb/v2/export_proxy.py). 10 Nov sweep: the case no longer reads the v0.18
+    cad_constraints.json (its knob top matched z_knob_snap; its 716 pads and old Ø9.77 rod pad were stale keep-outs)."""
     here = os.path.dirname(os.path.abspath(__file__))
-    kicad = os.path.normpath(os.path.join(here, "..", "electronics", "kicad"))
-    return (os.path.join(kicad, "cad_constraints.json"),
-            os.path.join(kicad, "knob-main-pcb", "pcb_proxy.json"))
-
-
-def _knob_top(cons, fallback):
-    """Knob-top z from cad_constraints when the knob branch writes it; else the snapshot."""
-    for key in ("z_knob_top", "knob_top"):
-        if key in cons and isinstance(cons[key], (int, float)):
-            return float(cons[key]), "cad_constraints"
-    return float(fallback), "placeholder"
-
-
-def _pcb_outline(cons, pcb_w, above, below):
-    pcb = cons.get("pcb")
-    if isinstance(pcb, (list, tuple)) and len(pcb) == 3:
-        return float(pcb[0]), float(pcb[1]), float(pcb[2]), "cad_constraints"
-    return float(pcb_w), float(above), float(below), "interface"
+    return os.path.normpath(os.path.join(here, "..", "electronics", "kicad", "knob-main-pcb", "pcb_proxy.json"))
 
 
 def _bside_clear(parts, pcb_w, above, below):
@@ -491,13 +465,10 @@ def derive(D):
     if D.get("joy_step"):   # v0.24 top-edge step (rebate); none since v0.25 [Ed 18:35]
         D["joy_reb"] = (2 * (D["hole_hw"] + D["joy_step"]["w"]), 2 * (D["hole_hh"] + D["joy_step"]["w"]))
     # press rebate, same stack as the joystick proxy
-    D["press_travel"] = D["tol_sla"] + D["sw_push"]
-    D["fp_rebate"] = D["press_travel"] + D["tol_sla"]
     # Faceplate from the knob top. The bezel still rests on the plate; the plate is no longer
-    # parked 5 mm under the knob. Knob top comes from cad_constraints when that key lands.
-    cons_path, proxy_path = _data_files()
-    cons = _json(cons_path)
-    D["knob_top_used"], D["knob_top_src"] = _knob_top(cons, D["z_knob_snap"])
+    # parked 5 mm under the knob.
+    proxy_path = _proxy_file()
+    D["knob_top_used"], D["knob_top_src"] = float(D["z_knob_snap"]), "snapshot"
     # [Ed] 2 Nov: the v0.18 interface faceplate wins (faceplate_z = z_top - knob_proud 18.0).
     D["z_fp1"] = D["faceplate_z"]
     D["z_fp0"] = D["faceplate_z_back"]
@@ -509,10 +480,6 @@ def derive(D):
     D["z_bz1"] = D["z_bz0"] + D["grip_h"]   # [Ed 2 Nov] grip block (v0.4: + bz_t 1.2)
     # 10HP panel. The box behind the rail ears is one rectangle: shell and cover share it.
     # The PCB is inset from that rectangle by the wall plus the drop-in clearance, on all four sides.
-    _, above, below, src = _pcb_outline(cons, D["pcb_w"], D["pcb_above"], D["pcb_below"])
-    D["pcb_live_above"] = above
-    D["pcb_live_below"] = below
-    D["pcb_src"] = src
     D["hp"] = int(D["hp_scope"])
     D["panel_w"] = D["hp"] * D["hp_pitch"] - D["hp_gap"]
     D["panel_w_scope"] = D["panel_w"]
@@ -624,13 +591,10 @@ def derive(D):
     # side clearances the HP choice is supposed to buy
     D["side_air"] = (D["x_in1"] - D["x_in0"] - D["nest_w"]) / 2
     D["rear_air"] = (D["x_in1"] - D["x_in0"]) / 2 - D["d_big_tip"] / 2
-    # B-side keep-out: KiCad proxy boxes plus the pad courtyards written into cad_constraints.
-    boxes = list(_json(proxy_path).get("back_parts") or [])
-    feel = cons.get("feel") or {}
-    pw, pl = (feel.get("pad") or (1.8, 1.8))[:2]
-    for xy in cons.get("fm_pad_xy") or []:
-        boxes.append({"ref": "feel pad", "x": xy[0], "y": xy[1], "w": pw, "l": pl})
-    rod_r = cons.get("rod_pad_r")
+    # B-side keep-out: the main board proxy's back parts and its rod pad.
+    proxy = _json(proxy_path)
+    boxes = list(proxy.get("back_parts") or [])
+    rod_r = proxy.get("rod_pad_r")
     if isinstance(rod_r, (int, float)) and rod_r > 0:
         boxes.append({"ref": "rod pad", "x": 0.0, "y": 0.0, "w": 2.0 * rod_r, "l": 2.0 * rod_r})
     D["bside_clear"], D["bside_ref"] = _bside_clear(boxes, D["nest_w"], D["nest_above"], D["nest_below"])
