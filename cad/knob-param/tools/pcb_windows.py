@@ -11,9 +11,9 @@ Obstacles (panel frame):
   posts       the cover's corner-column ring that bears on the board round each notch (r notch_r + tube_press) + M
   encoder     convex hull of the encoder daughterboard, its header and its standoff (their pins land on the main PCB) + M
   bearing 2   the printed seat round H2 + M (inside the knob keep-out at present)
-  joystick    [Ed 3 Nov] layout v4: what touches the main board now: the joystick's main-PCB holes (hold-down spring bores,
-              press-spring grub access; live from cad/joystick-param) and the two vertical boards' feet (board edge, right-angle
-              header body and pads; electronics vb), all + M. v0.6 used the printed cradle glued to the board (gone in v4).
+  joystick    [Ed 3 Nov] layout v4: what touches the main board now: the joystick's main-PCB holes (the hold-down spring bores,
+              live from cad/joystick-param) and the two vertical boards' feet (board edge, right-angle header body and pads;
+              electronics vb), all + M. v0.6 used the printed cradle glued to the board (gone in v4).
   J10         KiCad J10 pad field if it lands on the board (stale v0.11 position, outside the board now)
   clear OLED  D = OLED inset by its 1.6 ledge [Ed v0.19b]; C and E stop M short of the OLED's top edge
   MCU         electronics mcu (LQFP100 + caps, court 17.2 [A]): court + margin is cut out of any window it actually overlaps
@@ -21,7 +21,7 @@ Obstacles (panel frame):
   A/B web     a board strip of width WEB on x = 0 from the knob keep-out up to the joystick's board features, so A (left) and B
               (right) stay two windows and the knob region keeps a direct link to the top of the board [A]."""
 import math, json, sys, argparse, os
-from shapely.geometry import box, Point, Polygon, MultiPoint
+from shapely.geometry import box, Point, MultiPoint
 from shapely.ops import unary_union
 from shapely import affinity
 from knobparam.common import model
@@ -74,22 +74,13 @@ if not D.get("enc_riser", True):   # v0.53: the EE-SX1321 sits straight on the b
     _sx, _sy = to_panel(*D["sens_xy"])   # past the body across the slot (2.0 x 1.0 at +-2.55, +-1.4 [S Omron pattern]); arms radial
     HARD.append(("encoder sensor EE-SX1321 and its pads",
                  affinity.translate(affinity.rotate(box(-3.55, -2.0, 3.55, 2.0), D["sens_dir"] + D["mech_rot"], origin=(0, 0)), _sx, _sy)))
-# joystick: [Ed 3 Nov] v4: its holes in the main PCB (live from the joystick derive) and the vertical boards' feet (electronics)
+# joystick: [Ed 3 Nov] v4: its holes in the main PCB (live from the joystick derive: since v0.8 only the hold-down spring bores) and
+# the vertical boards' feet (electronics)
 from knobparam.assembly import joystick as _js
 sys.path.insert(0, _js._jsdir())
 from jsparam import params as _jp
 JD = _jp.derive(_jp.P); py = JD["place_y"]
-JS_ON_BOARD = []
-for what, d, pts in (("hold-down spring bore", JD["spr_bore"], JD["springs"]), ("press-spring grub access", JD["grub_access_d"], JD.get("access_xy", [])),
-                     ("joystick standoff screw", JD["drill_m2"], JD["standoff_xy"]), ("joystick cradle dowel", JD["cradle"]["pin"]["d"] + 0.05, JD.get("cr_pins", []))):
-    for x, y in pts:
-        JS_ON_BOARD.append((what, Point(x, y + py).buffer(d / 2, 64)))
-if JD.get("base") == "cradle":   # v0.6 history: the printed cradle's footprint on the PCB (real part, cut at z 0.05)
-    from jsparam import parts as _jparts
-    from knobparam.assembly.plan_sheet import _cut_faces
-    tris = _cut_faces(_jparts.cradle(JD), "z", 0.05)
-    cr = unary_union([Polygon(t).buffer(1e-4) for t in tris if Polygon(t).area > 1e-9])
-    JS_ON_BOARD.append(("joystick cradle", affinity.translate(cr, 0, py)))
+JS_ON_BOARD = [("hold-down spring bore", Point(x, y + py).buffer(JD["spr_bore"] / 2, 64)) for x, y in JD["springs"]]
 from knobparam.electronics.parts import pcb as _pcb
 for x0_, x1_, y0_, y1_ in _pcb.vb_footprint(D):
     JS_ON_BOARD.append(("vertical board foot", box(x0_, y0_, x1_, y1_)))

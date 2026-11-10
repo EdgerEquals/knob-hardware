@@ -18,7 +18,7 @@ S = D["scr"]
 z0 = D["z_scr0"]
 print(f"z_scr0 {z0:.3f}  z_roof {D['z_roof']:.3f}  roof_t {D['roof_t']}  z_bz0 {D['z_bz0']:.3f}  scr_top {D['scr_top']:.3f}")
 print(f"guides {D['g_xy']}  g_rboss_r {D['g_rboss_r']:.2f} g_ins_bot {D['g_ins_bot']:.2f}  peg boss r {D.get('p_rboss_r', 0):.2f} p_ins_bot {D.get('p_ins_bot', 0):.2f}")
-print(f"press springs {D['cs_xy']}  bore r {D['cs_bore_r']:.2f}; db_sock_x {D.get('db_sock_x')}; fpc_x {D['fpc_x']:.2f}; half_w {D['half_w']:.2f} half_h {D['half_h']:.2f} bz_lip {D['bz_lip']}")
+print(f"db_sock_x {D.get('db_sock_x')}; fpc_x {D['fpc_x']:.2f}; half_w {D['half_w']:.2f} half_h {D['half_h']:.2f} bz_lip {D['bz_lip']}")
 
 cache = os.path.join(os.path.dirname(out), "fmst02.brep")
 if os.path.exists(cache):

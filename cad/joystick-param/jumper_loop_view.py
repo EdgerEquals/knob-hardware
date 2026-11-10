@@ -48,9 +48,6 @@ def main(out):
             ax.set_xlim(2, 22); ax.set_ylim(-10, 8)
             ax.set_title(f"plan cut at z {zm:.2f} through the loop (looking down): S1 along y, S2 along -x, crease, S3 back", fontsize=9.5)
             ax.set_xlabel("x (mm)"); ax.set_ylabel("y (mm)")
-            for (x, y) in D["cs_xy"][:2]:
-                ax.add_patch(plt.Circle((x, y), 0.65, fill=False, ls=":", ec="#d62728"))
-            ax.text(10.0, -6.9, "grub key line (behind)", fontsize=7, color="#d62728")
         else:
             ax.set_xlim(2, 22); ax.set_ylim(29.5, 46)
             ax.set_title(f"section along the S2 leg, y = {D['jmp_y2']:g}", fontsize=9.5)
