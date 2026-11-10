@@ -68,9 +68,24 @@ def _rib_w(D, r):
         return D["ha_rib_w0"] + (D["ha_rib_w1"] - D["ha_rib_w0"]) * (r - r0) / max(rh - r0, 1e-6)
     return D["ha_rib_w1"]
 
+def rib_taper(D):
+    """v0.55 [Ed 10 Nov 11:23]: (r0, z_tip) of the rib top's slope past the spring column, or None (full height to the tip)."""
+    if not (D.get("ha_rib_taper") and D.get("es_on")):
+        return None
+    return D["es_rp"] + D["es_col_d"] / 2 + D["ha_rib_taper_gap"], D["fan_top"]
+
+def rib_top(D, r):
+    """The rib's top z at radius r (full height to the slope's start, then straight down to z_tip at ha_rib_r1)."""
+    t = rib_taper(D); zt = D["ha_rib_z_top"]
+    if t is None or r <= t[0]:
+        return zt
+    r0, z1 = t
+    return zt + (z1 - zt) * (min(r, D["ha_rib_r1"]) - r0) / (D["ha_rib_r1"] - r0)
+
 def rib(D):
     """v0.17 [Ed]: tapered spine on the Hall arm. Width 3.0 at the hub to 5.2 at the hammerhead, on to ha_rib_r1.
-    Top at the lever top. Bottom stays over the thrust cage and drops to ha_rib_z_low beyond ha_rib_r_step."""
+    Top at the lever top. Bottom stays over the thrust cage and drops to ha_rib_z_low beyond ha_rib_r_step.
+    v0.55 [Ed 10 Nov 11:23]: past the spring column the top slopes down to the magnet bar's top at the tip (rib_taper)."""
     ang = D["ha_ang0"]
     r_hub, r_step = D["ha_rib_r_hub"], D["ha_rib_r_step"]
     r_head, r1 = D["ha_rib_r_head"], D["ha_rib_r1"]
@@ -80,6 +95,12 @@ def rib(D):
         s += _trap(r_step, r_head, _rib_w(D, r_step), _rib_w(D, r_head), D["ha_rib_z_low"], z_top - D["ha_rib_z_low"], ang)
     if r1 > r_head:
         s += _trap(r_head, r1, D["ha_rib_w1"], D["ha_rib_w1"], D["ha_rib_z_low"], z_top - D["ha_rib_z_low"], ang)
+    t = rib_taper(D)
+    if t is not None:   # the wedge over the slope, in the arm's own frame (x along the arm, y across, z up), turned to ang
+        r0, z1 = t; W = D["ha_rib_w1"] + 1.0
+        pts = [(r0, z_top), (r1, z1), (r1 + 1.0, z1), (r1 + 1.0, z_top + 1.0), (r0, z_top + 1.0)]
+        prof = Face(Wire.make_polygon([Vector(x, -W / 2, z) for x, z in pts], close=True))
+        s -= Rot(0, 0, ang) * extrude(prof, W, dir=(0, 1, 0))
     return s
 
 def ears(D):

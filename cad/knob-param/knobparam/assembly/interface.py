@@ -242,6 +242,10 @@ P = dict(
     ha_rib_rload=15.5,   # [Ed] radius of that load
     ha_rib_E=1700.0,   # [Ed] PA12 Young's modulus, N/mm² (1.7 GPa)
     ha_rib_defl=0.07,   # [Ed] mm, max in-plane deflection at ha_rib_rload
+    ha_rib_taper=True,   # [Ed 10 Nov 11:23] v0.55: past the spring column the rib's top slopes down to the magnet bar's top (fan_top) at
+                         # the tip. The springs only use the rib at the column; the outer part adds little to the deflection check
+                         # (bending is largest at the root): 2.19x -> 2.17x. False = v0.22-v0.54, full height to ha_rib_r1.
+    ha_rib_taper_gap=0.2,   # [A] the slope starts this far past the column's edge (es_rp + es_col_d / 2)
     # ---- outer thrust [Ed]: cageless, tracks only. Load balls Ø2 stainless; cheap glass spacers 1.5–1.6 ----
     ot_ball_d=1.5,   # [Ed 8 Nov 13:26] load ball, 316 stainless (was Ø2): the knob-side walls 0.10 -> 0.35 a side, the clear floor 1.0 -> 1.2
     ot_spacer_min=1.19,   # [Ed 8 Nov] precision glass, Cospheric soda-lime 1.21 ±0.02 [S] (the small balls need precision glass, not sieved)

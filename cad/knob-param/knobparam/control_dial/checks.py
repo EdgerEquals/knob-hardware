@@ -12,8 +12,8 @@ def _rib_defl(D):
     z1, zc, zl, rs = D["ha_rib_z_top"], D["ha_rib_z_cage"], D["ha_rib_z_low"], D["ha_rib_r_step"]
     def w(r):
         return w0 + (w1 - w0) * (r - r0) / (rh - r0) if r <= rh else w1
-    def h(r):
-        return z1 - (zc if r < rs else zl)
+    def h(r):   # v0.55: the top follows the slope past the spring column (hall.rib_top)
+        return hall.rib_top(D, r) - (zc if r < rs else zl)
     def I(r):
         return h(r) * w(r) ** 3 / 12.0   # bending in the plane of the sweep
     n = 2000
@@ -22,6 +22,10 @@ def _rib_defl(D):
         r = r0 + (rF - r0) * (i + 0.5) / n
         s += F * (rF - r) ** 2 / (E * I(r))
     return s * (rF - r0) / n
+
+def _taper_txt(D):
+    t = hall.rib_taper(D)
+    return "" if t is None else f", sloping from r {t[0]:.2f} to z {t[1]:.2f} at the tip r {D['ha_rib_r1']:g} [Ed 10 Nov 11:23]"
 
 def _arc_rows(D, row):
     """v0.21 [Ed 2 Nov]: the single detent on the arc (three dimples on a raised land) and the three ball tracks
@@ -73,7 +77,7 @@ def _split_rows(D, row):
             f"r {t['r']:.2f}, {t['ang']:.0f}° ±{t['half']:.1f}°, balls " + "/".join(f"{d:g}" for d in t["dias"]) + f", z {t['z']:.2f}")
     d = _rib_defl(D)
     row("Hall rib deflection margin (limit / deflection, x)", D["ha_rib_defl"] / max(d, 1e-9), 2.0,
-        f"{d:.4f} mm at r {D['ha_rib_rload']:g} under {D['ha_rib_load']:g} N; rib top z {D['ha_rib_z_top']:.2f} [Ed 2x rule]")
+        f"{d:.4f} mm at r {D['ha_rib_rload']:g} under {D['ha_rib_load']:g} N; rib top z {D['ha_rib_z_top']:.2f}{_taper_txt(D)} [Ed 2x rule]")
 
 def _dist(a, b):
     """min distance between two lists of solids, and the pair."""
@@ -300,7 +304,7 @@ def _tail(D, parts, r):
             row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
             f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
-            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}",
+            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, z {D['ha_rib_z_cage']:.1f} over the cage / {D['ha_rib_z_low']:.1f} beyond r {D['ha_rib_r_step']:.2f}, top {D['ha_rib_z_top']:.1f}{_taper_txt(D)}",
             higher_ok=False)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)

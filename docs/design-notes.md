@@ -65,6 +65,17 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Hall arm rib slopes past the spring column, v0.55 (Ed, 10 Nov 2026)
+
+[Ed 11:23 asked whether the arm holding the springs' pin needs to be so long and stand past where the springs join it; then
+chose A, the taper]. Picture: `docs/img/hall-arm-rib.png` (`tools/studies/hall_arm_rib_fig.py`).
+- **Length stays.** The arm runs to r 16.7 for the five Hall magnets (r 5.7-15.7, the outer one as far out as the knob ring
+  allows). The centring springs only use it at the column, r 8.
+- **Height past the column goes.** The rib's top stays at z 9.0 to r 9.4 (0.2 past the column), then slopes straight down to
+  the magnet bar's top, z 5.9, at the tip (`ha_rib_taper`). The full height was there for the 2 N in-plane stiffness check,
+  and its outer part added little (bending is largest at the root): margin 2.19x -> 2.17x (2x rule), 58 mm³ of PA-12 off the
+  arm's tip. Nothing else on the arm changes. 336 / 336 gap checks pass, no clashes.
+
 ## Main board routed (9 Nov 2026)
 
 KiCad DRC 0 / 0 on 6 layers (`docs/img/main-board-routed.png`; plan notes in `docs/main-board-pass-plan-2026-11-07.md`, step 3).

@@ -15,7 +15,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from knobparam.common import model
 
 OUT = sys.argv[1]
+from knobparam.control_dial.parts import hall_arm as hall
+from knobparam.control_dial.checks import _rib_defl
 D = model.derive(model.default_params())
+D0 = dict(D); D0["ha_rib_taper"] = False   # v0.54's full-height rib, for the comparison
+REMOVED = hall.rib(D0).volume - hall.rib(D).volume
+MARGIN0, MARGIN1 = D["ha_rib_defl"] / _rib_defl(D0), D["ha_rib_defl"] / _rib_defl(D)
 CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".cache-knob", "anim", "index.json")
 idx = json.load(open(CACHE))["parts"]
 TMP = os.path.dirname(os.path.abspath(OUT))
@@ -62,13 +67,14 @@ for k, r in enumerate(D["hv_r"], 1):
     ax.add_patch(Rectangle((r - md / 2, zb0), md, mh, fc="#d64545", ec="#8a1f1f", lw=0.8))
     ax.text(r, zb0 - 0.55, f"{k}", ha="center", fontsize=10, color="#8a1f1f", weight="bold")
 ax.text(D["hv_r"][2], -1.0, "Hall magnets (r " + ", ".join(f"{r:.1f}" for r in D["hv_r"]) + ")", ha="center", fontsize=10, color="#8a1f1f")
-# rib as built
-rib = [(rhub, zc), (rstep, zc), (rstep, zl), (r1, zl), (r1, zt), (rhub, zt)]
+# rib as built (v0.55: the top slopes past the column; hall_arm.rib_taper) and the v0.54 top it replaced (hatched)
+t = hall.rib_taper(D)
+X0, ztip = t if t is not None else (r1, zt)
+rib = [(rhub, zc), (rstep, zc), (rstep, zl), (r1, zl), (r1, ztip), (X0, zt), (rhub, zt)]
 ax.add_patch(Polygon(rib, closed=True, fc="#5b8fd6", ec="#1f4f99", lw=1.2, alpha=0.85))
-# what the stiffness rule does not need: above the taper line past the column
-cut = [(X0, zt), (r1, zt), (r1, zb1)]
+cut = [(X0, zt), (r1, zt), (r1, ztip)]
 ax.add_patch(Polygon(cut, closed=True, fc="none", ec="#e65100", lw=0, hatch="////"))
-ax.plot([X0, r1], [zt, zb1], color="#e65100", lw=2.2, ls="--")
+ax.plot([X0, r1, r1], [zt, zt, ztip], color="#e65100", lw=1.2, ls="--")
 # column, pin, springs
 ax.add_patch(Rectangle((rc - cd / 2, zt), cd, ctop - zt, fc="#5b8fd6", ec="#1f4f99", lw=1))
 ax.add_patch(Rectangle((rc - D["es_pin_d"] / 2, ctop - 1.5), D["es_pin_d"], D["es_z"] + D["es_od"] / 2 + 0.4 - ctop + 1.5, fc="#30363b", ec="none"))
@@ -76,10 +82,12 @@ ax.add_patch(Circle((rc + 1.3, D["es_z"]), D["es_od"] / 2, fc="none", ec="#9c5a3
 ax.add_patch(Circle((rc - 1.3, D["es_z"]), D["es_od"] / 2, fc="none", ec="#9c5a3c", lw=2))
 ax.annotate("spring column + steel pin (r 8):\nthe two springs hook on here,\nthen run off sideways (out of the page)", (rc, D["es_z"] + 1.0), (1.0, 15.2),
             fontsize=10.5, arrowprops=dict(arrowstyle="-", color="#333", lw=0.8))
-ax.annotate("rib top z 9.0 (raised from 6.8 for the 2 N\nstiffness check: 2x rule)", ((rc + r1) / 2 + 2, zt), (11.0, 14.0), fontsize=10.5,
+ax.annotate(f"rib top z {zt:g} at the root (raised from 6.8 for the\n2 N stiffness check: 2x rule)", (5.2, zt), (0.3, 13.4), fontsize=10.5,
             arrowprops=dict(arrowstyle="-", color="#333", lw=0.8))
-ax.annotate("could taper to the bar top (z 5.9) at the tip:\nstiffness margin 2.19x -> 2.17x; 118 mm³ less", (14.5, 7.4), (12.6, 11.4), fontsize=10.5,
-            color="#b23c00", arrowprops=dict(arrowstyle="-", color="#b23c00", lw=0.8))
+if t is not None:
+    ax.annotate(f"v0.55: slopes from r {X0:.1f} to the bar top (z {ztip:g}) at the tip.\nHatched: the v0.54 top, gone: {REMOVED:.0f} mm³ "
+                f"(~{REMOVED * 1.01e-3:.2f} g PA-12);\nstiffness margin {MARGIN0:.2f}x -> {MARGIN1:.2f}x", (14.8, 8.6), (9.6, 11.6), fontsize=10.5,
+                color="#b23c00", arrowprops=dict(arrowstyle="-", color="#b23c00", lw=0.8))
 ax.annotate("", (r1, -2.0), (0, -2.0), arrowprops=dict(arrowstyle="<->", color="#333", lw=0.9))
 ax.text(0.3, -3.0, f"arm length from the axis: r {r1:g} (the outer magnet sits as far out as the knob ring allows)", ha="left", fontsize=10.5)
 ax.set_xlim(-0.3, 18.4); ax.set_ylim(-3.8, 17.2); ax.set_aspect("equal")
