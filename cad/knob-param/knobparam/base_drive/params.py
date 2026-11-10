@@ -90,8 +90,13 @@ P = dict(
     sp_ped_pocket=1.5,   # [A] the pedestal block is guided this deep in a pocket in the plate
     sp_ped_clear=0.1,   # [A] pocket over the block, all round (slide fit, SLA both)
     sp_ped_lift=0.25,   # [A] block bottom above the pocket floor at nominal: ±0.25 of adjustment (the printed-stack tolerance)
-    sp_grub=(2.0, 2.0),   # [Ed 15:50] M2 x 2 grub under the pedestal, tapped into the plate like the detent boss; sets the train
-                          # height against the 45° knob race stack at assembly (key through the PCB from behind)
+    sp_grub=(2.0, 2.0),   # [Ed 15:50] M2 x 2 grub under the pedestal, tapped into the plate like the detent boss (key through the PCB
+                          # from behind). v0.22b job: set the train against the 45° knob race stack (gone with the v0.25 split: the
+                          # dish-to-tube bond takes that up). Its job now (10 Nov sweep, Ed asked "are you sure it's not needed?"): the
+                          # only height adjustment of the dial's lower part before the dish is bonded, so it sets the Hall bar's gap
+                          # over H3 (0.30 nominal, 0.29 min). Untrimmed, that gap rides on about ±0.39 RSS of print stack [A: cradle
+                          # pocket and pedestal SLA ±0.2 each, lower part MJF ±0.25, sensor, magnet, glue ±0.05 each]. Set it by
+                          # turning up until the dial turns free off H3, then 3/4 turn more (M2 x 0.4: 0.30)
     sp_thread_min=1.5,   # [A] grub thread kept in the plate at the top of its range
     sp_lift_max=0.010,   # [Ed 2x rule] boss lift under the detent spring: 0.01 (was 0.05 for the v0.21 bridge)
     # ---- v0.25 [Ed 3 Nov 18:15] detent block: the boss, its bracket and the wall are one separate printed block (UTR-8100, like

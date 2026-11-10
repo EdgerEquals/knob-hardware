@@ -20,7 +20,8 @@ see **Done in v0.56** at the end. A (physical) goes to him one item at a time.
    gone (knob bolts removed 2 Nov, `knob_bolt_n=0`). The glass now runs 10 mm (not the faceplate's 2.5) through a bore with
    0.20 radial air. It also sets the joystick cradle flange's −y edge (`jsparam/params.py:1071`). Fix: `collar_h_mult=0`.
    Related: two hole clearances (`knob_rad_clear` 0.20 built; `knob_hole_clear` 0.4 exported, read by nothing).
-3. **Dial detent pedestal grub and its Ø1.6 hole through the main board.** v0.22b job: "turn until the detent spoke just
+3. **KEPT (it is needed) [Ed: "are you sure that grub screw is not needed?"]:** its v0.22b job went with the v0.25 split, but it is the only height adjustment of the dial's lower part, so it sets the Hall bar's gap over H3 (0.30, min 0.29) against about ±0.39 RSS of print stack. The sweep's "lost its job" was wrong on that. Set: up until the dial turns free, then 3/4 turn. Its range (±0.25) is shorter than that stack: open question.
+   Was: **Dial detent pedestal grub and its Ø1.6 hole through the main board.** v0.22b job: "turn until the detent spoke just
    lifts off the knob race". The v0.25 dial split removed that ("the train-vs-race stack the pedestal grub was set against
    no longer fights the race"). Left: a ±0.25 height trim before bonding. Fix if unwanted: fixed pedestal, drop the grub,
    tapped hole, board hole (`sp_access_d`) and four rows.
