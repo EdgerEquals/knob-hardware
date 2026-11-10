@@ -1,5 +1,5 @@
-"""Joystick checks (v0.9). The switch is the only stop: the bezel's cup sits on the stem, so its own click is the press. The guide
-heads hang on cushions under the carrier bosses (the up-stop). The four hold-down springs are unchanged in kind from v0.3. The case
+"""Joystick checks (v0.10). The switch is the only stop: the bezel's cup sits on the stem, so its own click is the press. The guide
+heads hang on cushions under the carrier bosses (the up-stop). v0.10: two hold-down springs on the axis, 1.8 N each (four 0.9 N until v0.9). The case
 cradle rows are in _case_rows9 (v0.9, printed with the case) and _case_rows8 (v0.8, separate cradle on a bead)."""
 import math, itertools
 from build123d import Pos, Rot
@@ -137,8 +137,15 @@ def run(D, P):
                         ("push on the block side, up the panel", D["sf_up_mid"], "")):
         row(f"tipping safety at the worst-case click ({nm})", v, f">= {D['tip_margin']:g}", v >= D["tip_margin"] - 1e-6,
             f"restoring / overturning moment; push to click {D['f_click']:.2f} N worst ({D['f_click_nom']:.2f} nominal) = switch + cups. {note}")
-    row("two pins, each through a pair", len(pins), "2", len(pins) == 2 and len(sprs) == 4,
-        f"Ø{D['pin_d']:.2f} x {D['pin_x1'] - D['pin_x0']:.1f} mm, along X, at y ±{D['spr_y']:.2f}")
+    row("cross pins: one per row of springs", len(pins), str(len(D["pin_y"])), len(pins) == len(D["pin_y"]) and len(sprs) == 2 * len(D["pin_y"]),
+        f"{len(sprs)} springs on {len(pins)} pin(s), Ø{D['pin_d']:.2f} x {D['pin_x1'] - D['pin_x0']:.1f} mm, along X, at y "
+        + ", ".join(f"{y:+.2f}" for y in D["pin_y"]))
+    row("hold-down spring: closed body inside the free length, room for the hooks (mm)", D["spr_free"] - D["spr_body"], f">= {2 * D['spr_d']:.1f}",
+        D["spr_free"] - D["spr_body"] >= 2 * D["spr_d"] - 1e-9,
+        f"316, OD {D['spr_d']:g}, wire {D['spr_wire']:g} [A], index {D['spr_C']:.1f}, ~{D['spr_n']:.0f} active coils for {D['spr_rate']:.3f} N/mm; "
+        f"body {D['spr_body']:.1f} of the {D['spr_free']:.1f} free length; two hooks need about an OD each [A]")
+    row("hold-down spring: shear at the installed pull vs 45% of the wire's tensile (MPa)", D["spr_tau"], f"<= {D['spr_tau_allow']:.0f}",
+        D["spr_tau"] <= D["spr_tau_allow"], f"{D['spr_f']:g} N; Gibbs 316 spring wire >= {D['spr_uts']:g} MPa [S]; static [A]")
     row("pin slides in the bore", min(p.distance_to(ra) for p in pins), ">= 0.10",
         min(p.distance_to(ra) for p in pins) >= 0.10,
         f"bore Ø{D['pin_bore']:.2f} over pin Ø{D['pin_d']:.2f}")
@@ -165,7 +172,7 @@ def run(D, P):
     xmir = lambda pts: {(round(-x, 4), round(y, 4)) for x, y in pts} == {(round(x, 4), round(y, 4)) for x, y in pts}
     sym = xmir(D["balls"]) and _mirror_ok(D["springs"])   # v0.5: the top ball row is set by the rail strip, so the balls mirror in x only
     row("balls and hold-down springs symmetric", 1.0 if sym else 0.0, "mirror", sym,
-        f"hold-down springs (±{D['spr_x']:.2f}, ±{D['spr_y']:.2f}); balls (±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}), "
+        f"hold-down springs (±{D['spr_x']:.2f}, {'±' if D['spr_y'] else ''}{D['spr_y']:.2f}); balls (±{D['bx']:.2f}, +{D['by_top']:.2f} / −{D['by_bot']:.2f}), "
         "mirrored in x (the top row is set by the rail strip)")
     # 9 balls
     bt = min(b.distance_to(car) for b in balls)
@@ -185,13 +192,13 @@ def run(D, P):
         kg = min(_gap_at(D, od, x, y) for x, y in ((0.0, -D["half_h"]), (D["half_w"], -D["half_h"])))
         row(f"bezel (full slide toward the knob) vs {name}", kg, f">= {T['knob_min']}", kg >= T["knob_min"] - 1e-6,
             f"Ø{od:.2f}. Bezel lip {D['bz_lip']:.2f} mm, outer ±{D['half_h']:.2f}")
-    # 11 holes in the main PCB: the four hold-down spring bores (the only ones left)
+    # 11 holes in the main PCB: the hold-down spring bores (two since v0.10; the only ones left)
     def on_board(x, y, pad=0.0):
         fy = y   # v0.5: local; y_pcb is the main-PCB top edge (the case nest) above the joystick axis
         return (abs(x) + pad <= D["pcb_w"] / 2 - D["pcb_edge"]) and (fy + pad <= D["y_pcb"] - D["pcb_edge"])
     holes_ok = all(on_board(x, y, D["spr_bore"] / 2) for x, y in D["springs"])
     row("hold-down spring bores on the main PCB", 1.0 if holes_ok else 0.0, "on", holes_ok,
-        f"Ø{D['spr_bore']:g} at (±{D['spr_x']:.2f}, ±{D['spr_y']:.2f}), each at least {D['pcb_edge']:g} inside the main-PCB outline "
+        f"Ø{D['spr_bore']:g} at (±{D['spr_x']:.2f}, {'±' if D['spr_y'] else ''}{D['spr_y']:.2f}), each at least {D['pcb_edge']:g} inside the main-PCB outline "
         f"(x ±{D['pcb_w'] / 2:.2f}, top edge local y {D['y_pcb']:.2f})")
     # 12 walls, floor, volumes
     row("bezel lip", D["bz_lip"], "1.0-1.5", 1.0 - 1e-9 <= D["bz_lip"] <= 1.5 + 1e-9,

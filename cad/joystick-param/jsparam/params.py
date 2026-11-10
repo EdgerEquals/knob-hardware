@@ -47,7 +47,7 @@ Every derived value is computed in derive(); parts and checks read only P + deri
 
 The stack now (v0.9): the switch is on the carrier axis, on the top board. The top board hangs in the cradle printed into the case
 (glued up under its shoulders); the vertical boards' male pins slide in the two 1.27 sockets under it. Four Ø2 balls between the
-carrier and the cradle's lower seats carry the carrier, and four hold-down extension springs from a rear anchor behind the main PCB
+carrier and the cradle's lower seats carry the carrier, and two hold-down extension springs (v0.10; four until v0.9) from a rear anchor behind the main PCB
 keep it on them. The screen is glued on the roof of the grip block (the bezel); the cup over the stem is printed into the bezel and
 sits on the stem, so the switch's own end of travel is the only stop for tilt and for the centre press. Two guide screws in brass
 sleeves tie the bezel to the carrier; their heads hang a float below the carrier's guide bosses, on a cushion ring (the up-stop).
@@ -60,7 +60,7 @@ import os
 import sys
 
 P = dict(
-    version="v0.9",
+    version="v0.10",   # [Ed 10 Nov] two hold-down springs on the axis (was four at y ±1.5)
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
     knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
@@ -248,11 +248,14 @@ P = dict(
     spr_d=2.0,              # [A]
     spr_bore=3.4,           # [A]
     spr_boss=(2.6, 0.6),    # [A] hook boss under the carrier: Ø, height
-    spr_xy=(12.5, 1.5),     # [A] v0.5 hold-down springs at (±x, ±y), inside the balls. y 1.5 is left over from the v0.5-v0.7 press-spring
-                            # grub-access holes (it made room for them); the holes went in v0.8 and the springs have not moved since.
-                            # Whether to move them is open [C, Danny]
-    spr_f=0.90,             # [Ed 2 Nov 13:08] N each (option B; v0.4 0.5). Sized so a sideways push on the glass top that clicks the
-                            # worst-case switch against the cup spring-back still has a 1.3 tipping safety
+    spr_xy=(12.5, 0.0),     # [Ed 10 Nov, "A: two springs, hooked from the back"] v0.10: two hold-down springs on the joystick's axis
+                            # (±12.5, 0), one round hole each in the main board and one cross pin behind it. v0.5-v0.9: four at (±12.5, ±1.5);
+                            # the y 1.5 was left over from the press-spring grub holes (gone in v0.8) and made each side's two holes one figure-8
+    spr_f=1.80,             # [Ed 10 Nov] N each: two springs give the same 3.6 N on the axis as v0.9's four at 0.9 [Ed 2 Nov 13:08]
+                            # (option B), so every tipping safety is unchanged (still >= 1.3 at the worst-case click)
+    spr_wire=0.30,          # [A] spring wire (316, non-magnetic); with spr_d and the rate, the active coils follow
+    spr_G=69000.0,          # [A] 316 spring wire shear modulus, N/mm²
+    spr_uts=1689.0,         # [S] Gibbs Type 316 spring wire, min tensile at its smallest listed size (as the dial's springs)
     cup_ratio_set=2.5,      # [Ed 2 Nov 13:08] option B: gentle ball cups, radius 2.5 × the ball radius (v0.4 1.4: 35° at the full
                             # slide, 1.8 N of push-back). 8.6° at the full slide; ~0.5 N spring-back to centre
     tip_margin=1.3,         # [A] tipping force / worst-case switch tilt force
@@ -504,7 +507,7 @@ def derive(P_):
     # hold-downs stay inboard of the FPC drop and under the bezel. The old pair at x=±22.5
     # stood outside the lip; that is the yellow tube Ed circled.
     D["spr_x"], D["spr_y"] = D["spr_xy"]   # v0.5: inside the ball cups (y: see spr_xy)
-    D["springs"] = [(sx, sy) for sx in (D["spr_x"], -D["spr_x"]) for sy in (D["spr_y"], -D["spr_y"])]
+    D["springs"] = [(sx, sy) for sx in (D["spr_x"], -D["spr_x"]) for sy in ((D["spr_y"], -D["spr_y"]) if D["spr_y"] else (0.0,))]
     # [Ed 2 Nov] the screen flex plugs into a socket on the top board, beyond the +x hold-down bores. Its long side runs along y (the
     # flex width), so the flex drops straight onto it. (tab_x1: v0.5 put it on a tab past the board edge; it is inside the board now)
     edge = S["w"] / 2
@@ -576,7 +579,14 @@ def derive(P_):
     D["pin_x1"] = D["ra_x1"] - 0.25
     D["pin_head_d"] = D["pin_d"] * 1.8
     D["pin_head_t"] = 0.8
-    D["pin_y"] = (D["spr_y"], -D["spr_y"])
+    D["pin_y"] = (D["spr_y"], -D["spr_y"]) if D["spr_y"] else (0.0,)   # v0.10: one cross pin for the two springs on the axis
+    # v0.10: the spring itself (closed-coil extension, 316): active coils for the rate, closed body, Wahl-corrected shear at the pull
+    dw, Dm = D["spr_wire"], D["spr_d"] - D["spr_wire"]
+    D["spr_n"] = D["spr_G"] * dw ** 4 / (8 * Dm ** 3 * D["spr_rate"])
+    C = Dm / dw; D["spr_C"] = C
+    D["spr_body"] = (D["spr_n"] + 1) * dw
+    D["spr_tau"] = 8 * D["spr_f"] * Dm * ((4 * C - 1) / (4 * C - 4) + 0.615 / C) / (math.pi * dw ** 3)
+    D["spr_tau_allow"] = 0.45 * D["spr_uts"]
     D["ra_slot"] = D["spr_d"] + 1.2
     D["ra_bond"] = (D["ra_x1"] - D["ra_x0"]) * (D["ra_y1"] - D["ra_y0"])
     # ---- v0.5 guides: screw + brass sleeve, bezel to carrier; sleeve in a reamed bore. v0.8: the head hangs a float + cushion below

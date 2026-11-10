@@ -277,3 +277,15 @@ Details and numbers: `docs/layout-v4-2026-11-03.md`, "Step 1 in the model". Pict
 - **The cutout and the grip block are unchanged; the carrier narrows** 1.2 each side (±19.26 × ±11.82) to make room for the lip, and the
   balls move in with its corners: (±16.64, +8.45 / −9.20). No skirt: the lip ring is the anti-rotation stop.
 - Checks **105/105** (v0.6 101/101). Tipping toward the knob 1.61 → 1.43, left/right 2.78 → 2.60 (both over 1.3).
+
+## v0.10 (10 Nov 2026): two hold-down springs [Ed 14:44, "A: two springs, hooked from the back"]
+
+From the leftover sweep: the four springs sat at (±12.5, ±1.5) only because the v0.5 press-spring grub holes needed the room
+(grubs gone in v0.8), so each side's two Ø3.4 holes in the main board were one figure-8. Now two springs at (±12.5, 0), 1.8 N
+each: the same 3.6 N on the axis, so every tipping safety is unchanged. Spring [A]: 316, OD 2.0, wire 0.3, about 63 active
+coils for 0.225 N/mm, closed body 19.3 of the 32.3 free length, shear 366 MPa at the pull (≤ 760, 45% of Gibbs 316). One cross
+pin in the rear anchor; main board v2.1 has one round Ø3.4 hole per side (the routing did not move; DRC 0 / 0). Assembly is as
+before: springs hooked to the carrier on the bench, lower hooks pulled onto the cross pin from the back.
+Not taken: a pin through the vertical boards near their bottom (Ed's idea). With the stack in the case that spot is closed in
+(main board below, top board above, a vertical board each side), and one end of each spring must be hooked after the joystick
+(in from the front) and the stack (in from the back) meet. Picture: `docs/img/js-holddown-options.png`.

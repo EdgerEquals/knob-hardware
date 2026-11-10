@@ -223,7 +223,7 @@ def cross(D, pp, jp, JD):
         dx_ = max(abs(X - mx) - c, 0.0); dy_ = max(abs(Y - my) - c, 0.0)
         best = min(best, math.hypot(dx_, dy_) - JD["spr_d"] / 2)
     row("H7B0 courtyard to the joystick hold-down springs (plan)", best, 1.0,
-        f"courtyard {M['court']:g} □ at ({mx:g}, {my:g}); springs at (±{JD['spr_x']:.2f}, {py - JD['spr_y']:.2f} / {py + JD['spr_y']:.2f})")
+        f"courtyard {M['court']:g} □ at ({mx:g}, {my:g}); springs at (±{JD['spr_x']:.2f}, " + " / ".join(f"{py + y:.2f}" for y in sorted({y for _x, y in JD["springs"]})) + ")")
     # ---- [Ed 18:35] the cradle printed into the case
     cs = pp.get("case")
     if cs is not None:

@@ -1,9 +1,9 @@
-knob-main-pcb v2.0 PCBWay pack, generated 2026-11-09 18:07 AWST by fab_export.py
+knob-main-pcb v2.1 PCBWay pack, generated 2026-11-10 14:51 AWST by fab_export.py
 READY TO QUOTE
 
 {
   "board": "knob-main-pcb",
-  "rev": "v2.0",
+  "rev": "v2.1",
   "erc_messages": 0,
   "erc_errors": 0,
   "erc_warnings": 0,

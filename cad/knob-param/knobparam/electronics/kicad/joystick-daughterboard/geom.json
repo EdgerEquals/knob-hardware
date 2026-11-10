@@ -1,5 +1,5 @@
 {
- "rev": "v0.9",
+ "rev": "v0.10",
  "pitch": 2.54,
  "db_t": 1.0,
  "corner_r": 0.95,
@@ -18,25 +18,13 @@
  "main_pcb_holes": [
   {
    "x": 12.5,
-   "y": 42.13,
-   "d": 3.4,
-   "what": "hold-down spring"
-  },
-  {
-   "x": 12.5,
-   "y": 39.13,
+   "y": 40.63,
    "d": 3.4,
    "what": "hold-down spring"
   },
   {
    "x": -12.5,
-   "y": 42.13,
-   "d": 3.4,
-   "what": "hold-down spring"
-  },
-  {
-   "x": -12.5,
-   "y": 39.13,
+   "y": 40.63,
    "d": 3.4,
    "what": "hold-down spring"
   }

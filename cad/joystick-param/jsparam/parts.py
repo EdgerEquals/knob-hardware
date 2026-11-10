@@ -1,9 +1,9 @@
-"""Top-screen joystick stack parts (v0.9): build(D) -> {name: solid}. Reads D only. Local frame: origin = carrier centre on the
+"""Top-screen joystick stack parts (v0.10): build(D) -> {name: solid}. Reads D only. Local frame: origin = carrier centre on the
 main-PCB front, z out of the panel.
 
 The top board (switch on its axis, two 1.27 sockets underneath) hangs in the cradle printed into the case. The carrier rides on four
-balls in the cradle's lower seats and is held down by four extension springs hooked on two cross pins in a rear anchor behind the main
-PCB. The screen is glued on the roof of the grip block (the bezel); the cup column hanging from the roof sits on the stem, and two
+balls in the cradle's lower seats and is held down by two extension springs on its axis (v0.10; four until v0.9), hooked on a cross
+pin in a rear anchor behind the main PCB. The screen is glued on the roof of the grip block (the bezel); the cup column hanging from the roof sits on the stem, and two
 guide screws in brass sleeves tie the bezel to the carrier, their heads hanging on cushions under the carrier bosses. The custom
 jumper takes the screen's flex from its B2B header down to the socket on the top board. v0.8 (cradle_in_case=False) also builds the
 separate cradle's bead and the faceplate's top-edge step.
@@ -58,7 +58,7 @@ def step_region(D, solid, y_from=None):
     return solid & box(-60.0, 60.0, y0, 60.0, -20.0, 80.0)
 
 def pcb(D):
-    """Main-PCB proxy patch round the joystick: the four hold-down spring bores are its only holes."""
+    """Main-PCB proxy patch round the joystick: the hold-down spring bores (two since v0.10) are its only holes."""
     t = D["pcb_t"]
     x0, x1 = -D["pcb_w"] / 2, D["pcb_w"] / 2
     y1 = D["y_pcb"]

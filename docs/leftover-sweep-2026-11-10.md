@@ -7,7 +7,8 @@ see **Done in v0.56** at the end. A (physical) goes to him one item at a time.
 
 ## A. Physical leftovers (in a made part or board): Ed's call, one at a time
 
-1. **Joystick hold-down spring holes overlap** ✔. The springs sit at y ±1.5 (`cad/joystick-param/jsparam/params.py:308`,
+1. **DONE (v0.57, joystick v0.10, main board v2.1) [Ed 14:44, "A: two springs, hooked from the back"]:** two springs on the joystick's axis at 1.8 N each (same 3.6 N, every tipping safety unchanged), one cross pin, one round Ø3.4 hole per side (`docs/img/js-holddown-options.png`). Ed asked about a pin through the vertical boards instead: once the stack is in, nothing can reach it, and one end of each spring has to be hooked after the joystick (front) and the stack (back) meet.
+   Was: **Joystick hold-down spring holes overlap** ✔. The springs sit at y ±1.5 (`cad/joystick-param/jsparam/params.py:308`,
    `spr_xy`), moved from ±3.0 on 2 Nov 13:23 only to make room for the press-spring grub access holes. The grubs went in
    joystick v0.8; the springs stayed. The two Ø3.4 bores per side are 3.0 apart, so each pair is one figure-8 cut-out
    (3.4 × 6.4, 1.6 neck) on main board v2 (KiCad x 110.8–114.2, y 56.17–62.57, and the mirror) and on the joystick top board.

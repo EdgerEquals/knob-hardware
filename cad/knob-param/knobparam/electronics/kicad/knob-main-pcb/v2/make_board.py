@@ -582,7 +582,7 @@ CLASSES = [(n, c, w, nets) for n, c, w, nets, _l in FLEX_CLASSES] + [("GND", 0.1
            ("Supply", 0.1, 0.25, ["3V3", "VDDA", "VREFP", "VCAP", "ROD"])]
 
 
-REV = "v2.0"   # main board v2 (9 Nov 2026): the H743 board from the v0.53 model
+REV = "v2.1"   # main board v2 (9 Nov 2026): the H743 board from the v0.53 model. v2.1 (10 Nov): one round hole per joystick spring (js_holes_v010.py)
 
 KEEP = []   # board items taken off a board: KiCad 7's python loses the board's track list once their wrappers are freed
 

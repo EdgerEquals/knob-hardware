@@ -65,6 +65,12 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Leftover sweep, v0.56 and v0.57 (Ed, 10 Nov 2026)
+
+`docs/leftover-sweep-2026-11-10.md`. v0.56: the safe fixes (model mistakes, superseded boards archived in
+`electronics/kicad/superseded/`, dead code and checks; no made part changed). v0.57: joystick v0.10, two hold-down springs on
+the axis (1.8 N each) through one round hole per side in main board v2.1 (`docs/top-screen-joystick.md`, v0.10).
+
 ## Hall arm rib slopes past the spring column, v0.55 (Ed, 10 Nov 2026)
 
 [Ed 11:23 asked whether the arm holding the springs' pin needs to be so long and stand past where the springs join it; then
