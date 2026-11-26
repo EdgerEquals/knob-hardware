@@ -26,9 +26,11 @@ def arm(D, travel=0.0):
             x0, y0 = _pt(rs[i - 1], ps[i - 1]); L = math.hypot(x - x0, y - y0); ang = math.degrees(math.atan2(y - y0, x - x0))
             q += Pos((x + x0) / 2, (y + y0) / 2, z0) * Rot(0, 0, ang) * Box(L, 2 * pr, z1 - z0, align=A)
         s = q if s is None else s + q
-    sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
-    L = rs[0] - r_in
-    s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
+    rib_arm = D["fan_on"] and D["arm_det"] == "split"
+    if not (rib_arm and not D["tb_on"]):   # v0.60 [sweep A4]: with the rib run down to ha_rib_z_low the v0.15 spoke sits inside it
+        sz0, sw = D["hv_spoke_z0"], D["hv_spoke_w"]; r_in = D["dial_tube_od"] / 2 - 0.3
+        L = rs[0] - r_in
+        s += Rot(0, 0, ps[0]) * Pos(r_in + L / 2, 0, sz0) * Box(L, sw, z1 - sz0, align=A)
     lev = not (D.get("cc_on") or D.get("es_on"))   # v0.30/v0.31: no lever (the springs push / pull the Hall arm itself)
     if D["fan_on"] and D["arm_det"] == "split":   # v0.22 [Ed]: no fan; Hall spoke + rib, lever, and the detent spoke
         if lev: s += lever(D)

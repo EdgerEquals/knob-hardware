@@ -303,7 +303,7 @@ def _tail(D, parts, r):
             row("Hall spoke vs thrust balls / cage (±travel)", min_dist(list(posed(lambda t: hall.arm(D, t), TR).values()), tc), 0.3)
         row("Hall arm rib tip deflection at the load radius (mm)", _rib_defl(D), D["ha_rib_defl"],
             f"PA12 E {D['ha_rib_E']/1000:.1f} GPa, {D['ha_rib_load']:g} N in-plane at r {D['ha_rib_rload']:g}; "
-            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, underside z {D['ha_rib_z_cage']:.1f} to r {D['ha_rib_r_step']:.2f} (the old thrust cage's step) / {D['ha_rib_z_low']:.1f} beyond, top {D['ha_rib_z_top']:.1f}{_taper_txt(D)}",
+            f"rib {D['ha_rib_w0']:g}→{D['ha_rib_w1']:g} wide, underside z {D['ha_rib_z_cage']:.2f} to r {D['ha_rib_r_step']:.2f}{" (the thrust cage's step)" if D['tb_on'] else ""} / {D['ha_rib_z_low']:.2f} beyond, top {D['ha_rib_z_top']:.1f}{_taper_txt(D)}",
             higher_ok=False)
     else:
         row("Hall paddle vs ring tips (radial)", D["ha_r_tip"] - D["ha_pad_r1"], 0.3)

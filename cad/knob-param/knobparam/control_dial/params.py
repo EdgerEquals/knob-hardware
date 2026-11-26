@@ -311,7 +311,7 @@ def derive(D):
         D["hv_bar_z0"] = D["hv_z_mag0"]
         D["hv_spoke_z0"] = max(D["tb_z_ball"] + D["tb_ball_d"] / 2, D["tb_cage_z0"] + D["tb_cage"][2]) + D["hv_spoke_clear"]
         # v0.17 rib: over the thrust cage the bottom stays at the spoke; past the cage OD + a web it drops to ha_rib_z_low
-        D["ha_rib_z_cage"] = D["hv_spoke_z0"]
+        D["ha_rib_z_cage"] = D["hv_spoke_z0"] if D["tb_on"] else D["ha_rib_z_low"]   # v0.60 [sweep A4]: no cage since 2 Nov, no step
         D["ha_rib_r_step"] = D["tb_cage"][1] / 2 + D["tb_web_min"]   # 4.95 at the v0.16 cage (Ø8.6 + 0.65 web)
     _arc_mech(D)
     _split_mech(D)

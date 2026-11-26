@@ -25,7 +25,7 @@ see **Done in v0.56** at the end. A (physical) goes to him one item at a time.
    lifts off the knob race". The v0.25 dial split removed that ("the train-vs-race stack the pedestal grub was set against
    no longer fights the race"). Left: a ±0.25 height trim before bonding. Fix if unwanted: fixed pedestal, drop the grub,
    tapped hole, board hole (`sp_access_d`) and four rows.
-4. **Hall rib root still stepped round the removed thrust cage** ✔ (`tb_on=False` since 2 Nov). r 4.06–4.94 the rib's
+4. **DONE 26 Nov, v0.60 ([A] tidy, reported; `docs/img/hall-rib-root.png`): root at z 3.85, the v0.15 spoke gone, the part +0.08 mm³, margin 2.17x → 2.29x.** Was: **Hall rib root still stepped round the removed thrust cage** ✔ (`tb_on=False` since 2 Nov). r 4.06–4.94 the rib's
    underside stays at z 4.61 (`ha_rib_z_cage`). Run it at z 3.85 like the rest: stiffness 2.17x → 2.29x. The v0.15 Hall
    spoke is now inside the rib bar a 1.1 mm³ sliver; it can go too.
 5. **Detent spoke step-up** at r 8.7 still clears centring-spring anchor post 2 (gone since v0.31). Harmless.
