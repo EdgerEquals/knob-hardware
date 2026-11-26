@@ -65,6 +65,13 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Leftover sweep A4-A6, v0.60 and v0.61 (26 Nov 2026)
+
+v0.60 ([A] tidy, A4): the Hall arm rib's root runs at z 3.85 like the rest (no thrust cage since 2 Nov); the v0.15 spoke inside
+the rib goes. The dial's lower part gains 0.08 mm³; rib margin 2.17x → 2.29x (`docs/img/hall-rib-root.png`). A5 [Ed "A"]: the
+detent spoke's step-up stays (`docs/img/detent-spoke.png`). v0.61 [Ed "A", A6]: joystick v0.11, the printed cradle's flange
+runs into the case side wall (no 0.85 notch); the glow coat stops 0.20 under it (`docs/top-screen-joystick.md`).
+
 ## Pedestal grub travel, v0.59 and main board v2.2 (Ed, 26 Nov 2026)
 
 The pedestal grub is the only trim on the Hall bar's gap over H3 before the dish is bonded, and the untrimmed print stack under

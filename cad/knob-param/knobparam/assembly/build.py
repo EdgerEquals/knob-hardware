@@ -77,6 +77,29 @@ def _fuse_cradle(case, key):
     return fused, dst, ck
 
 
+def _trim_glow(glow, key):
+    """v0.61 [Ed 26 Nov "A", sweep A6]: the joystick cradle's flange runs out into the case side wall (joystick v0.11 cc.fl_wall), so the
+    side-wall glow coat stops cc.glow_air under the flange along its length (one box per side, panel frame). Cached like the fused case.
+    Returns (coat, brep path or None)."""
+    from build123d import export_brep, import_brep, Box, Pos, Align
+    import hashlib
+    from . import joystick as js
+    JD = js._jd()
+    cc = JD.get("cc", {})
+    if JD.get("base") != "case" or not JD.get("cradle_in_case") or not cc.get("fl_wall"):
+        return glow, None
+    py, a = JD["place_y"], cc["glow_air"]
+    y0, y1, z0 = py + JD["fl_y0"] - a, py + JD["fl_y1"] + a, JD["z_fl0"] - a
+    dst = os.path.join(CACHE, "glow_trim_" + hashlib.sha1((key + f"|{y0:.4f}|{y1:.4f}|{z0:.4f}").encode()).hexdigest()[:16] + ".brep")
+    if os.path.exists(dst):
+        return import_brep(dst), dst
+    A = (Align.MIN, Align.MIN, Align.MIN)
+    for x0 in (JD["nest_hw"], -60.0):   # out from the hangers to past the wall, each side
+        glow = glow - Pos(x0, y0, z0) * Box(60.0 - JD["nest_hw"], y1 - y0, 50.0, align=A)
+    export_brep(glow, dst)
+    return glow, dst
+
+
 def build_all(D, full_pcb=False, only=None):
     """only: list of sub-assembly names (None = all). Returns parts, stats, keys, owner{part: sub}."""
     global PATHS
@@ -92,13 +115,18 @@ def build_all(D, full_pcb=False, only=None):
             # the case gives the board outline (10HP nest + corner notches); electronics gives every hole and cut-out
             out = dict(out); paths = dict(paths)
             out["PCB"], paths["PCB"] = _merge_pcb(parts["PCB"], out["PCB"], keys["PCB"] + key)
-        ck = ""
+        ck, gtrim = "", None
         if s == "case" and "case" in out:   # v0.25 [Ed 18:35]: the joystick cradle is printed into the case (one print)
             out = dict(out); paths = dict(paths)
             out["case"], p_, ck = _fuse_cradle(out["case"], key)
             if p_: paths["case"] = p_
+            gn = next((n for n in out if n.startswith("glow coat")), None)
+            if gn and ck:   # v0.61 [sweep A6]: the coat stops under the flange where the flange joins the side wall
+                out[gn], gp = _trim_glow(out[gn], key + ck)
+                if gp: paths[gn] = gp; gtrim = gn
         for n in out: keys[n] = (keys[n] + key + n) if (n == "PCB" and n in keys) else key + n; owner[n] = owner.get(n, s)
         if ck: keys["case"] += "|cradle" + ck
+        if gtrim: keys[gtrim] += "|trim" + ck   # the turned copies (view) and the clash memo are keyed on it
         PATHS.update(paths); parts.update(out)
     if full_pcb and (not only or "electronics" in only):
         from build123d import export_brep

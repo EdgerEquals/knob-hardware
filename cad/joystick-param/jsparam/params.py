@@ -60,7 +60,7 @@ import os
 import sys
 
 P = dict(
-    version="v0.10",   # [Ed 10 Nov] two hold-down springs on the axis (was four at y ±1.5)
+    version="v0.11",   # [Ed 26 Nov A] the printed cradle's flange joins the case side wall. v0.10 [Ed 10 Nov]: two hold-down springs on the axis (was four at y ±1.5)
     # ---- placement. place_y is derived so the notched edge clears the knob ----
     knob_od_design=41.70,   # [Ed] size the plan to the v0.17 knob. The live knob-param OD is checked too
     knob_extra=0.0,         # nominal gap is the process stack itself (v0.4 rule only)
@@ -161,7 +161,12 @@ P = dict(
             shoulder=1.0,   # [A] shoulder over the top board's edge (the board is glued up under it)
             seat_above=1.0, # [A] lower ball-seat bosses start this far above the top board's top face (parts under them stay lower)
             collar_air=0.5, # [A] flange −y edge to the knob collar (case collar_r)
-            glow_air=0.20,  # [A] flange ±x edge to the case side-wall glow coat (the coat is modelled 0.3 off the wall, 0.35 thick)
+            glow_air=0.20,  # [A] flange ±x edge to the case side-wall glow coat (the coat is modelled 0.3 off the wall, 0.35 thick).
+                            # v0.11: only when the flange stops short of the wall (fl_wall False); with fl_wall the coat stops 0.20 under it
+            fl_wall=True,   # [Ed 26 Nov "A", sweep A6] v0.11: printed with the case, the flange runs out into the case side wall (was 0.85
+                            # short of it: a notch 1.62 deep, open below, that the glow coat had to be brushed up into); the knob
+                            # assembly stops the coat glow_air under the flange there (docs/img/js-flange.png)
+            wall_ov=0.02,   # [A] flange edge into the side wall, so the two fuse (as the lip and riser into the faceplate)
             top_air=0.20),  # [A] flange +y end to the case top wall inner face (no contact: the lip ring locates in y)
     # ---- v0.8 [Ed 3 Nov 13:09–14:08] step-1 follow-ups: the cup over the stem is printed into the bezel (grip block) and its ceiling
     # sits on the stem (no gap), so the switch's own click is the press [Ed 13:09]; no press springs, grubs, inserts or press peg
@@ -766,6 +771,8 @@ def _case_cradle(D, K):
     # flange plan limits from the case: side-wall glow coat (x), knob collar (−y), case top wall / rail strip (+y)
     xin = float(K.get("case_x_in1", 22.75)); gg, gt = float(K.get("case_glow_gap", 0.3)), float(K.get("case_glow_t", 0.35))
     D["fl_x1"] = xin - gg - gt - cc["glow_air"]
+    if D.get("cradle_in_case") and cc.get("fl_wall"):   # v0.11 [Ed 26 Nov A]: out into the side wall (one print)
+        D["fl_x1"] = xin + cc["wall_ov"]
     D["fl_y0"] = (float(K.get("case_collar_r", 23.7)) + cc["collar_air"]) - D["place_y"]
     y_top_wall = float(K["case_y_in1"]) - D["place_y"] if "case_y_in1" in K else 99.0
     D["fl_y1"] = min(y_top_wall - cc["top_air"], D["y_rail"] - D["rail_margin"])

@@ -238,8 +238,12 @@ def cross(D, pp, jp, JD):
         gl = [q for n, q in pp.items() if n.startswith("glow coat")]
         if gl:
             d = min(cr.distance_to(g) for g in gl)
-            row("printed cradle flange clear of the side-wall glow coat", d, JD["cc"]["glow_air"] - 0.01,
-                f"flange edge x ±{JD['fl_x1']:.2f}; the coat is modelled {D['glow_gap']:g} off the wall at x ±{D['x_in1']:.2f} (brush access)")
+            if JD["cc"].get("fl_wall"):   # v0.61 [Ed 26 Nov A, sweep A6]
+                txt = (f"the flange runs into the side wall (edge x ±{JD['fl_x1']:.2f}, wall at ±{D['x_in1']:.2f}); the coat stops "
+                       f"{JD['cc']['glow_air']:g} under it (z {JD['z_fl0'] - JD['cc']['glow_air']:.2f}) along y {py + JD['fl_y0']:.1f}-{py + JD['fl_y1']:.1f}")
+            else:
+                txt = f"flange edge x ±{JD['fl_x1']:.2f}; the coat is modelled {D['glow_gap']:g} off the wall at x ±{D['x_in1']:.2f} (brush access)"
+            row("printed cradle flange clear of the side-wall glow coat", d, JD["cc"]["glow_air"] - 0.01, txt)
         # the top board goes in from the back on its own (with its sockets, SW1 and the screen socket) up to its printed nest
         fixed = {n: q for n, q in pp.items() if n == "case" or n.startswith(("glow coat", "corner insert", "jack ", "USB-C"))}
         mov = {n: q for n, q in jp.items() if n.startswith(tuple(PREFIX + k for k in ("joystick top board", "top-board socket", "SW1 ", "screen FPC socket")))}

@@ -289,3 +289,12 @@ before: springs hooked to the carrier on the bench, lower hooks pulled onto the 
 Not taken: a pin through the vertical boards near their bottom (Ed's idea). With the stack in the case that spot is closed in
 (main board below, top board above, a vertical board each side), and one end of each spring must be hooked after the joystick
 (in from the front) and the stack (in from the back) meet. Picture: `docs/img/js-holddown-options.png`.
+
+## v0.11 (26 Nov 2026): the cradle's flange joins the case side wall [Ed 26 Nov, "A", leftover sweep A6]
+
+Printed with the case since v0.9, the flange still stopped 0.85 short of each side wall (0.20 past the glow coat as the model
+draws it, 0.35 thick and 0.30 off the wall; the real coat is a film), which left a notch 1.62 deep, open below, that the coat
+had to be brushed into. Now the flange runs 0.02 into the side wall (`cc.fl_wall`, `cc.wall_ov`), so the cradle ties into the
+wall as well as the faceplate; the flange's height is unchanged (it keeps the carrier's cup bosses clear). In the knob model
+the side-wall glow coat stops 0.20 under the flange along its length (`assembly/build.py` `_trim_glow`; knob v0.61). Joystick
+97/97, knob 329/329, no clashes; the case gains 69 mm³, the coat loses 20. Picture of the old notch: `docs/img/js-flange.png`.
