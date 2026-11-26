@@ -87,10 +87,14 @@ P = dict(
     sp_wall_r1=16.89,   # [A] wall outer face: 0.35 inside the knob ring's upper half (r 17.24, turns with the knob)
     sp_wall_a=(246.5, 281.0),   # [A] wall from the Hall spoke's sweep (+ gap) to short of the lever's (mechanism frame)
     sp_brk_w=3.0,   # [A] bracket width, boss to wall
-    sp_ped_pocket=1.5,   # [A] the pedestal block is guided this deep in a pocket in the plate
+    sp_ped_pocket=2.0,   # [Ed 26 Nov "A"] the pedestal block is guided this deep in a pocket in the plate (was 1.5)
     sp_ped_clear=0.1,   # [A] pocket over the block, all round (slide fit, SLA both)
-    sp_ped_lift=0.25,   # [A] block bottom above the pocket floor at nominal: ±0.25 of adjustment (the printed-stack tolerance)
-    sp_grub=(2.0, 2.0),   # [Ed 15:50] M2 x 2 grub under the pedestal, tapped into the plate like the detent boss (key through the PCB
+    sp_ped_lift=0.5,   # [Ed 26 Nov "A"] block bottom above the pocket floor at nominal: 0.5 down before it lands (was 0.25)
+    sp_grub_pcb=1.5,   # [A] the grub may run this far down into the main board's clearance hole (sp_access_d), 0.1 short of its back
+    sp_adj_need=0.39,   # [A] travel the grub must give each way: the untrimmed print stack under the Hall bar (RSS, see sp_grub)
+    sp_grub=(2.0, 3.0),   # [Ed 26 Nov "A"] M2 x 3 (was M2 x 2 [Ed 15:50]) grub under the pedestal, tapped into the plate like the
+                          # detent boss; v0.59 it runs down into a Ø2.4 clearance hole in the main board, ±0.50 (was ±0.25: it stopped
+                          # on the board below and ran out of thread above; docs/img/pedestal-grub-travel.png). Key through the PCB
                           # from behind). v0.22b job: set the train against the 45° knob race stack (gone with the v0.25 split: the
                           # dish-to-tube bond takes that up). Its job now (10 Nov sweep, Ed asked "are you sure it's not needed?"): the
                           # only height adjustment of the dial's lower part before the dish is bonded, so it sets the Hall bar's gap
@@ -274,9 +278,11 @@ def _place_split_mount(D):
     D["sp_z_blk0"] = D["sp_z_pf"] + D["sp_ped_lift"]                       # block bottom = grub tip at nominal
     gd, gl = D["sp_grub"]
     D["sp_z_grub0"] = D["sp_z_blk0"] - gl                                   # grub bottom (hex socket, key from below)
-    D["sp_adj_down"] = min(D["sp_ped_lift"], D["sp_z_grub0"])               # until the block meets the floor / the grub the PCB
+    into = D["sp_grub_pcb"] if D["sp_access_d"] >= gd + 0.2 else 0.0         # v0.59: a clearance hole lets the grub into the board
+    D["sp_adj_down"] = min(D["sp_ped_lift"], D["sp_z_grub0"] + into)        # until the block meets the floor / the grub its PCB limit
     D["sp_adj_up"] = D["sp_z_pf"] - D["sp_thread_min"] - D["sp_z_grub0"]   # while sp_thread_min of thread stays in the plate
     D["sp_guide"] = D["plate_t"] - D["sp_z_blk0"]
+    D["sp_guide_top"] = D["sp_guide"] - min(D["sp_adj_down"], D["sp_adj_up"])   # guide left at the top of the (symmetric) range
 
 
 def _detent_block_joint(D, r0, r1, rm, t, L, e):

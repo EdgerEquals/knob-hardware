@@ -21,9 +21,9 @@
 - KiCad PCBWay packs (Gerber+drill zip, BOM with MPN/LCSC, CPL, ERC/DRC reports, README status) in
   `cad/knob-param/knobparam/electronics/kicad/<board>/fab/` (`fab_export.py`).
 
-| Board | Rev | Status (10 Nov 2026) |
+| Board | Rev | Status (26 Nov 2026) |
 |---|---|---|
-| Main board | v2.0 | **READY TO QUOTE**: 6 layers, routed, KiCad DRC 0 / 0, fab pack in `knob-main-pcb/v2/fab/` (Gerbers, drill, BOM with LCSC numbers and datasheet links, CPL). |
+| Main board | v2.2 | **READY TO QUOTE**: 6 layers, routed, KiCad DRC 0 / 0, fab pack in `knob-main-pcb/v2/fab/` (Gerbers, drill, BOM with LCSC numbers and datasheet links, CPL). v2.1 (10 Nov): one round hole per joystick spring. v2.2 (26 Nov): the pedestal grub hole Ø2.4 at r 13.1 (was Ø1.6 at r 13.5). An upload of v2.0 or v2.1 is out of date. |
 | USB-C board, jack board, jack power board (upper / lower) | see each `fab/README.txt` | their own packs (`fab_export.py`). |
 
 Superseded and archived on 10 Nov in `superseded/` (**do not quote**): main PCB v0.11, screen adapter v0.4 (replaced by the

@@ -61,11 +61,13 @@ def _split_rows(D, parts, r):
               f"I {D['sp_wall_I']:.1f} mm⁴, lever {D['sp_wall_e']:.2f}, height {D['sp_wall_h']:.1f}; E {D['ad_E'] / 1000:g} GPa [A]; "
               f"physical limit {D['ad_defl_max']:g} (20% of the dimple depth): margin {D['ad_defl_max'] / max(D['sp_lift'], 1e-9):.1f}x", higher_ok=False)
     gd, gl = D["sp_grub"]
-    r.row("split detent: pedestal grub adjustment (down / up, mm)", min(D["sp_adj_down"], D["sp_adj_up"]), 0.2,
-          f"down {D['sp_adj_down']:.2f} (block to the pocket floor), up {D['sp_adj_up']:.2f} (keeping {D['sp_thread_min']:g} of M{gd:g} thread); "
-          f"M{gd:g}x{gl:g} grub tapped into the plate, key Ø{D['sp_access_d']:g} hole through the PCB [Ed 15:50]")
-    r.row("split detent: pedestal block guided in its pocket (mm)", D["sp_guide"], 1.0,
-          f"pocket {D['sp_ped_pocket']:g} deep, {D['sp_ped_clear']:g} slide clearance; block z {D['sp_z_blk0']:.2f}-{D['sp_z_blk1']:.2f}")
+    r.row("split detent: pedestal grub travel each way vs the untrimmed stack (mm)", min(D["sp_adj_down"], D["sp_adj_up"]), D["sp_adj_need"],
+          f"down {D['sp_adj_down']:.2f} (block to the pocket floor, grub {D['sp_z_grub0'] - D['sp_adj_down']:+.2f} in the board's Ø{D['sp_access_d']:g} "
+          f"hole), up {D['sp_adj_up']:.2f} (keeping {D['sp_thread_min']:g} of M{gd:g} thread); M{gd:g}x{gl:g} grub tapped into the plate "
+          f"[Ed 26 Nov A]; stack ±{D['sp_adj_need']:g} RSS [A]")
+    r.row("split detent: pedestal block guided in its pocket at the top of the grub's travel (mm)", D["sp_guide_top"], 1.0,
+          f"{D['sp_guide']:.2f} at nominal; pocket {D['sp_ped_pocket']:g} deep, {D['sp_ped_clear']:g} slide clearance; "
+          f"block z {D['sp_z_blk0']:.2f}-{D['sp_z_blk1']:.2f}")
     sl = hall_slot.window(D)
     g = mech.track_grooves(D)
     r.row("split detent: pedestal groove clear of the Hall slot (plate land, mm)", g.distance_to(sl), D["tk_slot_land"],

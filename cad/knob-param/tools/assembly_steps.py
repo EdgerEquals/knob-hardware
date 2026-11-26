@@ -54,7 +54,8 @@ STEPS = [
     dict(id="pedestal", name="Detent train: pedestal grub, pedestal block, train balls", dir="-z", travel="auto",
          parts=[r"^detent pedestal grub", r"^detent train pedestal", r"^track \d+ (separator )?ball"],
          note="grub from the top down the pocket, then the block, then the Ø1/Ø0.8/Ø1 train (CD 15:50); loose till the dial. "
-              "v0.25: the detent boss is no longer printed over the pocket, so it is open from the top [Ed 18:15]"),
+              "v0.25: the detent boss is no longer printed over the pocket, so it is open from the top [Ed 18:15]. "
+              "v0.59: M2 x 3; it may stand into the main board's Ø2.4 hole [Ed 26 Nov A]"),
     dict(id="thrust", name="Outer thrust ring: load balls, glass spacers, rubies", dir="-z", travel="auto",
          parts=[r"^outer thrust"], note="loose in the cradle race, cageless closed ring (CD)"),
     # ------------------------------------------------------------------ knob base and the herringbone stage

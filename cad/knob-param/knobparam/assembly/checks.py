@@ -444,10 +444,10 @@ def _arc_cross(D, parts, row, TR, ARM):
         nn, dk = min(hits, key=lambda t: t[1]) if hits else ("none", 9.0)
         pcb = [q for n, q in parts.items() if ispcb(n)]
         row("split detent: pedestal grub reachable from behind the PCB (key line clear, mm)", dk, 0.1,
-            f"Ø1.0 key line from z -13.4 (back cover and screens off) at r {D['sp_r']:g}, {D['sp_ang']:g}°; nearest: {nn}")
+            f"Ø1.0 key line from z -13.4 (back cover and screens off) at r {D['sp_grub_r']:g}, {D['sp_ang']:g}°; nearest: {nn}")
         if pcb:
             row("split detent: PCB key hole round the key line (mm)", min(key.distance_to(q) for q in pcb), 0.2,
-                f"Ø{D['sp_access_d']:g} NPTH in the main PCB [Ed 15:50]")
+                f"Ø{D['sp_access_d']:g} NPTH in the main PCB, clears the M2 grub [Ed 26 Nov A]")
         ring = [s for n, s in parts.items() if n.startswith("bottom internal ring")]
         if ring:
             row("split detent wall vs the knob's internal ring (mm)", min(mt.distance_to(q) for q in ring), T["arm_vs_cradle"],

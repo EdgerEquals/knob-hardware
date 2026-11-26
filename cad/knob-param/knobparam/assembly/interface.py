@@ -230,7 +230,11 @@ P = dict(
     # pedestal + grub, electronics PCB hole for the grub key) ----
     sp_ang=263.0,   # [A] detent spoke angle, mechanism frame (split-spoke study)
     sp_r=13.5,   # [A] detent and train radius
-    sp_access_d=1.6,   # [Ed 15:50] hole through the main PCB under the pedestal grub (0.9 hex key, from behind with the back cover off)
+    sp_access_d=2.4,   # [Ed 26 Nov "A"] hole through the main PCB under the pedestal grub, now a clearance hole for the M2 (was the Ø1.6
+                       # key hole [Ed 15:50]) so the grub can run down into the board: ±0.50 of travel (docs/img/pedestal-grub-travel.png).
+                       # Key (0.9 hex) from behind with the back cover off, as before
+    sp_grub_r=13.1,   # [Ed 26 Nov "A"] grub and its board hole on the detent line, 0.4 inside sp_r: the Ø2.4 keeps 0.25 from the OLED
+                      # tracks on main board v2.2 (no track moved); the cup point (Ø1) still bears inside the block (r 12.55-14.45)
     ha_rib_top_min=9.0,   # [A] v0.22: rib top raised to this z (was the lever top, 6.8) for a 2x margin on the rib deflection [Ed: 2x rule]
     ha_rib_load=2.0,   # [Ed] N, tangential (in-plane) tip load for the deflection check
     ha_rib_rload=15.5,   # [Ed] radius of that load
@@ -943,7 +947,7 @@ def _place_mech(D):
     D["ha_rib_r_head"] = D["fan_r0"]                                        # hammerhead (13.85 in v0.16b; follows the fan)
     D["ha_rib_r_hub"] = D["dial_tube_od"] / 2
     D["ha_rib_z_top"] = max(D["sl_top"], D["ha_rib_top_min"])             # v0.22: raised (was up to the lever top)
-    D["sp_grub_xy"] = (D["sp_r"] * math.cos(math.radians(D["sp_ang"])), D["sp_r"] * math.sin(math.radians(D["sp_ang"])))
+    D["sp_grub_xy"] = (D["sp_grub_r"] * math.cos(math.radians(D["sp_ang"])), D["sp_grub_r"] * math.sin(math.radians(D["sp_ang"])))
     D["ha_rib_z_low"] = D["plate_t"] + D["bt_up"] + 0.05                  # just over the plate so the swept corner stays ≥ 0.3
     # ha_rib_z_cage (over the thrust cage) is hv_spoke_z0, set by control_dial once the cage is known
     _place_det_columns(D)

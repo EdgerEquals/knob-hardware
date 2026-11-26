@@ -65,6 +65,18 @@ catalogue number is assigned here. The main PCB was not edited.
   DC through a choke, a Manchester code at MHz through a capacitor, a fast comparator to receive. The dial's draw stays steady, so
   nothing on the 5 V follows the data. Dial end on the fixed rod-link board (room measured); main end on TIM1 (PA10, PE11).
 
+## Pedestal grub travel, v0.59 and main board v2.2 (Ed, 26 Nov 2026)
+
+The pedestal grub is the only trim on the Hall bar's gap over H3 before the dish is bonded, and the untrimmed print stack under
+it is about ±0.39 RSS [A]; it only moved ±0.25 (stopped on the board below, out of thread above in the 3.5 plate). [Ed 26 Nov,
+"A"]: the main board's key hole becomes a Ø2.4 clearance hole so the grub runs down into the board: M2 x 3 (was M2 x 2), pocket
+2.0 deep (was 1.5), block 0.5 off its floor (was 0.25): **±0.50**, 1.5 of thread and 1.0 of guide at every setting. The hole and
+grub sit at r 13.1 (was 13.5) on the detent line, so the hole keeps 0.25 from the OLED tracks; no track moved
+(`v2/grub_hole_v022.py`, DRC 0 / 0, pack v2.2). Picture: `docs/img/pedestal-grub-travel.png`. Ed's alternative, the plate raised
+round the grub, was looked at first: the block would need taller walls round it and only its inside has room (outside 0.45 to
+the detent block, the ends 0.6 and 1.1 to the swept Hall spoke and idler pinion 2; `docs/img/pedestal-room.png`). **Tight:**
+±0.50 against ±0.39 is 0.11 spare, the most a 3.5 plate gives with 1.5 of thread and 1.0 of guide.
+
 ## Leftover sweep, v0.56 and v0.57 (Ed, 10 Nov 2026)
 
 `docs/leftover-sweep-2026-11-10.md`. v0.56: the safe fixes (model mistakes, superseded boards archived in

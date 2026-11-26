@@ -96,11 +96,13 @@ def split_pedestal(D):
     return blk, cyl(gd / 2 - 0.01, D["sp_z_grub0"], gl, gx, gy)
 
 def split_cuts(D):
-    """Plate pocket for the pedestal block + the tapped hole for its grub (down to the plate bottom)."""
+    """Plate pocket for the pedestal block + the tapped hole for its grub (down to the plate bottom). v0.59: the grub sits at
+    sp_grub_r (13.1), so its edge passes 0.34 inside the pocket's inner wall; the hole runs on up to the plate top as a shallow
+    groove in that wall, where the grub's top stands above the floor."""
     a, c, r = D["ad_ang"], D["sp_ped_clear"], D["ad_r"]; p0, p1, ph = D["sp_ped"]
     s = sector(p0 - c, p1 + c, ph + math.degrees(c / r), D["sp_z_pf"], D["plate_t"] - D["sp_z_pf"] + 0.01, a, n=48)
     gx, gy = D["sp_grub_xy"]
-    return s + cyl(D["sp_grub"][0] / 2, -0.01, D["sp_z_pf"] + 0.02, gx, gy)
+    return s + cyl(D["sp_grub"][0] / 2, -0.01, D["plate_t"] + 0.02, gx, gy)
 
 def track_grooves(D):
     out = None
